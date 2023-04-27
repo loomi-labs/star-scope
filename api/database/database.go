@@ -27,7 +27,7 @@ var (
 	dbHost     = "localhost"
 	dbUser     = "postgres"
 	dbPassword = "postgres"
-	dbName     = "backlog-db"
+	dbName     = "blocklog-db"
 	dbPort     = "5432"
 	dbSSLMode  = "disable"
 	dbTimezone = "Europe/Zurich"

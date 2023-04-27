@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14.5
+    container_name: blocklog_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=blocklog-db
+    restart: unless-stopped
+
+  db-test:
+    image: postgres:14.5
+    container_name: blocklog_test_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=blocklog-db
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:6.21
+    container_name: blocklog_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    logging:
+      driver: "none"
+    volumes:
+       - pgadmin:/root/.pgadmin
+       - ./docker/pgadmin/local-db-servers.json:/pgadmin4/servers.json
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: blocklog_data
+  test_data:
+    name: blocklog_test_data
+  pgadmin:
+    name: blocklog_pgadmin
