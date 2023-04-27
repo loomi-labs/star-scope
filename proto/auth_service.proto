@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package blocklog.grpc;
+
+option go_package = "github.com/shifty11/blocklog-backend/grpc/auth";
+
+service AuthService {
+  rpc KeplrLogin (KeplrLoginRequest) returns (LoginResponse) {}
+  rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {}
+}
+
+message KeplrLoginRequest {
+  string signature = 1;
+  string signed = 2;
+  string pubkey = 3;
+  string wallet_address = 4;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message RefreshAccessTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshAccessTokenResponse {
+  string access_token = 1;
+}
