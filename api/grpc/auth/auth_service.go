@@ -2,10 +2,7 @@ package auth
 
 import (
 	"context"
-	"encoding/hex"
 	connect_go "github.com/bufbuild/connect-go"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/shifty11/blocklog-backend/database"
 	pb "github.com/shifty11/blocklog-backend/grpc/auth/v1"
 	authconnect "github.com/shifty11/blocklog-backend/grpc/auth/v1/v1connect"
@@ -35,25 +32,25 @@ var (
 	ErrorTokenVerificationFailed = status.Error(codes.Unauthenticated, "token verification failed")
 )
 
-func verifySignature(msg []byte, sig []byte, pubkey string) bool {
-	// Parse the public key from the hex-encoded string
-	pubkeyBytes, err := hex.DecodeString(pubkey)
-	if err != nil {
-		return false
-	}
-
-	// Create a public key object from the bytes
-	pubKey, err := secp256k1.PubKeyFromBytes(pubkeyBytes)
-	if err != nil {
-		return false
-	}
-
-	// Create a signature object from the bytes
-	sigObj := ed25519.Signature(sig)
-
-	// Verify the signature using the public key
-	return pubKey.VerifySignature(msg, sigObj)
-}
+//func verifySignature(msg []byte, sig []byte, pubkey string) bool {
+//	// Parse the public key from the hex-encoded string
+//	pubkeyBytes, err := hex.DecodeString(pubkey)
+//	if err != nil {
+//		return false
+//	}
+//
+//	// Create a public key object from the bytes
+//	pubKey, err := secp256k1.PubKeyFromBytes(pubkeyBytes)
+//	if err != nil {
+//		return false
+//	}
+//
+//	// Create a signature object from the bytes
+//	sigObj := ed25519.Signature(sig)
+//
+//	// Verify the signature using the public key
+//	return pubKey.VerifySignature(msg, sigObj)
+//}
 
 func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[pb.KeplrLoginRequest]) (*connect_go.Response[pb.LoginResponse], error) {
 	// TODO: verify signature
