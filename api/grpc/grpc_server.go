@@ -69,7 +69,7 @@ func (s GRPCServer) Run() {
 	mux.Handle(path, handler)
 	handler = corsHandler(mux) // Wrap the mux router with the CORS handler
 	err := http.ListenAndServe(
-		fmt.Sprintf("localhost:%v", s.config.Port),
+		fmt.Sprintf("0.0.0.0:%v", s.config.Port),
 		h2c.NewHandler(handler, &http2.Server{}),
 	)
 	if err != nil {

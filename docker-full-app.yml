@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:14.5
+    container_name: blocklog_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=blocklog-db
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-migration:
+    build: api
+    container_name: blocklog_db_migration
+    working_dir: /app
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/blocklog-db?sslmode=disable
+    env_file:
+      - api/.env
+    command: "/blocklog db migrate"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  grpc:
+    build: api
+    container_name: blocklog_grpc
+    working_dir: /app
+    ports:
+      - "50001:50001"
+    env_file:
+      - api/.env
+    command: "/blocklog service grpc"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+volumes:
+  data:
+    name: blocklog_data
