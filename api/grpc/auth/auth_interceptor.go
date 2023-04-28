@@ -2,12 +2,11 @@ package auth
 
 import (
 	"context"
-	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/bufbuild/connect-go"
 	"github.com/shifty11/blocklog-backend/common"
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -25,73 +24,79 @@ func NewAuthInterceptor(jwtManager *JWTManager, userManager *database.UserManage
 	return &AuthInterceptor{jwtManager: jwtManager, accessibleRoles: accessibleRoles, userManager: userManager}
 }
 
-func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
+func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(
 		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		debugInfo := "--> unary interceptor: " + info.FullMethod
+		req connect.AnyRequest,
+	) (connect.AnyResponse, error) {
+		debugInfo := "--> unary interceptor: " + req.Spec().Procedure
 
-		ctx, err := interceptor.authorize(ctx, info.FullMethod)
+		ctx, err := i.authorize(ctx, req.Spec().Procedure)
 		if err != nil {
 			log.Sugar.Debug(debugInfo + " access denied!")
 			return nil, err
 		}
 		log.Sugar.Debug(debugInfo)
-
-		return handler(ctx, req)
+		return next(ctx, req)
 	}
 }
 
-func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
+func (i *AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return func(
-		srv interface{},
-		stream grpc.ServerStream,
-		info *grpc.StreamServerInfo,
-		handler grpc.StreamHandler,
-	) error {
-		debugInfo := "--> stream interceptor: " + info.FullMethod
+		ctx context.Context,
+		spec connect.Spec,
+	) connect.StreamingClientConn {
+		conn := next(ctx, spec)
+		debugInfo := "--> stream client interceptor: " + conn.Spec().Procedure
+		log.Sugar.Debug(debugInfo)
+		return conn
+	}
+}
 
-		ctx, err := interceptor.authorize(stream.Context(), info.FullMethod)
+func (i *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(
+		ctx context.Context,
+		conn connect.StreamingHandlerConn,
+	) error {
+		debugInfo := "--> stream handler interceptor: " + conn.Spec().Procedure
+
+		ctx, err := i.authorize(ctx, conn.Spec().Procedure)
 		if err != nil {
 			log.Sugar.Debug(debugInfo + " access denied!")
 			return err
 		}
-		wrapped := grpcmiddleware.WrapServerStream(stream)
-		wrapped.WrappedContext = ctx
+		//wrapped := grpcmiddleware.WrapServerStream(stream)
+		//wrapped.WrappedContext = ctx
 		log.Sugar.Debug(debugInfo)
-
-		return handler(srv, wrapped)
+		return next(ctx, conn)
 	}
 }
 
-func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) (context.Context, error) {
-	accessibleRoles, ok := interceptor.accessibleRoles[method]
+func (i *AuthInterceptor) authorize(ctx context.Context, method string) (context.Context, error) {
+	accessibleRoles, ok := i.accessibleRoles[method]
 	if slices.Contains(accessibleRoles, Unauthenticated) {
-		return nil, nil
+		return ctx, nil
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
+		return ctx, status.Errorf(codes.Unauthenticated, "metadata is not provided")
 	}
 
 	values := md["authorization"]
 	if len(values) == 0 {
-		return nil, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+		return ctx, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
 	}
 
 	accessToken := strings.Replace(values[0], "Bearer ", "", 1)
-	claims, err := interceptor.jwtManager.Verify(accessToken)
+	claims, err := i.jwtManager.Verify(accessToken)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
+		return ctx, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
 	}
 
 	for _, role := range accessibleRoles {
 		if role == claims.Role {
-			entUser, err := interceptor.userManager.QueryById(ctx, claims.UserId)
+			entUser, err := i.userManager.QueryById(ctx, claims.UserId)
 			if err != nil {
 				return nil, status.Error(codes.Internal, "user not found")
 			}
@@ -99,5 +104,5 @@ func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string
 		}
 	}
 
-	return nil, status.Error(codes.PermissionDenied, "no permission to access this RPC")
+	return ctx, status.Error(codes.PermissionDenied, "no permission to access this RPC")
 }

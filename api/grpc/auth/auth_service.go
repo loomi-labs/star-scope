@@ -3,15 +3,18 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	connect_go "github.com/bufbuild/connect-go"
 	"github.com/shifty11/blocklog-backend/database"
+	pb "github.com/shifty11/blocklog-backend/grpc/auth/v1"
+	authconnect "github.com/shifty11/blocklog-backend/grpc/auth/v1/v1connect"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
-type AuthServer struct {
-	UnimplementedAuthServiceServer
+type AuthService struct {
+	authconnect.UnimplementedAuthServiceHandler
 	userManager *database.UserManager
 	jwtManager  *JWTManager
 }
@@ -21,11 +24,8 @@ type DiscordIdentity struct {
 	Username string      `json:"username"`
 }
 
-func NewAuthServer(
-	userManager *database.UserManager,
-	jwtManager *JWTManager,
-) AuthServiceServer {
-	return &AuthServer{
+func NewAuthServiceHandler(userManager *database.UserManager, jwtManager *JWTManager) authconnect.AuthServiceHandler {
+	return &AuthService{
 		userManager: userManager,
 		jwtManager:  jwtManager,
 	}
@@ -38,10 +38,10 @@ var (
 	ErrorTokenVerificationFailed = status.Error(codes.Unauthenticated, "token verification failed")
 )
 
-func (s *AuthServer) KeplrLogin(ctx context.Context, request *KeplrLoginRequest) (*LoginResponse, error) {
+func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[pb.KeplrLoginRequest]) (*connect_go.Response[pb.LoginResponse], error) {
 	// TODO: verify signature
 
-	user, err := s.userManager.QueryByWalletAddress(ctx, request.GetWalletAddress())
+	user, err := s.userManager.QueryByWalletAddress(ctx, request.Msg.GetWalletAddress())
 	if err != nil {
 		return nil, ErrorUserNotFound
 	}
@@ -57,11 +57,14 @@ func (s *AuthServer) KeplrLogin(ctx context.Context, request *KeplrLoginRequest)
 		log.Sugar.Errorf("Could not generate refreshToken for user %v (%v): %v", user.Name, user.ID, err)
 		return nil, ErrorInternal
 	}
-	return &LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return connect_go.NewResponse(&pb.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}), nil
 }
 
-func (s *AuthServer) RefreshAccessToken(ctx context.Context, request *RefreshAccessTokenRequest) (*RefreshAccessTokenResponse, error) {
-	claims, err := s.jwtManager.Verify(request.RefreshToken)
+func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_go.Request[pb.RefreshAccessTokenRequest]) (*connect_go.Response[pb.RefreshAccessTokenResponse], error) {
+	claims, err := s.jwtManager.Verify(request.Msg.GetRefreshToken())
 	if err != nil {
 		return nil, ErrorTokenVerificationFailed
 	}
@@ -78,5 +81,5 @@ func (s *AuthServer) RefreshAccessToken(ctx context.Context, request *RefreshAcc
 		return nil, ErrorInternal
 	}
 
-	return &RefreshAccessTokenResponse{AccessToken: accessToken}, nil
+	return connect_go.NewResponse(&pb.RefreshAccessTokenResponse{AccessToken: accessToken}), nil
 }

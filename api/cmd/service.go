@@ -39,6 +39,7 @@ var startGrpcServerCmd = &cobra.Command{
 			JwtSecretKey:         jwtSecretKey,
 			AccessTokenDuration:  accessTokenDuration,
 			RefreshTokenDuration: refreshTokenDuration,
+			Port:                 50001,
 		}
 
 		dbManagers := database.NewDefaultDbManagers()

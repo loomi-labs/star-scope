@@ -1,0 +1,12 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/shifty11/blocklog-backend
+plugins:
+  - plugin: buf.build/protocolbuffers/go
+    out: ../api
+    opt: module=github.com/shifty11/blocklog-backend
+  - plugin: buf.build/bufbuild/connect-go
+    out: ../api
+    opt: module=github.com/shifty11/blocklog-backend
