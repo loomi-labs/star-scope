@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package blocklog.grpc;
+
+option go_package = "github.com/shifty11/blocklog-backend/grpc/event";
+
+
+service EventService {
+  rpc EventStream (google.protobuf.Empty) returns (stream Event) {}
+}
+
+message Event {
+  string name = 1;
+}
