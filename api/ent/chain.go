@@ -25,6 +25,8 @@ type Chain struct {
 	Name string `json:"name,omitempty"`
 	// Image holds the value of the "image" field.
 	Image string `json:"image,omitempty"`
+	// IndexingHeight holds the value of the "indexing_height" field.
+	IndexingHeight int64 `json:"indexing_height,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
 	Edges        ChainEdges `json:"edges"`
@@ -54,7 +56,7 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case chain.FieldID:
+		case chain.FieldID, chain.FieldIndexingHeight:
 			values[i] = new(sql.NullInt64)
 		case chain.FieldName, chain.FieldImage:
 			values[i] = new(sql.NullString)
@@ -104,6 +106,12 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field image", values[i])
 			} else if value.Valid {
 				c.Image = value.String
+			}
+		case chain.FieldIndexingHeight:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field indexing_height", values[i])
+			} else if value.Valid {
+				c.IndexingHeight = value.Int64
 			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
@@ -157,6 +165,9 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(c.Image)
+	builder.WriteString(", ")
+	builder.WriteString("indexing_height=")
+	builder.WriteString(fmt.Sprintf("%v", c.IndexingHeight))
 	builder.WriteByte(')')
 	return builder.String()
 }

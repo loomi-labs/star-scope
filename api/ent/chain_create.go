@@ -61,6 +61,20 @@ func (cc *ChainCreate) SetImage(s string) *ChainCreate {
 	return cc
 }
 
+// SetIndexingHeight sets the "indexing_height" field.
+func (cc *ChainCreate) SetIndexingHeight(i int64) *ChainCreate {
+	cc.mutation.SetIndexingHeight(i)
+	return cc
+}
+
+// SetNillableIndexingHeight sets the "indexing_height" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableIndexingHeight(i *int64) *ChainCreate {
+	if i != nil {
+		cc.SetIndexingHeight(*i)
+	}
+	return cc
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cc *ChainCreate) AddEventListenerIDs(ids ...int) *ChainCreate {
 	cc.mutation.AddEventListenerIDs(ids...)
@@ -119,6 +133,10 @@ func (cc *ChainCreate) defaults() {
 		v := chain.DefaultUpdateTime()
 		cc.mutation.SetUpdateTime(v)
 	}
+	if _, ok := cc.mutation.IndexingHeight(); !ok {
+		v := chain.DefaultIndexingHeight
+		cc.mutation.SetIndexingHeight(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -134,6 +152,9 @@ func (cc *ChainCreate) check() error {
 	}
 	if _, ok := cc.mutation.Image(); !ok {
 		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "Chain.image"`)}
+	}
+	if _, ok := cc.mutation.IndexingHeight(); !ok {
+		return &ValidationError{Name: "indexing_height", err: errors.New(`ent: missing required field "Chain.indexing_height"`)}
 	}
 	return nil
 }
@@ -176,6 +197,10 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.Image(); ok {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
 		_node.Image = value
+	}
+	if value, ok := cc.mutation.IndexingHeight(); ok {
+		_spec.SetField(chain.FieldIndexingHeight, field.TypeInt64, value)
+		_node.IndexingHeight = value
 	}
 	if nodes := cc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

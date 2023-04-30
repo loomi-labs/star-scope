@@ -25,6 +25,8 @@ func (Chain) Fields() []ent.Field {
 		field.String("name").
 			Unique(),
 		field.String("image"),
+		field.Int64("indexing_height").
+			Default(0),
 	}
 }
 

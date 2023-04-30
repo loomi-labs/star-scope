@@ -22,6 +22,8 @@ const (
 	FieldName = "name"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldIndexingHeight holds the string denoting the indexing_height field in the database.
+	FieldIndexingHeight = "indexing_height"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// Table holds the table name of the chain in the database.
@@ -42,6 +44,7 @@ var Columns = []string{
 	FieldUpdateTime,
 	FieldName,
 	FieldImage,
+	FieldIndexingHeight,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -61,6 +64,8 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultIndexingHeight holds the default value on creation for the "indexing_height" field.
+	DefaultIndexingHeight int64
 )
 
 // OrderOption defines the ordering options for the Chain queries.
@@ -89,6 +94,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByImage orders the results by the image field.
 func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByIndexingHeight orders the results by the indexing_height field.
+func ByIndexingHeight(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIndexingHeight, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.

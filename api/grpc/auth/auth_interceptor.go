@@ -18,10 +18,11 @@ type AuthInterceptor struct {
 	jwtManager      *JWTManager
 	userManager     *database.UserManager
 	accessibleRoles map[string][]Role
+	authToken       string
 }
 
-func NewAuthInterceptor(jwtManager *JWTManager, userManager *database.UserManager, accessibleRoles map[string][]Role) *AuthInterceptor {
-	return &AuthInterceptor{jwtManager: jwtManager, accessibleRoles: accessibleRoles, userManager: userManager}
+func NewAuthInterceptor(jwtManager *JWTManager, userManager *database.UserManager, accessibleRoles map[string][]Role, authToken string) *AuthInterceptor {
+	return &AuthInterceptor{jwtManager: jwtManager, accessibleRoles: accessibleRoles, userManager: userManager, authToken: authToken}
 }
 
 func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
@@ -86,6 +87,10 @@ func (i *AuthInterceptor) authorize(ctx context.Context, method string) (context
 	values := md["authorization"]
 	if len(values) == 0 {
 		return ctx, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+	}
+
+	if values[0] == i.authToken {
+		return ctx, nil
 	}
 
 	accessToken := strings.Replace(values[0], "Bearer ", "", 1)

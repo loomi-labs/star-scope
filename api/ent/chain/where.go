@@ -75,6 +75,11 @@ func Image(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldImage, v))
 }
 
+// IndexingHeight applies equality check predicate on the "indexing_height" field. It's identical to IndexingHeightEQ.
+func IndexingHeight(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldCreateTime, v))
@@ -283,6 +288,46 @@ func ImageEqualFold(v string) predicate.Chain {
 // ImageContainsFold applies the ContainsFold predicate on the "image" field.
 func ImageContainsFold(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldContainsFold(FieldImage, v))
+}
+
+// IndexingHeightEQ applies the EQ predicate on the "indexing_height" field.
+func IndexingHeightEQ(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
+}
+
+// IndexingHeightNEQ applies the NEQ predicate on the "indexing_height" field.
+func IndexingHeightNEQ(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldIndexingHeight, v))
+}
+
+// IndexingHeightIn applies the In predicate on the "indexing_height" field.
+func IndexingHeightIn(vs ...int64) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldIndexingHeight, vs...))
+}
+
+// IndexingHeightNotIn applies the NotIn predicate on the "indexing_height" field.
+func IndexingHeightNotIn(vs ...int64) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldIndexingHeight, vs...))
+}
+
+// IndexingHeightGT applies the GT predicate on the "indexing_height" field.
+func IndexingHeightGT(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldIndexingHeight, v))
+}
+
+// IndexingHeightGTE applies the GTE predicate on the "indexing_height" field.
+func IndexingHeightGTE(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldIndexingHeight, v))
+}
+
+// IndexingHeightLT applies the LT predicate on the "indexing_height" field.
+func IndexingHeightLT(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldIndexingHeight, v))
+}
+
+// IndexingHeightLTE applies the LTE predicate on the "indexing_height" field.
+func IndexingHeightLTE(v int64) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldIndexingHeight, v))
 }
 
 // HasEventListeners applies the HasEdge predicate on the "event_listeners" edge.

@@ -5,7 +5,9 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/blocklog-backend/grpc/auth"
-	authconnect "github.com/shifty11/blocklog-backend/grpc/auth/v1/v1connect"
+	"github.com/shifty11/blocklog-backend/grpc/auth/authpb/authpbconnect"
+	"github.com/shifty11/blocklog-backend/grpc/indexer"
+	"github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb/indexerpbconnect"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -18,6 +20,7 @@ type Config struct {
 	AccessTokenDuration  time.Duration
 	RefreshTokenDuration time.Duration
 	JwtSecretKey         string
+	IndexerAuthToken     string
 }
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -56,18 +59,21 @@ func corsHandler(next http.Handler) http.Handler {
 func (s GRPCServer) Run() {
 	log.Sugar.Infof("Starting GRPC server on port %v", s.config.Port)
 	jwtManager := auth.NewJWTManager([]byte(s.config.JwtSecretKey), s.config.AccessTokenDuration, s.config.RefreshTokenDuration)
-	authInterceptor := auth.NewAuthInterceptor(jwtManager, s.dbManagers.UserManager, auth.AccessibleRoles())
+	authInterceptor := auth.NewAuthInterceptor(jwtManager, s.dbManagers.UserManager, auth.AccessibleRoles(), s.config.IndexerAuthToken)
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
-	path, handler := authconnect.NewAuthServiceHandler(
+	mux := http.NewServeMux()
+	mux.Handle(authpbconnect.NewAuthServiceHandler(
 		auth.NewAuthServiceHandler(s.dbManagers, jwtManager),
 		interceptors,
-	)
+	))
+	mux.Handle(indexerpbconnect.NewIndexerServiceHandler(
+		indexer.NewIndexerServiceHandler(s.dbManagers),
+		interceptors,
+	))
 
-	mux := http.NewServeMux()
-	mux.Handle(path, handler)
-	handler = corsHandler(mux) // Wrap the mux router with the CORS handler
+	handler := corsHandler(mux) // Wrap the mux router with the CORS handler
 	err := http.ListenAndServe(
 		fmt.Sprintf("0.0.0.0:%v", s.config.Port),
 		h2c.NewHandler(handler, &http2.Server{}),

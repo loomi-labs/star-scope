@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package blocklog.grpc;
 
-option go_package = "github.com/shifty11/blocklog-backend/grpc/auth";
+option go_package = "github.com/shifty11/blocklog-backend/grpc/auth/authpb";
 
 service AuthService {
   rpc KeplrLogin (KeplrLoginRequest) returns (LoginResponse) {}

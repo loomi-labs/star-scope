@@ -6,8 +6,8 @@ import (
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/blocklog-backend/ent"
-	pb "github.com/shifty11/blocklog-backend/grpc/auth/v1"
-	authconnect "github.com/shifty11/blocklog-backend/grpc/auth/v1/v1connect"
+	"github.com/shifty11/blocklog-backend/grpc/auth/authpb"
+	"github.com/shifty11/blocklog-backend/grpc/auth/authpb/authpbconnect"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,13 +15,13 @@ import (
 
 //goland:noinspection GoNameStartsWithPackageName
 type AuthService struct {
-	authconnect.UnimplementedAuthServiceHandler
+	authpbconnect.UnimplementedAuthServiceHandler
 	userManager    *database.UserManager
 	projectManager *database.ProjectManager
 	jwtManager     *JWTManager
 }
 
-func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager) authconnect.AuthServiceHandler {
+func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager) authpbconnect.AuthServiceHandler {
 	return &AuthService{
 		userManager:    dbManagers.UserManager,
 		projectManager: dbManagers.ProjectManager,
@@ -36,7 +36,7 @@ var (
 	ErrorTokenVerificationFailed = status.Error(codes.Unauthenticated, "token verification failed")
 )
 
-func verifySignature(request *pb.KeplrLoginRequest) bool {
+func verifySignature(request *authpb.KeplrLoginRequest) bool {
 	var signature map[string]interface{}
 	err := json.Unmarshal([]byte(request.GetSignature()), &signature)
 	if err != nil {
@@ -95,7 +95,7 @@ func getWalletAddress(message string) (string, error) {
 	return signedMessage.Msgs[0].Value.Signer, nil
 }
 
-func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[pb.KeplrLoginRequest]) (*connect_go.Response[pb.LoginResponse], error) {
+func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	verifySignature(request.Msg)
 
 	address, err := getWalletAddress(request.Msg.SignedMessage)
@@ -128,13 +128,13 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Reques
 		log.Sugar.Errorf("Could not generate refreshToken for user %v (%v): %v", user.Name, user.ID, err)
 		return nil, ErrorInternal
 	}
-	return connect_go.NewResponse(&pb.LoginResponse{
+	return connect_go.NewResponse(&authpb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}), nil
 }
 
-func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_go.Request[pb.RefreshAccessTokenRequest]) (*connect_go.Response[pb.RefreshAccessTokenResponse], error) {
+func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {
 	claims, err := s.jwtManager.Verify(request.Msg.GetRefreshToken())
 	if err != nil {
 		return nil, ErrorTokenVerificationFailed
@@ -152,5 +152,5 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_g
 		return nil, ErrorInternal
 	}
 
-	return connect_go.NewResponse(&pb.RefreshAccessTokenResponse{AccessToken: accessToken}), nil
+	return connect_go.NewResponse(&authpb.RefreshAccessTokenResponse{AccessToken: accessToken}), nil
 }

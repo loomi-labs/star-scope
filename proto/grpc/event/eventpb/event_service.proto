@@ -4,7 +4,7 @@ import "google/protobuf/empty.proto";
 
 package blocklog.grpc;
 
-option go_package = "github.com/shifty11/blocklog-backend/grpc/event";
+option go_package = "github.com/shifty11/blocklog-backend/grpc/event/eventpb";
 
 
 service EventService {

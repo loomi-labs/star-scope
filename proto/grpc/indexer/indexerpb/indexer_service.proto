@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package blocklog.grpc;
+
+option go_package = "github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb";
+
+service IndexerService {
+  rpc GetHeight (GetHeightRequest) returns (Height) {}
+  rpc UpdateHeight (UpdateHeightRequest) returns (google.protobuf.Empty) {}
+}
+
+message GetHeightRequest {
+  string chain_name = 1;
+}
+
+message Height {
+  int64 height = 1;
+}
+
+message UpdateHeightRequest {
+  string chain_name = 1;
+  int64 height = 2;
+}

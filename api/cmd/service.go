@@ -35,11 +35,13 @@ var startGrpcServerCmd = &cobra.Command{
 		if err != nil {
 			log.Panicf("Invalid refresh token duration: %s", err)
 		}
+		indexerAuthToken := common.GetEnvX("INDEXER_AUTH_TOKEN")
 		var config = &grpc.Config{
 			JwtSecretKey:         jwtSecretKey,
 			AccessTokenDuration:  accessTokenDuration,
 			RefreshTokenDuration: refreshTokenDuration,
 			Port:                 50001,
+			IndexerAuthToken:     indexerAuthToken,
 		}
 
 		dbManagers := database.NewDefaultDbManagers()

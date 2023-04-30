@@ -250,6 +250,7 @@ func InitDb() error {
 type DbManagers struct {
 	UserManager    *UserManager
 	ProjectManager *ProjectManager
+	ChainManager   *ChainManager
 }
 
 func NewDefaultDbManagers() *DbManagers {
@@ -260,8 +261,10 @@ func NewDefaultDbManagers() *DbManagers {
 func NewCustomDbManagers(client *ent.Client) *DbManagers {
 	userManager := NewUserManager(client)
 	projectManager := NewProjectManager(client)
+	chainManager := NewChainManager(client)
 	return &DbManagers{
 		UserManager:    userManager,
 		ProjectManager: projectManager,
+		ChainManager:   chainManager,
 	}
 }

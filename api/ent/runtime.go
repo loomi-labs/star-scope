@@ -33,6 +33,10 @@ func init() {
 	chain.DefaultUpdateTime = chainDescUpdateTime.Default.(func() time.Time)
 	// chain.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	chain.UpdateDefaultUpdateTime = chainDescUpdateTime.UpdateDefault.(func() time.Time)
+	// chainDescIndexingHeight is the schema descriptor for indexing_height field.
+	chainDescIndexingHeight := chainFields[2].Descriptor()
+	// chain.DefaultIndexingHeight holds the default value on creation for the indexing_height field.
+	chain.DefaultIndexingHeight = chainDescIndexingHeight.Default.(int64)
 	channelMixin := schema.Channel{}.Mixin()
 	channelMixinFields0 := channelMixin[0].Fields()
 	_ = channelMixinFields0

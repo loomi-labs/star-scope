@@ -15,6 +15,7 @@ var (
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "image", Type: field.TypeString},
+		{Name: "indexing_height", Type: field.TypeInt64, Default: 0},
 	}
 	// ChainsTable holds the schema information for the "chains" table.
 	ChainsTable = &schema.Table{

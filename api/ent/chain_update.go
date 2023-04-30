@@ -47,6 +47,27 @@ func (cu *ChainUpdate) SetImage(s string) *ChainUpdate {
 	return cu
 }
 
+// SetIndexingHeight sets the "indexing_height" field.
+func (cu *ChainUpdate) SetIndexingHeight(i int64) *ChainUpdate {
+	cu.mutation.ResetIndexingHeight()
+	cu.mutation.SetIndexingHeight(i)
+	return cu
+}
+
+// SetNillableIndexingHeight sets the "indexing_height" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableIndexingHeight(i *int64) *ChainUpdate {
+	if i != nil {
+		cu.SetIndexingHeight(*i)
+	}
+	return cu
+}
+
+// AddIndexingHeight adds i to the "indexing_height" field.
+func (cu *ChainUpdate) AddIndexingHeight(i int64) *ChainUpdate {
+	cu.mutation.AddIndexingHeight(i)
+	return cu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cu *ChainUpdate) AddEventListenerIDs(ids ...int) *ChainUpdate {
 	cu.mutation.AddEventListenerIDs(ids...)
@@ -142,6 +163,12 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.Image(); ok {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
 	}
+	if value, ok := cu.mutation.IndexingHeight(); ok {
+		_spec.SetField(chain.FieldIndexingHeight, field.TypeInt64, value)
+	}
+	if value, ok := cu.mutation.AddedIndexingHeight(); ok {
+		_spec.AddField(chain.FieldIndexingHeight, field.TypeInt64, value)
+	}
 	if cu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -222,6 +249,27 @@ func (cuo *ChainUpdateOne) SetName(s string) *ChainUpdateOne {
 // SetImage sets the "image" field.
 func (cuo *ChainUpdateOne) SetImage(s string) *ChainUpdateOne {
 	cuo.mutation.SetImage(s)
+	return cuo
+}
+
+// SetIndexingHeight sets the "indexing_height" field.
+func (cuo *ChainUpdateOne) SetIndexingHeight(i int64) *ChainUpdateOne {
+	cuo.mutation.ResetIndexingHeight()
+	cuo.mutation.SetIndexingHeight(i)
+	return cuo
+}
+
+// SetNillableIndexingHeight sets the "indexing_height" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableIndexingHeight(i *int64) *ChainUpdateOne {
+	if i != nil {
+		cuo.SetIndexingHeight(*i)
+	}
+	return cuo
+}
+
+// AddIndexingHeight adds i to the "indexing_height" field.
+func (cuo *ChainUpdateOne) AddIndexingHeight(i int64) *ChainUpdateOne {
+	cuo.mutation.AddIndexingHeight(i)
 	return cuo
 }
 
@@ -349,6 +397,12 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	}
 	if value, ok := cuo.mutation.Image(); ok {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.IndexingHeight(); ok {
+		_spec.SetField(chain.FieldIndexingHeight, field.TypeInt64, value)
+	}
+	if value, ok := cuo.mutation.AddedIndexingHeight(); ok {
+		_spec.AddField(chain.FieldIndexingHeight, field.TypeInt64, value)
 	}
 	if cuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

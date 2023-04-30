@@ -47,6 +47,8 @@ type ChainMutation struct {
 	update_time            *time.Time
 	name                   *string
 	image                  *string
+	indexing_height        *int64
+	addindexing_height     *int64
 	clearedFields          map[string]struct{}
 	event_listeners        map[int]struct{}
 	removedevent_listeners map[int]struct{}
@@ -298,6 +300,62 @@ func (m *ChainMutation) ResetImage() {
 	m.image = nil
 }
 
+// SetIndexingHeight sets the "indexing_height" field.
+func (m *ChainMutation) SetIndexingHeight(i int64) {
+	m.indexing_height = &i
+	m.addindexing_height = nil
+}
+
+// IndexingHeight returns the value of the "indexing_height" field in the mutation.
+func (m *ChainMutation) IndexingHeight() (r int64, exists bool) {
+	v := m.indexing_height
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIndexingHeight returns the old "indexing_height" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldIndexingHeight(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIndexingHeight is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIndexingHeight requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIndexingHeight: %w", err)
+	}
+	return oldValue.IndexingHeight, nil
+}
+
+// AddIndexingHeight adds i to the "indexing_height" field.
+func (m *ChainMutation) AddIndexingHeight(i int64) {
+	if m.addindexing_height != nil {
+		*m.addindexing_height += i
+	} else {
+		m.addindexing_height = &i
+	}
+}
+
+// AddedIndexingHeight returns the value that was added to the "indexing_height" field in this mutation.
+func (m *ChainMutation) AddedIndexingHeight() (r int64, exists bool) {
+	v := m.addindexing_height
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetIndexingHeight resets all changes to the "indexing_height" field.
+func (m *ChainMutation) ResetIndexingHeight() {
+	m.indexing_height = nil
+	m.addindexing_height = nil
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
 func (m *ChainMutation) AddEventListenerIDs(ids ...int) {
 	if m.event_listeners == nil {
@@ -386,7 +444,7 @@ func (m *ChainMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChainMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.create_time != nil {
 		fields = append(fields, chain.FieldCreateTime)
 	}
@@ -398,6 +456,9 @@ func (m *ChainMutation) Fields() []string {
 	}
 	if m.image != nil {
 		fields = append(fields, chain.FieldImage)
+	}
+	if m.indexing_height != nil {
+		fields = append(fields, chain.FieldIndexingHeight)
 	}
 	return fields
 }
@@ -415,6 +476,8 @@ func (m *ChainMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case chain.FieldImage:
 		return m.Image()
+	case chain.FieldIndexingHeight:
+		return m.IndexingHeight()
 	}
 	return nil, false
 }
@@ -432,6 +495,8 @@ func (m *ChainMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldName(ctx)
 	case chain.FieldImage:
 		return m.OldImage(ctx)
+	case chain.FieldIndexingHeight:
+		return m.OldIndexingHeight(ctx)
 	}
 	return nil, fmt.Errorf("unknown Chain field %s", name)
 }
@@ -469,6 +534,13 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetImage(v)
 		return nil
+	case chain.FieldIndexingHeight:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIndexingHeight(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)
 }
@@ -476,13 +548,21 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ChainMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addindexing_height != nil {
+		fields = append(fields, chain.FieldIndexingHeight)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ChainMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case chain.FieldIndexingHeight:
+		return m.AddedIndexingHeight()
+	}
 	return nil, false
 }
 
@@ -491,6 +571,13 @@ func (m *ChainMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ChainMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case chain.FieldIndexingHeight:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddIndexingHeight(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Chain numeric field %s", name)
 }
@@ -529,6 +616,9 @@ func (m *ChainMutation) ResetField(name string) error {
 		return nil
 	case chain.FieldImage:
 		m.ResetImage()
+		return nil
+	case chain.FieldIndexingHeight:
+		m.ResetIndexingHeight()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)
