@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/shifty11/blocklog-backend/database"
+	"github.com/shifty11/blocklog-backend/ent"
 	pb "github.com/shifty11/blocklog-backend/grpc/auth/v1"
 	authconnect "github.com/shifty11/blocklog-backend/grpc/auth/v1/v1connect"
 	"github.com/shifty11/go-logger/log"
@@ -32,54 +34,98 @@ var (
 	ErrorTokenVerificationFailed = status.Error(codes.Unauthenticated, "token verification failed")
 )
 
-//func verifySignature(msg []byte, sig []byte, pubkey string) bool {
-//	// Parse the public key from the hex-encoded string
-//	pubkeyBytes, err := hex.DecodeString(pubkey)
-//	if err != nil {
-//		return false
-//	}
-//
-//	// Create a public key object from the bytes
-//	pubKey, err := secp256k1.PubKeyFromBytes(pubkeyBytes)
-//	if err != nil {
-//		return false
-//	}
-//
-//	// Create a signature object from the bytes
-//	sigObj := ed25519.Signature(sig)
-//
-//	// Verify the signature using the public key
-//	return pubKey.VerifySignature(msg, sigObj)
-//}
+func verifySignature(request *pb.KeplrLoginRequest) bool {
+	var signature map[string]interface{}
+	err := json.Unmarshal([]byte(request.GetSignature()), &signature)
+	if err != nil {
+		return false
+	}
+
+	var signedMessage map[string]interface{}
+	err = json.Unmarshal([]byte(request.GetSignedMessage()), &signedMessage)
+	if err != nil {
+		return false
+	}
+	// TODO: make a proper verification
+	return true
+
+	//pubkeyBytes, err := hex.DecodeString(signature["signature"].(map[string]interface{})["pub_key"].(string))
+	//if err != nil {
+	//	return false
+	//}
+	//log.Sugar.Infof("pubkeyBytes: %v", pubkeyBytes)
+	//
+	//// Create a public key object from the bytes
+	////pubKey, err := secp256k1.PU
+	////if err != nil {
+	////	return false
+	////}
+	//
+	//signatureBytes, err := hex.DecodeString(signature["value"].(string))
+	//log.Sugar.Infof("signatureBytes: %v", signatureBytes)
+	//return false
+}
+
+type SignedMessage struct {
+	AccountNumber string `json:"account_number"`
+	ChainID       string `json:"chain_id"`
+	Fee           struct {
+		Amount []any  `json:"amount"`
+		Gas    string `json:"gas"`
+	} `json:"fee"`
+	Memo string `json:"memo"`
+	Msgs []struct {
+		Type  string `json:"type"`
+		Value struct {
+			Data   string `json:"data"`
+			Signer string `json:"signer"`
+		} `json:"value"`
+	} `json:"msgs"`
+	Sequence string `json:"sequence"`
+}
+
+func getWalletAddress(message string) (string, error) {
+	var signedMessage SignedMessage
+	err := json.Unmarshal([]byte(message), &signedMessage)
+	if err != nil {
+		return "", err
+	}
+	return signedMessage.Msgs[0].Value.Signer, nil
+}
 
 func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[pb.KeplrLoginRequest]) (*connect_go.Response[pb.LoginResponse], error) {
-	// TODO: verify signature
+	verifySignature(request.Msg)
 
+	address, err := getWalletAddress(request.Msg.SignedMessage)
+	if err != nil {
+		log.Sugar.Errorf("error while getting wallet address: %v", err)
+		return nil, ErrorLoginFailed
+	}
+
+	user, err := s.userManager.QueryByWalletAddress(ctx, address)
+	if err != nil && ent.IsNotFound(err) {
+		user = s.userManager.CreateOrUpdate(ctx, address, address)
+		// TODO: subscribe to events
+	} else if err != nil {
+		log.Sugar.Errorf("error while querying user by wallet address: %v", err)
+		return nil, ErrorLoginFailed
+	}
+
+	accessToken, err := s.jwtManager.GenerateToken(user, AccessToken)
+	if err != nil {
+		log.Sugar.Errorf("Could not generate accessToken for user %v (%v): %v", user.Name, user.ID, err)
+		return nil, ErrorLoginFailed
+	}
+
+	refreshToken, err := s.jwtManager.GenerateToken(user, RefreshToken)
+	if err != nil {
+		log.Sugar.Errorf("Could not generate refreshToken for user %v (%v): %v", user.Name, user.ID, err)
+		return nil, ErrorInternal
+	}
 	return connect_go.NewResponse(&pb.LoginResponse{
-		AccessToken:  "accessToken",
-		RefreshToken: "refreshToken",
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}), nil
-
-	//user, err := s.userManager.QueryByWalletAddress(ctx, request.Msg.GetWalletAddress())
-	//if err != nil {
-	//	return nil, ErrorUserNotFound
-	//}
-	//
-	//accessToken, err := s.jwtManager.GenerateToken(user, AccessToken)
-	//if err != nil {
-	//	log.Sugar.Errorf("Could not generate accessToken for user %v (%v): %v", user.Name, user.ID, err)
-	//	return nil, ErrorLoginFailed
-	//}
-	//
-	//refreshToken, err := s.jwtManager.GenerateToken(user, RefreshToken)
-	//if err != nil {
-	//	log.Sugar.Errorf("Could not generate refreshToken for user %v (%v): %v", user.Name, user.ID, err)
-	//	return nil, ErrorInternal
-	//}
-	//return connect_go.NewResponse(&pb.LoginResponse{
-	//	AccessToken:  accessToken,
-	//	RefreshToken: refreshToken,
-	//}), nil
 }
 
 func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_go.Request[pb.RefreshAccessTokenRequest]) (*connect_go.Response[pb.RefreshAccessTokenResponse], error) {
