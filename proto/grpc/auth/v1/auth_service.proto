@@ -9,16 +9,6 @@ service AuthService {
   rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {}
 }
 
-message PubKey {
-  string type = 1;
-  bytes value = 2;
-}
-
-message Signature {
-  PubKey pub_key = 1;
-  bytes signature = 2;
-}
-
 message KeplrLoginRequest {
   string signedMessage = 1;
   string signature = 2;

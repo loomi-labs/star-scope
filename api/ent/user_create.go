@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/shifty11/blocklog-backend/ent/project"
 	"github.com/shifty11/blocklog-backend/ent/user"
 )
 
@@ -72,6 +73,21 @@ func (uc *UserCreate) SetNillableRole(u *user.Role) *UserCreate {
 		uc.SetRole(*u)
 	}
 	return uc
+}
+
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (uc *UserCreate) AddProjectIDs(ids ...int) *UserCreate {
+	uc.mutation.AddProjectIDs(ids...)
+	return uc
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (uc *UserCreate) AddProjects(p ...*Project) *UserCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddProjectIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -195,6 +211,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
+	}
+	if nodes := uc.mutation.ProjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ProjectsTable,
+			Columns: []string{user.ProjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

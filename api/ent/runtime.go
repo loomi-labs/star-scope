@@ -5,6 +5,11 @@ package ent
 import (
 	"time"
 
+	"github.com/shifty11/blocklog-backend/ent/chain"
+	"github.com/shifty11/blocklog-backend/ent/channel"
+	"github.com/shifty11/blocklog-backend/ent/event"
+	"github.com/shifty11/blocklog-backend/ent/eventlistener"
+	"github.com/shifty11/blocklog-backend/ent/project"
 	"github.com/shifty11/blocklog-backend/ent/schema"
 	"github.com/shifty11/blocklog-backend/ent/user"
 )
@@ -13,6 +18,81 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	chainMixin := schema.Chain{}.Mixin()
+	chainMixinFields0 := chainMixin[0].Fields()
+	_ = chainMixinFields0
+	chainFields := schema.Chain{}.Fields()
+	_ = chainFields
+	// chainDescCreateTime is the schema descriptor for create_time field.
+	chainDescCreateTime := chainMixinFields0[0].Descriptor()
+	// chain.DefaultCreateTime holds the default value on creation for the create_time field.
+	chain.DefaultCreateTime = chainDescCreateTime.Default.(func() time.Time)
+	// chainDescUpdateTime is the schema descriptor for update_time field.
+	chainDescUpdateTime := chainMixinFields0[1].Descriptor()
+	// chain.DefaultUpdateTime holds the default value on creation for the update_time field.
+	chain.DefaultUpdateTime = chainDescUpdateTime.Default.(func() time.Time)
+	// chain.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	chain.UpdateDefaultUpdateTime = chainDescUpdateTime.UpdateDefault.(func() time.Time)
+	channelMixin := schema.Channel{}.Mixin()
+	channelMixinFields0 := channelMixin[0].Fields()
+	_ = channelMixinFields0
+	channelFields := schema.Channel{}.Fields()
+	_ = channelFields
+	// channelDescCreateTime is the schema descriptor for create_time field.
+	channelDescCreateTime := channelMixinFields0[0].Descriptor()
+	// channel.DefaultCreateTime holds the default value on creation for the create_time field.
+	channel.DefaultCreateTime = channelDescCreateTime.Default.(func() time.Time)
+	// channelDescUpdateTime is the schema descriptor for update_time field.
+	channelDescUpdateTime := channelMixinFields0[1].Descriptor()
+	// channel.DefaultUpdateTime holds the default value on creation for the update_time field.
+	channel.DefaultUpdateTime = channelDescUpdateTime.Default.(func() time.Time)
+	// channel.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	channel.UpdateDefaultUpdateTime = channelDescUpdateTime.UpdateDefault.(func() time.Time)
+	eventMixin := schema.Event{}.Mixin()
+	eventMixinFields0 := eventMixin[0].Fields()
+	_ = eventMixinFields0
+	eventFields := schema.Event{}.Fields()
+	_ = eventFields
+	// eventDescCreateTime is the schema descriptor for create_time field.
+	eventDescCreateTime := eventMixinFields0[0].Descriptor()
+	// event.DefaultCreateTime holds the default value on creation for the create_time field.
+	event.DefaultCreateTime = eventDescCreateTime.Default.(func() time.Time)
+	// eventDescUpdateTime is the schema descriptor for update_time field.
+	eventDescUpdateTime := eventMixinFields0[1].Descriptor()
+	// event.DefaultUpdateTime holds the default value on creation for the update_time field.
+	event.DefaultUpdateTime = eventDescUpdateTime.Default.(func() time.Time)
+	// event.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	event.UpdateDefaultUpdateTime = eventDescUpdateTime.UpdateDefault.(func() time.Time)
+	eventlistenerMixin := schema.EventListener{}.Mixin()
+	eventlistenerMixinFields0 := eventlistenerMixin[0].Fields()
+	_ = eventlistenerMixinFields0
+	eventlistenerFields := schema.EventListener{}.Fields()
+	_ = eventlistenerFields
+	// eventlistenerDescCreateTime is the schema descriptor for create_time field.
+	eventlistenerDescCreateTime := eventlistenerMixinFields0[0].Descriptor()
+	// eventlistener.DefaultCreateTime holds the default value on creation for the create_time field.
+	eventlistener.DefaultCreateTime = eventlistenerDescCreateTime.Default.(func() time.Time)
+	// eventlistenerDescUpdateTime is the schema descriptor for update_time field.
+	eventlistenerDescUpdateTime := eventlistenerMixinFields0[1].Descriptor()
+	// eventlistener.DefaultUpdateTime holds the default value on creation for the update_time field.
+	eventlistener.DefaultUpdateTime = eventlistenerDescUpdateTime.Default.(func() time.Time)
+	// eventlistener.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	eventlistener.UpdateDefaultUpdateTime = eventlistenerDescUpdateTime.UpdateDefault.(func() time.Time)
+	projectMixin := schema.Project{}.Mixin()
+	projectMixinFields0 := projectMixin[0].Fields()
+	_ = projectMixinFields0
+	projectFields := schema.Project{}.Fields()
+	_ = projectFields
+	// projectDescCreateTime is the schema descriptor for create_time field.
+	projectDescCreateTime := projectMixinFields0[0].Descriptor()
+	// project.DefaultCreateTime holds the default value on creation for the create_time field.
+	project.DefaultCreateTime = projectDescCreateTime.Default.(func() time.Time)
+	// projectDescUpdateTime is the schema descriptor for update_time field.
+	projectDescUpdateTime := projectMixinFields0[1].Descriptor()
+	// project.DefaultUpdateTime holds the default value on creation for the update_time field.
+	project.DefaultUpdateTime = projectDescUpdateTime.Default.(func() time.Time)
+	// project.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	project.UpdateDefaultUpdateTime = projectDescUpdateTime.UpdateDefault.(func() time.Time)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

@@ -61,7 +61,7 @@ func (s GRPCServer) Run() {
 	interceptors := connect.WithInterceptors(authInterceptor)
 
 	path, handler := authconnect.NewAuthServiceHandler(
-		auth.NewAuthServiceHandler(s.dbManagers.UserManager, jwtManager),
+		auth.NewAuthServiceHandler(s.dbManagers, jwtManager),
 		interceptors,
 	)
 

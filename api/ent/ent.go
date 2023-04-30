@@ -12,6 +12,11 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/shifty11/blocklog-backend/ent/chain"
+	"github.com/shifty11/blocklog-backend/ent/channel"
+	"github.com/shifty11/blocklog-backend/ent/event"
+	"github.com/shifty11/blocklog-backend/ent/eventlistener"
+	"github.com/shifty11/blocklog-backend/ent/project"
 	"github.com/shifty11/blocklog-backend/ent/user"
 )
 
@@ -73,7 +78,12 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			user.Table: user.ValidColumn,
+			chain.Table:         chain.ValidColumn,
+			channel.Table:       channel.ValidColumn,
+			event.Table:         event.ValidColumn,
+			eventlistener.Table: eventlistener.ValidColumn,
+			project.Table:       project.ValidColumn,
+			user.Table:          user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

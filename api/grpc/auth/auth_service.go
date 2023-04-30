@@ -16,14 +16,16 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type AuthService struct {
 	authconnect.UnimplementedAuthServiceHandler
-	userManager *database.UserManager
-	jwtManager  *JWTManager
+	userManager    *database.UserManager
+	projectManager *database.ProjectManager
+	jwtManager     *JWTManager
 }
 
-func NewAuthServiceHandler(userManager *database.UserManager, jwtManager *JWTManager) authconnect.AuthServiceHandler {
+func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager) authconnect.AuthServiceHandler {
 	return &AuthService{
-		userManager: userManager,
-		jwtManager:  jwtManager,
+		userManager:    dbManagers.UserManager,
+		projectManager: dbManagers.ProjectManager,
+		jwtManager:     jwtManager,
 	}
 }
 
@@ -105,7 +107,11 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Reques
 	user, err := s.userManager.QueryByWalletAddress(ctx, address)
 	if err != nil && ent.IsNotFound(err) {
 		user = s.userManager.CreateOrUpdate(ctx, address, address)
-		// TODO: subscribe to events
+		_, err := s.projectManager.CreateCosmosProject(ctx, user, address)
+		if err != nil {
+			log.Sugar.Errorf("error while creating cosmos project: %v", err)
+			return nil, ErrorLoginFailed
+		}
 	} else if err != nil {
 		log.Sugar.Errorf("error while querying user by wallet address: %v", err)
 		return nil, ErrorLoginFailed

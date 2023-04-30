@@ -48,6 +48,7 @@ func (m *UserManager) UpdateRole(ctx context.Context, name string, role user.Rol
 }
 
 func (m *UserManager) CreateOrUpdate(ctx context.Context, userName string, walletAddress string) *ent.User {
+	log.Sugar.Debugf("CreateOrUpdate: %s %s", userName, walletAddress)
 	entUser, err := m.client.User.
 		Query().
 		Where(user.WalletAddressEQ(walletAddress)).

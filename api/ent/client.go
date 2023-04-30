@@ -13,6 +13,12 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/shifty11/blocklog-backend/ent/chain"
+	"github.com/shifty11/blocklog-backend/ent/channel"
+	"github.com/shifty11/blocklog-backend/ent/event"
+	"github.com/shifty11/blocklog-backend/ent/eventlistener"
+	"github.com/shifty11/blocklog-backend/ent/project"
 	"github.com/shifty11/blocklog-backend/ent/user"
 )
 
@@ -21,6 +27,16 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Chain is the client for interacting with the Chain builders.
+	Chain *ChainClient
+	// Channel is the client for interacting with the Channel builders.
+	Channel *ChannelClient
+	// Event is the client for interacting with the Event builders.
+	Event *EventClient
+	// EventListener is the client for interacting with the EventListener builders.
+	EventListener *EventListenerClient
+	// Project is the client for interacting with the Project builders.
+	Project *ProjectClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -36,6 +52,11 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Chain = NewChainClient(c.config)
+	c.Channel = NewChannelClient(c.config)
+	c.Event = NewEventClient(c.config)
+	c.EventListener = NewEventListenerClient(c.config)
+	c.Project = NewProjectClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -117,9 +138,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Chain:         NewChainClient(cfg),
+		Channel:       NewChannelClient(cfg),
+		Event:         NewEventClient(cfg),
+		EventListener: NewEventListenerClient(cfg),
+		Project:       NewProjectClient(cfg),
+		User:          NewUserClient(cfg),
 	}, nil
 }
 
@@ -137,16 +163,21 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Chain:         NewChainClient(cfg),
+		Channel:       NewChannelClient(cfg),
+		Event:         NewEventClient(cfg),
+		EventListener: NewEventListenerClient(cfg),
+		Project:       NewProjectClient(cfg),
+		User:          NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		Chain.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -168,22 +199,774 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.User.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Chain, c.Channel, c.Event, c.EventListener, c.Project, c.User,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.User.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Chain, c.Channel, c.Event, c.EventListener, c.Project, c.User,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *ChainMutation:
+		return c.Chain.mutate(ctx, m)
+	case *ChannelMutation:
+		return c.Channel.mutate(ctx, m)
+	case *EventMutation:
+		return c.Event.mutate(ctx, m)
+	case *EventListenerMutation:
+		return c.EventListener.mutate(ctx, m)
+	case *ProjectMutation:
+		return c.Project.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// ChainClient is a client for the Chain schema.
+type ChainClient struct {
+	config
+}
+
+// NewChainClient returns a client for the Chain from the given config.
+func NewChainClient(c config) *ChainClient {
+	return &ChainClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `chain.Hooks(f(g(h())))`.
+func (c *ChainClient) Use(hooks ...Hook) {
+	c.hooks.Chain = append(c.hooks.Chain, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `chain.Intercept(f(g(h())))`.
+func (c *ChainClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Chain = append(c.inters.Chain, interceptors...)
+}
+
+// Create returns a builder for creating a Chain entity.
+func (c *ChainClient) Create() *ChainCreate {
+	mutation := newChainMutation(c.config, OpCreate)
+	return &ChainCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Chain entities.
+func (c *ChainClient) CreateBulk(builders ...*ChainCreate) *ChainCreateBulk {
+	return &ChainCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Chain.
+func (c *ChainClient) Update() *ChainUpdate {
+	mutation := newChainMutation(c.config, OpUpdate)
+	return &ChainUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ChainClient) UpdateOne(ch *Chain) *ChainUpdateOne {
+	mutation := newChainMutation(c.config, OpUpdateOne, withChain(ch))
+	return &ChainUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ChainClient) UpdateOneID(id int) *ChainUpdateOne {
+	mutation := newChainMutation(c.config, OpUpdateOne, withChainID(id))
+	return &ChainUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Chain.
+func (c *ChainClient) Delete() *ChainDelete {
+	mutation := newChainMutation(c.config, OpDelete)
+	return &ChainDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ChainClient) DeleteOne(ch *Chain) *ChainDeleteOne {
+	return c.DeleteOneID(ch.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ChainClient) DeleteOneID(id int) *ChainDeleteOne {
+	builder := c.Delete().Where(chain.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ChainDeleteOne{builder}
+}
+
+// Query returns a query builder for Chain.
+func (c *ChainClient) Query() *ChainQuery {
+	return &ChainQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeChain},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Chain entity by its id.
+func (c *ChainClient) Get(ctx context.Context, id int) (*Chain, error) {
+	return c.Query().Where(chain.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ChainClient) GetX(ctx context.Context, id int) *Chain {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEventListeners queries the event_listeners edge of a Chain.
+func (c *ChainClient) QueryEventListeners(ch *Chain) *EventListenerQuery {
+	query := (&EventListenerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, id),
+			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, chain.EventListenersTable, chain.EventListenersColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ChainClient) Hooks() []Hook {
+	return c.hooks.Chain
+}
+
+// Interceptors returns the client interceptors.
+func (c *ChainClient) Interceptors() []Interceptor {
+	return c.inters.Chain
+}
+
+func (c *ChainClient) mutate(ctx context.Context, m *ChainMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ChainCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ChainUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ChainUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ChainDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Chain mutation op: %q", m.Op())
+	}
+}
+
+// ChannelClient is a client for the Channel schema.
+type ChannelClient struct {
+	config
+}
+
+// NewChannelClient returns a client for the Channel from the given config.
+func NewChannelClient(c config) *ChannelClient {
+	return &ChannelClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `channel.Hooks(f(g(h())))`.
+func (c *ChannelClient) Use(hooks ...Hook) {
+	c.hooks.Channel = append(c.hooks.Channel, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `channel.Intercept(f(g(h())))`.
+func (c *ChannelClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Channel = append(c.inters.Channel, interceptors...)
+}
+
+// Create returns a builder for creating a Channel entity.
+func (c *ChannelClient) Create() *ChannelCreate {
+	mutation := newChannelMutation(c.config, OpCreate)
+	return &ChannelCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Channel entities.
+func (c *ChannelClient) CreateBulk(builders ...*ChannelCreate) *ChannelCreateBulk {
+	return &ChannelCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Channel.
+func (c *ChannelClient) Update() *ChannelUpdate {
+	mutation := newChannelMutation(c.config, OpUpdate)
+	return &ChannelUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ChannelClient) UpdateOne(ch *Channel) *ChannelUpdateOne {
+	mutation := newChannelMutation(c.config, OpUpdateOne, withChannel(ch))
+	return &ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ChannelClient) UpdateOneID(id int) *ChannelUpdateOne {
+	mutation := newChannelMutation(c.config, OpUpdateOne, withChannelID(id))
+	return &ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Channel.
+func (c *ChannelClient) Delete() *ChannelDelete {
+	mutation := newChannelMutation(c.config, OpDelete)
+	return &ChannelDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ChannelClient) DeleteOne(ch *Channel) *ChannelDeleteOne {
+	return c.DeleteOneID(ch.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ChannelClient) DeleteOneID(id int) *ChannelDeleteOne {
+	builder := c.Delete().Where(channel.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ChannelDeleteOne{builder}
+}
+
+// Query returns a query builder for Channel.
+func (c *ChannelClient) Query() *ChannelQuery {
+	return &ChannelQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeChannel},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Channel entity by its id.
+func (c *ChannelClient) Get(ctx context.Context, id int) (*Channel, error) {
+	return c.Query().Where(channel.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ChannelClient) GetX(ctx context.Context, id int) *Channel {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProject queries the project edge of a Channel.
+func (c *ChannelClient) QueryProject(ch *Channel) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(channel.Table, channel.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, channel.ProjectTable, channel.ProjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEventListeners queries the event_listeners edge of a Channel.
+func (c *ChannelClient) QueryEventListeners(ch *Channel) *EventListenerQuery {
+	query := (&EventListenerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(channel.Table, channel.FieldID, id),
+			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, channel.EventListenersTable, channel.EventListenersColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ChannelClient) Hooks() []Hook {
+	return c.hooks.Channel
+}
+
+// Interceptors returns the client interceptors.
+func (c *ChannelClient) Interceptors() []Interceptor {
+	return c.inters.Channel
+}
+
+func (c *ChannelClient) mutate(ctx context.Context, m *ChannelMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ChannelCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ChannelUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ChannelDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Channel mutation op: %q", m.Op())
+	}
+}
+
+// EventClient is a client for the Event schema.
+type EventClient struct {
+	config
+}
+
+// NewEventClient returns a client for the Event from the given config.
+func NewEventClient(c config) *EventClient {
+	return &EventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `event.Hooks(f(g(h())))`.
+func (c *EventClient) Use(hooks ...Hook) {
+	c.hooks.Event = append(c.hooks.Event, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `event.Intercept(f(g(h())))`.
+func (c *EventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Event = append(c.inters.Event, interceptors...)
+}
+
+// Create returns a builder for creating a Event entity.
+func (c *EventClient) Create() *EventCreate {
+	mutation := newEventMutation(c.config, OpCreate)
+	return &EventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Event entities.
+func (c *EventClient) CreateBulk(builders ...*EventCreate) *EventCreateBulk {
+	return &EventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Event.
+func (c *EventClient) Update() *EventUpdate {
+	mutation := newEventMutation(c.config, OpUpdate)
+	return &EventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EventClient) UpdateOne(e *Event) *EventUpdateOne {
+	mutation := newEventMutation(c.config, OpUpdateOne, withEvent(e))
+	return &EventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EventClient) UpdateOneID(id int) *EventUpdateOne {
+	mutation := newEventMutation(c.config, OpUpdateOne, withEventID(id))
+	return &EventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Event.
+func (c *EventClient) Delete() *EventDelete {
+	mutation := newEventMutation(c.config, OpDelete)
+	return &EventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EventClient) DeleteOne(e *Event) *EventDeleteOne {
+	return c.DeleteOneID(e.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EventClient) DeleteOneID(id int) *EventDeleteOne {
+	builder := c.Delete().Where(event.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EventDeleteOne{builder}
+}
+
+// Query returns a query builder for Event.
+func (c *EventClient) Query() *EventQuery {
+	return &EventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Event entity by its id.
+func (c *EventClient) Get(ctx context.Context, id int) (*Event, error) {
+	return c.Query().Where(event.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EventClient) GetX(ctx context.Context, id int) *Event {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEventListener queries the event_listener edge of a Event.
+func (c *EventClient) QueryEventListener(e *Event) *EventListenerQuery {
+	query := (&EventListenerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, id),
+			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, event.EventListenerTable, event.EventListenerColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EventClient) Hooks() []Hook {
+	return c.hooks.Event
+}
+
+// Interceptors returns the client interceptors.
+func (c *EventClient) Interceptors() []Interceptor {
+	return c.inters.Event
+}
+
+func (c *EventClient) mutate(ctx context.Context, m *EventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Event mutation op: %q", m.Op())
+	}
+}
+
+// EventListenerClient is a client for the EventListener schema.
+type EventListenerClient struct {
+	config
+}
+
+// NewEventListenerClient returns a client for the EventListener from the given config.
+func NewEventListenerClient(c config) *EventListenerClient {
+	return &EventListenerClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `eventlistener.Hooks(f(g(h())))`.
+func (c *EventListenerClient) Use(hooks ...Hook) {
+	c.hooks.EventListener = append(c.hooks.EventListener, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `eventlistener.Intercept(f(g(h())))`.
+func (c *EventListenerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EventListener = append(c.inters.EventListener, interceptors...)
+}
+
+// Create returns a builder for creating a EventListener entity.
+func (c *EventListenerClient) Create() *EventListenerCreate {
+	mutation := newEventListenerMutation(c.config, OpCreate)
+	return &EventListenerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EventListener entities.
+func (c *EventListenerClient) CreateBulk(builders ...*EventListenerCreate) *EventListenerCreateBulk {
+	return &EventListenerCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EventListener.
+func (c *EventListenerClient) Update() *EventListenerUpdate {
+	mutation := newEventListenerMutation(c.config, OpUpdate)
+	return &EventListenerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EventListenerClient) UpdateOne(el *EventListener) *EventListenerUpdateOne {
+	mutation := newEventListenerMutation(c.config, OpUpdateOne, withEventListener(el))
+	return &EventListenerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EventListenerClient) UpdateOneID(id int) *EventListenerUpdateOne {
+	mutation := newEventListenerMutation(c.config, OpUpdateOne, withEventListenerID(id))
+	return &EventListenerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EventListener.
+func (c *EventListenerClient) Delete() *EventListenerDelete {
+	mutation := newEventListenerMutation(c.config, OpDelete)
+	return &EventListenerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EventListenerClient) DeleteOne(el *EventListener) *EventListenerDeleteOne {
+	return c.DeleteOneID(el.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EventListenerClient) DeleteOneID(id int) *EventListenerDeleteOne {
+	builder := c.Delete().Where(eventlistener.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EventListenerDeleteOne{builder}
+}
+
+// Query returns a query builder for EventListener.
+func (c *EventListenerClient) Query() *EventListenerQuery {
+	return &EventListenerQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEventListener},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EventListener entity by its id.
+func (c *EventListenerClient) Get(ctx context.Context, id int) (*EventListener, error) {
+	return c.Query().Where(eventlistener.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EventListenerClient) GetX(ctx context.Context, id int) *EventListener {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryChannel queries the channel edge of a EventListener.
+func (c *EventListenerClient) QueryChannel(el *EventListener) *ChannelQuery {
+	query := (&ChannelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := el.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, id),
+			sqlgraph.To(channel.Table, channel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, eventlistener.ChannelTable, eventlistener.ChannelColumn),
+		)
+		fromV = sqlgraph.Neighbors(el.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChain queries the chain edge of a EventListener.
+func (c *EventListenerClient) QueryChain(el *EventListener) *ChainQuery {
+	query := (&ChainClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := el.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, id),
+			sqlgraph.To(chain.Table, chain.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, eventlistener.ChainTable, eventlistener.ChainColumn),
+		)
+		fromV = sqlgraph.Neighbors(el.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvents queries the events edge of a EventListener.
+func (c *EventListenerClient) QueryEvents(el *EventListener) *EventQuery {
+	query := (&EventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := el.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, id),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, eventlistener.EventsTable, eventlistener.EventsColumn),
+		)
+		fromV = sqlgraph.Neighbors(el.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EventListenerClient) Hooks() []Hook {
+	return c.hooks.EventListener
+}
+
+// Interceptors returns the client interceptors.
+func (c *EventListenerClient) Interceptors() []Interceptor {
+	return c.inters.EventListener
+}
+
+func (c *EventListenerClient) mutate(ctx context.Context, m *EventListenerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EventListenerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EventListenerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EventListenerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EventListenerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EventListener mutation op: %q", m.Op())
+	}
+}
+
+// ProjectClient is a client for the Project schema.
+type ProjectClient struct {
+	config
+}
+
+// NewProjectClient returns a client for the Project from the given config.
+func NewProjectClient(c config) *ProjectClient {
+	return &ProjectClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `project.Hooks(f(g(h())))`.
+func (c *ProjectClient) Use(hooks ...Hook) {
+	c.hooks.Project = append(c.hooks.Project, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `project.Intercept(f(g(h())))`.
+func (c *ProjectClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Project = append(c.inters.Project, interceptors...)
+}
+
+// Create returns a builder for creating a Project entity.
+func (c *ProjectClient) Create() *ProjectCreate {
+	mutation := newProjectMutation(c.config, OpCreate)
+	return &ProjectCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Project entities.
+func (c *ProjectClient) CreateBulk(builders ...*ProjectCreate) *ProjectCreateBulk {
+	return &ProjectCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Project.
+func (c *ProjectClient) Update() *ProjectUpdate {
+	mutation := newProjectMutation(c.config, OpUpdate)
+	return &ProjectUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProjectClient) UpdateOne(pr *Project) *ProjectUpdateOne {
+	mutation := newProjectMutation(c.config, OpUpdateOne, withProject(pr))
+	return &ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProjectClient) UpdateOneID(id int) *ProjectUpdateOne {
+	mutation := newProjectMutation(c.config, OpUpdateOne, withProjectID(id))
+	return &ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Project.
+func (c *ProjectClient) Delete() *ProjectDelete {
+	mutation := newProjectMutation(c.config, OpDelete)
+	return &ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProjectClient) DeleteOne(pr *Project) *ProjectDeleteOne {
+	return c.DeleteOneID(pr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProjectClient) DeleteOneID(id int) *ProjectDeleteOne {
+	builder := c.Delete().Where(project.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProjectDeleteOne{builder}
+}
+
+// Query returns a query builder for Project.
+func (c *ProjectClient) Query() *ProjectQuery {
+	return &ProjectQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProject},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Project entity by its id.
+func (c *ProjectClient) Get(ctx context.Context, id int) (*Project, error) {
+	return c.Query().Where(project.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProjectClient) GetX(ctx context.Context, id int) *Project {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryChannels queries the channels edge of a Project.
+func (c *ProjectClient) QueryChannels(pr *Project) *ChannelQuery {
+	query := (&ChannelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(channel.Table, channel.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.ChannelsTable, project.ChannelsColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a Project.
+func (c *ProjectClient) QueryUser(pr *Project) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, project.UserTable, project.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ProjectClient) Hooks() []Hook {
+	return c.hooks.Project
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProjectClient) Interceptors() []Interceptor {
+	return c.inters.Project
+}
+
+func (c *ProjectClient) mutate(ctx context.Context, m *ProjectMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProjectCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProjectUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Project mutation op: %q", m.Op())
 	}
 }
 
@@ -280,6 +1063,22 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	return obj
 }
 
+// QueryProjects queries the projects edge of a User.
+func (c *UserClient) QueryProjects(u *User) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ProjectsTable, user.ProjectsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -308,9 +1107,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User []ent.Hook
+		Chain, Channel, Event, EventListener, Project, User []ent.Hook
 	}
 	inters struct {
-		User []ent.Interceptor
+		Chain, Channel, Event, EventListener, Project, User []ent.Interceptor
 	}
 )

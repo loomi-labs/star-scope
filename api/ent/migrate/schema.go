@@ -8,6 +8,124 @@ import (
 )
 
 var (
+	// ChainsColumns holds the columns for the "chains" table.
+	ChainsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "image", Type: field.TypeString},
+	}
+	// ChainsTable holds the schema information for the "chains" table.
+	ChainsTable = &schema.Table{
+		Name:       "chains",
+		Columns:    ChainsColumns,
+		PrimaryKey: []*schema.Column{ChainsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "chain_name",
+				Unique:  true,
+				Columns: []*schema.Column{ChainsColumns[3]},
+			},
+		},
+	}
+	// ChannelsColumns holds the columns for the "channels" table.
+	ChannelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"funding", "staking", "governance", "dex", "other"}},
+		{Name: "project_channels", Type: field.TypeInt, Nullable: true},
+	}
+	// ChannelsTable holds the schema information for the "channels" table.
+	ChannelsTable = &schema.Table{
+		Name:       "channels",
+		Columns:    ChannelsColumns,
+		PrimaryKey: []*schema.Column{ChannelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "channels_projects_channels",
+				Columns:    []*schema.Column{ChannelsColumns[5]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// EventsColumns holds the columns for the "events" table.
+	EventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "title", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "event_listener_events", Type: field.TypeInt, Nullable: true},
+	}
+	// EventsTable holds the schema information for the "events" table.
+	EventsTable = &schema.Table{
+		Name:       "events",
+		Columns:    EventsColumns,
+		PrimaryKey: []*schema.Column{EventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "events_event_listeners_events",
+				Columns:    []*schema.Column{EventsColumns[5]},
+				RefColumns: []*schema.Column{EventListenersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// EventListenersColumns holds the columns for the "event_listeners" table.
+	EventListenersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "wallet_address", Type: field.TypeString},
+		{Name: "chain_event_listeners", Type: field.TypeInt, Nullable: true},
+		{Name: "channel_event_listeners", Type: field.TypeInt, Nullable: true},
+	}
+	// EventListenersTable holds the schema information for the "event_listeners" table.
+	EventListenersTable = &schema.Table{
+		Name:       "event_listeners",
+		Columns:    EventListenersColumns,
+		PrimaryKey: []*schema.Column{EventListenersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "event_listeners_chains_event_listeners",
+				Columns:    []*schema.Column{EventListenersColumns[4]},
+				RefColumns: []*schema.Column{ChainsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "event_listeners_channels_event_listeners",
+				Columns:    []*schema.Column{EventListenersColumns[5]},
+				RefColumns: []*schema.Column{ChannelsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// ProjectsColumns holds the columns for the "projects" table.
+	ProjectsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "user_projects", Type: field.TypeInt, Nullable: true},
+	}
+	// ProjectsTable holds the schema information for the "projects" table.
+	ProjectsTable = &schema.Table{
+		Name:       "projects",
+		Columns:    ProjectsColumns,
+		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "projects_users_projects",
+				Columns:    []*schema.Column{ProjectsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -25,9 +143,19 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ChainsTable,
+		ChannelsTable,
+		EventsTable,
+		EventListenersTable,
+		ProjectsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	ChannelsTable.ForeignKeys[0].RefTable = ProjectsTable
+	EventsTable.ForeignKeys[0].RefTable = EventListenersTable
+	EventListenersTable.ForeignKeys[0].RefTable = ChainsTable
+	EventListenersTable.ForeignKeys[1].RefTable = ChannelsTable
+	ProjectsTable.ForeignKeys[0].RefTable = UsersTable
 }

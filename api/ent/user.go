@@ -26,8 +26,29 @@ type User struct {
 	// WalletAddress holds the value of the "wallet_address" field.
 	WalletAddress string `json:"wallet_address,omitempty"`
 	// Role holds the value of the "role" field.
-	Role         user.Role `json:"role,omitempty"`
+	Role user.Role `json:"role,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Projects holds the value of the projects edge.
+	Projects []*Project `json:"projects,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ProjectsOrErr returns the Projects value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ProjectsOrErr() ([]*Project, error) {
+	if e.loadedTypes[0] {
+		return e.Projects, nil
+	}
+	return nil, &NotLoadedError{edge: "projects"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -103,6 +124,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
+}
+
+// QueryProjects queries the "projects" edge of the User entity.
+func (u *User) QueryProjects() *ProjectQuery {
+	return NewUserClient(u.config).QueryProjects(u)
 }
 
 // Update returns a builder for updating this User.

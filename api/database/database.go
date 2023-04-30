@@ -10,6 +10,7 @@ import (
 	goMigrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/shifty11/blocklog-backend/ent/chain"
 
 	"github.com/pkg/errors"
 	"github.com/shifty11/blocklog-backend/common"
@@ -225,8 +226,30 @@ func MigrateDb() error {
 	return err
 }
 
+func InitDb() error {
+	client := connect()
+	ctx := context.Background()
+	doesOsmosisExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Osmosis")).
+		ExistX(ctx)
+	if !doesOsmosisExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Osmosis").
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	//client.User.Delete().ExecX(ctx)
+	return nil
+}
+
 type DbManagers struct {
-	UserManager *UserManager
+	UserManager    *UserManager
+	ProjectManager *ProjectManager
 }
 
 func NewDefaultDbManagers() *DbManagers {
@@ -236,7 +259,9 @@ func NewDefaultDbManagers() *DbManagers {
 
 func NewCustomDbManagers(client *ent.Client) *DbManagers {
 	userManager := NewUserManager(client)
+	projectManager := NewProjectManager(client)
 	return &DbManagers{
-		UserManager: userManager,
+		UserManager:    userManager,
+		ProjectManager: projectManager,
 	}
 }
