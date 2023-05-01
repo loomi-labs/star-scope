@@ -6,8 +6,12 @@ import (
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/blocklog-backend/grpc/auth"
 	"github.com/shifty11/blocklog-backend/grpc/auth/authpb/authpbconnect"
+	"github.com/shifty11/blocklog-backend/grpc/event"
+	"github.com/shifty11/blocklog-backend/grpc/event/eventpb/eventpbconnect"
 	"github.com/shifty11/blocklog-backend/grpc/indexer"
 	"github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb/indexerpbconnect"
+	"github.com/shifty11/blocklog-backend/grpc/project"
+	"github.com/shifty11/blocklog-backend/grpc/project/projectpb/projectpbconnect"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -43,7 +47,7 @@ func corsHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, connect-protocol-version")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Connect-Protocol-Version")
 
 		// If the request method is OPTIONS, just return with no content
 		if r.Method == "OPTIONS" {
@@ -70,6 +74,14 @@ func (s GRPCServer) Run() {
 	))
 	mux.Handle(indexerpbconnect.NewIndexerServiceHandler(
 		indexer.NewIndexerServiceHandler(s.dbManagers),
+		interceptors,
+	))
+	mux.Handle(projectpbconnect.NewProjectServiceHandler(
+		project.NewProjectServiceHandler(),
+		interceptors,
+	))
+	mux.Handle(eventpbconnect.NewEventServiceHandler(
+		event.NewEventServiceHandler(),
 		interceptors,
 	))
 

@@ -12,5 +12,7 @@ service EventService {
 }
 
 message Event {
-  string name = 1;
+  int64 id = 1;
+  string title = 2;
+  string description = 3;
 }

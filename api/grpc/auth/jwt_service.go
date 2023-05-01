@@ -28,10 +28,14 @@ func AccessibleRoles() map[string][]Role {
 	const path = "/blocklog.grpc"
 	const authService = path + ".AuthService/"
 	const indexerService = path + ".IndexerService/"
+	const projectService = path + ".ProjectService/"
+	const eventService = path + ".EventService/"
 
 	roles := map[string][]Role{
 		authService + "KeplrLogin":         {Unauthenticated, User, Admin},
 		authService + "RefreshAccessToken": {Unauthenticated, User, Admin},
+		projectService + "ListProjects":    {User, Admin},
+		eventService + "EventStream":       {User, Admin},
 		indexerService + "GetHeight":       {Token},
 		indexerService + "UpdateHeight":    {Token},
 	}
