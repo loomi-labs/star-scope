@@ -14,6 +14,7 @@ var (
 	Unauthenticated Role = "unauthenticated"
 	User                 = Role(user.RoleUser.String())
 	Admin                = Role(user.RoleAdmin.String())
+	Token           Role = "token"
 )
 
 type TokenType string
@@ -26,10 +27,13 @@ const (
 func AccessibleRoles() map[string][]Role {
 	const path = "/blocklog.grpc"
 	const authService = path + ".AuthService/"
+	const indexerService = path + ".IndexerService/"
 
 	roles := map[string][]Role{
 		authService + "KeplrLogin":         {Unauthenticated, User, Admin},
 		authService + "RefreshAccessToken": {Unauthenticated, User, Admin},
+		indexerService + "GetHeight":       {Token},
+		indexerService + "UpdateHeight":    {Token},
 	}
 	return roles
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"net/http"
 	"strings"
 )
 
@@ -32,7 +32,7 @@ func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	) (connect.AnyResponse, error) {
 		debugInfo := "--> unary interceptor: " + req.Spec().Procedure
 
-		ctx, err := i.authorize(ctx, req.Spec().Procedure)
+		ctx, err := i.authorize(ctx, req.Header(), req.Spec().Procedure)
 		if err != nil {
 			log.Sugar.Debug(debugInfo + " access denied!")
 			return nil, err
@@ -61,7 +61,7 @@ func (i *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc
 	) error {
 		debugInfo := "--> stream handler interceptor: " + conn.Spec().Procedure
 
-		ctx, err := i.authorize(ctx, conn.Spec().Procedure)
+		ctx, err := i.authorize(ctx, conn.RequestHeader(), conn.Spec().Procedure)
 		if err != nil {
 			log.Sugar.Debug(debugInfo + " access denied!")
 			return err
@@ -73,27 +73,26 @@ func (i *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc
 	}
 }
 
-func (i *AuthInterceptor) authorize(ctx context.Context, method string) (context.Context, error) {
-	accessibleRoles, ok := i.accessibleRoles[method]
+func (i *AuthInterceptor) authorize(ctx context.Context, header http.Header, procedure string) (context.Context, error) {
+	accessibleRoles, ok := i.accessibleRoles[procedure]
+	if !ok {
+		log.Sugar.Errorf("no access roles are defined for %s", procedure)
+		return ctx, status.Errorf(codes.Unauthenticated, "unauthorized access")
+	}
 	if slices.Contains(accessibleRoles, Unauthenticated) {
 		return ctx, nil
 	}
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ctx, status.Errorf(codes.Unauthenticated, "metadata is not provided")
-	}
-
-	values := md["authorization"]
-	if len(values) == 0 {
+	authorization := header.Get("Authorization")
+	if authorization == "" {
 		return ctx, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
 	}
 
-	if values[0] == i.authToken {
+	if authorization == i.authToken {
 		return ctx, nil
 	}
 
-	accessToken := strings.Replace(values[0], "Bearer ", "", 1)
+	accessToken := strings.Replace(authorization, "Bearer ", "", 1)
 	claims, err := i.jwtManager.Verify(accessToken)
 	if err != nil {
 		return ctx, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
