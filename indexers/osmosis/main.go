@@ -14,6 +14,6 @@ func main() {
 		}
 	}()
 
-	var indx = indexer.NewIndexer("https://rest.cosmos.directory/osmosis")
+	var indx = indexer.NewIndexer("https://rest.cosmos.directory/osmosis", []string{"localhost:9092"})
 	indx.StartIndexing()
 }

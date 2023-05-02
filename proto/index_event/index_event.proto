@@ -8,7 +8,7 @@ package blocklog.grpc;
 option go_package = "github.com/shifty11/blocklog-backend/index_event/index_event";
 
 message CoinReceivedEvent {
-  string coin = 1;
+  string denom = 1;
   uint64 amount = 2;
   string sender = 3;
 }
