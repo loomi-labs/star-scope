@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+package blocklog.grpc;
+
+option go_package = "github.com/shifty11/blocklog-backend/index_event/index_event";
+
+message CoinReceivedEvent {
+  string coin = 1;
+  uint64 amount = 2;
+  string sender = 3;
+}
+
+message OsmosisPoolUnlockEvent {
+  google.protobuf.Duration duration = 1;
+  google.protobuf.Timestamp unlock_time = 2;
+}
+
+message TxEvent {
+  string chain_name = 1;
+  string wallet_address = 2;
+  oneof event {
+    CoinReceivedEvent coin_received = 3;
+    OsmosisPoolUnlockEvent osmosis_pool_unlock = 4;
+  }
+}
