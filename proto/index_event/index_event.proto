@@ -9,7 +9,7 @@ option go_package = "github.com/shifty11/blocklog-backend/index_event/index_even
 
 message CoinReceivedEvent {
   string denom = 1;
-  uint64 amount = 2;
+  string amount = 2;
   string sender = 3;
 }
 
