@@ -5,12 +5,12 @@ import (
 	"fmt"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	"github.com/golang/protobuf/proto"
 	lockuptypes "github.com/osmosis-labs/osmosis/v15/x/lockup/types"
 	indexEvent "github.com/shifty11/blocklog-backend/indexers/osmosis/index_event"
 	"github.com/shifty11/go-logger/log"
 	"github.com/tendermint/tendermint/abci/types"
 	"golang.org/x/exp/slices"
-	"math/big"
 	"strings"
 )
 
@@ -43,14 +43,16 @@ func (i *Indexer) getRawEventResult(events []types.Event, event RawEvent) (map[s
 	return result, nil
 }
 
-func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) {
+func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) ([]byte, error) {
 	if len(events) == 0 {
-		return
+		return nil, nil
 	}
 	txEvent := &indexEvent.TxEvent{
 		ChainName: i.chainInfo.ChainName,
 		Event: &indexEvent.TxEvent_CoinReceived{
-			CoinReceived: &indexEvent.CoinReceivedEvent{},
+			CoinReceived: &indexEvent.CoinReceivedEvent{
+				Coin: &indexEvent.Coin{},
+			},
 		},
 	}
 
@@ -61,55 +63,52 @@ func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) {
 	})
 	if err != nil {
 		// check out this tx -> https://www.mintscan.io/osmosis/txs/8822ACEB04702476DB2D6ACA8E9AE398C7412B012DFEBDEE39BCBBCE50B872E1?height=9415274
-		log.Sugar.Error(err)
-		return
+		log.Sugar.Warn(err)
+		return nil, nil
 	}
 	if result[success] != "true" {
-		return
+		return nil, nil
 	}
 	txEvent.WalletAddress = result[receiver]
 	txEvent.GetCoinReceived().Sender = result[sender]
-	num := new(big.Int)
-	num, ok := num.SetString(result[amount], 10) // convert to big.Int to make sure it is a valid number
-	if !ok {
-		log.Sugar.Errorf("Failed to parse amount: %v", result[amount])
-		return
-	}
-	log.Sugar.Infof("Amount: %v", num)
-	txEvent.GetCoinReceived().Amount = num.String()
-	txEvent.GetCoinReceived().Denom = result[denom]
-	i.kafkaProducer.Produce(txEvent)
+	txEvent.GetCoinReceived().GetCoin().Amount = result[amount]
+	txEvent.GetCoinReceived().GetCoin().Denom = result[denom]
+	return proto.Marshal(txEvent)
 }
 
-func (i *Indexer) handleMsgSend(msg *banktypes.MsgSend, tx []byte) {
+func (i *Indexer) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([]byte, error) {
 	if i.wasTxSuccessful(tx) {
-		i.kafkaProducer.Produce(&indexEvent.TxEvent{
+		var txEvent = &indexEvent.TxEvent{
 			ChainName:     i.chainInfo.ChainName,
 			WalletAddress: msg.ToAddress,
 			Event: &indexEvent.TxEvent_CoinReceived{
 				CoinReceived: &indexEvent.CoinReceivedEvent{
-					Denom:  msg.Amount[0].Denom,
-					Amount: msg.Amount[0].Amount.String(),
 					Sender: msg.FromAddress,
+					Coin: &indexEvent.Coin{
+						Amount: msg.Amount[0].Amount.String(),
+						Denom:  msg.Amount[0].Denom,
+					},
 				},
 			},
-		})
+		}
+		return proto.Marshal(txEvent)
 	}
+	return nil, nil
 }
 
 func (i *Indexer) handleMsgMultiSend(_ *banktypes.MsgMultiSend, _ []byte, height int64) {
 	log.Sugar.Errorf("MsgMultiSend not implemented: height: %v on %v", height, i.chainInfo.ChainName)
 }
 
-func (i *Indexer) handleMsgRecvPacket(_ *ibcChannel.MsgRecvPacket, tx []byte) {
-	i.handleFungibleTokenPacketEvent(i.getTxEvents(tx))
+func (i *Indexer) handleMsgRecvPacket(_ *ibcChannel.MsgRecvPacket, tx []byte) ([]byte, error) {
+	return i.handleFungibleTokenPacketEvent(i.getTxEvents(tx))
 }
 
 func (i *Indexer) handleMsgBeginUnlockingAll(_ *lockuptypes.MsgBeginUnlockingAll, _ []byte, height int64) {
 	log.Sugar.Errorf("MsgBeginUnlockingAll not implemented: height: %v on %v", height, i.chainInfo.ChainName)
 }
 
-func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx []byte) {
+func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx []byte) ([]byte, error) {
 	txEvent := &indexEvent.TxEvent{
 		ChainName: i.chainInfo.ChainName,
 		Event: &indexEvent.TxEvent_OsmosisPoolUnlock{
@@ -123,20 +122,20 @@ func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx [
 	})
 	if err != nil {
 		log.Sugar.Error(err)
-		return
+		return nil, nil
 	}
 	txEvent.WalletAddress = result[owner]
 	dur, err := parseDuration(result[duration])
 	if err != nil {
 		log.Sugar.Errorf("Failed to parse duration: %v", err)
-		return
+		return nil, nil
 	}
 	txEvent.GetOsmosisPoolUnlock().Duration = dur
 	unlTime, err := parseTime(result[unlockTime])
 	if err != nil {
 		log.Sugar.Errorf("Failed to parse unlock time: %v", err)
-		return
+		return nil, nil
 	}
 	txEvent.GetOsmosisPoolUnlock().UnlockTime = unlTime
-	i.kafkaProducer.Produce(txEvent)
+	return proto.Marshal(txEvent)
 }

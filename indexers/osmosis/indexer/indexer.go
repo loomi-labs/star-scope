@@ -51,6 +51,7 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 	var txs = data.GetTxs()
 	var cntSkipped = 0
 	var cntMsgs = 0
+	var protoMsgs = make([][]byte, 0)
 	for _, tx := range txs {
 		txDecoded, err := i.encodingConfig.TxConfig.TxDecoder()(tx)
 		if err != nil {
@@ -59,24 +60,37 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 		}
 		cntMsgs += len(txDecoded.GetMsgs())
 		for _, anyMsg := range txDecoded.GetMsgs() {
+			var protoMsg []byte
+			var err error
 			switch msg := anyMsg.(type) {
 			case *banktypes.MsgSend:
-				i.handleMsgSend(msg, tx)
+				protoMsg, err = i.handleMsgSend(msg, tx)
 			case *banktypes.MsgMultiSend:
-				i.handleMsgMultiSend(msg, tx)
+				i.handleMsgMultiSend(msg, tx, blockResponse.GetBlock().GetHeader().Height)
 			case *ibcChannel.MsgRecvPacket:
-				i.handleMsgRecvPacket(msg, tx)
+				protoMsg, err = i.handleMsgRecvPacket(msg, tx)
 			case *lockuptypes.MsgBeginUnlockingAll:
-				i.handleMsgBeginUnlockingAll(msg)
+				i.handleMsgBeginUnlockingAll(msg, tx, blockResponse.GetBlock().GetHeader().Height)
 			case *lockuptypes.MsgBeginUnlocking:
-				i.handleMsgBeginUnlocking(msg, tx)
+				protoMsg, err = i.handleMsgBeginUnlocking(msg, tx)
 			default:
 				cntSkipped++
 			}
+			if err != nil {
+				log.Sugar.Errorf("Error handling msg: %v", err)
+				continue
+			}
+			if protoMsg != nil {
+				protoMsgs = append(protoMsgs, protoMsg)
+			}
 		}
 	}
+	if len(protoMsgs) > 0 {
+		i.kafkaProducer.Produce(protoMsgs)
+	}
 	var cntProcessed = cntMsgs - cntSkipped
-	log.Sugar.Debugf("Block %v\tTotal: %v\tProcessed: %v\tSkipped: %v", blockResponse.GetBlock().GetHeader().Height, cntMsgs, cntProcessed, cntSkipped)
+	log.Sugar.Debugf("Block %v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
+		blockResponse.GetBlock().GetHeader().Height, cntMsgs, cntSkipped, cntProcessed, len(protoMsgs))
 }
 
 func (i *Indexer) getTxResult(tx []byte) txtypes.GetTxResponse {
@@ -108,6 +122,7 @@ func (i *Indexer) getTxResult(tx []byte) txtypes.GetTxResponse {
 func (i *Indexer) getTxEvents(tx []byte) []types.Event {
 	var resp = i.getTxResult(tx)
 	if resp.GetTxResponse().Code == 0 {
+		//log.Sugar.Debugf("Tx %v was successful", resp.GetTxResponse().TxHash)
 		return resp.GetTxResponse().Events
 	}
 	return nil
