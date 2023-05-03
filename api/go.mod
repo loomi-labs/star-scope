@@ -7,6 +7,7 @@ require (
 	entgo.io/ent v0.12.2
 	github.com/bufbuild/connect-go v1.7.0
 	github.com/cosmos/cosmos-sdk v0.47.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.3
