@@ -3,14 +3,12 @@ package indexer
 import (
 	"context"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"github.com/segmentio/kafka-go"
-	indexEvent "github.com/shifty11/blocklog-backend/indexers/osmosis/index_event"
 	"github.com/shifty11/go-logger/log"
 )
 
 var (
-	topic = "new-event"
+	topic = "index-events"
 )
 
 type KafkaProducer struct {
@@ -38,17 +36,16 @@ func (k *KafkaProducer) close(w *kafka.Writer) {
 	}
 }
 
-func (k *KafkaProducer) Produce(txEvent *indexEvent.TxEvent) {
-	msg, err := proto.Marshal(txEvent)
-	if err != nil {
-		panic(fmt.Sprintf("failed to marshal txEvent: %v", err))
-	}
+func (k *KafkaProducer) Produce(msgs [][]byte) {
 	w := k.writer()
 	defer k.close(w)
 
-	err = w.WriteMessages(context.Background(), kafka.Message{
-		Value: msg,
-	})
+	kafkaMsgs := make([]kafka.Message, len(msgs))
+	for i, msg := range msgs {
+		kafkaMsgs[i] = kafka.Message{Value: msg}
+	}
+
+	err := w.WriteMessages(context.Background(), kafkaMsgs...)
 	if err != nil {
 		panic(fmt.Sprintf("failed to write messages: %v", err))
 	}
