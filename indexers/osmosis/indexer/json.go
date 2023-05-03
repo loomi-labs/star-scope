@@ -2,7 +2,7 @@ package indexer
 
 import (
 	"errors"
-	"github.com/cosmos/gogoproto/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/osmosis-labs/osmosis/osmoutils/noapptest"
 	"io"
 	"net/http"

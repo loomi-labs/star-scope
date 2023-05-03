@@ -77,7 +77,11 @@ func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) ([]byte, 
 }
 
 func (i *Indexer) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([]byte, error) {
-	if i.wasTxSuccessful(tx) {
+	wasSuccessful, err := i.wasTxSuccessful(tx)
+	if err != nil {
+		return nil, err
+	}
+	if wasSuccessful {
 		var txEvent = &indexEvent.TxEvent{
 			ChainName:     i.chainInfo.ChainName,
 			WalletAddress: msg.ToAddress,
@@ -101,7 +105,11 @@ func (i *Indexer) handleMsgMultiSend(_ *banktypes.MsgMultiSend, _ []byte, height
 }
 
 func (i *Indexer) handleMsgRecvPacket(_ *ibcChannel.MsgRecvPacket, tx []byte) ([]byte, error) {
-	return i.handleFungibleTokenPacketEvent(i.getTxEvents(tx))
+	events, err := i.getTxEvents(tx)
+	if err != nil {
+		return nil, err
+	}
+	return i.handleFungibleTokenPacketEvent(events)
 }
 
 func (i *Indexer) handleMsgBeginUnlockingAll(_ *lockuptypes.MsgBeginUnlockingAll, _ []byte, height int64) {
@@ -116,7 +124,11 @@ func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx [
 		},
 	}
 	var owner, duration, unlockTime = "owner", "duration", "unlock_time"
-	result, err := i.getRawEventResult(i.getTxEvents(tx), RawEvent{
+	events, err := i.getTxEvents(tx)
+	if err != nil {
+		return nil, err
+	}
+	result, err := i.getRawEventResult(events, RawEvent{
 		Type:       "begin_unlock",
 		Attributes: []string{owner, duration, unlockTime},
 	})

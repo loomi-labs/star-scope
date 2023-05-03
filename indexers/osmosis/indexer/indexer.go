@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/bufbuild/connect-go"
 	cmtservice "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -56,12 +57,11 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 		txDecoded, err := i.encodingConfig.TxConfig.TxDecoder()(tx)
 		if err != nil {
 			log.Sugar.Errorf("Error decoding tx: %v", err)
-			continue
+			break
 		}
 		cntMsgs += len(txDecoded.GetMsgs())
 		for _, anyMsg := range txDecoded.GetMsgs() {
 			var protoMsg []byte
-			var err error
 			switch msg := anyMsg.(type) {
 			case *banktypes.MsgSend:
 				protoMsg, err = i.handleMsgSend(msg, tx)
@@ -78,11 +78,14 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 			}
 			if err != nil {
 				log.Sugar.Errorf("Error handling msg: %v", err)
-				continue
+				break
 			}
 			if protoMsg != nil {
 				protoMsgs = append(protoMsgs, protoMsg)
 			}
+		}
+		if err != nil {
+			break
 		}
 	}
 	if len(protoMsgs) > 0 {
@@ -93,43 +96,50 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 		blockResponse.GetBlock().GetHeader().Height, cntMsgs, cntSkipped, cntProcessed, len(protoMsgs))
 }
 
-func (i *Indexer) getTxResult(tx []byte) txtypes.GetTxResponse {
+func (i *Indexer) getTxResult(tx []byte) (*txtypes.GetTxResponse, error) {
 	hash := sha256.Sum256(tx)
 	hashString := hex.EncodeToString(hash[:])
 
 	var url = fmt.Sprintf("%v/cosmos/tx/v1beta1/txs/%v", i.baseUrl, hashString)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Sugar.Panic(err)
+		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		log.Sugar.Panicf("Status code: %v", resp.StatusCode)
+		return nil, errors.New(fmt.Sprintf("Status code: %v", resp.StatusCode))
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Sugar.Panic(err)
+		return nil, err
 	}
 	encodingConfig := GetEncodingConfig()
 	var txResponse txtypes.GetTxResponse
 	if err := encodingConfig.Codec.UnmarshalJSON(body, &txResponse); err != nil {
-		log.Sugar.Panic(err)
+		return nil, err
 	}
-	return txResponse
+	return &txResponse, nil
 }
 
-func (i *Indexer) getTxEvents(tx []byte) []types.Event {
-	var resp = i.getTxResult(tx)
+func (i *Indexer) getTxEvents(tx []byte) ([]types.Event, error) {
+	resp, err := i.getTxResult(tx)
+	if err != nil {
+		return nil, err
+	}
 	if resp.GetTxResponse().Code == 0 {
 		//log.Sugar.Debugf("Tx %v was successful", resp.GetTxResponse().TxHash)
-		return resp.GetTxResponse().Events
+		return resp.GetTxResponse().Events, nil
 	}
-	return nil
+	return nil, nil
 }
 
-func (i *Indexer) wasTxSuccessful(tx []byte) bool {
-	return i.getTxEvents(tx) != nil
+func (i *Indexer) wasTxSuccessful(tx []byte) (bool, error) {
+	events, err := i.getTxEvents(tx)
+	if err != nil {
+		return false, err
+	}
+	return len(events) > 0, nil
 }
 
 type SyncStatus struct {
