@@ -47,7 +47,7 @@ func NewIndexer(baseUrl string, kafkaAddresses []string) Indexer {
 	}
 }
 
-func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse) error {
+func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse, syncStatus SyncStatus) error {
 	var data = blockResponse.GetBlock().GetData()
 	var txs = data.GetTxs()
 	var cntSkipped = 0
@@ -87,8 +87,13 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 		i.kafkaProducer.Produce(protoMsgs)
 	}
 	var cntProcessed = cntMsgs - cntSkipped
-	log.Sugar.Debugf("Block %v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
-		blockResponse.GetBlock().GetHeader().Height, cntMsgs, cntSkipped, cntProcessed, len(protoMsgs))
+	var behindText = ""
+	var behind = syncStatus.LatestHeight - blockResponse.GetBlock().GetHeader().Height
+	if behind > 0 {
+		behindText = fmt.Sprintf(" (%v behind latest)", behind)
+	}
+	log.Sugar.Debugf("Block %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
+		blockResponse.GetBlock().GetHeader().Height, behindText, cntMsgs, cntSkipped, cntProcessed, len(protoMsgs))
 	return nil
 }
 
@@ -192,6 +197,7 @@ func (i *Indexer) updateHeight(syncStatus *SyncStatus) {
 
 func (i *Indexer) StartIndexing() {
 	var syncStatus = i.getSyncStatus(i.baseUrl, i.encodingConfig, i.grpcClient)
+	var catchUp = syncStatus.Height < syncStatus.LatestHeight
 	log.Sugar.Infof("Start indexing at height: %v", syncStatus.Height)
 	for true {
 		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.baseUrl, syncStatus.Height)
@@ -207,7 +213,7 @@ func (i *Indexer) StartIndexing() {
 				log.Sugar.Panicf("Failed to get block: %v %v", status, err)
 			}
 		} else {
-			err := i.handleBlock(&blockResponse)
+			err := i.handleBlock(&blockResponse, syncStatus)
 			if err != nil {
 				log.Sugar.Errorf("Failed to handle block (try again): %v", err)
 				time.Sleep(200 * time.Millisecond)
@@ -215,8 +221,10 @@ func (i *Indexer) StartIndexing() {
 				i.updateHeight(&syncStatus)
 			}
 		}
-		if syncStatus.Height >= syncStatus.LatestHeight {
+		if !catchUp {
 			time.Sleep(1 * time.Second)
+		} else {
+			catchUp = syncStatus.Height < syncStatus.LatestHeight
 		}
 	}
 }
