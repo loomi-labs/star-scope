@@ -10,11 +10,10 @@ import (
 	goMigrate "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/shifty11/blocklog-backend/ent/chain"
-
 	"github.com/pkg/errors"
 	"github.com/shifty11/blocklog-backend/common"
 	"github.com/shifty11/blocklog-backend/ent"
+	"github.com/shifty11/blocklog-backend/ent/chain"
 	"github.com/shifty11/blocklog-backend/ent/migrate"
 	"github.com/shifty11/go-logger/log"
 	"os"
@@ -243,14 +242,14 @@ func InitDb() error {
 			return err
 		}
 	}
-	//client.User.Delete().ExecX(ctx)
 	return nil
 }
 
 type DbManagers struct {
-	UserManager    *UserManager
-	ProjectManager *ProjectManager
-	ChainManager   *ChainManager
+	UserManager          *UserManager
+	ProjectManager       *ProjectManager
+	ChainManager         *ChainManager
+	EventListenerManager *EventListenerManager
 }
 
 func NewDefaultDbManagers() *DbManagers {
@@ -262,9 +261,11 @@ func NewCustomDbManagers(client *ent.Client) *DbManagers {
 	userManager := NewUserManager(client)
 	projectManager := NewProjectManager(client)
 	chainManager := NewChainManager(client)
+	eventListenerManager := NewEventListenerManager(client)
 	return &DbManagers{
-		UserManager:    userManager,
-		ProjectManager: projectManager,
-		ChainManager:   chainManager,
+		UserManager:          userManager,
+		ProjectManager:       projectManager,
+		ChainManager:         chainManager,
+		EventListenerManager: eventListenerManager,
 	}
 }

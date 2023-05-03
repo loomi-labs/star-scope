@@ -7,6 +7,7 @@ import (
 	"github.com/shifty11/blocklog-backend/common"
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/blocklog-backend/grpc"
+	"github.com/shifty11/blocklog-backend/index_event"
 	"log"
 	"time"
 
@@ -50,8 +51,19 @@ var startGrpcServerCmd = &cobra.Command{
 	},
 }
 
+var startEventConsumerCmd = &cobra.Command{
+	Use:   "event-consumer",
+	Short: "Start the event consumer",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		eventConsumer := index_event.NewKafkaConsumer(dbManagers, "localhost:9092")
+		eventConsumer.StartConsuming()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(serviceCmd)
 
 	serviceCmd.AddCommand(startGrpcServerCmd)
+	serviceCmd.AddCommand(startEventConsumerCmd)
 }
