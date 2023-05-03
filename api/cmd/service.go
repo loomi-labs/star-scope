@@ -5,9 +5,9 @@ package cmd
 
 import (
 	"github.com/shifty11/blocklog-backend/common"
-	"github.com/shifty11/blocklog-backend/consumer"
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/blocklog-backend/grpc"
+	"github.com/shifty11/blocklog-backend/kafka"
 	"log"
 	"time"
 
@@ -56,8 +56,8 @@ var startEventConsumerCmd = &cobra.Command{
 	Short: "Start the event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
-		eventConsumer := consumer.NewKafkaConsumer(dbManagers, "localhost:9092")
-		eventConsumer.StartConsuming()
+		eventConsumer := kafka.NewKafka(dbManagers, common.GetEnvX("KAFKA_BROKERS"))
+		eventConsumer.ConsumeIndexedEvents()
 	},
 }
 

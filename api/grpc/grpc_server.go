@@ -3,6 +3,7 @@ package grpc
 import (
 	"fmt"
 	"github.com/bufbuild/connect-go"
+	"github.com/shifty11/blocklog-backend/common"
 	"github.com/shifty11/blocklog-backend/database"
 	"github.com/shifty11/blocklog-backend/grpc/auth"
 	"github.com/shifty11/blocklog-backend/grpc/auth/authpb/authpbconnect"
@@ -12,6 +13,7 @@ import (
 	"github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb/indexerpbconnect"
 	"github.com/shifty11/blocklog-backend/grpc/project"
 	"github.com/shifty11/blocklog-backend/grpc/project/projectpb/projectpbconnect"
+	"github.com/shifty11/blocklog-backend/kafka"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -81,7 +83,7 @@ func (s GRPCServer) Run() {
 		interceptors,
 	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
-		event.NewEventServiceHandler(),
+		event.NewEventServiceHandler(kafka.NewKafka(s.dbManagers, common.GetEnvX("KAFKA_BROKERS"))),
 		interceptors,
 	))
 
