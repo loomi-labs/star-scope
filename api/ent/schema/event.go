@@ -5,6 +5,9 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
+	"github.com/shifty11/blocklog-backend/indexevent"
+	"reflect"
+	"time"
 )
 
 // Event holds the schema definition for the Event entity.
@@ -20,9 +23,20 @@ func (Event) Mixin() []ent.Mixin {
 
 // Fields of the Event.
 func (Event) Fields() []ent.Field {
+	var types []string
+	var events = []interface{}{
+		indexevent.TxEvent_CoinReceived{},
+		indexevent.TxEvent_OsmosisPoolUnlock{},
+	}
+	for _, t := range events {
+		types = append(types, reflect.TypeOf(t).Name())
+	}
 	return []ent.Field{
-		field.String("title"),
-		field.String("description"),
+		field.Enum("type").
+			Values(types...),
+		field.Bytes("tx_event"),
+		field.Time("notify_time").
+			Default(time.Now()),
 	}
 }
 

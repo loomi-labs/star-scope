@@ -7,10 +7,11 @@ import (
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 	lockuptypes "github.com/osmosis-labs/osmosis/v15/x/lockup/types"
-	indexEvent "github.com/shifty11/blocklog-backend/indexers/osmosis/index_event"
+	"github.com/shifty11/blocklog-backend/indexers/osmosis/indexevent"
 	"github.com/shifty11/go-logger/log"
 	"github.com/tendermint/tendermint/abci/types"
 	"golang.org/x/exp/slices"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
 )
 
@@ -47,11 +48,12 @@ func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) ([]byte, 
 	if len(events) == 0 {
 		return nil, nil
 	}
-	txEvent := &indexEvent.TxEvent{
-		ChainName: i.chainInfo.ChainName,
-		Event: &indexEvent.TxEvent_CoinReceived{
-			CoinReceived: &indexEvent.CoinReceivedEvent{
-				Coin: &indexEvent.Coin{},
+	txEvent := &indexevent.TxEvent{
+		ChainName:  i.chainInfo.ChainName,
+		NotifyTime: timestamppb.Now(),
+		Event: &indexevent.TxEvent_CoinReceived{
+			CoinReceived: &indexevent.CoinReceivedEvent{
+				Coin: &indexevent.Coin{},
 			},
 		},
 	}
@@ -82,13 +84,14 @@ func (i *Indexer) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([]byte, erro
 		return nil, err
 	}
 	if wasSuccessful {
-		var txEvent = &indexEvent.TxEvent{
+		var txEvent = &indexevent.TxEvent{
 			ChainName:     i.chainInfo.ChainName,
 			WalletAddress: msg.ToAddress,
-			Event: &indexEvent.TxEvent_CoinReceived{
-				CoinReceived: &indexEvent.CoinReceivedEvent{
+			NotifyTime:    timestamppb.Now(),
+			Event: &indexevent.TxEvent_CoinReceived{
+				CoinReceived: &indexevent.CoinReceivedEvent{
 					Sender: msg.FromAddress,
-					Coin: &indexEvent.Coin{
+					Coin: &indexevent.Coin{
 						Amount: msg.Amount[0].Amount.String(),
 						Denom:  msg.Amount[0].Denom,
 					},
@@ -117,10 +120,11 @@ func (i *Indexer) handleMsgBeginUnlockingAll(_ *lockuptypes.MsgBeginUnlockingAll
 }
 
 func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx []byte) ([]byte, error) {
-	txEvent := &indexEvent.TxEvent{
-		ChainName: i.chainInfo.ChainName,
-		Event: &indexEvent.TxEvent_OsmosisPoolUnlock{
-			OsmosisPoolUnlock: &indexEvent.OsmosisPoolUnlockEvent{},
+	txEvent := &indexevent.TxEvent{
+		ChainName:  i.chainInfo.ChainName,
+		NotifyTime: timestamppb.Now(),
+		Event: &indexevent.TxEvent_OsmosisPoolUnlock{
+			OsmosisPoolUnlock: &indexevent.OsmosisPoolUnlockEvent{},
 		},
 	}
 	var owner, duration, unlockTime = "owner", "duration", "unlock_time"

@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"github.com/shifty11/blocklog-backend/database"
-	"github.com/shifty11/go-logger/log"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -22,18 +21,8 @@ var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Migrate the database",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := database.MigrateDb()
-		if err != nil {
-			log.Sugar.Panicf("failed to migrate database: %v", err)
-		} else {
-			log.Sugar.Info("database migrated successfully")
-			err := database.InitDb()
-			if err != nil {
-				log.Sugar.Infof("failed to init database: %v", err)
-			} else {
-				log.Sugar.Info("database initialized successfully")
-			}
-		}
+		database.MigrateDb()
+		database.InitDb()
 	},
 }
 

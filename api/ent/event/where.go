@@ -65,14 +65,14 @@ func UpdateTime(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldUpdateTime, v))
 }
 
-// Title applies equality check predicate on the "title" field. It's identical to TitleEQ.
-func Title(v string) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldTitle, v))
+// TxEvent applies equality check predicate on the "tx_event" field. It's identical to TxEventEQ.
+func TxEvent(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldTxEvent, v))
 }
 
-// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
-func Description(v string) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldDescription, v))
+// NotifyTime applies equality check predicate on the "notify_time" field. It's identical to NotifyTimeEQ.
+func NotifyTime(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldNotifyTime, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -155,134 +155,104 @@ func UpdateTimeLTE(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldUpdateTime, v))
 }
 
-// TitleEQ applies the EQ predicate on the "title" field.
-func TitleEQ(v string) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldTitle, v))
+// TypeEQ applies the EQ predicate on the "type" field.
+func TypeEQ(v Type) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldType, v))
 }
 
-// TitleNEQ applies the NEQ predicate on the "title" field.
-func TitleNEQ(v string) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldTitle, v))
+// TypeNEQ applies the NEQ predicate on the "type" field.
+func TypeNEQ(v Type) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldType, v))
 }
 
-// TitleIn applies the In predicate on the "title" field.
-func TitleIn(vs ...string) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldTitle, vs...))
+// TypeIn applies the In predicate on the "type" field.
+func TypeIn(vs ...Type) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldType, vs...))
 }
 
-// TitleNotIn applies the NotIn predicate on the "title" field.
-func TitleNotIn(vs ...string) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldTitle, vs...))
+// TypeNotIn applies the NotIn predicate on the "type" field.
+func TypeNotIn(vs ...Type) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldType, vs...))
 }
 
-// TitleGT applies the GT predicate on the "title" field.
-func TitleGT(v string) predicate.Event {
-	return predicate.Event(sql.FieldGT(FieldTitle, v))
+// TxEventEQ applies the EQ predicate on the "tx_event" field.
+func TxEventEQ(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldTxEvent, v))
 }
 
-// TitleGTE applies the GTE predicate on the "title" field.
-func TitleGTE(v string) predicate.Event {
-	return predicate.Event(sql.FieldGTE(FieldTitle, v))
+// TxEventNEQ applies the NEQ predicate on the "tx_event" field.
+func TxEventNEQ(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldTxEvent, v))
 }
 
-// TitleLT applies the LT predicate on the "title" field.
-func TitleLT(v string) predicate.Event {
-	return predicate.Event(sql.FieldLT(FieldTitle, v))
+// TxEventIn applies the In predicate on the "tx_event" field.
+func TxEventIn(vs ...[]byte) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldTxEvent, vs...))
 }
 
-// TitleLTE applies the LTE predicate on the "title" field.
-func TitleLTE(v string) predicate.Event {
-	return predicate.Event(sql.FieldLTE(FieldTitle, v))
+// TxEventNotIn applies the NotIn predicate on the "tx_event" field.
+func TxEventNotIn(vs ...[]byte) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldTxEvent, vs...))
 }
 
-// TitleContains applies the Contains predicate on the "title" field.
-func TitleContains(v string) predicate.Event {
-	return predicate.Event(sql.FieldContains(FieldTitle, v))
+// TxEventGT applies the GT predicate on the "tx_event" field.
+func TxEventGT(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldTxEvent, v))
 }
 
-// TitleHasPrefix applies the HasPrefix predicate on the "title" field.
-func TitleHasPrefix(v string) predicate.Event {
-	return predicate.Event(sql.FieldHasPrefix(FieldTitle, v))
+// TxEventGTE applies the GTE predicate on the "tx_event" field.
+func TxEventGTE(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldTxEvent, v))
 }
 
-// TitleHasSuffix applies the HasSuffix predicate on the "title" field.
-func TitleHasSuffix(v string) predicate.Event {
-	return predicate.Event(sql.FieldHasSuffix(FieldTitle, v))
+// TxEventLT applies the LT predicate on the "tx_event" field.
+func TxEventLT(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldTxEvent, v))
 }
 
-// TitleEqualFold applies the EqualFold predicate on the "title" field.
-func TitleEqualFold(v string) predicate.Event {
-	return predicate.Event(sql.FieldEqualFold(FieldTitle, v))
+// TxEventLTE applies the LTE predicate on the "tx_event" field.
+func TxEventLTE(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldTxEvent, v))
 }
 
-// TitleContainsFold applies the ContainsFold predicate on the "title" field.
-func TitleContainsFold(v string) predicate.Event {
-	return predicate.Event(sql.FieldContainsFold(FieldTitle, v))
+// NotifyTimeEQ applies the EQ predicate on the "notify_time" field.
+func NotifyTimeEQ(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldNotifyTime, v))
 }
 
-// DescriptionEQ applies the EQ predicate on the "description" field.
-func DescriptionEQ(v string) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldDescription, v))
+// NotifyTimeNEQ applies the NEQ predicate on the "notify_time" field.
+func NotifyTimeNEQ(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldNotifyTime, v))
 }
 
-// DescriptionNEQ applies the NEQ predicate on the "description" field.
-func DescriptionNEQ(v string) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldDescription, v))
+// NotifyTimeIn applies the In predicate on the "notify_time" field.
+func NotifyTimeIn(vs ...time.Time) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldNotifyTime, vs...))
 }
 
-// DescriptionIn applies the In predicate on the "description" field.
-func DescriptionIn(vs ...string) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldDescription, vs...))
+// NotifyTimeNotIn applies the NotIn predicate on the "notify_time" field.
+func NotifyTimeNotIn(vs ...time.Time) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldNotifyTime, vs...))
 }
 
-// DescriptionNotIn applies the NotIn predicate on the "description" field.
-func DescriptionNotIn(vs ...string) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldDescription, vs...))
+// NotifyTimeGT applies the GT predicate on the "notify_time" field.
+func NotifyTimeGT(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldNotifyTime, v))
 }
 
-// DescriptionGT applies the GT predicate on the "description" field.
-func DescriptionGT(v string) predicate.Event {
-	return predicate.Event(sql.FieldGT(FieldDescription, v))
+// NotifyTimeGTE applies the GTE predicate on the "notify_time" field.
+func NotifyTimeGTE(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldNotifyTime, v))
 }
 
-// DescriptionGTE applies the GTE predicate on the "description" field.
-func DescriptionGTE(v string) predicate.Event {
-	return predicate.Event(sql.FieldGTE(FieldDescription, v))
+// NotifyTimeLT applies the LT predicate on the "notify_time" field.
+func NotifyTimeLT(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldNotifyTime, v))
 }
 
-// DescriptionLT applies the LT predicate on the "description" field.
-func DescriptionLT(v string) predicate.Event {
-	return predicate.Event(sql.FieldLT(FieldDescription, v))
-}
-
-// DescriptionLTE applies the LTE predicate on the "description" field.
-func DescriptionLTE(v string) predicate.Event {
-	return predicate.Event(sql.FieldLTE(FieldDescription, v))
-}
-
-// DescriptionContains applies the Contains predicate on the "description" field.
-func DescriptionContains(v string) predicate.Event {
-	return predicate.Event(sql.FieldContains(FieldDescription, v))
-}
-
-// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
-func DescriptionHasPrefix(v string) predicate.Event {
-	return predicate.Event(sql.FieldHasPrefix(FieldDescription, v))
-}
-
-// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
-func DescriptionHasSuffix(v string) predicate.Event {
-	return predicate.Event(sql.FieldHasSuffix(FieldDescription, v))
-}
-
-// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
-func DescriptionEqualFold(v string) predicate.Event {
-	return predicate.Event(sql.FieldEqualFold(FieldDescription, v))
-}
-
-// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
-func DescriptionContainsFold(v string) predicate.Event {
-	return predicate.Event(sql.FieldContainsFold(FieldDescription, v))
+// NotifyTimeLTE applies the LTE predicate on the "notify_time" field.
+func NotifyTimeLTE(v time.Time) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldNotifyTime, v))
 }
 
 // HasEventListener applies the HasEdge predicate on the "event_listener" edge.

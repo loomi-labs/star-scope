@@ -22,10 +22,12 @@ type Event struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// Title holds the value of the "title" field.
-	Title string `json:"title,omitempty"`
-	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	// Type holds the value of the "type" field.
+	Type event.Type `json:"type,omitempty"`
+	// TxEvent holds the value of the "tx_event" field.
+	TxEvent []byte `json:"tx_event,omitempty"`
+	// NotifyTime holds the value of the "notify_time" field.
+	NotifyTime time.Time `json:"notify_time,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventQuery when eager-loading is set.
 	Edges                 EventEdges `json:"edges"`
@@ -60,11 +62,13 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case event.FieldTxEvent:
+			values[i] = new([]byte)
 		case event.FieldID:
 			values[i] = new(sql.NullInt64)
-		case event.FieldTitle, event.FieldDescription:
+		case event.FieldType:
 			values[i] = new(sql.NullString)
-		case event.FieldCreateTime, event.FieldUpdateTime:
+		case event.FieldCreateTime, event.FieldUpdateTime, event.FieldNotifyTime:
 			values[i] = new(sql.NullTime)
 		case event.ForeignKeys[0]: // event_listener_events
 			values[i] = new(sql.NullInt64)
@@ -101,17 +105,23 @@ func (e *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				e.UpdateTime = value.Time
 			}
-		case event.FieldTitle:
+		case event.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field title", values[i])
+				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
-				e.Title = value.String
+				e.Type = event.Type(value.String)
 			}
-		case event.FieldDescription:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field description", values[i])
+		case event.FieldTxEvent:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field tx_event", values[i])
+			} else if value != nil {
+				e.TxEvent = *value
+			}
+		case event.FieldNotifyTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field notify_time", values[i])
 			} else if value.Valid {
-				e.Description = value.String
+				e.NotifyTime = value.Time
 			}
 		case event.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -167,11 +177,14 @@ func (e *Event) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(e.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("title=")
-	builder.WriteString(e.Title)
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", e.Type))
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(e.Description)
+	builder.WriteString("tx_event=")
+	builder.WriteString(fmt.Sprintf("%v", e.TxEvent))
+	builder.WriteString(", ")
+	builder.WriteString("notify_time=")
+	builder.WriteString(e.NotifyTime.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

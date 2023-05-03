@@ -35,15 +35,29 @@ func (eu *EventUpdate) SetUpdateTime(t time.Time) *EventUpdate {
 	return eu
 }
 
-// SetTitle sets the "title" field.
-func (eu *EventUpdate) SetTitle(s string) *EventUpdate {
-	eu.mutation.SetTitle(s)
+// SetType sets the "type" field.
+func (eu *EventUpdate) SetType(e event.Type) *EventUpdate {
+	eu.mutation.SetType(e)
 	return eu
 }
 
-// SetDescription sets the "description" field.
-func (eu *EventUpdate) SetDescription(s string) *EventUpdate {
-	eu.mutation.SetDescription(s)
+// SetTxEvent sets the "tx_event" field.
+func (eu *EventUpdate) SetTxEvent(b []byte) *EventUpdate {
+	eu.mutation.SetTxEvent(b)
+	return eu
+}
+
+// SetNotifyTime sets the "notify_time" field.
+func (eu *EventUpdate) SetNotifyTime(t time.Time) *EventUpdate {
+	eu.mutation.SetNotifyTime(t)
+	return eu
+}
+
+// SetNillableNotifyTime sets the "notify_time" field if the given value is not nil.
+func (eu *EventUpdate) SetNillableNotifyTime(t *time.Time) *EventUpdate {
+	if t != nil {
+		eu.SetNotifyTime(*t)
+	}
 	return eu
 }
 
@@ -113,7 +127,20 @@ func (eu *EventUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (eu *EventUpdate) check() error {
+	if v, ok := eu.mutation.GetType(); ok {
+		if err := event.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Event.type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := eu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt))
 	if ps := eu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -125,11 +152,14 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := eu.mutation.UpdateTime(); ok {
 		_spec.SetField(event.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := eu.mutation.Title(); ok {
-		_spec.SetField(event.FieldTitle, field.TypeString, value)
+	if value, ok := eu.mutation.GetType(); ok {
+		_spec.SetField(event.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := eu.mutation.Description(); ok {
-		_spec.SetField(event.FieldDescription, field.TypeString, value)
+	if value, ok := eu.mutation.TxEvent(); ok {
+		_spec.SetField(event.FieldTxEvent, field.TypeBytes, value)
+	}
+	if value, ok := eu.mutation.NotifyTime(); ok {
+		_spec.SetField(event.FieldNotifyTime, field.TypeTime, value)
 	}
 	if eu.mutation.EventListenerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -186,15 +216,29 @@ func (euo *EventUpdateOne) SetUpdateTime(t time.Time) *EventUpdateOne {
 	return euo
 }
 
-// SetTitle sets the "title" field.
-func (euo *EventUpdateOne) SetTitle(s string) *EventUpdateOne {
-	euo.mutation.SetTitle(s)
+// SetType sets the "type" field.
+func (euo *EventUpdateOne) SetType(e event.Type) *EventUpdateOne {
+	euo.mutation.SetType(e)
 	return euo
 }
 
-// SetDescription sets the "description" field.
-func (euo *EventUpdateOne) SetDescription(s string) *EventUpdateOne {
-	euo.mutation.SetDescription(s)
+// SetTxEvent sets the "tx_event" field.
+func (euo *EventUpdateOne) SetTxEvent(b []byte) *EventUpdateOne {
+	euo.mutation.SetTxEvent(b)
+	return euo
+}
+
+// SetNotifyTime sets the "notify_time" field.
+func (euo *EventUpdateOne) SetNotifyTime(t time.Time) *EventUpdateOne {
+	euo.mutation.SetNotifyTime(t)
+	return euo
+}
+
+// SetNillableNotifyTime sets the "notify_time" field if the given value is not nil.
+func (euo *EventUpdateOne) SetNillableNotifyTime(t *time.Time) *EventUpdateOne {
+	if t != nil {
+		euo.SetNotifyTime(*t)
+	}
 	return euo
 }
 
@@ -277,7 +321,20 @@ func (euo *EventUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (euo *EventUpdateOne) check() error {
+	if v, ok := euo.mutation.GetType(); ok {
+		if err := event.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Event.type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (euo *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error) {
+	if err := euo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt))
 	id, ok := euo.mutation.ID()
 	if !ok {
@@ -306,11 +363,14 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error
 	if value, ok := euo.mutation.UpdateTime(); ok {
 		_spec.SetField(event.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := euo.mutation.Title(); ok {
-		_spec.SetField(event.FieldTitle, field.TypeString, value)
+	if value, ok := euo.mutation.GetType(); ok {
+		_spec.SetField(event.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := euo.mutation.Description(); ok {
-		_spec.SetField(event.FieldDescription, field.TypeString, value)
+	if value, ok := euo.mutation.TxEvent(); ok {
+		_spec.SetField(event.FieldTxEvent, field.TypeBytes, value)
+	}
+	if value, ok := euo.mutation.NotifyTime(); ok {
+		_spec.SetField(event.FieldNotifyTime, field.TypeTime, value)
 	}
 	if euo.mutation.EventListenerCleared() {
 		edge := &sqlgraph.EdgeSpec{

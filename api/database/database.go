@@ -210,22 +210,23 @@ func CreateMigrations(dbCon string) {
 	}
 }
 
-func MigrateDb() error {
+func MigrateDb() {
 	m, err := goMigrate.New("file://database/migrations/", DbCon())
 	if err != nil {
-		return err
+		log.Sugar.Panicf("failed to migrate database: %v", err)
 	}
 	err = m.Up()
 	if err != nil {
 		if err == goMigrate.ErrNoChange {
 			log.Sugar.Info("no migration needed")
-			return nil
+		} else {
+			log.Sugar.Panicf("failed to migrate database: %v", err)
 		}
 	}
-	return err
+	log.Sugar.Info("database migrated successfully")
 }
 
-func InitDb() error {
+func InitDb() {
 	client := connect()
 	ctx := context.Background()
 	doesOsmosisExist := client.Chain.
@@ -239,10 +240,10 @@ func InitDb() error {
 			SetImage("").
 			Save(ctx)
 		if err != nil {
-			return err
+			log.Sugar.Panicf("failed to init database: %v", err)
 		}
 	}
-	return nil
+	log.Sugar.Info("database initialized successfully")
 }
 
 type DbManagers struct {

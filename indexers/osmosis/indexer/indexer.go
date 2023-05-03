@@ -47,7 +47,7 @@ func NewIndexer(baseUrl string, kafkaAddresses []string) Indexer {
 	}
 }
 
-func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse) {
+func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse) error {
 	var data = blockResponse.GetBlock().GetData()
 	var txs = data.GetTxs()
 	var cntSkipped = 0
@@ -56,8 +56,7 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 	for _, tx := range txs {
 		txDecoded, err := i.encodingConfig.TxConfig.TxDecoder()(tx)
 		if err != nil {
-			log.Sugar.Errorf("Error decoding tx: %v", err)
-			break
+			return err
 		}
 		cntMsgs += len(txDecoded.GetMsgs())
 		for _, anyMsg := range txDecoded.GetMsgs() {
@@ -77,15 +76,11 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 				cntSkipped++
 			}
 			if err != nil {
-				log.Sugar.Errorf("Error handling msg: %v", err)
-				break
+				return err
 			}
 			if protoMsg != nil {
 				protoMsgs = append(protoMsgs, protoMsg)
 			}
-		}
-		if err != nil {
-			break
 		}
 	}
 	if len(protoMsgs) > 0 {
@@ -94,6 +89,7 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 	var cntProcessed = cntMsgs - cntSkipped
 	log.Sugar.Debugf("Block %v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
 		blockResponse.GetBlock().GetHeader().Height, cntMsgs, cntSkipped, cntProcessed, len(protoMsgs))
+	return nil
 }
 
 func (i *Indexer) getTxResult(tx []byte) (*txtypes.GetTxResponse, error) {
@@ -211,8 +207,13 @@ func (i *Indexer) StartIndexing() {
 				log.Sugar.Panicf("Failed to get block: %v %v", status, err)
 			}
 		} else {
-			i.handleBlock(&blockResponse)
-			i.updateHeight(&syncStatus)
+			err := i.handleBlock(&blockResponse)
+			if err != nil {
+				log.Sugar.Errorf("Failed to handle block (try again): %v", err)
+				time.Sleep(200 * time.Millisecond)
+			} else {
+				i.updateHeight(&syncStatus)
+			}
 		}
 		if syncStatus.Height >= syncStatus.LatestHeight {
 			time.Sleep(1 * time.Second)
