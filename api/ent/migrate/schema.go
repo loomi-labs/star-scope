@@ -58,8 +58,9 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "title", Type: field.TypeString},
-		{Name: "description", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock"}},
+		{Name: "tx_event", Type: field.TypeBytes},
+		{Name: "notify_time", Type: field.TypeTime},
 		{Name: "event_listener_events", Type: field.TypeInt, Nullable: true},
 	}
 	// EventsTable holds the schema information for the "events" table.
@@ -70,7 +71,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "events_event_listeners_events",
-				Columns:    []*schema.Column{EventsColumns[5]},
+				Columns:    []*schema.Column{EventsColumns[6]},
 				RefColumns: []*schema.Column{EventListenersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

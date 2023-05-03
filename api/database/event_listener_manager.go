@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"github.com/shifty11/blocklog-backend/ent"
+	"github.com/shifty11/blocklog-backend/ent/event"
+	"time"
 )
 
 type EventListenerManager struct {
@@ -14,5 +16,23 @@ func NewEventListenerManager(client *ent.Client) *EventListenerManager {
 }
 
 func (m *EventListenerManager) QueryAll(ctx context.Context) []*ent.EventListener {
-	return m.client.EventListener.Query().AllX(ctx)
+	return m.client.EventListener.
+		Query().
+		AllX(ctx)
+}
+
+func (m *EventListenerManager) UpdateAddEvent(
+	ctx context.Context,
+	el *ent.EventListener,
+	eventType event.Type,
+	notifyTime time.Time,
+	txEvent []byte,
+) (*ent.Event, error) {
+	return m.client.Event.
+		Create().
+		SetEventListener(el).
+		SetType(eventType).
+		SetNotifyTime(notifyTime).
+		SetTxEvent(txEvent).
+		Save(ctx)
 }

@@ -11,7 +11,7 @@ import (
 func GetAndDecode(url string, encodingConfig noapptest.TestEncodingConfig, target proto.Message) (int, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return 0, err
+		return 503, err
 	}
 	if resp.StatusCode != 200 {
 		return resp.StatusCode, errors.New(resp.Status)

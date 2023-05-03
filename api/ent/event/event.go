@@ -3,6 +3,7 @@
 package event
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -18,10 +19,12 @@ const (
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
-	// FieldTitle holds the string denoting the title field in the database.
-	FieldTitle = "title"
-	// FieldDescription holds the string denoting the description field in the database.
-	FieldDescription = "description"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
+	// FieldTxEvent holds the string denoting the tx_event field in the database.
+	FieldTxEvent = "tx_event"
+	// FieldNotifyTime holds the string denoting the notify_time field in the database.
+	FieldNotifyTime = "notify_time"
 	// EdgeEventListener holds the string denoting the event_listener edge name in mutations.
 	EdgeEventListener = "event_listener"
 	// Table holds the table name of the event in the database.
@@ -40,8 +43,9 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
-	FieldTitle,
-	FieldDescription,
+	FieldType,
+	FieldTxEvent,
+	FieldNotifyTime,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "events"
@@ -72,7 +76,32 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultNotifyTime holds the default value on creation for the "notify_time" field.
+	DefaultNotifyTime time.Time
 )
+
+// Type defines the type for the "type" enum field.
+type Type string
+
+// Type values.
+const (
+	TypeTxEvent_CoinReceived      Type = "TxEvent_CoinReceived"
+	TypeTxEvent_OsmosisPoolUnlock Type = "TxEvent_OsmosisPoolUnlock"
+)
+
+func (_type Type) String() string {
+	return string(_type)
+}
+
+// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
+func TypeValidator(_type Type) error {
+	switch _type {
+	case TypeTxEvent_CoinReceived, TypeTxEvent_OsmosisPoolUnlock:
+		return nil
+	default:
+		return fmt.Errorf("event: invalid enum value for type field: %q", _type)
+	}
+}
 
 // OrderOption defines the ordering options for the Event queries.
 type OrderOption func(*sql.Selector)
@@ -92,14 +121,14 @@ func ByUpdateTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdateTime, opts...).ToFunc()
 }
 
-// ByTitle orders the results by the title field.
-func ByTitle(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTitle, opts...).ToFunc()
+// ByType orders the results by the type field.
+func ByType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
-// ByDescription orders the results by the description field.
-func ByDescription(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+// ByNotifyTime orders the results by the notify_time field.
+func ByNotifyTime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNotifyTime, opts...).ToFunc()
 }
 
 // ByEventListenerField orders the results by event_listener field.
