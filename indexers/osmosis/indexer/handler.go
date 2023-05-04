@@ -1,12 +1,12 @@
 package indexer
 
 import (
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"errors"
 	"fmt"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
-	"github.com/loomi-labs/star-scope/indexers/osmosis/indexevent"
 	lockuptypes "github.com/osmosis-labs/osmosis/v15/x/lockup/types"
 	"github.com/shifty11/go-logger/log"
 	"github.com/tendermint/tendermint/abci/types"

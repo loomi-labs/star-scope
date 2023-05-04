@@ -57,7 +57,6 @@ services:
       KAFKA_RESTART_ATTEMPTS: '10'
       KAFKA_RESTART_DELAY: '5'
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-#      KAFKA_CREATE_TOPICS: "index-events:1:1"
       ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: '0'
     restart: unless-stopped
 
