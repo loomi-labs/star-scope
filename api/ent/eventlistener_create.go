@@ -10,10 +10,10 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/shifty11/blocklog-backend/ent/chain"
-	"github.com/shifty11/blocklog-backend/ent/channel"
-	"github.com/shifty11/blocklog-backend/ent/event"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/channel"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 )
 
 // EventListenerCreate is the builder for creating a EventListener entity.

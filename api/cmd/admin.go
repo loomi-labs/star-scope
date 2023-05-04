@@ -6,8 +6,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/shifty11/blocklog-backend/database"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/database"
+	"github.com/loomi-labs/star-scope/ent/user"
 	"os"
 
 	"github.com/spf13/cobra"

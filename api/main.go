@@ -2,8 +2,8 @@ package main
 
 import (
 	_ "github.com/hedwigz/entviz"
-	"github.com/shifty11/blocklog-backend/cmd"
-	"github.com/shifty11/blocklog-backend/database"
+	"github.com/loomi-labs/star-scope/cmd"
+	"github.com/loomi-labs/star-scope/database"
 	"github.com/shifty11/go-logger/log"
 )
 

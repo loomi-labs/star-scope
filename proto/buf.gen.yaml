@@ -2,17 +2,17 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/shifty11/blocklog-backend
+    default: github.com/loomi-labs/star-scope
 #    except:
 #      - buf.build/cosmos/cosmos-sdk
 #      - buf.build/cosmos/gogo-proto
 plugins:
   - plugin: buf.build/protocolbuffers/go
     out: ../api
-    opt: module=github.com/shifty11/blocklog-backend
+    opt: module=github.com/loomi-labs/star-scope
 #  - name: gocosmos
 #    out: ../api
 #    opt: plugins=grpc,Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/struct.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/wrappers.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types,Mcosmos/orm/v1alpha1/orm.proto=github.com/cosmos/cosmos-sdk/api/cosmos/orm/v1alpha1
   - plugin: buf.build/bufbuild/connect-go
     out: ../api
-    opt: module=github.com/shifty11/blocklog-backend
+    opt: module=github.com/loomi-labs/star-scope

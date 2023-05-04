@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package blocklog.grpc;
+package starscope.grpc;
 
-option go_package = "github.com/shifty11/blocklog-backend/grpc/auth/authpb";
+option go_package = "github.com/loomi-labs/star-scope/grpc/auth/authpb";
 
 service AuthService {
   rpc KeplrLogin (KeplrLoginRequest) returns (LoginResponse) {}

@@ -8,7 +8,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	projectpb "github.com/shifty11/blocklog-backend/grpc/project/projectpb"
+	projectpb "github.com/loomi-labs/star-scope/grpc/project/projectpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
@@ -23,7 +23,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// ProjectServiceName is the fully-qualified name of the ProjectService service.
-	ProjectServiceName = "blocklog.grpc.ProjectService"
+	ProjectServiceName = "starscope.grpc.ProjectService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -36,15 +36,15 @@ const (
 const (
 	// ProjectServiceListProjectsProcedure is the fully-qualified name of the ProjectService's
 	// ListProjects RPC.
-	ProjectServiceListProjectsProcedure = "/blocklog.grpc.ProjectService/ListProjects"
+	ProjectServiceListProjectsProcedure = "/starscope.grpc.ProjectService/ListProjects"
 )
 
-// ProjectServiceClient is a client for the blocklog.grpc.ProjectService service.
+// ProjectServiceClient is a client for the starscope.grpc.ProjectService service.
 type ProjectServiceClient interface {
 	ListProjects(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[projectpb.ListProjectsResponse], error)
 }
 
-// NewProjectServiceClient constructs a client for the blocklog.grpc.ProjectService service. By
+// NewProjectServiceClient constructs a client for the starscope.grpc.ProjectService service. By
 // default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
 // and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
 // connect.WithGRPC() or connect.WithGRPCWeb() options.
@@ -67,12 +67,12 @@ type projectServiceClient struct {
 	listProjects *connect_go.Client[emptypb.Empty, projectpb.ListProjectsResponse]
 }
 
-// ListProjects calls blocklog.grpc.ProjectService.ListProjects.
+// ListProjects calls starscope.grpc.ProjectService.ListProjects.
 func (c *projectServiceClient) ListProjects(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[projectpb.ListProjectsResponse], error) {
 	return c.listProjects.CallUnary(ctx, req)
 }
 
-// ProjectServiceHandler is an implementation of the blocklog.grpc.ProjectService service.
+// ProjectServiceHandler is an implementation of the starscope.grpc.ProjectService service.
 type ProjectServiceHandler interface {
 	ListProjects(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[projectpb.ListProjectsResponse], error)
 }
@@ -89,12 +89,12 @@ func NewProjectServiceHandler(svc ProjectServiceHandler, opts ...connect_go.Hand
 		svc.ListProjects,
 		opts...,
 	))
-	return "/blocklog.grpc.ProjectService/", mux
+	return "/starscope.grpc.ProjectService/", mux
 }
 
 // UnimplementedProjectServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedProjectServiceHandler struct{}
 
 func (UnimplementedProjectServiceHandler) ListProjects(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[projectpb.ListProjectsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("blocklog.grpc.ProjectService.ListProjects is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.ProjectService.ListProjects is not implemented"))
 }

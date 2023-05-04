@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"github.com/shifty11/blocklog-backend/common"
+	"github.com/loomi-labs/star-scope/common"
 )
 
 // User holds the schema definition for the User entity.

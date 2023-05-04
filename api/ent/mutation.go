@@ -11,13 +11,13 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/shifty11/blocklog-backend/ent/chain"
-	"github.com/shifty11/blocklog-backend/ent/channel"
-	"github.com/shifty11/blocklog-backend/ent/event"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
-	"github.com/shifty11/blocklog-backend/ent/predicate"
-	"github.com/shifty11/blocklog-backend/ent/project"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/channel"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/project"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 const (

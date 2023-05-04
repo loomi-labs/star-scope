@@ -1,17 +1,17 @@
 {
   "Servers": {
     "1": {
-      "Name": "Blocklog (dev)",
-      "Group": "Blocklog",
+      "Name": "Star Scope (dev)",
+      "Group": "Star Scope",
       "Host": "db",
       "Port": 5432,
-      "MaintenanceDB": "blocklog-db",
+      "MaintenanceDB": "star-scope-db",
       "Username": "postgres",
       "PassFile": "/pgpass",
       "SSLMode": "prefer"
     },
     "2": {
-      "Name": "Blocklog Test (dev)",
+      "Name": "Star Scope Test (dev)",
       "Group": "Servers",
       "Host": "db",
       "Port": 5433,

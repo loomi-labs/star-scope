@@ -4,7 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/shifty11/blocklog-backend/database"
+	"github.com/loomi-labs/star-scope/database"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -33,7 +33,7 @@ var createMigrationsCmd = &cobra.Command{
 	Long: `Create migrations based on ent/schema/*.go files
 
 Example with custom db:
-go run main.go createMigrations postgres://postgres:postgres@localhost:5432/blocklog-db?sslmode=disable&TimeZone=Europe/Zurich
+go run main.go createMigrations postgres://postgres:postgres@localhost:5432/star-scope-db?sslmode=disable&TimeZone=Europe/Zurich
 `,
 	Args: cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {

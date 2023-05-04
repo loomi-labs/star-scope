@@ -3,9 +3,9 @@ package indexer
 import (
 	"context"
 	connect_go "github.com/bufbuild/connect-go"
-	"github.com/shifty11/blocklog-backend/database"
-	"github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb"
-	"github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb/indexerpbconnect"
+	"github.com/loomi-labs/star-scope/database"
+	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb"
+	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb/indexerpbconnect"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

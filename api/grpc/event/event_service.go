@@ -3,12 +3,12 @@ package event
 import (
 	"context"
 	connect_go "github.com/bufbuild/connect-go"
-	"github.com/shifty11/blocklog-backend/common"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/grpc/event/eventpb"
-	"github.com/shifty11/blocklog-backend/grpc/event/eventpb/eventpbconnect"
-	"github.com/shifty11/blocklog-backend/grpc/types"
-	"github.com/shifty11/blocklog-backend/kafka"
+	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
+	"github.com/loomi-labs/star-scope/grpc/types"
+	"github.com/loomi-labs/star-scope/kafka"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 )

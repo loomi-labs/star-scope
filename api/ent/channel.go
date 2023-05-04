@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/shifty11/blocklog-backend/ent/channel"
-	"github.com/shifty11/blocklog-backend/ent/project"
+	"github.com/loomi-labs/star-scope/ent/channel"
+	"github.com/loomi-labs/star-scope/ent/project"
 )
 
 // Channel is the model entity for the Channel schema.

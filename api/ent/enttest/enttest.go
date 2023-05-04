@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/shifty11/blocklog-backend/ent"
+	"github.com/loomi-labs/star-scope/ent"
 	// required by schema hooks.
-	_ "github.com/shifty11/blocklog-backend/ent/runtime"
+	_ "github.com/loomi-labs/star-scope/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/shifty11/blocklog-backend/ent/migrate"
+	"github.com/loomi-labs/star-scope/ent/migrate"
 )
 
 type (

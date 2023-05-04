@@ -2,7 +2,7 @@
 
 package runtime
 
-// The schema-stitching logic is generated in github.com/shifty11/blocklog-backend/ent/runtime.go
+// The schema-stitching logic is generated in github.com/loomi-labs/star-scope/ent/runtime.go
 
 const (
 	Version = "v0.12.2"                                         // Version of ent codegen.

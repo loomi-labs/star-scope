@@ -11,9 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/shifty11/blocklog-backend/ent/chain"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
-	"github.com/shifty11/blocklog-backend/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/predicate"
 )
 
 // ChainQuery is the builder for querying Chain entities.

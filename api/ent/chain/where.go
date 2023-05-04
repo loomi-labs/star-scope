@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/shifty11/blocklog-backend/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.

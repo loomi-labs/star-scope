@@ -3,7 +3,7 @@ version: '3.9'
 services:
   db:
     image: postgres:14.5
-    container_name: blocklog_db
+    container_name: starscope_db
     ports:
       - "5432:5432"
     volumes:
@@ -11,7 +11,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=blocklog-db
+      - POSTGRES_DB=star-scope-db
     healthcheck:
       test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
       interval: 5s
@@ -20,26 +20,26 @@ services:
 
   db-migration:
     build: api
-    container_name: blocklog_db_migration
+    container_name: starscope_db_migration
     working_dir: /app
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/blocklog-db?sslmode=disable
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/star-scope-db?sslmode=disable
     env_file:
       - api/.env
-    command: "/blocklog db migrate"
+    command: "/starscope db migrate"
     depends_on:
       db:
         condition: service_healthy
 
   grpc:
     build: api
-    container_name: blocklog_grpc
+    container_name: starscope_grpc
     working_dir: /app
     ports:
       - "50001:50001"
     env_file:
       - api/.env
-    command: "/blocklog service grpc"
+    command: "/starscope service grpc"
     depends_on:
       db:
         condition: service_healthy
@@ -48,4 +48,4 @@ services:
 
 volumes:
   data:
-    name: blocklog_data
+    name: starscope_data

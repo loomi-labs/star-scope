@@ -8,7 +8,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	indexerpb "github.com/shifty11/blocklog-backend/grpc/indexer/indexerpb"
+	indexerpb "github.com/loomi-labs/star-scope/grpc/indexer/indexerpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
@@ -23,7 +23,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// IndexerServiceName is the fully-qualified name of the IndexerService service.
-	IndexerServiceName = "blocklog.grpc.IndexerService"
+	IndexerServiceName = "starscope.grpc.IndexerService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -36,19 +36,19 @@ const (
 const (
 	// IndexerServiceGetHeightProcedure is the fully-qualified name of the IndexerService's GetHeight
 	// RPC.
-	IndexerServiceGetHeightProcedure = "/blocklog.grpc.IndexerService/GetHeight"
+	IndexerServiceGetHeightProcedure = "/starscope.grpc.IndexerService/GetHeight"
 	// IndexerServiceUpdateHeightProcedure is the fully-qualified name of the IndexerService's
 	// UpdateHeight RPC.
-	IndexerServiceUpdateHeightProcedure = "/blocklog.grpc.IndexerService/UpdateHeight"
+	IndexerServiceUpdateHeightProcedure = "/starscope.grpc.IndexerService/UpdateHeight"
 )
 
-// IndexerServiceClient is a client for the blocklog.grpc.IndexerService service.
+// IndexerServiceClient is a client for the starscope.grpc.IndexerService service.
 type IndexerServiceClient interface {
 	GetHeight(context.Context, *connect_go.Request[indexerpb.GetHeightRequest]) (*connect_go.Response[indexerpb.Height], error)
 	UpdateHeight(context.Context, *connect_go.Request[indexerpb.UpdateHeightRequest]) (*connect_go.Response[emptypb.Empty], error)
 }
 
-// NewIndexerServiceClient constructs a client for the blocklog.grpc.IndexerService service. By
+// NewIndexerServiceClient constructs a client for the starscope.grpc.IndexerService service. By
 // default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
 // and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
 // connect.WithGRPC() or connect.WithGRPCWeb() options.
@@ -77,17 +77,17 @@ type indexerServiceClient struct {
 	updateHeight *connect_go.Client[indexerpb.UpdateHeightRequest, emptypb.Empty]
 }
 
-// GetHeight calls blocklog.grpc.IndexerService.GetHeight.
+// GetHeight calls starscope.grpc.IndexerService.GetHeight.
 func (c *indexerServiceClient) GetHeight(ctx context.Context, req *connect_go.Request[indexerpb.GetHeightRequest]) (*connect_go.Response[indexerpb.Height], error) {
 	return c.getHeight.CallUnary(ctx, req)
 }
 
-// UpdateHeight calls blocklog.grpc.IndexerService.UpdateHeight.
+// UpdateHeight calls starscope.grpc.IndexerService.UpdateHeight.
 func (c *indexerServiceClient) UpdateHeight(ctx context.Context, req *connect_go.Request[indexerpb.UpdateHeightRequest]) (*connect_go.Response[emptypb.Empty], error) {
 	return c.updateHeight.CallUnary(ctx, req)
 }
 
-// IndexerServiceHandler is an implementation of the blocklog.grpc.IndexerService service.
+// IndexerServiceHandler is an implementation of the starscope.grpc.IndexerService service.
 type IndexerServiceHandler interface {
 	GetHeight(context.Context, *connect_go.Request[indexerpb.GetHeightRequest]) (*connect_go.Response[indexerpb.Height], error)
 	UpdateHeight(context.Context, *connect_go.Request[indexerpb.UpdateHeightRequest]) (*connect_go.Response[emptypb.Empty], error)
@@ -110,16 +110,16 @@ func NewIndexerServiceHandler(svc IndexerServiceHandler, opts ...connect_go.Hand
 		svc.UpdateHeight,
 		opts...,
 	))
-	return "/blocklog.grpc.IndexerService/", mux
+	return "/starscope.grpc.IndexerService/", mux
 }
 
 // UnimplementedIndexerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedIndexerServiceHandler struct{}
 
 func (UnimplementedIndexerServiceHandler) GetHeight(context.Context, *connect_go.Request[indexerpb.GetHeightRequest]) (*connect_go.Response[indexerpb.Height], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("blocklog.grpc.IndexerService.GetHeight is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.GetHeight is not implemented"))
 }
 
 func (UnimplementedIndexerServiceHandler) UpdateHeight(context.Context, *connect_go.Request[indexerpb.UpdateHeightRequest]) (*connect_go.Response[emptypb.Empty], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("blocklog.grpc.IndexerService.UpdateHeight is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.UpdateHeight is not implemented"))
 }

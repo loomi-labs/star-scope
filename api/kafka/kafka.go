@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/loomi-labs/star-scope/database"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
+	"github.com/loomi-labs/star-scope/indexevent"
 	"github.com/segmentio/kafka-go"
-	"github.com/shifty11/blocklog-backend/database"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/ent/event"
-	"github.com/shifty11/blocklog-backend/grpc/event/eventpb"
-	"github.com/shifty11/blocklog-backend/indexevent"
 	"github.com/shifty11/go-logger/log"
 	"time"
 )
@@ -102,6 +102,7 @@ func (k *Kafka) getEventListenerMap() map[string]*ent.EventListener {
 }
 
 func (k *Kafka) ConsumeIndexedEvents() {
+	log.Sugar.Info("Start consuming indexed events")
 	r := k.indexedEventsReader()
 	defer k.closeReader(r)
 
