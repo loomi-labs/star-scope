@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   pgadmin:
-    image: dpage/pgadmin4:6.21
+    image: dpage/pgadmin4:7.0
     container_name: starscope_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
@@ -37,7 +37,7 @@ services:
       driver: "none"
     volumes:
        - pgadmin:/root/.pgadmin
-       - ./docker/pgadmin/local-db-servers.json:/pgadmin4/servers.json
+       - ./data/docker/pgadmin/local-db-servers.json:/pgadmin4/servers.json
     ports:
       - "5050:80"
     restart: unless-stopped

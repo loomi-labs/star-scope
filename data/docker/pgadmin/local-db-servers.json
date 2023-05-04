@@ -12,7 +12,7 @@
     },
     "2": {
       "Name": "Star Scope Test (dev)",
-      "Group": "Servers",
+      "Group": "Star Scope",
       "Host": "db",
       "Port": 5433,
       "MaintenanceDB": "postgres",
