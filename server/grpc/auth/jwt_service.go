@@ -28,13 +28,13 @@ func AccessibleRoles() map[string][]Role {
 	const path = "/starscope.grpc"
 	const authService = path + ".AuthService/"
 	const indexerService = path + ".IndexerService/"
-	const projectService = path + ".ProjectService/"
+	const userService = path + ".UserService/"
 	const eventService = path + ".EventService/"
 
 	roles := map[string][]Role{
 		authService + "KeplrLogin":         {Unauthenticated, User, Admin},
 		authService + "RefreshAccessToken": {Unauthenticated, User, Admin},
-		projectService + "ListProjects":    {User, Admin},
+		userService + "GetUser":            {User, Admin},
 		eventService + "EventStream":       {User, Admin},
 		indexerService + "GetHeight":       {Token},
 		indexerService + "UpdateHeight":    {Token},

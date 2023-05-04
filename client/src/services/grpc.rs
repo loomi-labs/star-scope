@@ -8,6 +8,7 @@ use crate::config::keys;
 use crate::services::auth::AuthService;
 use crate::services::grpc::auth_service_client::AuthServiceClient;
 use crate::services::grpc::event_service_client::EventServiceClient;
+use crate::services::grpc::user_service_client::UserServiceClient;
 
 tonic::include_proto!("starscope.grpc");
 
@@ -46,5 +47,9 @@ impl GrpcClient {
 
     pub fn get_auth_service(&self) -> AuthServiceClient<Client> {
         AuthServiceClient::new(Client::new(self.endpoint_url.clone()))
+    }
+
+    pub fn get_user_service(&self) -> UserServiceClient<Client> {
+        UserServiceClient::new(Client::new(self.endpoint_url.clone()))
     }
 }

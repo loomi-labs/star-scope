@@ -11,8 +11,8 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
 	"github.com/loomi-labs/star-scope/grpc/indexer"
 	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb/indexerpbconnect"
-	"github.com/loomi-labs/star-scope/grpc/project"
-	"github.com/loomi-labs/star-scope/grpc/project/projectpb/projectpbconnect"
+	"github.com/loomi-labs/star-scope/grpc/user"
+	"github.com/loomi-labs/star-scope/grpc/user/userpb/userpbconnect"
 	"github.com/loomi-labs/star-scope/kafka"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
@@ -78,8 +78,8 @@ func (s GRPCServer) Run() {
 		indexer.NewIndexerServiceHandler(s.dbManagers),
 		interceptors,
 	))
-	mux.Handle(projectpbconnect.NewProjectServiceHandler(
-		project.NewProjectServiceHandler(),
+	mux.Handle(userpbconnect.NewUserServiceHandler(
+		user.NewUserServiceHandler(),
 		interceptors,
 	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
