@@ -8,18 +8,18 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/shifty11/blocklog-backend/ent/migrate"
+	"github.com/loomi-labs/star-scope/ent/migrate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/shifty11/blocklog-backend/ent/chain"
-	"github.com/shifty11/blocklog-backend/ent/channel"
-	"github.com/shifty11/blocklog-backend/ent/event"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
-	"github.com/shifty11/blocklog-backend/ent/project"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/channel"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/project"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // Client is the client that holds all ent builders.

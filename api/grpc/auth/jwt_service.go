@@ -3,8 +3,8 @@ package auth
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/user"
 	"time"
 )
 
@@ -25,7 +25,7 @@ const (
 )
 
 func AccessibleRoles() map[string][]Role {
-	const path = "/blocklog.grpc"
+	const path = "/starscope.grpc"
 	const authService = path + ".AuthService/"
 	const indexerService = path + ".IndexerService/"
 	const projectService = path + ".ProjectService/"

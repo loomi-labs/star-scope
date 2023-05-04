@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/ent/event"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/event"
 	"time"
 )
 

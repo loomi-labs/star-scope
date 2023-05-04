@@ -3,7 +3,7 @@ version: '3.9'
 services:
   db:
     image: postgres:14.5
-    container_name: blocklog_db
+    container_name: starscope_db
     ports:
       - "5432:5432"
     volumes:
@@ -11,12 +11,12 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=blocklog-db
+      - POSTGRES_DB=star-scope-db
     restart: unless-stopped
 
   db-test:
     image: postgres:14.5
-    container_name: blocklog_test_db
+    container_name: starscope_test_db
     ports:
       - "5433:5432"
     volumes:
@@ -24,12 +24,12 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=blocklog-db
+      - POSTGRES_DB=star-scope-db
     restart: unless-stopped
 
   pgadmin:
     image: dpage/pgadmin4:6.21
-    container_name: blocklog_pgadmin
+    container_name: starscope_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
@@ -44,7 +44,7 @@ services:
 
   kafka:
     image: obsidiandynamics/kafka
-    container_name: blocklog_kafka
+    container_name: starscope_kafka
     ports:
       - '2181:2181'
       - '9092:9092'
@@ -63,7 +63,7 @@ services:
 
   kafdrop:
     image: obsidiandynamics/kafdrop
-    container_name: blocklog_kafdrop
+    container_name: starscope_kafdrop
     ports:
       - '9000:9000'
     environment:
@@ -75,8 +75,8 @@ services:
 
 volumes:
   data:
-    name: blocklog_data
+    name: starscope_data
   test_data:
-    name: blocklog_test_data
+    name: starscope_test_data
   pgadmin:
-    name: blocklog_pgadmin
+    name: starscope_pgadmin

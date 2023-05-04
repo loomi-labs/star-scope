@@ -10,9 +10,9 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/shifty11/blocklog-backend/ent/channel"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
-	"github.com/shifty11/blocklog-backend/ent/project"
+	"github.com/loomi-labs/star-scope/ent/channel"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/project"
 )
 
 // ChannelCreate is the builder for creating a Channel entity.

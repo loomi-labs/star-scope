@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/shifty11/blocklog-backend/ent/predicate"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // UserDelete is the builder for deleting a User entity.

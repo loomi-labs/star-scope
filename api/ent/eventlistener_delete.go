@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
-	"github.com/shifty11/blocklog-backend/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/predicate"
 )
 
 // EventListenerDelete is the builder for deleting a EventListener entity.

@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/ent/chain"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/chain"
 )
 
 type ChainManager struct {

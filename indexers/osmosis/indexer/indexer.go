@@ -1,8 +1,8 @@
 package indexer
 
 import (
-	"buf.build/gen/go/rapha/blocklog/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
-	"buf.build/gen/go/rapha/blocklog/protocolbuffers/go/grpc/indexer/indexerpb"
+	"buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,9 +13,9 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	"github.com/loomi-labs/star-scope/indexers/osmosis/client"
 	"github.com/osmosis-labs/osmosis/osmoutils/noapptest"
 	lockuptypes "github.com/osmosis-labs/osmosis/v15/x/lockup/types"
-	"github.com/shifty11/blocklog-backend/indexers/osmosis/client"
 	"github.com/shifty11/go-logger/log"
 	"github.com/tendermint/tendermint/abci/types"
 	"io"

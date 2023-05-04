@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/rapha/blocklog
+name: buf.build/loomi-labs/star-scope
 #deps:
 #  - buf.build/cosmos/cosmos-sdk
 #  - buf.build/cosmos/gogo-proto

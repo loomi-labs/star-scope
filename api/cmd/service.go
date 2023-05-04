@@ -4,10 +4,10 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/shifty11/blocklog-backend/common"
-	"github.com/shifty11/blocklog-backend/database"
-	"github.com/shifty11/blocklog-backend/grpc"
-	"github.com/shifty11/blocklog-backend/kafka"
+	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/database"
+	"github.com/loomi-labs/star-scope/grpc"
+	"github.com/loomi-labs/star-scope/kafka"
 	"log"
 	"time"
 

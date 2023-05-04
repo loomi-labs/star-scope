@@ -8,7 +8,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	eventpb "github.com/shifty11/blocklog-backend/grpc/event/eventpb"
+	eventpb "github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
@@ -23,7 +23,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// EventServiceName is the fully-qualified name of the EventService service.
-	EventServiceName = "blocklog.grpc.EventService"
+	EventServiceName = "starscope.grpc.EventService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -36,18 +36,18 @@ const (
 const (
 	// EventServiceEventStreamProcedure is the fully-qualified name of the EventService's EventStream
 	// RPC.
-	EventServiceEventStreamProcedure = "/blocklog.grpc.EventService/EventStream"
+	EventServiceEventStreamProcedure = "/starscope.grpc.EventService/EventStream"
 )
 
-// EventServiceClient is a client for the blocklog.grpc.EventService service.
+// EventServiceClient is a client for the starscope.grpc.EventService service.
 type EventServiceClient interface {
 	EventStream(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.ServerStreamForClient[eventpb.Event], error)
 }
 
-// NewEventServiceClient constructs a client for the blocklog.grpc.EventService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
+// NewEventServiceClient constructs a client for the starscope.grpc.EventService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -67,12 +67,12 @@ type eventServiceClient struct {
 	eventStream *connect_go.Client[emptypb.Empty, eventpb.Event]
 }
 
-// EventStream calls blocklog.grpc.EventService.EventStream.
+// EventStream calls starscope.grpc.EventService.EventStream.
 func (c *eventServiceClient) EventStream(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.ServerStreamForClient[eventpb.Event], error) {
 	return c.eventStream.CallServerStream(ctx, req)
 }
 
-// EventServiceHandler is an implementation of the blocklog.grpc.EventService service.
+// EventServiceHandler is an implementation of the starscope.grpc.EventService service.
 type EventServiceHandler interface {
 	EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.Event]) error
 }
@@ -89,12 +89,12 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect_go.HandlerO
 		svc.EventStream,
 		opts...,
 	))
-	return "/blocklog.grpc.EventService/", mux
+	return "/starscope.grpc.EventService/", mux
 }
 
 // UnimplementedEventServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedEventServiceHandler struct{}
 
 func (UnimplementedEventServiceHandler) EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.Event]) error {
-	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("blocklog.grpc.EventService.EventStream is not implemented"))
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.EventService.EventStream is not implemented"))
 }

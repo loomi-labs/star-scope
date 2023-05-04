@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 	"github.com/bufbuild/connect-go"
-	"github.com/shifty11/blocklog-backend/common"
-	"github.com/shifty11/blocklog-backend/database"
+	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/database"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"

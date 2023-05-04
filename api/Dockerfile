@@ -9,6 +9,6 @@ RUN go mod download
 COPY . .
 RUN rm Dockerfile
 
-RUN go build -o /blocklog
+RUN go build -o /starscope
 
-CMD [ "/blocklog" ]
+CMD [ "/starscope" ]

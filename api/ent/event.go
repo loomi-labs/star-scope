@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/shifty11/blocklog-backend/ent/event"
-	"github.com/shifty11/blocklog-backend/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 )
 
 // Event is the model entity for the Event schema.

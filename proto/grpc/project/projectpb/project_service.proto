@@ -2,9 +2,9 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package blocklog.grpc;
+package starscope.grpc;
 
-option go_package = "github.com/shifty11/blocklog-backend/grpc/project/projectpb";
+option go_package = "github.com/loomi-labs/star-scope/grpc/project/projectpb";
 
 
 service ProjectService {

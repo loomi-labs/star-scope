@@ -3,11 +3,11 @@ package project
 import (
 	"context"
 	connect_go "github.com/bufbuild/connect-go"
-	"github.com/shifty11/blocklog-backend/common"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/grpc/project/projectpb"
-	"github.com/shifty11/blocklog-backend/grpc/project/projectpb/projectpbconnect"
-	"github.com/shifty11/blocklog-backend/grpc/types"
+	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/grpc/project/projectpb"
+	"github.com/loomi-labs/star-scope/grpc/project/projectpb/projectpbconnect"
+	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 )

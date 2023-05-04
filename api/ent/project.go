@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/shifty11/blocklog-backend/ent/project"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/ent/project"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // Project is the model entity for the Project schema.

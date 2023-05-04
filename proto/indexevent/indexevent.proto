@@ -5,9 +5,9 @@ import "google/protobuf/duration.proto";
 //import "cosmos/base/v1beta1/coin.proto";
 //import "gogoproto/gogo.proto";
 
-package blocklog.grpc;
+package starscope.event;
 
-option go_package = "github.com/shifty11/blocklog-backend/indexevent/indexevent";
+option go_package = "github.com/loomi-labs/star-scope/indexevent/indexevent";
 
 message Coin {
   string denom = 1;

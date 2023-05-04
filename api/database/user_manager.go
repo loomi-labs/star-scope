@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"github.com/shifty11/blocklog-backend/ent"
-	"github.com/shifty11/blocklog-backend/ent/user"
+	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/shifty11/go-logger/log"
 )
 

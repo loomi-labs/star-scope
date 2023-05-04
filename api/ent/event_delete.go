@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/shifty11/blocklog-backend/ent/event"
-	"github.com/shifty11/blocklog-backend/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/predicate"
 )
 
 // EventDelete is the builder for deleting a Event entity.

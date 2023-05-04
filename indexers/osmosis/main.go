@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/shifty11/blocklog-backend/indexers/osmosis/indexer"
+	"github.com/loomi-labs/star-scope/indexers/osmosis/indexer"
 	"github.com/shifty11/go-logger/log"
 )
 

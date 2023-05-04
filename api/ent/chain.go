@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/shifty11/blocklog-backend/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/chain"
 )
 
 // Chain is the model entity for the Chain schema.

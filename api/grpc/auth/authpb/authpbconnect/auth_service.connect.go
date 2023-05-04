@@ -8,7 +8,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	authpb "github.com/shifty11/blocklog-backend/grpc/auth/authpb"
+	authpb "github.com/loomi-labs/star-scope/grpc/auth/authpb"
 	http "net/http"
 	strings "strings"
 )
@@ -22,7 +22,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// AuthServiceName is the fully-qualified name of the AuthService service.
-	AuthServiceName = "blocklog.grpc.AuthService"
+	AuthServiceName = "starscope.grpc.AuthService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -34,19 +34,19 @@ const (
 // period.
 const (
 	// AuthServiceKeplrLoginProcedure is the fully-qualified name of the AuthService's KeplrLogin RPC.
-	AuthServiceKeplrLoginProcedure = "/blocklog.grpc.AuthService/KeplrLogin"
+	AuthServiceKeplrLoginProcedure = "/starscope.grpc.AuthService/KeplrLogin"
 	// AuthServiceRefreshAccessTokenProcedure is the fully-qualified name of the AuthService's
 	// RefreshAccessToken RPC.
-	AuthServiceRefreshAccessTokenProcedure = "/blocklog.grpc.AuthService/RefreshAccessToken"
+	AuthServiceRefreshAccessTokenProcedure = "/starscope.grpc.AuthService/RefreshAccessToken"
 )
 
-// AuthServiceClient is a client for the blocklog.grpc.AuthService service.
+// AuthServiceClient is a client for the starscope.grpc.AuthService service.
 type AuthServiceClient interface {
 	KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
 	RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error)
 }
 
-// NewAuthServiceClient constructs a client for the blocklog.grpc.AuthService service. By default,
+// NewAuthServiceClient constructs a client for the starscope.grpc.AuthService service. By default,
 // it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
 // sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
 // or connect.WithGRPCWeb() options.
@@ -75,17 +75,17 @@ type authServiceClient struct {
 	refreshAccessToken *connect_go.Client[authpb.RefreshAccessTokenRequest, authpb.RefreshAccessTokenResponse]
 }
 
-// KeplrLogin calls blocklog.grpc.AuthService.KeplrLogin.
+// KeplrLogin calls starscope.grpc.AuthService.KeplrLogin.
 func (c *authServiceClient) KeplrLogin(ctx context.Context, req *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	return c.keplrLogin.CallUnary(ctx, req)
 }
 
-// RefreshAccessToken calls blocklog.grpc.AuthService.RefreshAccessToken.
+// RefreshAccessToken calls starscope.grpc.AuthService.RefreshAccessToken.
 func (c *authServiceClient) RefreshAccessToken(ctx context.Context, req *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {
 	return c.refreshAccessToken.CallUnary(ctx, req)
 }
 
-// AuthServiceHandler is an implementation of the blocklog.grpc.AuthService service.
+// AuthServiceHandler is an implementation of the starscope.grpc.AuthService service.
 type AuthServiceHandler interface {
 	KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
 	RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error)
@@ -108,16 +108,16 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect_go.HandlerOpt
 		svc.RefreshAccessToken,
 		opts...,
 	))
-	return "/blocklog.grpc.AuthService/", mux
+	return "/starscope.grpc.AuthService/", mux
 }
 
 // UnimplementedAuthServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAuthServiceHandler struct{}
 
 func (UnimplementedAuthServiceHandler) KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("blocklog.grpc.AuthService.KeplrLogin is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.KeplrLogin is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("blocklog.grpc.AuthService.RefreshAccessToken is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.RefreshAccessToken is not implemented"))
 }

@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shifty11/blocklog-backend/ent"
+	"github.com/loomi-labs/star-scope/ent"
 )
 
 // The ChainFunc type is an adapter to allow the use of ordinary
