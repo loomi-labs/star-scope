@@ -143,7 +143,8 @@ func (k *Kafka) ConsumeIndexedEvents() {
 	}
 }
 
-func (k *Kafka) ConsumeProcessedEvents(user *ent.User, eventsChannel chan *eventpb.Event) {
+func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, eventsChannel chan *eventpb.Event) {
+	log.Sugar.Debugf("Start processed-events consumer for user %v", user.WalletAddress)
 	r := k.processedEventsReader()
 	defer k.closeReader(r)
 
@@ -154,24 +155,30 @@ func (k *Kafka) ConsumeProcessedEvents(user *ent.User, eventsChannel chan *event
 	}
 
 	for {
-		msg, err := r.ReadMessage(context.Background())
-		if err != nil {
-			break
-		}
-		var txEvent indexevent.TxEvent
-		err = proto.Unmarshal(msg.Value, &txEvent)
-		if err != nil {
-			log.Sugar.Error(err)
-		}
-		log.Sugar.Debugf("ConsumeProcessedEvents for %v", txEvent.WalletAddress)
+		select {
+		case <-ctx.Done():
+			log.Sugar.Debugf("Stop the processed-events consumer for user %v", user.WalletAddress)
+			return
+		default:
+			msg, err := r.ReadMessage(context.Background())
+			if err != nil {
+				break
+			}
+			var txEvent indexevent.TxEvent
+			err = proto.Unmarshal(msg.Value, &txEvent)
+			if err != nil {
+				log.Sugar.Error(err)
+			}
+			log.Sugar.Debugf("ConsumeProcessedEvents for %v", txEvent.WalletAddress)
 
-		if txEvent.WalletAddress == user.WalletAddress {
-			switch txEvent.GetEvent().(type) {
-			case *indexevent.TxEvent_CoinReceived:
-				eventsChannel <- &eventpb.Event{
-					Id:          0,
-					Title:       "Coin Received",
-					Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
+			if txEvent.WalletAddress == user.WalletAddress {
+				switch txEvent.GetEvent().(type) {
+				case *indexevent.TxEvent_CoinReceived:
+					eventsChannel <- &eventpb.Event{
+						Id:          0,
+						Title:       "Coin Received",
+						Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
+					}
 				}
 			}
 		}

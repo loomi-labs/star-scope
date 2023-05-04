@@ -190,6 +190,7 @@ func (i *Indexer) updateHeight(syncStatus *SyncStatus) {
 		),
 	)
 	if err != nil {
+		// TODO: handle error based on status code and retry if necessary
 		panic(err)
 	}
 	syncStatus.Height++
