@@ -36,15 +36,9 @@ var (
 	ErrorTokenVerificationFailed = status.Error(codes.Unauthenticated, "token verification failed")
 )
 
-func verifySignature(request *authpb.KeplrLoginRequest) bool {
-	var signature map[string]interface{}
-	err := json.Unmarshal([]byte(request.GetSignature()), &signature)
-	if err != nil {
-		return false
-	}
-
-	var signedMessage map[string]interface{}
-	err = json.Unmarshal([]byte(request.GetSignedMessage()), &signedMessage)
+func verifySignature(message string) bool {
+	var keplrResponse map[string]interface{}
+	err := json.Unmarshal([]byte(message), &keplrResponse)
 	if err != nil {
 		return false
 	}
@@ -68,37 +62,46 @@ func verifySignature(request *authpb.KeplrLoginRequest) bool {
 	//return false
 }
 
-type SignedMessage struct {
-	AccountNumber string `json:"account_number"`
-	ChainID       string `json:"chain_id"`
-	Fee           struct {
-		Amount []any  `json:"amount"`
-		Gas    string `json:"gas"`
-	} `json:"fee"`
-	Memo string `json:"memo"`
-	Msgs []struct {
-		Type  string `json:"type"`
-		Value struct {
-			Data   string `json:"data"`
-			Signer string `json:"signer"`
-		} `json:"value"`
-	} `json:"msgs"`
-	Sequence string `json:"sequence"`
+type KeplrResponse struct {
+	Signed struct {
+		AccountNumber string `json:"account_number"`
+		ChainID       string `json:"chain_id"`
+		Fee           struct {
+			Amount []any  `json:"amount"`
+			Gas    string `json:"gas"`
+		} `json:"fee"`
+		Memo string `json:"memo"`
+		Msgs []struct {
+			Type  string `json:"type"`
+			Value struct {
+				Data   string `json:"data"`
+				Signer string `json:"signer"`
+			} `json:"value"`
+		} `json:"msgs"`
+		Sequence string `json:"sequence"`
+	} `json:"signed"`
+	Signature struct {
+		PubKey struct {
+			Type  string `json:"type"`
+			Value string `json:"value"`
+		} `json:"pub_key"`
+		Signature string `json:"signature"`
+	} `json:"signature"`
 }
 
 func getWalletAddress(message string) (string, error) {
-	var signedMessage SignedMessage
-	err := json.Unmarshal([]byte(message), &signedMessage)
+	var keplrResponse KeplrResponse
+	err := json.Unmarshal([]byte(message), &keplrResponse)
 	if err != nil {
 		return "", err
 	}
-	return signedMessage.Msgs[0].Value.Signer, nil
+	return keplrResponse.Signed.Msgs[0].Value.Signer, nil
 }
 
 func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
-	verifySignature(request.Msg)
+	verifySignature(request.Msg.GetKeplrResponse())
 
-	address, err := getWalletAddress(request.Msg.SignedMessage)
+	address, err := getWalletAddress(request.Msg.GetKeplrResponse())
 	if err != nil {
 		log.Sugar.Errorf("error while getting wallet address: %v", err)
 		return nil, ErrorLoginFailed
