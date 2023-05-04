@@ -33,7 +33,10 @@ func (e EventService) EventStream(ctx context.Context, _ *connect_go.Request[emp
 	}
 
 	processedEvents := make(chan *eventpb.Event, 100)
-	go e.kafka.ConsumeProcessedEvents(user, processedEvents)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	go e.kafka.ConsumeProcessedEvents(ctx, user, processedEvents)
 
 	for {
 		event, ok := <-processedEvents
