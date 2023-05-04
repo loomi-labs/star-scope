@@ -32,6 +32,7 @@ func (e EventService) EventStream(ctx context.Context, _ *connect_go.Request[emp
 		return types.UserNotFoundErr
 	}
 
+	// TODO: cancel the stream when the client disconnects
 	processedEvents := make(chan *eventpb.Event, 100)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
