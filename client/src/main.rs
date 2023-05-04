@@ -18,7 +18,7 @@ use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
 use crate::pages::overview::page::Overview;
 use crate::services::auth::AuthService;
-use crate::services::grpc::{GrpcClient};
+use crate::services::grpc::{GrpcClient, User};
 
 mod components;
 mod config;
@@ -113,7 +113,7 @@ pub struct AppState {
     pub auth_state: RcSignal<AuthState>,
     pub route: RcSignal<AppRoutes>,
     pub messages: RcSignal<Vec<RcSignal<InfoMsg>>>,
-    pub user: RcSignal<Option<String>>,
+    pub user: RcSignal<Option<User>>,
 }
 
 impl AppState {
@@ -154,11 +154,10 @@ impl AppState {
     }
 
     pub fn get_user_name(&self) -> String {
-        // match self.user.get().as_ref() {
-        //     Some(user) => user.name.clone(),
-        //     None => "Unknown".to_string(),
-        // }
-        "Unknown".to_string()
+        match self.user.get().as_ref() {
+            Some(user) => user.name.clone(),
+            None => "Unknown".to_string(),
+        }
     }
 
     pub fn get_user_avatar(&self) -> String {
@@ -227,22 +226,24 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
     }
 }
 
-// async fn query_user_info(cx: Scope<'_>) {
-//     let app_state = use_context::<AppState>(cx);
-//     let services = use_context::<Services>(cx);
-//     let request = services.grpc_client.create_request({});
-//     let response = services
-//         .grpc_client
-//         .get_user_service()
-//         .get_user(request)
-//         .await
-//         .map(|res| res.into_inner());
-//     if let Ok(user) = response {
-//         *app_state.user.modify() = Some(user);
-//     } else {
-//         create_error_msg_from_status(cx, response.err().unwrap());
-//     }
-// }
+async fn query_user_info(cx: Scope<'_>) {
+    let app_state = use_context::<AppState>(cx);
+    let services = use_context::<Services>(cx);
+    debug!("query_user_info");
+    let request = services.grpc_client.create_request({});
+    let response = services
+        .grpc_client
+        .get_user_service()
+        .get_user(request)
+        .await
+        .map(|res| res.into_inner());
+    debug!("query_user_info: {:?}", response);
+    if let Ok(user) = response {
+        *app_state.user.modify() = Some(user);
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
 
 #[component]
 pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
@@ -251,27 +252,6 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
 
     provide_context(cx, services.clone());
     provide_context(cx, app_state.clone());
-
-    // if services.auth_manager.clone().has_login_query_params() {
-    //     debug!("Logging in...");
-    //     let resp = services
-    //         .auth_manager
-    //         .clone()
-    //         .login_with_query_params()
-    //         .await;
-    //     match resp {
-    //         Ok(_) => {
-    //             app_state.auth_state.set(AuthState::LoggedIn);
-    //             create_message(
-    //                 cx,
-    //                 "Login success",
-    //                 "Logged in successfully",
-    //                 InfoLevel::Info,
-    //             );
-    //         }
-    //         Err(e) => create_error_msg_from_status(cx, e),
-    //     }
-    // }
 
     start_jwt_refresh_timer(cx.to_owned());
 
@@ -289,9 +269,9 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                         match auth_state.as_ref() {
                             AuthState::LoggedOut => navigate(AppRoutes::Login.to_string().as_str()),
                             AuthState::LoggedIn => {
-                                // spawn_local_scoped(cx, async move {
-                                //     query_user_info(cx).await;
-                                // });
+                                spawn_local_scoped(cx, async move {
+                                    query_user_info(cx).await;
+                                });
                                 navigate(AppRoutes::Overview.to_string().as_str())
                             },
                             AuthState::LoggingIn => {}
