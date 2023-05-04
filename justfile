@@ -11,3 +11,6 @@ migrate:
 
 visualize-models:
     cd server && go run -mod=mod ariga.io/entviz ./ent/schema/
+
+client:
+    cd client && trunk serve

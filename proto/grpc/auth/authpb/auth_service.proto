@@ -10,8 +10,7 @@ service AuthService {
 }
 
 message KeplrLoginRequest {
-  string signedMessage = 1;
-  string signature = 2;
+  string keplrResponse = 1;
 }
 
 message LoginResponse {
