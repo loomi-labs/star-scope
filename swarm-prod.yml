@@ -21,8 +21,6 @@ services:
     working_dir: /app
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/star-scope-db?sslmode=disable
-    env_file:
-      - server/.env.template
     command: "/starscope db migrate"
     deploy:
       placement:
@@ -62,8 +60,6 @@ services:
     image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_grpc
     working_dir: /app
-    env_file:
-      - server/.env.template
     command: "/starscope service grpc"
     deploy:
       placement:
@@ -74,8 +70,6 @@ services:
     image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
     container_name: starscope_indexer_osmosis
     working_dir: /app
-    env_file:
-      - indexers/osmosis/.env.template
     command: "/indexer"
     restart: on-failure
     deploy:
@@ -87,8 +81,6 @@ services:
     image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_event_consumer
     working_dir: /app
-    env_file:
-      - server/.env.template
     command: "/starscope service event-consumer"
     deploy:
       placement:
