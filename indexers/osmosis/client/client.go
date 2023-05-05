@@ -12,7 +12,7 @@ func GetClient() indexerpbconnect.IndexerServiceClient {
 	interceptors := connect.WithInterceptors(authInterceptor)
 	return indexerpbconnect.NewIndexerServiceClient(
 		http.DefaultClient,
-		"http://localhost:50001",
+		common.GetEnvX("INDEXER_GRPC_ENDPOINT"),
 		interceptors,
 	)
 }

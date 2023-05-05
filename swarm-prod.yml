@@ -17,6 +17,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   db-migration:
     build: server
@@ -30,6 +34,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   pgadmin:
     image: dpage/pgadmin4:7.0
@@ -44,6 +52,10 @@ services:
       - ./data/docker/pgadmin/local-db-servers.json:/pgadmin4/servers.json
     ports:
       - "5050:80"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   kafka:
     image: obsidiandynamics/kafka
@@ -61,6 +73,10 @@ services:
       KAFKA_RESTART_DELAY: '5'
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: '0'
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   kafdrop:
     image: obsidiandynamics/kafdrop
@@ -72,6 +88,10 @@ services:
       JVM_OPTS: '-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify'
     depends_on:
       - 'kafka'
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   grpc:
     build: server
@@ -87,6 +107,10 @@ services:
         condition: service_healthy
       db-migration:
         condition: service_completed_successfully
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   indexer-osmosis:
     build: indexers/osmosis
@@ -101,6 +125,10 @@ services:
         condition: service_started
       grpc:
         condition: service_started
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   event-consumer:
     build: server
@@ -114,19 +142,55 @@ services:
         condition: service_healthy
       db-migration:
         condition: service_completed_successfully
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
 
   client:
     build:
       context: .
       dockerfile: client.Dockerfile
-      args:
-        - GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:50001
     container_name: starscope_client
     ports:
       - "8080:8080"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  whoami-client:
+    image: jwilder/whoami
+    container_name: starscope_whoami_client
+    networks:
+      - caddy
+    deploy:
+      labels:
+        caddy: star-scope.decrypto.online
+        caddy.reverse_proxy: "client:8080"
+      placement:
+        constraints:
+          - node.role != manager
+
+  whoami-kafkadrop:
+    image: jwilder/whoami
+    container_name: starscope_whoami_kafkadrop
+    networks:
+      - caddy
+    deploy:
+      labels:
+        caddy: kafkadrop.star-scope.decrypto.online
+        caddy.reverse_proxy: "kafkadrop:9000"
+      placement:
+        constraints:
+          - node.role != manager
 
 volumes:
   data:
     name: starscope_data
   pgadmin:
     name: starscope_pgadmin
+
+networks:
+  caddy:
+    external: true

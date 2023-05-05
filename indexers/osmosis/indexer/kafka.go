@@ -3,12 +3,13 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"github.com/loomi-labs/star-scope/indexers/osmosis/common"
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 )
 
 var (
-	topic = "index-events"
+	topic = common.GetEnvX("KAFKA_TOPIC")
 )
 
 type KafkaProducer struct {
@@ -23,9 +24,12 @@ func NewKafkaProducer(addresses ...string) *KafkaProducer {
 
 func (k *KafkaProducer) writer() *kafka.Writer {
 	return &kafka.Writer{
-		Addr:     kafka.TCP(k.addresses...),
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
+		Addr:                   kafka.TCP(k.addresses...),
+		Topic:                  topic,
+		Balancer:               &kafka.LeastBytes{},
+		AllowAutoTopicCreation: true,
+		//Logger:                 kafka.LoggerFunc(log.Sugar.Debugf),
+		//ErrorLogger:            kafka.LoggerFunc(log.Sugar.Errorf),
 	}
 }
 
