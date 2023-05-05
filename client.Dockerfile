@@ -27,7 +27,8 @@ ENV PATH="/app/node_modules/.bin:${PATH}"
 COPY client .
 COPY proto ./proto
 
-ENV GRPC_ENDPOINT_URL grpc:50001
+ARG GRPC_WEB_ENDPOINT_URL
+ENV GRPC_WEB_ENDPOINT_URL $GRPC_WEB_ENDPOINT_URL
 
 # Build your Sycamore project using Trunk
 RUN trunk build --release

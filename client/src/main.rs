@@ -167,7 +167,7 @@ impl AppState {
         //         return user.avatar;
         //     }
         // }
-        keys::DEVAULT_AVATAR_PATH.to_string()
+        keys::DEFAULT_AVATAR_PATH.to_string()
     }
 }
 

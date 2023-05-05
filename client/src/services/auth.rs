@@ -82,7 +82,6 @@ impl AuthService {
     pub fn new() -> Self {
         Self {
             endpoint_url: keys::GRPC_WEB_ENDPOINT_URL.to_string(),
-            // endpoint_url: env!("GRPC_WEB_ENDPOINT_URL").to_string(),
         }
     }
 
