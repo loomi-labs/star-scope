@@ -72,9 +72,16 @@ services:
     image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
     container_name: starscope_indexer_osmosis
     working_dir: /app
+    environment:
+      - DEBUG=true
+      - INDEXER_AUTH_TOKEN=jkasdfgiouwersdas
+      - KAFKA_TOPIC=index-events
+      - REST_ENDPOINT=https://rest.cosmos.directory/osmosis
+      - KAFKA_BROKERS=kafka:29092
+      - INDEXER_GRPC_ENDPOINT=http://grpc:50001
     secrets:
       - starscope-env
-    command: [/usr/local/bin/source_env.sh, /indexer]
+    command: /indexer
     restart: on-failure
     deploy:
       placement:
@@ -112,7 +119,7 @@ services:
     deploy:
       labels:
         caddy: star-scope.decrypto.online
-        caddy.reverse_proxy: "client:8080"
+        caddy.reverse_proxy: "client:80"
       placement:
         constraints:
           - node.role != manager
