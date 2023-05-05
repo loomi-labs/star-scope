@@ -9,7 +9,7 @@
 # domain name.
 
 :80 {
-        reverse_proxy /starscope.grpc* grpc:50001
+        reverse_proxy /starscope.grpc* envoy:8090
 
         # Set this path to your site's directory.
         root * /var/www/star-scope
