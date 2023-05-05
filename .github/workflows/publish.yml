@@ -35,6 +35,7 @@ jobs:
               - 'server/**'
             client:
               - 'client/**'
+              - 'client**'
             osmosis-indexer:
               - 'indexers/osmosis/**'
 
@@ -96,6 +97,6 @@ jobs:
           deployment_mode: docker-swarm
           copy_stack_file: true
           deploy_path: /home/ubuntu
-          stack_file_name: swarm-prod.yml
+          stack_file_name: swarm-prod-star-scope.yml
           keep_files: 5
           args: star-scope --with-registry-auth
