@@ -46,6 +46,8 @@ func (e EventService) EventStream(ctx context.Context, _ *connect_go.Request[emp
 			return types.UnknownErr
 		}
 		log.Sugar.Debugf("received processed event: %v", event)
+		// TODO: set correct channel Id
+		//event.ChannelId = 1
 		err := stream.Send(event)
 		if err != nil {
 			log.Sugar.Error(err)
