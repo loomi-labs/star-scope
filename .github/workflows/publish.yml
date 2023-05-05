@@ -46,7 +46,7 @@ jobs:
 
       - name: Build and push server Docker image
         uses: docker/build-push-action@v4.0.0
-        if: steps.changes.outputs.server == 'true'
+#        if: steps.changes.outputs.server == 'true'
         with:
           context: server/
           push: true
@@ -55,7 +55,7 @@ jobs:
 
       - name: Build and push client Docker image
         uses: docker/build-push-action@v4.0.0
-        if: steps.changes.outputs.client == 'true'
+#        if: steps.changes.outputs.client == 'true'
         with:
           context: client/
           push: true
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build and push indexers Docker image
         uses: docker/build-push-action@v4.0.0
-        if: steps.changes.outputs.indexers == 'true'
+#        if: steps.changes.outputs.indexers == 'true'
         with:
           context: indexers/osmosis/
           push: true
