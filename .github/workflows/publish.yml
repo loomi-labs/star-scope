@@ -35,7 +35,7 @@ jobs:
               - 'server/**'
             client:
               - 'client/**'
-              - 'client**'
+              - 'client.*'
             osmosis-indexer:
               - 'indexers/osmosis/**'
 
