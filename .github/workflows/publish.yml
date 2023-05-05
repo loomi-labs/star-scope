@@ -50,7 +50,7 @@ jobs:
         with:
           context: server/
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.actor }}/star-scope-server:latest
+          tags: ${{ env.DOCKER_META_IMAGES }}/star-scope-server:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push client Docker image
@@ -59,7 +59,7 @@ jobs:
         with:
           context: client/
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.actor }}/star-scope-client:latest
+          tags: ${{ env.DOCKER_META_IMAGES }}/star-scope-client:latest
           labels: ${{ steps.meta.outputs.labels }}
           build-args: GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
 
@@ -69,7 +69,7 @@ jobs:
         with:
           context: indexers/osmosis/
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.actor }}/star-scope-indexers:latest
+          tags: ${{ env.DOCKER_META_IMAGES }}/star-scope-indexers:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Deploy to swarm
