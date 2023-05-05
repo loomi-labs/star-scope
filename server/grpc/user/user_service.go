@@ -21,7 +21,7 @@ func NewUserServiceHandler() userpbconnect.UserServiceHandler {
 	return &UserService{}
 }
 
-func (e UserService) GetUser(ctx context.Context, c *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error) {
+func (e UserService) GetUser(ctx context.Context, _ *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -34,7 +34,7 @@ func (e UserService) GetUser(ctx context.Context, c *connect_go.Request[emptypb.
 	}), nil
 }
 
-func (e UserService) ListChannels(ctx context.Context, c *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error) {
+func (e UserService) ListChannels(ctx context.Context, _ *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -44,6 +44,10 @@ func (e UserService) ListChannels(ctx context.Context, c *connect_go.Request[emp
 	channels, err := user.
 		QueryProjects().
 		QueryChannels().
+		//WithEventListeners(
+		//	func(query *ent.EventListenerQuery) {
+		//		query.WithEvents()
+		//	}).
 		All(ctx)
 	if err != nil {
 		log.Sugar.Errorf("failed to query channels: %v", err)

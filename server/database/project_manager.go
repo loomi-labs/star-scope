@@ -47,6 +47,24 @@ func (m *ProjectManager) CreateCosmosProject(ctx context.Context, user *ent.User
 	if err != nil {
 		return nil, err
 	}
+	ch, err = m.client.Channel.
+		Create().
+		SetName("Staking").
+		SetType(channel.TypeStaking).
+		SetProject(proj).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ch, err = m.client.Channel.
+		Create().
+		SetName("Dex").
+		SetType(channel.TypeDex).
+		SetProject(proj).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
 	_, err = m.client.EventListener.
 		Create().
 		SetChannel(ch).
