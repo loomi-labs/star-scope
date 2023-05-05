@@ -68,13 +68,6 @@ services:
         constraints:
           - node.role != manager
 
-  envoy:
-    image: ghcr.io/loomi-labs/star-scope-envoy:main
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
-
   indexer-osmosis:
     image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
     container_name: starscope_indexer_osmosis
