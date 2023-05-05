@@ -35,6 +35,7 @@ func AccessibleRoles() map[string][]Role {
 		authService + "KeplrLogin":         {Unauthenticated, User, Admin},
 		authService + "RefreshAccessToken": {Unauthenticated, User, Admin},
 		userService + "GetUser":            {User, Admin},
+		userService + "ListChannels":       {User, Admin},
 		eventService + "EventStream":       {User, Admin},
 		indexerService + "GetHeight":       {Token},
 		indexerService + "UpdateHeight":    {Token},
