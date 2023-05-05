@@ -64,14 +64,14 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             div(class="text-sm font-light tracking-wide text-gray-400 uppercase") { "Main" }
                         }
                     }
-                    li() {
-                        a(href=AppRoutes::Home, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Home, app_state.route.get().as_ref()))) {
-                            span(class=span_icon_class) {
-                                i(class="fas fa-home") {}
-                            }
-                            span(class=span_text_class) { "Home" }
-                        }
-                    }
+                    // li() {
+                    //     a(href=AppRoutes::Home, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Home, app_state.route.get().as_ref()))) {
+                    //         span(class=span_icon_class) {
+                    //             i(class="fas fa-home") {}
+                    //         }
+                    //         span(class=span_text_class) { "Home" }
+                    //     }
+                    // }
                     li() {
                         a(href=AppRoutes::Overview, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Overview, app_state.route.get().as_ref()))) {
                             span(class=span_icon_class) {
@@ -80,14 +80,14 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             span(class=span_text_class) { "Overview" }
                         }
                     }
-                    li() {
-                        a(href=AppRoutes::Communication, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Communication, app_state.route.get().as_ref()))) {
-                            span(class=span_icon_class) {
-                                i(class="fas fa-message") {}
-                            }
-                            span(class=span_text_class) { "Communication" }
-                        }
-                    }
+                    // li() {
+                    //     a(href=AppRoutes::Communication, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Communication, app_state.route.get().as_ref()))) {
+                    //         span(class=span_icon_class) {
+                    //             i(class="fas fa-message") {}
+                    //         }
+                    //         span(class=span_text_class) { "Communication" }
+                    //     }
+                    // }
                 }
             }
         }

@@ -1,12 +1,10 @@
-use std::result;
-
 use log::debug;
 use serde::{Deserialize, Serialize};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
 
-use crate::{AppRoutes, AppState, AuthState, InfoLevel, Services};
+use crate::{AppState, AuthState, InfoLevel, Services};
 use crate::components::messages::create_message;
 
 #[derive(Serialize, Deserialize)]
