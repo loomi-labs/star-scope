@@ -38,7 +38,7 @@ jobs:
             indexers:
               - 'indexers/osmosis/**'
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Extract metadata (tags, labels) for server image
         id: meta-server
         uses: docker/metadata-action@v4.3.0
         with:
@@ -53,34 +53,46 @@ jobs:
           tags: ${{ steps.meta-server.outputs.tags }}
           labels: ${{ steps.meta-server.outputs.labels }}
 
-#      - name: Build and push client Docker image
-#        uses: docker/build-push-action@v4.0.0
-##        if: steps.changes.outputs.client == 'true'
-#        with:
-#          context: client/
-#          push: true
-#          tags: ${{ env.DOCKER_META_IMAGES }}/star-scope-client:latest
-#          labels: ${{ steps.meta.outputs.labels }}
-#          build-args: GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
-#
-#      - name: Build and push indexers Docker image
-#        uses: docker/build-push-action@v4.0.0
-##        if: steps.changes.outputs.indexers == 'true'
-#        with:
-#          context: indexers/osmosis/
-#          push: true
-#          tags: ${{ env.DOCKER_META_IMAGES }}/star-scope-indexers:latest
-#          labels: ${{ steps.meta.outputs.labels }}
-#
-#      - name: Deploy to swarm
-#        uses: wshihadeh/docker-deployment-action@v2
-#        with:
-#          remote_docker_host: ubuntu@188.166.38.235
-#          ssh_private_key: ${{ secrets.SWARMY_SSH_PRIVATE_KEY }}
-#          ssh_public_key: ${{ secrets.SWARMY_SSH_PUBLIC_KEY }}
-#          deployment_mode: docker-swarm
-#          copy_stack_file: true
-#          deploy_path: /home/ubuntu
-#          stack_file_name: swarm-prod.yml
-#          keep_files: 5
-#          args: star-scope
+      - name: Extract metadata (tags, labels) for client image
+        id: meta-client
+        uses: docker/metadata-action@v4.3.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client
+
+      - name: Build and push client Docker image
+        uses: docker/build-push-action@v4.0.0
+#        if: steps.changes.outputs.client == 'true'
+        with:
+          context: client/
+          push: true
+          tags: ${{ steps.meta-client.outputs.tags }}
+          labels: ${{ steps.meta-client.outputs.labels }}
+          build-args: GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
+
+      - name: Extract metadata (tags, labels) for indexer image
+        id: meta-indexer
+        uses: docker/metadata-action@v4.3.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-indexer
+
+      - name: Build and push indexer Docker image
+        uses: docker/build-push-action@v4.0.0
+#        if: steps.changes.outputs.indexers == 'true'
+        with:
+          context: indexers/osmosis/
+          push: true
+          tags: ${{ steps.meta-indexer.outputs.tags }}
+          labels: ${{ steps.meta-indexer.outputs.labels }}
+
+      - name: Deploy to swarm
+        uses: wshihadeh/docker-deployment-action@v2
+        with:
+          remote_docker_host: ubuntu@188.166.38.235
+          ssh_private_key: ${{ secrets.SWARMY_SSH_PRIVATE_KEY }}
+          ssh_public_key: ${{ secrets.SWARMY_SSH_PUBLIC_KEY }}
+          deployment_mode: docker-swarm
+          copy_stack_file: true
+          deploy_path: /home/ubuntu
+          stack_file_name: swarm-prod.yml
+          keep_files: 5
+          args: star-scope
