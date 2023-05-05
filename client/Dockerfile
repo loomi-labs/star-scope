@@ -1,3 +1,5 @@
+# This Dockerfile has to be built in the root folder of the project (../)
+
 # Stage 1 - Install dependencies and build the app in a build environment
 FROM rust:slim AS build-env
 
@@ -36,4 +38,4 @@ RUN trunk build --release
 # Stage 2 - Create the run-time image
 FROM caddy:2.5.2-alpine
 COPY --from=build-env /app/dist /var/www/star-scope
-COPY client.Caddyfile /etc/caddy/Caddyfile
+COPY client/Caddyfile /etc/caddy/Caddyfile

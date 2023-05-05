@@ -35,7 +35,6 @@ jobs:
               - 'server/**'
             client:
               - 'client/**'
-              - 'client.**'
             osmosis-indexer:
               - 'indexers/osmosis/**'
 
@@ -66,7 +65,8 @@ jobs:
         uses: docker/build-push-action@v4.0.0
         if: steps.changes.outputs.client == 'true'
         with:
-          file: client.Dockerfile
+          context: .
+          file: client/Dockerfile
           push: true
           tags: ${{ steps.meta-client.outputs.tags }}
           labels: ${{ steps.meta-client.outputs.labels }}
