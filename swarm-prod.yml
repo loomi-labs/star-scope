@@ -16,7 +16,7 @@ services:
           - node.role != manager
 
   db-migration:
-    image: ghcr.io/loomi-labs/star-scope-server:latest
+    image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_db_migration
     working_dir: /app
     environment:
@@ -59,7 +59,7 @@ services:
           - node.role != manager
 
   grpc:
-    image: ghcr.io/loomi-labs/star-scope-server:latest
+    image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_grpc
     working_dir: /app
     env_file:
@@ -71,7 +71,7 @@ services:
           - node.role != manager
 
   indexer-osmosis:
-    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:latest
+    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
     container_name: starscope_indexer_osmosis
     working_dir: /app
     env_file:
@@ -84,7 +84,7 @@ services:
           - node.role != manager
 
   event-consumer:
-    image: ghcr.io/loomi-labs/star-scope-server:latest
+    image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_event_consumer
     working_dir: /app
     env_file:
@@ -96,7 +96,7 @@ services:
           - node.role != manager
 
   client:
-    image: ghcr.io/loomi-labs/star-scope-client:latest
+    image: ghcr.io/loomi-labs/star-scope-client:main
     container_name: starscope_client
     networks:
       - caddy
