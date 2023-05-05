@@ -15,4 +15,5 @@ message Event {
   int64 id = 1;
   string title = 2;
   string description = 3;
+  int64 channel_id = 4;
 }
