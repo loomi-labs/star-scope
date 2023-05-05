@@ -8,11 +8,11 @@
 # this machine's public IP, then replace ":80" below with your
 # domain name.
 
-:80 {
-        reverse_proxy /cosmos_notifier_grpc* envoy:8090
+:8080 {
+        reverse_proxy /starscope.grpc* grpc:50001
 
         # Set this path to your site's directory.
-        root * /var/www/cosmos-notifier-sycamore
+        root * /var/www/star-scope
         encode gzip
 
         try_files {path} /
