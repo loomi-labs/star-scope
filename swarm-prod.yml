@@ -60,7 +60,9 @@ services:
     image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_grpc
     working_dir: /app
-    command: "/starscope service grpc"
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service grpc"
     deploy:
       placement:
         constraints:
@@ -70,7 +72,9 @@ services:
     image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
     container_name: starscope_indexer_osmosis
     working_dir: /app
-    command: "/indexer"
+    secrets:
+      - starscope-env
+    command: [/usr/local/bin/source_env.sh, /indexer]
     restart: on-failure
     deploy:
       placement:
@@ -81,7 +85,9 @@ services:
     image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_event_consumer
     working_dir: /app
-    command: "/starscope service event-consumer"
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service event-consumer"
     deploy:
       placement:
         constraints:
@@ -132,4 +138,8 @@ volumes:
 
 networks:
   caddy:
+    external: true
+
+secrets:
+  starscope-env:
     external: true
