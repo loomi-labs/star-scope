@@ -9,16 +9,16 @@
 # domain name.
 
 :80 {
-        reverse_proxy /starscope.grpc* envoy:8090
+    handle /starscope.grpc* {
+        reverse_proxy grpc:50001
+    }
 
-        # Set this path to your site's directory.
+    handle {
         root * /var/www/star-scope
-        encode gzip
-
-        try_files {path} /
-
-        # Enable the static file server.
         file_server
+        encode gzip
+        try_files {path} /
+    }
 }
 
 # Refer to the Caddy docs for more information:
