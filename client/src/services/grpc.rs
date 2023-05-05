@@ -52,4 +52,8 @@ impl GrpcClient {
     pub fn get_user_service(&self) -> UserServiceClient<Client> {
         UserServiceClient::new(Client::new(self.endpoint_url.clone()))
     }
+
+    pub fn get_event_service(&self) -> EventServiceClient<Client> {
+        EventServiceClient::new(Client::new(self.endpoint_url.clone()))
+    }
 }

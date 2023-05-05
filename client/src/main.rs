@@ -229,7 +229,6 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
 async fn query_user_info(cx: Scope<'_>) {
     let app_state = use_context::<AppState>(cx);
     let services = use_context::<Services>(cx);
-    debug!("query_user_info");
     let request = services.grpc_client.create_request({});
     let response = services
         .grpc_client
@@ -237,7 +236,6 @@ async fn query_user_info(cx: Scope<'_>) {
         .get_user(request)
         .await
         .map(|res| res.into_inner());
-    debug!("query_user_info: {:?}", response);
     if let Ok(user) = response {
         *app_state.user.modify() = Some(user);
     } else {
