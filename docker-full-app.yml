@@ -118,7 +118,7 @@ services:
   client:
     build:
       context: .
-      dockerfile: client.Dockerfile
+      dockerfile: client/Dockerfile
       args:
         - GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:50001
     container_name: starscope_client

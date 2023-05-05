@@ -13,4 +13,4 @@ visualize-models:
     cd server && go run -mod=mod ariga.io/entviz ./ent/schema/
 
 client:
-    cd client && export GRPC_WEB_ENDPOINT_URL=http://127.0.0.1 && trunk serve
+    cd client && export GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:50001 && trunk serve

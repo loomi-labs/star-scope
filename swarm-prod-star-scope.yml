@@ -124,15 +124,15 @@ services:
         constraints:
           - node.role != manager
 
-  whoami-kafkadrop:
+  whoami-kafdrop:
     image: jwilder/whoami
-    container_name: starscope_whoami_kafkadrop
+    container_name: starscope_whoami_kafdrop
     networks:
       - caddy
     deploy:
       labels:
-        caddy: kafkadrop.star-scope.decrypto.online
-        caddy.reverse_proxy: "kafkadrop:9000"
+        caddy: kafdrop.star-scope.decrypto.online
+        caddy.reverse_proxy: "kafdrop:9000"
       placement:
         constraints:
           - node.role != manager
