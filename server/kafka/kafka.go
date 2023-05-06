@@ -111,7 +111,7 @@ func (k *Kafka) ConsumeIndexedEvents() {
 	for {
 		msg, err := r.ReadMessage(context.Background())
 		if err != nil {
-			break
+			log.Sugar.Errorf("failed to read message: %v", err)
 		}
 		var txEvent indexevent.TxEvent
 		err = proto.Unmarshal(msg.Value, &txEvent)
@@ -165,23 +165,11 @@ func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, even
 			if err != nil {
 				break
 			}
-			var txEvent indexevent.TxEvent
-			err = proto.Unmarshal(msg.Value, &txEvent)
+			txEvent, err := TxEventToProto(msg.Value)
 			if err != nil {
 				log.Sugar.Error(err)
 			}
-			log.Sugar.Debugf("ConsumeProcessedEvents for %v", txEvent.WalletAddress)
-
-			if txEvent.WalletAddress == user.WalletAddress {
-				switch txEvent.GetEvent().(type) {
-				case *indexevent.TxEvent_CoinReceived:
-					eventsChannel <- &eventpb.Event{
-						Id:          0,
-						Title:       "Coin Received",
-						Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
-					}
-				}
-			}
+			eventsChannel <- txEvent
 		}
 	}
 }

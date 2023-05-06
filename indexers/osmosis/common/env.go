@@ -27,3 +27,16 @@ func GetEnvAsBoolX(key string) bool {
 	}
 	return boolValue
 }
+
+// GetEnvAsBool returns the value of the environment variable named by the key as a bool or false if it is not set.
+func GetEnvAsBool(key string) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return false
+	}
+	boolValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return false
+	}
+	return boolValue
+}

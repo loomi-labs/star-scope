@@ -9,6 +9,7 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/event/eventpb";
 
 service EventService {
   rpc EventStream (google.protobuf.Empty) returns (stream Event) {}
+  rpc ListEvents (google.protobuf.Empty) returns (ListEventsResponse) {}
 }
 
 message Event {
@@ -17,3 +18,8 @@ message Event {
   string description = 3;
   int64 channel_id = 4;
 }
+
+message ListEventsResponse {
+  repeated Event events = 1;
+}
+

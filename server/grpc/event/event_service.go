@@ -4,6 +4,7 @@ import (
 	"context"
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
@@ -16,12 +17,14 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type EventService struct {
 	eventpbconnect.UnimplementedEventServiceHandler
-	kafka *kafka.Kafka
+	kafka                *kafka.Kafka
+	eventListenerManager *database.EventListenerManager
 }
 
-func NewEventServiceHandler(kafka *kafka.Kafka) eventpbconnect.EventServiceHandler {
+func NewEventServiceHandler(dbManagers *database.DbManagers, kafka *kafka.Kafka) eventpbconnect.EventServiceHandler {
 	return &EventService{
-		kafka: kafka,
+		kafka:                kafka,
+		eventListenerManager: dbManagers.EventListenerManager,
 	}
 }
 
@@ -54,4 +57,28 @@ func (e EventService) EventStream(ctx context.Context, _ *connect_go.Request[emp
 			return types.UnknownErr
 		}
 	}
+}
+
+func (e EventService) ListEvents(ctx context.Context, _ *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsResponse], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	els := e.eventListenerManager.QueryByUser(ctx, user)
+	events := make([]*eventpb.Event, 0)
+	for _, el := range els {
+		for _, event := range el.Edges.Events {
+			pbEvent, err := kafka.EntEventToProto(event)
+			if err != nil {
+				log.Sugar.Error(err)
+				return nil, types.UnknownErr
+			}
+			events = append(events, pbEvent)
+		}
+	}
+	return connect_go.NewResponse(&eventpb.ListEventsResponse{
+		Events: events,
+	}), nil
 }

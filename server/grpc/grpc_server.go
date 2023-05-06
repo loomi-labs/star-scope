@@ -83,7 +83,7 @@ func (s GRPCServer) Run() {
 		interceptors,
 	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
-		event.NewEventServiceHandler(kafka.NewKafka(s.dbManagers, common.GetEnvX("KAFKA_BROKERS"))),
+		event.NewEventServiceHandler(s.dbManagers, kafka.NewKafka(s.dbManagers, common.GetEnvX("KAFKA_BROKERS"))),
 		interceptors,
 	))
 

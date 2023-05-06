@@ -37,6 +37,7 @@ func AccessibleRoles() map[string][]Role {
 		userService + "GetUser":            {User, Admin},
 		userService + "ListChannels":       {User, Admin},
 		eventService + "EventStream":       {User, Admin},
+		eventService + "ListEvents":        {User, Admin},
 		indexerService + "GetHeight":       {Token},
 		indexerService + "UpdateHeight":    {Token},
 	}

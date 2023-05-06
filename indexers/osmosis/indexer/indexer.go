@@ -14,6 +14,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/loomi-labs/star-scope/indexers/osmosis/client"
+	"github.com/loomi-labs/star-scope/indexers/osmosis/common"
 	"github.com/osmosis-labs/osmosis/osmoutils/noapptest"
 	lockuptypes "github.com/osmosis-labs/osmosis/v15/x/lockup/types"
 	"github.com/shifty11/go-logger/log"
@@ -174,7 +175,7 @@ func (i *Indexer) getSyncStatus(baseUrl string, encodingConfig noapptest.TestEnc
 		log.Sugar.Panic(err)
 	}
 	var height = apiResponse.Msg.GetHeight() + 1
-	if height == 1 {
+	if height == 1 || common.GetEnvAsBool("FORCE_START_FROM_LATEST_BLOCK") {
 		height = response.GetBlock().GetHeader().Height
 	}
 	return SyncStatus{

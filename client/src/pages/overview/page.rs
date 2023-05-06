@@ -21,7 +21,7 @@ pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
 }
 
 #[component]
-pub fn Channels<G: Html>(cx: Scope) -> View<G> {
+pub fn Events<G: Html>(cx: Scope) -> View<G> {
     let overview_state = use_context::<OverviewState>(cx);
     let channels = create_memo(cx, || {
         overview_state
@@ -32,9 +32,18 @@ pub fn Channels<G: Html>(cx: Scope) -> View<G> {
             .cloned()
             .collect::<Vec<_>>()
     });
-    let events = create_memo(cx, || {
+    let pastEvents = create_memo(cx, || {
         overview_state
-            .events
+            .pastEvents
+            .get()
+            .iter()
+            .take(10)
+            .cloned()
+            .collect::<Vec<_>>()
+    });
+    let newEvents = create_memo(cx, || {
+        overview_state
+            .newEvents
             .get()
             .iter()
             .take(10)
@@ -43,37 +52,22 @@ pub fn Channels<G: Html>(cx: Scope) -> View<G> {
     });
 
     view! {cx,
-        // div(class="flex flex-col") {
-        //     Keyed(
-        //         iterable=channels,
-        //         key=|channel| channel.name.clone(),
-        //         view=|cx,channel| {
-        //             view! {cx,
-        //                 div(class="flex flex-col my-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow") {
-        //                     div(class="flex flex-row justify-between") {
-        //                         div(class="flex flex-col") {
-        //                             p(class="text-lg font-bold") { (channel.name.clone()) }
-        //                             p(class="text-sm") { ("channel description") }
-        //                         }
-        //                         div(class="flex flex-col justify-center") {
-        //                             p(class="text-sm") { "Last message" }
-        //                             p(class="text-sm") { ("channel last message") }
-        //                         }
-        //                     }
-        //                     div(class="flex flex-row justify-between") {
-        //                         div(class="flex flex-col") {
-        //                             p(class="text-sm") { "Nr. of messages" }
-        //                             p(class="text-sm") { ("45") }
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     )
-        // }
+        p(class="text-2xl font-bold") { "Past events" }
         div(class="flex flex-col") {
             Keyed(
-                iterable=events,
+                iterable=pastEvents,
+                key=|event| event.id.clone(),
+                view=|cx,event| {
+                    view!{cx,
+                        EventComponent(event=event)
+                    }
+                }
+            )
+        }
+        p(class="text-2xl font-bold") { "New events" }
+        div(class="flex flex-col") {
+            Keyed(
+                iterable=newEvents,
                 key=|event| event.id.clone(),
                 view=|cx,event| {
                     view!{cx,
@@ -88,14 +82,16 @@ pub fn Channels<G: Html>(cx: Scope) -> View<G> {
 #[derive(Debug, Clone)]
 pub struct OverviewState {
     channels: RcSignal<Vec<Channel>>,
-    events: RcSignal<Vec<Event>>,
+    pastEvents: RcSignal<Vec<Event>>,
+    newEvents: RcSignal<Vec<Event>>,
 }
 
 impl OverviewState {
     pub fn new() -> Self {
         Self {
             channels: create_rc_signal(vec![]),
-            events: create_rc_signal(vec![]),
+            pastEvents: create_rc_signal(vec![]),
+            newEvents: create_rc_signal(vec![]),
         }
     }
 }
@@ -118,6 +114,24 @@ async fn query_channels(cx: Scope<'_>) {
     }
 }
 
+async fn query_events(cx: Scope<'_>) {
+    let overview_state = use_context::<OverviewState>(cx);
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request({});
+    let response = services
+        .grpc_client
+        .get_event_service()
+        .list_events(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(response) = response {
+        *overview_state.pastEvents.modify() = response.events;
+        debug!("Events: {:?}", *overview_state.pastEvents.get());
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
+
 fn subscribe_to_events(cx: Scope) {
     spawn_local_scoped(cx, async move {
         let overview_state = use_context::<OverviewState>(cx);
@@ -131,9 +145,9 @@ fn subscribe_to_events(cx: Scope) {
             .into_inner();
         while let Some(event) = event_stream.message().await.unwrap() {
             debug!("Received event: {:?}", event);
-            let mut events = overview_state.events.modify();
+            let mut events = overview_state.newEvents.modify();
             events.push(event);
-            *overview_state.events.modify() = events.clone();
+            *overview_state.newEvents.modify() = events.clone();
         }
     });
 }
@@ -142,14 +156,15 @@ fn subscribe_to_events(cx: Scope) {
 pub async fn Overview<G: Html>(cx: Scope<'_>) -> View<G> {
     provide_context(cx, OverviewState::new());
 
-    query_channels(cx.to_owned()).await;
+    // query_channels(cx.to_owned()).await;
+    query_events(cx.to_owned()).await;
     subscribe_to_events(cx.to_owned());
 
     view! {cx,
         div(class="flex flex-col h-full w-full p-8") {
-            h1(class="text-2xl font-bold") { "Overview" }
+            h1(class="text-4xl font-bold pb-4") { "Overview" }
             div(class="flex flex-col p-8 bg-white dark:bg-gray-600 rounded-lg shadow") {
-                Channels {}
+                Events {}
             }
         }
     }
