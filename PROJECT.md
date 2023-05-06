@@ -62,7 +62,7 @@ I used Rust for the frontend because I saw it as an opportunity to learn it.
 
 **Architecture**
 
-![Architecture](https://raw.githubusercontent.com/loomi-labs/star-scope/233ebaa67f4299b2a8f86ab78fb8f09e1736f83c/data/documentation/architecture.png?token=GHSAT0
+![Architecture](https://raw.githubusercontent.com/loomi-labs/star-scope/main/data/documentation/architecture.png)
 
 ## Challenges I ran into
 
