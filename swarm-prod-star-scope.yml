@@ -79,6 +79,7 @@ services:
       - REST_ENDPOINT=https://rest.cosmos.directory/osmosis
       - KAFKA_BROKERS=kafka:29092
       - INDEXER_GRPC_ENDPOINT=http://grpc:50001
+      - FORCE_START_FROM_LATEST_BLOCK=true
     secrets:
       - starscope-env
     command: /indexer
