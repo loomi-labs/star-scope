@@ -57,7 +57,7 @@ var startEventConsumerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		eventConsumer := kafka.NewKafka(dbManagers, common.GetEnvX("KAFKA_BROKERS"))
-		eventConsumer.ConsumeIndexedEvents()
+		eventConsumer.ProcessIndexedEvents()
 	},
 }
 

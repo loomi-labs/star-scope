@@ -1,10 +1,23 @@
+use std::fmt;
+use js_sys::Date;
 use log::debug;
+use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
+use wasm_bindgen::JsValue;
 
 use crate::components::messages::create_error_msg_from_status;
 use crate::Services;
 use crate::services::grpc::{Channel, Event};
+
+fn displayTimestamp(option: Option<Timestamp>) -> String {
+    if let Some(timestamp) = option {
+        let datetime = Date::new(&JsValue::from_f64(timestamp.seconds as f64 * 1000.0));
+        let asString = datetime.to_locale_string("en-US", &JsValue::from_str("date"));
+        return format!("{}", asString);
+    }
+    return "".to_string();
+}
 
 #[component(inline_props)]
 pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
@@ -13,6 +26,7 @@ pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
             div(class="flex flex-row justify-between") {
                 div(class="flex flex-col") {
                     p(class="text-lg font-bold") { (event.title.clone()) }
+                    p(class="text-sm") { (displayTimestamp(event.timestamp.clone())) }
                     p(class="text-sm") { (event.description.clone()) }
                 }
             }

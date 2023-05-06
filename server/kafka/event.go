@@ -18,20 +18,26 @@ func TxEventToProto(data []byte) (*eventpb.Event, error) {
 	switch txEvent.GetEvent().(type) {
 	case *indexevent.TxEvent_CoinReceived:
 		return &eventpb.Event{
-			Id:          0,
 			Title:       "Token Received",
 			Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
+			Timestamp:   txEvent.Timestamp,
 		}, nil
 	case *indexevent.TxEvent_OsmosisPoolUnlock:
 		return &eventpb.Event{
-			Id:          0,
 			Title:       "Pool Unlock",
 			Description: fmt.Sprintf("%v will unlock pool at %v", txEvent.WalletAddress, txEvent.GetOsmosisPoolUnlock().UnlockTime),
+			Timestamp:   txEvent.Timestamp,
 		}, nil
 	}
 	return nil, errors.New(fmt.Sprintf("No type defined for event %v", txEvent.GetEvent()))
 }
 
 func EntEventToProto(entEvent *ent.Event) (*eventpb.Event, error) {
-	return TxEventToProto(entEvent.TxEvent)
+	var pbEvent, err = TxEventToProto(entEvent.TxEvent)
+	if err != nil {
+		return nil, err
+	}
+	pbEvent.Id = int64(entEvent.ID)
+	//pbEvent.ChannelId = int64(entEvent.Edges.EventListener.Edges.Channel.ID)
+	return pbEvent, nil
 }

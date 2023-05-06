@@ -3,8 +3,8 @@ module github.com/loomi-labs/star-scope/indexers/osmosis
 go 1.20
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230504090119-bbf0fa41147a.1
-	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230504090119-bbf0fa41147a.1
+	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230506133255-88329b7085b7.1
+	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230506133255-88329b7085b7.1
 	github.com/bufbuild/connect-go v1.7.0
 	github.com/cosmos/cosmos-sdk v0.46.10
 	github.com/cosmos/ibc-go/v4 v4.3.0

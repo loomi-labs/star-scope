@@ -4,6 +4,7 @@ import (
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"errors"
 	"fmt"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
@@ -13,6 +14,7 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
+	"time"
 )
 
 type RawEvent struct {
@@ -44,12 +46,17 @@ func (i *Indexer) getRawEventResult(events []types.Event, event RawEvent) (map[s
 	return result, nil
 }
 
-func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) ([]byte, error) {
-	if len(events) == 0 {
+func (i *Indexer) handleFungibleTokenPacketEvent(txResponse *sdktypes.TxResponse) ([]byte, error) {
+	if txResponse == nil || len(txResponse.Events) == 0 {
 		return nil, nil
+	}
+	var timestamp, err = time.Parse(time.RFC3339, txResponse.Timestamp)
+	if err != nil {
+		return nil, err
 	}
 	txEvent := &indexevent.TxEvent{
 		ChainName:  i.chainInfo.ChainName,
+		Timestamp:  timestamppb.New(timestamp),
 		NotifyTime: timestamppb.Now(),
 		Event: &indexevent.TxEvent_CoinReceived{
 			CoinReceived: &indexevent.CoinReceivedEvent{
@@ -59,7 +66,7 @@ func (i *Indexer) handleFungibleTokenPacketEvent(events []types.Event) ([]byte, 
 	}
 
 	var receiver, sender, amount, denom, success = "receiver", "sender", "amount", "denom", "success"
-	result, err := i.getRawEventResult(events, RawEvent{
+	result, err := i.getRawEventResult(txResponse.Events, RawEvent{
 		Type:       "fungible_token_packet",
 		Attributes: []string{receiver, sender, amount, denom, success},
 	})
@@ -108,11 +115,11 @@ func (i *Indexer) handleMsgMultiSend(_ *banktypes.MsgMultiSend, _ []byte, height
 }
 
 func (i *Indexer) handleMsgRecvPacket(_ *ibcChannel.MsgRecvPacket, tx []byte) ([]byte, error) {
-	events, err := i.getTxEvents(tx)
+	txResponse, err := i.getTxResponse(tx)
 	if err != nil {
 		return nil, err
 	}
-	return i.handleFungibleTokenPacketEvent(events)
+	return i.handleFungibleTokenPacketEvent(txResponse)
 }
 
 func (i *Indexer) handleMsgBeginUnlockingAll(_ *lockuptypes.MsgBeginUnlockingAll, _ []byte, height int64) {
@@ -120,19 +127,25 @@ func (i *Indexer) handleMsgBeginUnlockingAll(_ *lockuptypes.MsgBeginUnlockingAll
 }
 
 func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx []byte) ([]byte, error) {
+	txResponse, err := i.getTxResponse(tx)
+	if err != nil {
+		return nil, err
+	}
+	timestamp, err := time.Parse(time.RFC3339, txResponse.Timestamp)
+	if err != nil {
+		return nil, err
+	}
 	txEvent := &indexevent.TxEvent{
 		ChainName:  i.chainInfo.ChainName,
+		Timestamp:  timestamppb.New(timestamp),
 		NotifyTime: timestamppb.Now(),
 		Event: &indexevent.TxEvent_OsmosisPoolUnlock{
 			OsmosisPoolUnlock: &indexevent.OsmosisPoolUnlockEvent{},
 		},
 	}
 	var owner, duration, unlockTime = "owner", "duration", "unlock_time"
-	events, err := i.getTxEvents(tx)
-	if err != nil {
-		return nil, err
-	}
-	result, err := i.getRawEventResult(events, RawEvent{
+
+	result, err := i.getRawEventResult(txResponse.Events, RawEvent{
 		Type:       "begin_unlock",
 		Attributes: []string{owner, duration, unlockTime},
 	})

@@ -101,14 +101,14 @@ func (k *Kafka) getEventListenerMap() map[string]*ent.EventListener {
 	return elMap
 }
 
-func (k *Kafka) ConsumeIndexedEvents() {
+func (k *Kafka) ProcessIndexedEvents() {
 	log.Sugar.Info("Start consuming indexed events")
 	r := k.indexedEventsReader()
 	defer k.closeReader(r)
 
-	elMap := k.getEventListenerMap()
-
 	for {
+		// TODO: find a better way to get event listener map than querying db every time
+		elMap := k.getEventListenerMap()
 		msg, err := r.ReadMessage(context.Background())
 		if err != nil {
 			log.Sugar.Errorf("failed to read message: %v", err)
@@ -141,6 +141,7 @@ func (k *Kafka) ConsumeIndexedEvents() {
 				log.Sugar.Debugf("Discard event %v with address %v", msg.Offset, txEvent.WalletAddress)
 			}
 		}
+		time.Sleep(1 * time.Second)
 	}
 }
 

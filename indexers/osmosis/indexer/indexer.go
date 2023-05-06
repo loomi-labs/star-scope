@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/bufbuild/connect-go"
 	cmtservice "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibcChannel "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
@@ -18,7 +19,6 @@ import (
 	"github.com/osmosis-labs/osmosis/osmoutils/noapptest"
 	lockuptypes "github.com/osmosis-labs/osmosis/v15/x/lockup/types"
 	"github.com/shifty11/go-logger/log"
-	"github.com/tendermint/tendermint/abci/types"
 	"io"
 	"net/http"
 	"time"
@@ -124,24 +124,26 @@ func (i *Indexer) getTxResult(tx []byte) (*txtypes.GetTxResponse, error) {
 	return &txResponse, nil
 }
 
-func (i *Indexer) getTxEvents(tx []byte) ([]types.Event, error) {
+func (i *Indexer) getTxResponse(tx []byte) (*sdktypes.TxResponse, error) {
 	resp, err := i.getTxResult(tx)
 	if err != nil {
 		return nil, err
 	}
 	if resp.GetTxResponse().Code == 0 {
-		//log.Sugar.Debugf("Tx %v was successful", resp.GetTxResponse().TxHash)
-		return resp.GetTxResponse().Events, nil
+		return resp.GetTxResponse(), nil
 	}
 	return nil, nil
 }
 
 func (i *Indexer) wasTxSuccessful(tx []byte) (bool, error) {
-	events, err := i.getTxEvents(tx)
+	txResponse, err := i.getTxResponse(tx)
 	if err != nil {
 		return false, err
 	}
-	return len(events) > 0, nil
+	if txResponse == nil {
+		return false, nil
+	}
+	return len(txResponse.Events) > 0, nil
 }
 
 type SyncStatus struct {
