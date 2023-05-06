@@ -243,11 +243,6 @@ func InitDb() {
 			log.Sugar.Panicf("failed to init database: %v", err)
 		}
 	}
-	// TODO: remove this when we have a proper user management
-	_, err := client.User.Delete().Exec(ctx)
-	if err != nil {
-		log.Sugar.Panicf("failed to delete users: %v", err)
-	}
 	log.Sugar.Info("database initialized successfully")
 }
 
