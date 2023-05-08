@@ -131,6 +131,9 @@ func (i *Indexer) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocking, tx [
 	if err != nil {
 		return nil, err
 	}
+	if txResponse == nil || len(txResponse.Events) == 0 {
+		return nil, nil
+	}
 	timestamp, err := time.Parse(time.RFC3339, txResponse.Timestamp)
 	if err != nil {
 		return nil, err
