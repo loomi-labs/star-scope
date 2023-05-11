@@ -24,13 +24,24 @@ const (
 	RefreshToken TokenType = "RefreshToken"
 )
 
-func AccessibleRoles() map[string][]Role {
-	const path = "/starscope.grpc"
-	const authService = path + ".AuthService/"
-	const indexerService = path + ".IndexerService/"
-	const userService = path + ".UserService/"
-	const eventService = path + ".EventService/"
+const (
+	basePath       = "/starscope.grpc"
+	authService    = basePath + ".AuthService/"
+	userService    = basePath + ".UserService/"
+	eventService   = basePath + ".EventService/"
+	indexerService = basePath + ".IndexerService/"
+)
 
+func ServiceNames() []string {
+	return []string{
+		authService,
+		userService,
+		eventService,
+		indexerService,
+	}
+}
+
+func AccessibleRoles() map[string][]Role {
 	roles := map[string][]Role{
 		authService + "KeplrLogin":         {Unauthenticated, User, Admin},
 		authService + "RefreshAccessToken": {Unauthenticated, User, Admin},

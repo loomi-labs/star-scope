@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	connect_go "github.com/bufbuild/connect-go"
+	"github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb"
@@ -98,8 +98,10 @@ func getWalletAddress(message string) (string, error) {
 	return keplrResponse.Signed.Msgs[0].Value.Signer, nil
 }
 
-func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
-	verifySignature(request.Msg.GetKeplrResponse())
+func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[authpb.KeplrLoginRequest]) (*connect.Response[authpb.LoginResponse], error) {
+	if !verifySignature(request.Msg.GetKeplrResponse()) {
+		return nil, ErrorLoginFailed
+	}
 
 	address, err := getWalletAddress(request.Msg.GetKeplrResponse())
 	if err != nil {
@@ -131,13 +133,13 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect_go.Reques
 		log.Sugar.Errorf("Could not generate refreshToken for user %v (%v): %v", user.Name, user.ID, err)
 		return nil, ErrorInternal
 	}
-	return connect_go.NewResponse(&authpb.LoginResponse{
+	return connect.NewResponse(&authpb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}), nil
 }
 
-func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {
+func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect.Request[authpb.RefreshAccessTokenRequest]) (*connect.Response[authpb.RefreshAccessTokenResponse], error) {
 	claims, err := s.jwtManager.Verify(request.Msg.GetRefreshToken())
 	if err != nil {
 		return nil, ErrorTokenVerificationFailed
@@ -155,5 +157,5 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect_g
 		return nil, ErrorInternal
 	}
 
-	return connect_go.NewResponse(&authpb.RefreshAccessTokenResponse{AccessToken: accessToken}), nil
+	return connect.NewResponse(&authpb.RefreshAccessTokenResponse{AccessToken: accessToken}), nil
 }

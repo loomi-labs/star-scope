@@ -72,6 +72,17 @@ services:
       - 'kafka'
     restart: unless-stopped
 
+  envoy:
+    image: envoyproxy/envoy-dev
+    container_name: starscope_envoy
+    extra_hosts:
+      - "grpc:host-gateway"
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data/docker/envoy/envoy.yaml:/etc/envoy/envoy.yaml
+    restart: unless-stopped
+
 volumes:
   data:
     name: starscope_data
