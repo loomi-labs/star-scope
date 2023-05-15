@@ -114,6 +114,9 @@ services:
 
   envoy:
     image: ghcr.io/loomi-labs/star-scope-envoy:main
+    networks:
+      - caddy
+      - default
     deploy:
       placement:
         constraints:
@@ -128,6 +131,19 @@ services:
       labels:
         caddy: star-scope.decrypto.online
         caddy.reverse_proxy: "client:80"
+      placement:
+        constraints:
+          - node.role != manager
+
+  whoami-grpc-client:
+    image: jwilder/whoami
+    container_name: starscope_whoami_grpc_client
+    networks:
+      - caddy
+    deploy:
+      labels:
+        caddy: grpc.star-scope.decrypto.online
+        caddy.reverse_proxy: "envoy:8090"
       placement:
         constraints:
           - node.role != manager
