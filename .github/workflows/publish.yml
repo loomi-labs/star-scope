@@ -37,6 +37,8 @@ jobs:
               - 'client/**'
             osmosis-indexer:
               - 'indexers/osmosis/**'
+            envoy:
+              - 'data/docker/envoy/**'
 
       - name: Extract metadata (tags, labels) for server image
         id: meta-server
@@ -87,6 +89,22 @@ jobs:
           push: true
           tags: ${{ steps.meta-indexer.outputs.tags }}
           labels: ${{ steps.meta-indexer.outputs.labels }}
+
+      - name: Extract metadata (tags, labels) for envoy image
+        id: meta-envoy
+        uses: docker/metadata-action@v4.3.0
+        if: steps.changes.outputs.envoy == 'true'
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-envoy
+
+      - name: Build and push envoy Docker image
+        uses: docker/build-push-action@v4.0.0
+        if: steps.changes.outputs.envoy == 'true'
+        with:
+          context: data/docker/envoy/
+          push: true
+          tags: ${{ steps.meta-envoy.outputs.tags }}
+          labels: ${{ steps.meta-envoy.outputs.labels }}
 
       - name: Deploy to swarm
         uses: wshihadeh/docker-deployment-action@v2

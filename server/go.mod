@@ -26,6 +26,7 @@ require (
 	github.com/TheZeroSlave/zapsentry v1.15.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
+	github.com/bufbuild/connect-grpcreflect-go v1.0.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/docker/docker v23.0.5+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect

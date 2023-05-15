@@ -3,6 +3,7 @@ package grpc
 import (
 	"fmt"
 	"github.com/bufbuild/connect-go"
+	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/grpc/auth"
@@ -16,6 +17,7 @@ import (
 	"github.com/loomi-labs/star-scope/kafka"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
+
 	"golang.org/x/net/http2/h2c"
 	"net/http"
 	"time"
@@ -45,6 +47,9 @@ func NewGRPCServer(
 	}
 }
 
+// needed if used without envoy
+//
+//goland:noinspection GoUnusedFunction
 func corsHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -69,7 +74,12 @@ func (s GRPCServer) Run() {
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
+	reflector := grpcreflect.NewStaticReflector(auth.ServiceNames()...)
 	mux := http.NewServeMux()
+
+	mux.Handle(grpcreflect.NewHandlerV1(reflector))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
+
 	mux.Handle(authpbconnect.NewAuthServiceHandler(
 		auth.NewAuthServiceHandler(s.dbManagers, jwtManager),
 		interceptors,
@@ -87,7 +97,8 @@ func (s GRPCServer) Run() {
 		interceptors,
 	))
 
-	handler := corsHandler(mux) // Wrap the mux router with the CORS handler
+	//handler := corsHandler(mux) // Wrap the mux router with the CORS handler
+	handler := mux
 	err := http.ListenAndServe(
 		fmt.Sprintf("0.0.0.0:%v", s.config.Port),
 		h2c.NewHandler(handler, &http2.Server{}),

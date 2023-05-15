@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	connect_go "github.com/bufbuild/connect-go"
+	"github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/types"
@@ -21,20 +21,20 @@ func NewUserServiceHandler() userpbconnect.UserServiceHandler {
 	return &UserService{}
 }
 
-func (e UserService) GetUser(ctx context.Context, _ *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error) {
+func (e UserService) GetUser(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.User], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
 		return nil, types.UserNotFoundErr
 	}
 
-	return connect_go.NewResponse(&userpb.User{
+	return connect.NewResponse(&userpb.User{
 		Id:   int64(user.ID),
 		Name: user.Name,
 	}), nil
 }
 
-func (e UserService) ListChannels(ctx context.Context, _ *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error) {
+func (e UserService) ListChannels(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.ListChannelsResponse], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -62,7 +62,7 @@ func (e UserService) ListChannels(ctx context.Context, _ *connect_go.Request[emp
 		})
 	}
 
-	return connect_go.NewResponse(&userpb.ListChannelsResponse{
+	return connect.NewResponse(&userpb.ListChannelsResponse{
 		Channels: channelPbs,
 	}), nil
 }
