@@ -74,9 +74,11 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     // }
                     li() {
                         a(href=AppRoutes::Overview, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Overview, app_state.route.get().as_ref()))) {
-                            span(class=span_icon_class) {
-                                i(class="fas fa-chart-line") {}
-                            }
+                            // span(class=span_icon_class) {
+                            //     i(class="fas fa-chart-line") {}
+                            // }
+                            span(class="icon-[mdi--bell]", style="font-size: 1.5rem;") {}
+
                             span(class=span_text_class) { "Overview" }
                         }
                     }
