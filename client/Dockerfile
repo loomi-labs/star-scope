@@ -20,14 +20,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 # Create a new directory for your app
 WORKDIR /app
 
-RUN npm install -D tailwindcss
-
-# Add node_modules to path
-ENV PATH="/app/node_modules/.bin:${PATH}"
-
 # Copy your project's files into the container
 COPY client .
 COPY proto ./proto
+
+RUN npm install --only=dev --no-audit
+
+# Add node_modules to path
+ENV PATH="/app/node_modules/.bin:${PATH}"
 
 ARG GRPC_WEB_ENDPOINT_URL
 ENV GRPC_WEB_ENDPOINT_URL $GRPC_WEB_ENDPOINT_URL
