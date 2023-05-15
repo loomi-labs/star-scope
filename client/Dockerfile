@@ -24,7 +24,7 @@ WORKDIR /app
 COPY client .
 COPY proto ./proto
 
-RUN npm install --only=dev --no-audit
+RUN npm install
 
 # Add node_modules to path
 ENV PATH="/app/node_modules/.bin:${PATH}"
