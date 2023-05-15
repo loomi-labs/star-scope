@@ -124,6 +124,8 @@ services:
     container_name: starscope_client
     ports:
       - "8080:80"
+    depends_on:
+      - envoy
 
   envoy:
     build: data/docker/envoy
@@ -132,7 +134,8 @@ services:
       - "8090:8090"
     volumes:
       - ./data/docker/envoy/envoy.yaml:/etc/envoy/envoy.yaml
-    restart: unless-stopped
+    depends_on:
+      - grpc
 
 volumes:
   data:
