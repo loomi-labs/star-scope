@@ -43,14 +43,14 @@ func ServiceNames() []string {
 
 func AccessibleRoles() map[string][]Role {
 	roles := map[string][]Role{
-		authService + "KeplrLogin":         {Unauthenticated, User, Admin},
-		authService + "RefreshAccessToken": {Unauthenticated, User, Admin},
-		userService + "GetUser":            {User, Admin},
-		userService + "ListChannels":       {User, Admin},
-		eventService + "EventStream":       {User, Admin},
-		eventService + "ListEvents":        {User, Admin},
-		indexerService + "GetHeight":       {Token},
-		indexerService + "UpdateHeight":    {Token},
+		authService + "KeplrLogin":              {Unauthenticated, User, Admin},
+		authService + "RefreshAccessToken":      {Unauthenticated, User, Admin},
+		userService + "GetUser":                 {User, Admin},
+		userService + "ListChannels":            {User, Admin},
+		eventService + "EventStream":            {User, Admin},
+		eventService + "ListEvents":             {User, Admin},
+		indexerService + "GetIndexingChains":    {Token},
+		indexerService + "UpdateIndexingChains": {Token},
 	}
 	return roles
 }
