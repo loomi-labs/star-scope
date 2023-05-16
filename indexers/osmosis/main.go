@@ -1,10 +1,7 @@
 package main
 
 import (
-	"github.com/loomi-labs/star-scope/indexers/osmosis/common"
-	"github.com/loomi-labs/star-scope/indexers/osmosis/indexer"
 	"github.com/shifty11/go-logger/log"
-	"strings"
 )
 
 func main() {
@@ -16,9 +13,5 @@ func main() {
 		}
 	}()
 
-	var indx = indexer.NewIndexer(
-		common.GetEnvX("REST_ENDPOINT"),
-		strings.Split(common.GetEnvX("KAFKA_BROKERS"), ","),
-	)
-	indx.StartIndexing()
+	NewGRPCServer(&Config{Port: 50002}).Run()
 }

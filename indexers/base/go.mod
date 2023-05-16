@@ -3,8 +3,8 @@ module github.com/loomi-labs/star-scope/indexers/base
 go 1.20
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230515101451-6c65a56c9665.1
-	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230515101451-6c65a56c9665.1
+	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516184332-95061d49b92d.1
+	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516184332-95061d49b92d.1
 	github.com/bufbuild/connect-go v1.7.0
 	github.com/cosmos/cosmos-sdk v0.46.7
 	github.com/cosmos/ibc-go/v6 v6.1.0

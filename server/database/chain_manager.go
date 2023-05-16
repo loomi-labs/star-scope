@@ -41,7 +41,9 @@ func (m *ChainManager) Update(ctx context.Context, id int, indexingHeight uint64
 	}
 	var umt []string
 	for element := range uniqueUnhandledMessageTypes {
-		umt = append(umt, element)
+		if element != "" {
+			umt = append(umt, element)
+		}
 	}
 	return c.Update().
 		SetIndexingHeight(indexingHeight).

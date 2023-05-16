@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"errors"
 	"fmt"
@@ -17,30 +18,57 @@ import (
 )
 
 type baseMessageHandler struct {
-	MessageHandler
+	TxHandler
 	chainInfo ChainInfo
 	txHelper  TxHelper
 }
 
-func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) MessageHandler {
+func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) TxHandler {
 	return &baseMessageHandler{
 		chainInfo: chainInfo,
 		txHelper:  NewTxHelper(chainInfo, encodingConfig),
 	}
 }
-func (m *baseMessageHandler) DecodeTx(tx []byte) (sdktypes.Tx, error) {
-	txDecoded, _ := m.txHelper.encodingConfig.TxConfig.TxDecoder()(tx)
-	return txDecoded, nil
-}
 
-func (m *baseMessageHandler) HandleMessage(anyMsg sdktypes.Msg, tx []byte) ([]byte, error) {
-	switch msg := anyMsg.(type) {
-	case *banktypes.MsgSend:
-		return m.handleMsgSend(msg, tx)
-	case *ibcChannel.MsgRecvPacket:
-		return m.handleMsgRecvPacket(msg, tx)
+func (m *baseMessageHandler) HandleTxs(txs [][]byte) (*indexerpb.HandleTxsResponse, error) {
+	var result indexerpb.HandleTxsResponse
+	for _, tx := range txs {
+		txDecoded, err := m.txHelper.encodingConfig.TxConfig.TxDecoder()(tx)
+		if err != nil {
+			split := strings.Split(err.Error(), "/")
+			if len(split) > 1 {
+				result.UnhandledMessageTypes = append(result.UnhandledMessageTypes, strings.TrimSuffix(split[1], ": tx parse error"))
+			} else {
+				log.Sugar.Errorf("Error decoding tx: %s", err)
+			}
+			continue
+		}
+		if txDecoded == nil {
+			continue
+		}
+		for _, anyMsg := range txDecoded.GetMsgs() {
+			switch msg := anyMsg.(type) {
+			case *banktypes.MsgSend:
+				newMsg, err := m.handleMsgSend(msg, tx)
+				if err != nil {
+					return nil, err
+				}
+				result.ProtoMessages = append(result.ProtoMessages, newMsg)
+				result.CountProcessed++
+			case *ibcChannel.MsgRecvPacket:
+				newMsg, err := m.handleMsgRecvPacket(msg, tx)
+				if err != nil {
+					return nil, err
+				}
+				result.ProtoMessages = append(result.ProtoMessages, newMsg)
+				result.CountProcessed++
+			default:
+				result.UnhandledMessageTypes = append(result.UnhandledMessageTypes, fmt.Sprintf("%T", msg))
+				result.CountSkipped++
+			}
+		}
 	}
-	return nil, nil
+	return &result, nil
 }
 
 type RawEvent struct {

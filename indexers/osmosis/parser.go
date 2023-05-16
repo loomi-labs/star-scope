@@ -1,4 +1,4 @@
-package indexer
+package main
 
 import (
 	"github.com/golang/protobuf/ptypes/duration"

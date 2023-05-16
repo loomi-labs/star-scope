@@ -1,19 +1,14 @@
 package indexer
 
 import (
-	"buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/bufbuild/connect-go"
 	cmtservice "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/loomi-labs/star-scope/indexers/base/client"
-	"github.com/loomi-labs/star-scope/indexers/base/common"
 	"github.com/loomi-labs/star-scope/indexers/base/kafka"
 	"github.com/shifty11/go-logger/log"
 	"io"
@@ -29,32 +24,28 @@ type ChainInfo struct {
 
 type Indexer struct {
 	chainInfo      ChainInfo
-	grpcClient     indexerpbconnect.IndexerServiceClient
 	encodingConfig EncodingConfig
 	kafkaProducer  *kafka.KafkaProducer
-	messageHandler MessageHandler
+	txHandler      TxHandler
 }
 
-type MessageHandler interface {
-	DecodeTx(tx []byte) (sdktypes.Tx, error)
-	HandleMessage(msg sdktypes.Msg, tx []byte) ([]byte, error)
+type TxHandler interface {
+	HandleTxs(txs [][]byte) (*indexerpb.HandleTxsResponse, error)
 }
 
-type IndexerConfig struct {
+type Config struct {
 	ChainInfo      ChainInfo
-	KafkaAddresses []string
+	KafkaBrokers   []string
 	EncodingConfig EncodingConfig
-	GrpcAuthToken  string
-	GrpcEndpoint   string
+	MessageHandler TxHandler
 }
 
-func NewIndexer(config IndexerConfig, messageHandler MessageHandler) Indexer {
+func NewIndexer(config Config) Indexer {
 	return Indexer{
 		chainInfo:      config.ChainInfo,
-		grpcClient:     client.NewGrpcClient(config.GrpcEndpoint, config.GrpcAuthToken),
 		encodingConfig: config.EncodingConfig,
-		kafkaProducer:  kafka.NewKafkaProducer(config.KafkaAddresses...),
-		messageHandler: messageHandler,
+		kafkaProducer:  kafka.NewKafkaProducer(config.KafkaBrokers...),
+		txHandler:      config.MessageHandler,
 	}
 }
 
@@ -120,58 +111,42 @@ func (h *TxHelper) WasTxSuccessful(tx []byte) (bool, error) {
 func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse, syncStatus SyncStatus) error {
 	var data = blockResponse.GetBlock().GetData()
 	var txs = data.GetTxs()
-	var cntSkipped = 0
-	var cntMsgs = 0
-	var protoMsgs = make([][]byte, 0)
-	for _, tx := range txs {
-		txDecoded, err := i.messageHandler.DecodeTx(tx)
-		if err != nil {
-			return err
-		}
-		if txDecoded == nil {
-			continue
-		}
-		cntMsgs += len(txDecoded.GetMsgs())
-		for _, anyMsg := range txDecoded.GetMsgs() {
-			var protoMsg []byte
-			protoMsg, err := i.messageHandler.HandleMessage(anyMsg, tx)
-			if err != nil {
-				return err
-			}
-			if protoMsg != nil {
-				protoMsgs = append(protoMsgs, protoMsg)
-			} else {
-				syncStatus.UnhandledMessageTypes[fmt.Sprintf("%T", anyMsg)] = struct{}{}
-				cntSkipped++
-			}
+
+	var result, err = i.txHandler.HandleTxs(txs)
+	if err != nil {
+		return err
+	}
+
+	if len(result.GetProtoMessages()) > 0 {
+		i.kafkaProducer.Produce(result.ProtoMessages)
+	}
+
+	if result.UnhandledMessageTypes != nil {
+		for _, msgType := range result.UnhandledMessageTypes {
+			syncStatus.UnhandledMessageTypes[msgType] = struct{}{}
 		}
 	}
-	if len(protoMsgs) > 0 {
-		i.kafkaProducer.Produce(protoMsgs)
-	}
-	var cntProcessed = cntMsgs - cntSkipped
+
 	var behindText = ""
-	var behind = syncStatus.LatestHeight - blockResponse.GetBlock().GetHeader().Height
+	var behind = int(syncStatus.LatestHeight) - int(blockResponse.GetBlock().GetHeader().Height)
 	if behind > 0 {
 		behindText = fmt.Sprintf(" (%v behind latest)", behind)
 	}
+	var total = result.CountProcessed + result.CountSkipped
 	log.Sugar.Infof("Block %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
-		blockResponse.GetBlock().GetHeader().Height, behindText, cntMsgs, cntSkipped, cntProcessed, len(protoMsgs))
+		blockResponse.GetBlock().GetHeader().Height, behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages))
 	return nil
 }
 
 type SyncStatus struct {
-	Height                int64
-	LatestHeight          int64
+	ChainId               uint64
+	Height                uint64
+	LatestHeight          uint64
 	UnhandledMessageTypes map[string]struct{}
 }
 
-func (i *Indexer) getSyncStatus() SyncStatus {
-	log.Sugar.Info("Getting sync status")
-	apiResponse, err := i.grpcClient.GetHeight(context.Background(), connect.NewRequest(&indexerpb.GetHeightRequest{ChainName: "Osmosis"}))
-	if err != nil {
-		log.Sugar.Panic(err)
-	}
+func (i *Indexer) getLatestHeight(syncStatus *SyncStatus) {
+	log.Sugar.Infof("Getting latest height of chain %v", i.chainInfo.Name)
 
 	var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/latest", i.chainInfo.RestEndpoint)
 	resp, err := http.Get(url)
@@ -191,42 +166,23 @@ func (i *Indexer) getSyncStatus() SyncStatus {
 	if err := i.encodingConfig.Codec.UnmarshalJSON(body, &response); err != nil {
 		log.Sugar.Panic(err)
 	}
-	var height = apiResponse.Msg.GetHeight() + 1
-	if height == 1 || common.GetEnvAsBool("FORCE_START_FROM_LATEST_BLOCK") {
-		height = response.GetBlock().GetHeader().Height
-	}
-	return SyncStatus{
-		LatestHeight:          response.GetBlock().GetHeader().Height,
-		Height:                height,
-		UnhandledMessageTypes: map[string]struct{}{},
+	syncStatus.LatestHeight = uint64(response.GetBlock().GetHeader().Height)
+	if syncStatus.Height == 0 {
+		syncStatus.Height = syncStatus.LatestHeight
 	}
 }
 
-func (i *Indexer) updateHeight(syncStatus *SyncStatus) {
-	// TODO: send unhandled message types
+func (i *Indexer) updateSyncStatus(syncStatus *SyncStatus, updateChannel chan SyncStatus) {
 	var unhandledMessageTypes []string
 	for msgType := range syncStatus.UnhandledMessageTypes {
 		unhandledMessageTypes = append(unhandledMessageTypes, msgType)
 	}
-
-	_, err := i.grpcClient.UpdateSyncStatus(context.Background(),
-		connect.NewRequest(
-			&indexerpb.UpdateSyncStatusRequest{
-				ChainName:             "Osmosis",
-				Height:                syncStatus.Height,
-				UnhandledMessageTypes: unhandledMessageTypes,
-			},
-		),
-	)
-	if err != nil {
-		// TODO: handle error based on status code and retry if necessary
-		panic(err)
-	}
+	updateChannel <- *syncStatus
 	syncStatus.Height++
 }
 
-func (i *Indexer) StartIndexing() {
-	var syncStatus = i.getSyncStatus()
+func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncStatus) {
+	i.getLatestHeight(&syncStatus)
 	var catchUp = syncStatus.Height < syncStatus.LatestHeight
 	log.Sugar.Infof("Start indexing at height: %v", syncStatus.Height)
 	for true {
@@ -244,12 +200,12 @@ func (i *Indexer) StartIndexing() {
 				log.Sugar.Panicf("Failed to get block: %v %v", status, err)
 			}
 		} else {
-			err := i.handleBlock(&blockResponse, syncStatus)
+			err = i.handleBlock(&blockResponse, syncStatus)
 			if err != nil {
-				log.Sugar.Errorf("Failed to handle block (try again): %v", err)
+				log.Sugar.Errorf("Failed to handle block %v (try again): %v", syncStatus.Height, err)
 				time.Sleep(200 * time.Millisecond)
 			} else {
-				i.updateHeight(&syncStatus)
+				i.updateSyncStatus(&syncStatus, updateChannel)
 			}
 		}
 		if !catchUp {

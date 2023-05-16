@@ -42,9 +42,9 @@ const (
 	// IndexerServiceUpdateIndexingChainsProcedure is the fully-qualified name of the IndexerService's
 	// UpdateIndexingChains RPC.
 	IndexerServiceUpdateIndexingChainsProcedure = "/starscope.grpc.IndexerService/UpdateIndexingChains"
-	// TxHandlerServiceHandleTxProcedure is the fully-qualified name of the TxHandlerService's HandleTx
-	// RPC.
-	TxHandlerServiceHandleTxProcedure = "/starscope.grpc.TxHandlerService/HandleTx"
+	// TxHandlerServiceHandleTxsProcedure is the fully-qualified name of the TxHandlerService's
+	// HandleTxs RPC.
+	TxHandlerServiceHandleTxsProcedure = "/starscope.grpc.TxHandlerService/HandleTxs"
 )
 
 // IndexerServiceClient is a client for the starscope.grpc.IndexerService service.
@@ -131,7 +131,7 @@ func (UnimplementedIndexerServiceHandler) UpdateIndexingChains(context.Context, 
 
 // TxHandlerServiceClient is a client for the starscope.grpc.TxHandlerService service.
 type TxHandlerServiceClient interface {
-	HandleTx(context.Context, *connect_go.Request[indexerpb.HandleTxRequest]) (*connect_go.Response[indexerpb.HandleTxResponse], error)
+	HandleTxs(context.Context, *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error)
 }
 
 // NewTxHandlerServiceClient constructs a client for the starscope.grpc.TxHandlerService service. By
@@ -144,9 +144,9 @@ type TxHandlerServiceClient interface {
 func NewTxHandlerServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) TxHandlerServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &txHandlerServiceClient{
-		handleTx: connect_go.NewClient[indexerpb.HandleTxRequest, indexerpb.HandleTxResponse](
+		handleTxs: connect_go.NewClient[indexerpb.HandleTxsRequest, indexerpb.HandleTxsResponse](
 			httpClient,
-			baseURL+TxHandlerServiceHandleTxProcedure,
+			baseURL+TxHandlerServiceHandleTxsProcedure,
 			opts...,
 		),
 	}
@@ -154,17 +154,17 @@ func NewTxHandlerServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 
 // txHandlerServiceClient implements TxHandlerServiceClient.
 type txHandlerServiceClient struct {
-	handleTx *connect_go.Client[indexerpb.HandleTxRequest, indexerpb.HandleTxResponse]
+	handleTxs *connect_go.Client[indexerpb.HandleTxsRequest, indexerpb.HandleTxsResponse]
 }
 
-// HandleTx calls starscope.grpc.TxHandlerService.HandleTx.
-func (c *txHandlerServiceClient) HandleTx(ctx context.Context, req *connect_go.Request[indexerpb.HandleTxRequest]) (*connect_go.Response[indexerpb.HandleTxResponse], error) {
-	return c.handleTx.CallUnary(ctx, req)
+// HandleTxs calls starscope.grpc.TxHandlerService.HandleTxs.
+func (c *txHandlerServiceClient) HandleTxs(ctx context.Context, req *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error) {
+	return c.handleTxs.CallUnary(ctx, req)
 }
 
 // TxHandlerServiceHandler is an implementation of the starscope.grpc.TxHandlerService service.
 type TxHandlerServiceHandler interface {
-	HandleTx(context.Context, *connect_go.Request[indexerpb.HandleTxRequest]) (*connect_go.Response[indexerpb.HandleTxResponse], error)
+	HandleTxs(context.Context, *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error)
 }
 
 // NewTxHandlerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -174,9 +174,9 @@ type TxHandlerServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewTxHandlerServiceHandler(svc TxHandlerServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle(TxHandlerServiceHandleTxProcedure, connect_go.NewUnaryHandler(
-		TxHandlerServiceHandleTxProcedure,
-		svc.HandleTx,
+	mux.Handle(TxHandlerServiceHandleTxsProcedure, connect_go.NewUnaryHandler(
+		TxHandlerServiceHandleTxsProcedure,
+		svc.HandleTxs,
 		opts...,
 	))
 	return "/starscope.grpc.TxHandlerService/", mux
@@ -185,6 +185,6 @@ func NewTxHandlerServiceHandler(svc TxHandlerServiceHandler, opts ...connect_go.
 // UnimplementedTxHandlerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedTxHandlerServiceHandler struct{}
 
-func (UnimplementedTxHandlerServiceHandler) HandleTx(context.Context, *connect_go.Request[indexerpb.HandleTxRequest]) (*connect_go.Response[indexerpb.HandleTxResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.TxHandlerService.HandleTx is not implemented"))
+func (UnimplementedTxHandlerServiceHandler) HandleTxs(context.Context, *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.TxHandlerService.HandleTxs is not implemented"))
 }

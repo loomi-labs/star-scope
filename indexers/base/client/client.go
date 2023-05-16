@@ -6,12 +6,19 @@ import (
 	"net/http"
 )
 
-func NewGrpcClient(endpoint string, authToken string) indexerpbconnect.IndexerServiceClient {
+func NewIndexerServiceClient(endpoint string, authToken string) indexerpbconnect.IndexerServiceClient {
 	authInterceptor := NewAuthInterceptor(authToken)
 	interceptors := connect.WithInterceptors(authInterceptor)
 	return indexerpbconnect.NewIndexerServiceClient(
 		http.DefaultClient,
 		endpoint,
 		interceptors,
+	)
+}
+
+func NewTxHandlerServiceClient(endpoint string) indexerpbconnect.TxHandlerServiceClient {
+	return indexerpbconnect.NewTxHandlerServiceClient(
+		http.DefaultClient,
+		endpoint,
 	)
 }
