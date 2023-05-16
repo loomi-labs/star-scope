@@ -27,7 +27,7 @@ func (ed *EventDelete) Where(ps ...predicate.Event) *EventDelete {
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (ed *EventDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks[int, EventMutation](ctx, ed.sqlExec, ed.mutation, ed.hooks)
+	return withHooks(ctx, ed.sqlExec, ed.mutation, ed.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.

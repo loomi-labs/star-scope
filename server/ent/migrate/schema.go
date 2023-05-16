@@ -15,7 +15,10 @@ var (
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "image", Type: field.TypeString},
-		{Name: "indexing_height", Type: field.TypeInt64, Default: 0},
+		{Name: "indexing_height", Type: field.TypeUint64, Default: 0},
+		{Name: "path", Type: field.TypeString},
+		{Name: "has_custom_indexer", Type: field.TypeBool, Default: false},
+		{Name: "unhandled_message_types", Type: field.TypeString, Default: ""},
 	}
 	// ChainsTable holds the schema information for the "chains" table.
 	ChainsTable = &schema.Table{

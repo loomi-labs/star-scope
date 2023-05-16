@@ -48,23 +48,57 @@ func (cu *ChainUpdate) SetImage(s string) *ChainUpdate {
 }
 
 // SetIndexingHeight sets the "indexing_height" field.
-func (cu *ChainUpdate) SetIndexingHeight(i int64) *ChainUpdate {
+func (cu *ChainUpdate) SetIndexingHeight(u uint64) *ChainUpdate {
 	cu.mutation.ResetIndexingHeight()
-	cu.mutation.SetIndexingHeight(i)
+	cu.mutation.SetIndexingHeight(u)
 	return cu
 }
 
 // SetNillableIndexingHeight sets the "indexing_height" field if the given value is not nil.
-func (cu *ChainUpdate) SetNillableIndexingHeight(i *int64) *ChainUpdate {
-	if i != nil {
-		cu.SetIndexingHeight(*i)
+func (cu *ChainUpdate) SetNillableIndexingHeight(u *uint64) *ChainUpdate {
+	if u != nil {
+		cu.SetIndexingHeight(*u)
 	}
 	return cu
 }
 
-// AddIndexingHeight adds i to the "indexing_height" field.
-func (cu *ChainUpdate) AddIndexingHeight(i int64) *ChainUpdate {
-	cu.mutation.AddIndexingHeight(i)
+// AddIndexingHeight adds u to the "indexing_height" field.
+func (cu *ChainUpdate) AddIndexingHeight(u int64) *ChainUpdate {
+	cu.mutation.AddIndexingHeight(u)
+	return cu
+}
+
+// SetPath sets the "path" field.
+func (cu *ChainUpdate) SetPath(s string) *ChainUpdate {
+	cu.mutation.SetPath(s)
+	return cu
+}
+
+// SetHasCustomIndexer sets the "has_custom_indexer" field.
+func (cu *ChainUpdate) SetHasCustomIndexer(b bool) *ChainUpdate {
+	cu.mutation.SetHasCustomIndexer(b)
+	return cu
+}
+
+// SetNillableHasCustomIndexer sets the "has_custom_indexer" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableHasCustomIndexer(b *bool) *ChainUpdate {
+	if b != nil {
+		cu.SetHasCustomIndexer(*b)
+	}
+	return cu
+}
+
+// SetUnhandledMessageTypes sets the "unhandled_message_types" field.
+func (cu *ChainUpdate) SetUnhandledMessageTypes(s string) *ChainUpdate {
+	cu.mutation.SetUnhandledMessageTypes(s)
+	return cu
+}
+
+// SetNillableUnhandledMessageTypes sets the "unhandled_message_types" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableUnhandledMessageTypes(s *string) *ChainUpdate {
+	if s != nil {
+		cu.SetUnhandledMessageTypes(*s)
+	}
 	return cu
 }
 
@@ -112,7 +146,7 @@ func (cu *ChainUpdate) RemoveEventListeners(e ...*EventListener) *ChainUpdate {
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *ChainUpdate) Save(ctx context.Context) (int, error) {
 	cu.defaults()
-	return withHooks[int, ChainMutation](ctx, cu.sqlSave, cu.mutation, cu.hooks)
+	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -164,10 +198,19 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.IndexingHeight(); ok {
-		_spec.SetField(chain.FieldIndexingHeight, field.TypeInt64, value)
+		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 	}
 	if value, ok := cu.mutation.AddedIndexingHeight(); ok {
-		_spec.AddField(chain.FieldIndexingHeight, field.TypeInt64, value)
+		_spec.AddField(chain.FieldIndexingHeight, field.TypeUint64, value)
+	}
+	if value, ok := cu.mutation.Path(); ok {
+		_spec.SetField(chain.FieldPath, field.TypeString, value)
+	}
+	if value, ok := cu.mutation.HasCustomIndexer(); ok {
+		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
+	}
+	if value, ok := cu.mutation.UnhandledMessageTypes(); ok {
+		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
 	}
 	if cu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -253,23 +296,57 @@ func (cuo *ChainUpdateOne) SetImage(s string) *ChainUpdateOne {
 }
 
 // SetIndexingHeight sets the "indexing_height" field.
-func (cuo *ChainUpdateOne) SetIndexingHeight(i int64) *ChainUpdateOne {
+func (cuo *ChainUpdateOne) SetIndexingHeight(u uint64) *ChainUpdateOne {
 	cuo.mutation.ResetIndexingHeight()
-	cuo.mutation.SetIndexingHeight(i)
+	cuo.mutation.SetIndexingHeight(u)
 	return cuo
 }
 
 // SetNillableIndexingHeight sets the "indexing_height" field if the given value is not nil.
-func (cuo *ChainUpdateOne) SetNillableIndexingHeight(i *int64) *ChainUpdateOne {
-	if i != nil {
-		cuo.SetIndexingHeight(*i)
+func (cuo *ChainUpdateOne) SetNillableIndexingHeight(u *uint64) *ChainUpdateOne {
+	if u != nil {
+		cuo.SetIndexingHeight(*u)
 	}
 	return cuo
 }
 
-// AddIndexingHeight adds i to the "indexing_height" field.
-func (cuo *ChainUpdateOne) AddIndexingHeight(i int64) *ChainUpdateOne {
-	cuo.mutation.AddIndexingHeight(i)
+// AddIndexingHeight adds u to the "indexing_height" field.
+func (cuo *ChainUpdateOne) AddIndexingHeight(u int64) *ChainUpdateOne {
+	cuo.mutation.AddIndexingHeight(u)
+	return cuo
+}
+
+// SetPath sets the "path" field.
+func (cuo *ChainUpdateOne) SetPath(s string) *ChainUpdateOne {
+	cuo.mutation.SetPath(s)
+	return cuo
+}
+
+// SetHasCustomIndexer sets the "has_custom_indexer" field.
+func (cuo *ChainUpdateOne) SetHasCustomIndexer(b bool) *ChainUpdateOne {
+	cuo.mutation.SetHasCustomIndexer(b)
+	return cuo
+}
+
+// SetNillableHasCustomIndexer sets the "has_custom_indexer" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableHasCustomIndexer(b *bool) *ChainUpdateOne {
+	if b != nil {
+		cuo.SetHasCustomIndexer(*b)
+	}
+	return cuo
+}
+
+// SetUnhandledMessageTypes sets the "unhandled_message_types" field.
+func (cuo *ChainUpdateOne) SetUnhandledMessageTypes(s string) *ChainUpdateOne {
+	cuo.mutation.SetUnhandledMessageTypes(s)
+	return cuo
+}
+
+// SetNillableUnhandledMessageTypes sets the "unhandled_message_types" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableUnhandledMessageTypes(s *string) *ChainUpdateOne {
+	if s != nil {
+		cuo.SetUnhandledMessageTypes(*s)
+	}
 	return cuo
 }
 
@@ -330,7 +407,7 @@ func (cuo *ChainUpdateOne) Select(field string, fields ...string) *ChainUpdateOn
 // Save executes the query and returns the updated Chain entity.
 func (cuo *ChainUpdateOne) Save(ctx context.Context) (*Chain, error) {
 	cuo.defaults()
-	return withHooks[*Chain, ChainMutation](ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
+	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -399,10 +476,19 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.IndexingHeight(); ok {
-		_spec.SetField(chain.FieldIndexingHeight, field.TypeInt64, value)
+		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 	}
 	if value, ok := cuo.mutation.AddedIndexingHeight(); ok {
-		_spec.AddField(chain.FieldIndexingHeight, field.TypeInt64, value)
+		_spec.AddField(chain.FieldIndexingHeight, field.TypeUint64, value)
+	}
+	if value, ok := cuo.mutation.Path(); ok {
+		_spec.SetField(chain.FieldPath, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.HasCustomIndexer(); ok {
+		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
+	}
+	if value, ok := cuo.mutation.UnhandledMessageTypes(); ok {
+		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
 	}
 	if cuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

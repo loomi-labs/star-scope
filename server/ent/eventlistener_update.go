@@ -137,7 +137,7 @@ func (elu *EventListenerUpdate) RemoveEvents(e ...*Event) *EventListenerUpdate {
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (elu *EventListenerUpdate) Save(ctx context.Context) (int, error) {
 	elu.defaults()
-	return withHooks[int, EventListenerMutation](ctx, elu.sqlSave, elu.mutation, elu.hooks)
+	return withHooks(ctx, elu.sqlSave, elu.mutation, elu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -427,7 +427,7 @@ func (eluo *EventListenerUpdateOne) Select(field string, fields ...string) *Even
 // Save executes the query and returns the updated EventListener entity.
 func (eluo *EventListenerUpdateOne) Save(ctx context.Context) (*EventListener, error) {
 	eluo.defaults()
-	return withHooks[*EventListener, EventListenerMutation](ctx, eluo.sqlSave, eluo.mutation, eluo.hooks)
+	return withHooks(ctx, eluo.sqlSave, eluo.mutation, eluo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.

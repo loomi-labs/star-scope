@@ -118,7 +118,7 @@ func (elc *EventListenerCreate) Mutation() *EventListenerMutation {
 // Save creates the EventListener in the database.
 func (elc *EventListenerCreate) Save(ctx context.Context) (*EventListener, error) {
 	elc.defaults()
-	return withHooks[*EventListener, EventListenerMutation](ctx, elc.sqlSave, elc.mutation, elc.hooks)
+	return withHooks(ctx, elc.sqlSave, elc.mutation, elc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.

@@ -36,7 +36,15 @@ func init() {
 	// chainDescIndexingHeight is the schema descriptor for indexing_height field.
 	chainDescIndexingHeight := chainFields[2].Descriptor()
 	// chain.DefaultIndexingHeight holds the default value on creation for the indexing_height field.
-	chain.DefaultIndexingHeight = chainDescIndexingHeight.Default.(int64)
+	chain.DefaultIndexingHeight = chainDescIndexingHeight.Default.(uint64)
+	// chainDescHasCustomIndexer is the schema descriptor for has_custom_indexer field.
+	chainDescHasCustomIndexer := chainFields[4].Descriptor()
+	// chain.DefaultHasCustomIndexer holds the default value on creation for the has_custom_indexer field.
+	chain.DefaultHasCustomIndexer = chainDescHasCustomIndexer.Default.(bool)
+	// chainDescUnhandledMessageTypes is the schema descriptor for unhandled_message_types field.
+	chainDescUnhandledMessageTypes := chainFields[5].Descriptor()
+	// chain.DefaultUnhandledMessageTypes holds the default value on creation for the unhandled_message_types field.
+	chain.DefaultUnhandledMessageTypes = chainDescUnhandledMessageTypes.Default.(string)
 	channelMixin := schema.Channel{}.Mixin()
 	channelMixinFields0 := channelMixin[0].Fields()
 	_ = channelMixinFields0

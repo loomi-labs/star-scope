@@ -26,7 +26,13 @@ type Chain struct {
 	// Image holds the value of the "image" field.
 	Image string `json:"image,omitempty"`
 	// IndexingHeight holds the value of the "indexing_height" field.
-	IndexingHeight int64 `json:"indexing_height,omitempty"`
+	IndexingHeight uint64 `json:"indexing_height,omitempty"`
+	// Path holds the value of the "path" field.
+	Path string `json:"path,omitempty"`
+	// HasCustomIndexer holds the value of the "has_custom_indexer" field.
+	HasCustomIndexer bool `json:"has_custom_indexer,omitempty"`
+	// UnhandledMessageTypes holds the value of the "unhandled_message_types" field.
+	UnhandledMessageTypes string `json:"unhandled_message_types,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
 	Edges        ChainEdges `json:"edges"`
@@ -56,9 +62,11 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case chain.FieldHasCustomIndexer:
+			values[i] = new(sql.NullBool)
 		case chain.FieldID, chain.FieldIndexingHeight:
 			values[i] = new(sql.NullInt64)
-		case chain.FieldName, chain.FieldImage:
+		case chain.FieldName, chain.FieldImage, chain.FieldPath, chain.FieldUnhandledMessageTypes:
 			values[i] = new(sql.NullString)
 		case chain.FieldCreateTime, chain.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -111,7 +119,25 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field indexing_height", values[i])
 			} else if value.Valid {
-				c.IndexingHeight = value.Int64
+				c.IndexingHeight = uint64(value.Int64)
+			}
+		case chain.FieldPath:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field path", values[i])
+			} else if value.Valid {
+				c.Path = value.String
+			}
+		case chain.FieldHasCustomIndexer:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field has_custom_indexer", values[i])
+			} else if value.Valid {
+				c.HasCustomIndexer = value.Bool
+			}
+		case chain.FieldUnhandledMessageTypes:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field unhandled_message_types", values[i])
+			} else if value.Valid {
+				c.UnhandledMessageTypes = value.String
 			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
@@ -168,6 +194,15 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("indexing_height=")
 	builder.WriteString(fmt.Sprintf("%v", c.IndexingHeight))
+	builder.WriteString(", ")
+	builder.WriteString("path=")
+	builder.WriteString(c.Path)
+	builder.WriteString(", ")
+	builder.WriteString("has_custom_indexer=")
+	builder.WriteString(fmt.Sprintf("%v", c.HasCustomIndexer))
+	builder.WriteString(", ")
+	builder.WriteString("unhandled_message_types=")
+	builder.WriteString(c.UnhandledMessageTypes)
 	builder.WriteByte(')')
 	return builder.String()
 }

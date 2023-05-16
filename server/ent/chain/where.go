@@ -76,8 +76,23 @@ func Image(v string) predicate.Chain {
 }
 
 // IndexingHeight applies equality check predicate on the "indexing_height" field. It's identical to IndexingHeightEQ.
-func IndexingHeight(v int64) predicate.Chain {
+func IndexingHeight(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
+}
+
+// Path applies equality check predicate on the "path" field. It's identical to PathEQ.
+func Path(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldPath, v))
+}
+
+// HasCustomIndexer applies equality check predicate on the "has_custom_indexer" field. It's identical to HasCustomIndexerEQ.
+func HasCustomIndexer(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldHasCustomIndexer, v))
+}
+
+// UnhandledMessageTypes applies equality check predicate on the "unhandled_message_types" field. It's identical to UnhandledMessageTypesEQ.
+func UnhandledMessageTypes(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldUnhandledMessageTypes, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -291,43 +306,183 @@ func ImageContainsFold(v string) predicate.Chain {
 }
 
 // IndexingHeightEQ applies the EQ predicate on the "indexing_height" field.
-func IndexingHeightEQ(v int64) predicate.Chain {
+func IndexingHeightEQ(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
 }
 
 // IndexingHeightNEQ applies the NEQ predicate on the "indexing_height" field.
-func IndexingHeightNEQ(v int64) predicate.Chain {
+func IndexingHeightNEQ(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldNEQ(FieldIndexingHeight, v))
 }
 
 // IndexingHeightIn applies the In predicate on the "indexing_height" field.
-func IndexingHeightIn(vs ...int64) predicate.Chain {
+func IndexingHeightIn(vs ...uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldIn(FieldIndexingHeight, vs...))
 }
 
 // IndexingHeightNotIn applies the NotIn predicate on the "indexing_height" field.
-func IndexingHeightNotIn(vs ...int64) predicate.Chain {
+func IndexingHeightNotIn(vs ...uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldNotIn(FieldIndexingHeight, vs...))
 }
 
 // IndexingHeightGT applies the GT predicate on the "indexing_height" field.
-func IndexingHeightGT(v int64) predicate.Chain {
+func IndexingHeightGT(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldGT(FieldIndexingHeight, v))
 }
 
 // IndexingHeightGTE applies the GTE predicate on the "indexing_height" field.
-func IndexingHeightGTE(v int64) predicate.Chain {
+func IndexingHeightGTE(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldGTE(FieldIndexingHeight, v))
 }
 
 // IndexingHeightLT applies the LT predicate on the "indexing_height" field.
-func IndexingHeightLT(v int64) predicate.Chain {
+func IndexingHeightLT(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldLT(FieldIndexingHeight, v))
 }
 
 // IndexingHeightLTE applies the LTE predicate on the "indexing_height" field.
-func IndexingHeightLTE(v int64) predicate.Chain {
+func IndexingHeightLTE(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldLTE(FieldIndexingHeight, v))
+}
+
+// PathEQ applies the EQ predicate on the "path" field.
+func PathEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldPath, v))
+}
+
+// PathNEQ applies the NEQ predicate on the "path" field.
+func PathNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldPath, v))
+}
+
+// PathIn applies the In predicate on the "path" field.
+func PathIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldPath, vs...))
+}
+
+// PathNotIn applies the NotIn predicate on the "path" field.
+func PathNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldPath, vs...))
+}
+
+// PathGT applies the GT predicate on the "path" field.
+func PathGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldPath, v))
+}
+
+// PathGTE applies the GTE predicate on the "path" field.
+func PathGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldPath, v))
+}
+
+// PathLT applies the LT predicate on the "path" field.
+func PathLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldPath, v))
+}
+
+// PathLTE applies the LTE predicate on the "path" field.
+func PathLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldPath, v))
+}
+
+// PathContains applies the Contains predicate on the "path" field.
+func PathContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldPath, v))
+}
+
+// PathHasPrefix applies the HasPrefix predicate on the "path" field.
+func PathHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldPath, v))
+}
+
+// PathHasSuffix applies the HasSuffix predicate on the "path" field.
+func PathHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldPath, v))
+}
+
+// PathEqualFold applies the EqualFold predicate on the "path" field.
+func PathEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldPath, v))
+}
+
+// PathContainsFold applies the ContainsFold predicate on the "path" field.
+func PathContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldPath, v))
+}
+
+// HasCustomIndexerEQ applies the EQ predicate on the "has_custom_indexer" field.
+func HasCustomIndexerEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldHasCustomIndexer, v))
+}
+
+// HasCustomIndexerNEQ applies the NEQ predicate on the "has_custom_indexer" field.
+func HasCustomIndexerNEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldHasCustomIndexer, v))
+}
+
+// UnhandledMessageTypesEQ applies the EQ predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesNEQ applies the NEQ predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesIn applies the In predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldUnhandledMessageTypes, vs...))
+}
+
+// UnhandledMessageTypesNotIn applies the NotIn predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldUnhandledMessageTypes, vs...))
+}
+
+// UnhandledMessageTypesGT applies the GT predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesGTE applies the GTE predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesLT applies the LT predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesLTE applies the LTE predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesContains applies the Contains predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesHasPrefix applies the HasPrefix predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesHasSuffix applies the HasSuffix predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesEqualFold applies the EqualFold predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldUnhandledMessageTypes, v))
+}
+
+// UnhandledMessageTypesContainsFold applies the ContainsFold predicate on the "unhandled_message_types" field.
+func UnhandledMessageTypesContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldUnhandledMessageTypes, v))
 }
 
 // HasEventListeners applies the HasEdge predicate on the "event_listeners" edge.

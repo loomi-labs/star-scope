@@ -222,8 +222,9 @@ func MigrateDb() {
 		} else {
 			log.Sugar.Panicf("failed to migrate database: %v", err)
 		}
+	} else {
+		log.Sugar.Info("database migrated successfully")
 	}
-	log.Sugar.Info("database migrated successfully")
 }
 
 func InitDb() {
@@ -237,6 +238,26 @@ func InitDb() {
 		_, err := client.Chain.
 			Create().
 			SetName("Osmosis").
+			SetPath("osmosis").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(true).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
+	doesCosmosExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Cosmos")).
+		ExistX(ctx)
+	if !doesCosmosExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Cosmos").
+			SetPath("cosmoshub").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
 			SetImage("").
 			Save(ctx)
 		if err != nil {

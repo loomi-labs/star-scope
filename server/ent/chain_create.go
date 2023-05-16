@@ -62,15 +62,49 @@ func (cc *ChainCreate) SetImage(s string) *ChainCreate {
 }
 
 // SetIndexingHeight sets the "indexing_height" field.
-func (cc *ChainCreate) SetIndexingHeight(i int64) *ChainCreate {
-	cc.mutation.SetIndexingHeight(i)
+func (cc *ChainCreate) SetIndexingHeight(u uint64) *ChainCreate {
+	cc.mutation.SetIndexingHeight(u)
 	return cc
 }
 
 // SetNillableIndexingHeight sets the "indexing_height" field if the given value is not nil.
-func (cc *ChainCreate) SetNillableIndexingHeight(i *int64) *ChainCreate {
-	if i != nil {
-		cc.SetIndexingHeight(*i)
+func (cc *ChainCreate) SetNillableIndexingHeight(u *uint64) *ChainCreate {
+	if u != nil {
+		cc.SetIndexingHeight(*u)
+	}
+	return cc
+}
+
+// SetPath sets the "path" field.
+func (cc *ChainCreate) SetPath(s string) *ChainCreate {
+	cc.mutation.SetPath(s)
+	return cc
+}
+
+// SetHasCustomIndexer sets the "has_custom_indexer" field.
+func (cc *ChainCreate) SetHasCustomIndexer(b bool) *ChainCreate {
+	cc.mutation.SetHasCustomIndexer(b)
+	return cc
+}
+
+// SetNillableHasCustomIndexer sets the "has_custom_indexer" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableHasCustomIndexer(b *bool) *ChainCreate {
+	if b != nil {
+		cc.SetHasCustomIndexer(*b)
+	}
+	return cc
+}
+
+// SetUnhandledMessageTypes sets the "unhandled_message_types" field.
+func (cc *ChainCreate) SetUnhandledMessageTypes(s string) *ChainCreate {
+	cc.mutation.SetUnhandledMessageTypes(s)
+	return cc
+}
+
+// SetNillableUnhandledMessageTypes sets the "unhandled_message_types" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableUnhandledMessageTypes(s *string) *ChainCreate {
+	if s != nil {
+		cc.SetUnhandledMessageTypes(*s)
 	}
 	return cc
 }
@@ -98,7 +132,7 @@ func (cc *ChainCreate) Mutation() *ChainMutation {
 // Save creates the Chain in the database.
 func (cc *ChainCreate) Save(ctx context.Context) (*Chain, error) {
 	cc.defaults()
-	return withHooks[*Chain, ChainMutation](ctx, cc.sqlSave, cc.mutation, cc.hooks)
+	return withHooks(ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -137,6 +171,14 @@ func (cc *ChainCreate) defaults() {
 		v := chain.DefaultIndexingHeight
 		cc.mutation.SetIndexingHeight(v)
 	}
+	if _, ok := cc.mutation.HasCustomIndexer(); !ok {
+		v := chain.DefaultHasCustomIndexer
+		cc.mutation.SetHasCustomIndexer(v)
+	}
+	if _, ok := cc.mutation.UnhandledMessageTypes(); !ok {
+		v := chain.DefaultUnhandledMessageTypes
+		cc.mutation.SetUnhandledMessageTypes(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -155,6 +197,15 @@ func (cc *ChainCreate) check() error {
 	}
 	if _, ok := cc.mutation.IndexingHeight(); !ok {
 		return &ValidationError{Name: "indexing_height", err: errors.New(`ent: missing required field "Chain.indexing_height"`)}
+	}
+	if _, ok := cc.mutation.Path(); !ok {
+		return &ValidationError{Name: "path", err: errors.New(`ent: missing required field "Chain.path"`)}
+	}
+	if _, ok := cc.mutation.HasCustomIndexer(); !ok {
+		return &ValidationError{Name: "has_custom_indexer", err: errors.New(`ent: missing required field "Chain.has_custom_indexer"`)}
+	}
+	if _, ok := cc.mutation.UnhandledMessageTypes(); !ok {
+		return &ValidationError{Name: "unhandled_message_types", err: errors.New(`ent: missing required field "Chain.unhandled_message_types"`)}
 	}
 	return nil
 }
@@ -199,8 +250,20 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 		_node.Image = value
 	}
 	if value, ok := cc.mutation.IndexingHeight(); ok {
-		_spec.SetField(chain.FieldIndexingHeight, field.TypeInt64, value)
+		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 		_node.IndexingHeight = value
+	}
+	if value, ok := cc.mutation.Path(); ok {
+		_spec.SetField(chain.FieldPath, field.TypeString, value)
+		_node.Path = value
+	}
+	if value, ok := cc.mutation.HasCustomIndexer(); ok {
+		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
+		_node.HasCustomIndexer = value
+	}
+	if value, ok := cc.mutation.UnhandledMessageTypes(); ok {
+		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
+		_node.UnhandledMessageTypes = value
 	}
 	if nodes := cc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
