@@ -120,7 +120,7 @@ services:
       context: .
       dockerfile: client/Dockerfile
       args:
-        - GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:8090
+        - GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:8080
     container_name: starscope_client
     ports:
       - "8080:80"
@@ -130,8 +130,6 @@ services:
   envoy:
     build: data/docker/envoy
     container_name: starscope_envoy
-    ports:
-      - "8090:8090"
     volumes:
       - ./data/docker/envoy/envoy.yaml:/etc/envoy/envoy.yaml
     depends_on:
