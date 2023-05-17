@@ -90,6 +90,11 @@ func HasCustomIndexer(v bool) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldHasCustomIndexer, v))
 }
 
+// HandledMessageTypes applies equality check predicate on the "handled_message_types" field. It's identical to HandledMessageTypesEQ.
+func HandledMessageTypes(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldHandledMessageTypes, v))
+}
+
 // UnhandledMessageTypes applies equality check predicate on the "unhandled_message_types" field. It's identical to UnhandledMessageTypesEQ.
 func UnhandledMessageTypes(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldUnhandledMessageTypes, v))
@@ -418,6 +423,71 @@ func HasCustomIndexerEQ(v bool) predicate.Chain {
 // HasCustomIndexerNEQ applies the NEQ predicate on the "has_custom_indexer" field.
 func HasCustomIndexerNEQ(v bool) predicate.Chain {
 	return predicate.Chain(sql.FieldNEQ(FieldHasCustomIndexer, v))
+}
+
+// HandledMessageTypesEQ applies the EQ predicate on the "handled_message_types" field.
+func HandledMessageTypesEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesNEQ applies the NEQ predicate on the "handled_message_types" field.
+func HandledMessageTypesNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesIn applies the In predicate on the "handled_message_types" field.
+func HandledMessageTypesIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldHandledMessageTypes, vs...))
+}
+
+// HandledMessageTypesNotIn applies the NotIn predicate on the "handled_message_types" field.
+func HandledMessageTypesNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldHandledMessageTypes, vs...))
+}
+
+// HandledMessageTypesGT applies the GT predicate on the "handled_message_types" field.
+func HandledMessageTypesGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesGTE applies the GTE predicate on the "handled_message_types" field.
+func HandledMessageTypesGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesLT applies the LT predicate on the "handled_message_types" field.
+func HandledMessageTypesLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesLTE applies the LTE predicate on the "handled_message_types" field.
+func HandledMessageTypesLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesContains applies the Contains predicate on the "handled_message_types" field.
+func HandledMessageTypesContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesHasPrefix applies the HasPrefix predicate on the "handled_message_types" field.
+func HandledMessageTypesHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesHasSuffix applies the HasSuffix predicate on the "handled_message_types" field.
+func HandledMessageTypesHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesEqualFold applies the EqualFold predicate on the "handled_message_types" field.
+func HandledMessageTypesEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldHandledMessageTypes, v))
+}
+
+// HandledMessageTypesContainsFold applies the ContainsFold predicate on the "handled_message_types" field.
+func HandledMessageTypesContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldHandledMessageTypes, v))
 }
 
 // UnhandledMessageTypesEQ applies the EQ predicate on the "unhandled_message_types" field.

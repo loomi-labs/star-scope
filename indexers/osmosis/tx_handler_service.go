@@ -53,6 +53,7 @@ func (t TxHandlerService) HandleTxs(_ context.Context, request *connect.Request[
 					return nil, connect.NewError(connect.CodeInternal, err)
 				}
 				response.ProtoMessages = append(response.ProtoMessages, protoMsg)
+				response.HandledMessageTypes = append(response.HandledMessageTypes, fmt.Sprintf("%T", anyMsg))
 				response.CountProcessed++
 			default:
 				response.UnhandledMessageTypes = append(response.UnhandledMessageTypes, fmt.Sprintf("%T", anyMsg))

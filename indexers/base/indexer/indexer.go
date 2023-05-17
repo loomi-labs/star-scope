@@ -125,6 +125,12 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 		i.kafkaProducer.Produce(result.ProtoMessages)
 	}
 
+	if result.HandledMessageTypes != nil {
+		for _, msgType := range result.HandledMessageTypes {
+			syncStatus.HandledMessageTypes[msgType] = struct{}{}
+		}
+	}
+
 	if result.UnhandledMessageTypes != nil {
 		for _, msgType := range result.UnhandledMessageTypes {
 			syncStatus.UnhandledMessageTypes[msgType] = struct{}{}
@@ -147,6 +153,7 @@ type SyncStatus struct {
 	ChainId               uint64
 	Height                uint64
 	LatestHeight          uint64
+	HandledMessageTypes   map[string]struct{}
 	UnhandledMessageTypes map[string]struct{}
 }
 
@@ -178,10 +185,6 @@ func (i *Indexer) getLatestHeight(syncStatus *SyncStatus) {
 }
 
 func (i *Indexer) updateSyncStatus(syncStatus *SyncStatus, updateChannel chan SyncStatus) {
-	var unhandledMessageTypes []string
-	for msgType := range syncStatus.UnhandledMessageTypes {
-		unhandledMessageTypes = append(unhandledMessageTypes, msgType)
-	}
 	updateChannel <- *syncStatus
 	syncStatus.Height++
 }

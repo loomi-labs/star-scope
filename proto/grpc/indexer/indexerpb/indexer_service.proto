@@ -17,8 +17,9 @@ message Chain {
   string path = 3;
   string rpc_url = 4;
   uint64 indexing_height = 5;
-  repeated string unhandled_message_types = 6;
-  bool has_custom_indexer = 7;
+  repeated string handled_message_types = 6;
+  repeated string unhandled_message_types = 7;
+  bool has_custom_indexer = 8;
 }
 
 message GetIndexingChainsResponse {
@@ -41,5 +42,6 @@ message HandleTxsResponse {
   repeated bytes proto_messages = 1;
   int32 count_skipped = 2;
   int32 count_processed = 3;
-  repeated string unhandled_message_types = 4;
+  repeated string handled_message_types = 4;
+  repeated string unhandled_message_types = 5;
 }

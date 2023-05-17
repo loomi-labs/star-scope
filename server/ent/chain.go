@@ -31,6 +31,8 @@ type Chain struct {
 	Path string `json:"path,omitempty"`
 	// HasCustomIndexer holds the value of the "has_custom_indexer" field.
 	HasCustomIndexer bool `json:"has_custom_indexer,omitempty"`
+	// HandledMessageTypes holds the value of the "handled_message_types" field.
+	HandledMessageTypes string `json:"handled_message_types,omitempty"`
 	// UnhandledMessageTypes holds the value of the "unhandled_message_types" field.
 	UnhandledMessageTypes string `json:"unhandled_message_types,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -66,7 +68,7 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case chain.FieldID, chain.FieldIndexingHeight:
 			values[i] = new(sql.NullInt64)
-		case chain.FieldName, chain.FieldImage, chain.FieldPath, chain.FieldUnhandledMessageTypes:
+		case chain.FieldName, chain.FieldImage, chain.FieldPath, chain.FieldHandledMessageTypes, chain.FieldUnhandledMessageTypes:
 			values[i] = new(sql.NullString)
 		case chain.FieldCreateTime, chain.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -132,6 +134,12 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field has_custom_indexer", values[i])
 			} else if value.Valid {
 				c.HasCustomIndexer = value.Bool
+			}
+		case chain.FieldHandledMessageTypes:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field handled_message_types", values[i])
+			} else if value.Valid {
+				c.HandledMessageTypes = value.String
 			}
 		case chain.FieldUnhandledMessageTypes:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -200,6 +208,9 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("has_custom_indexer=")
 	builder.WriteString(fmt.Sprintf("%v", c.HasCustomIndexer))
+	builder.WriteString(", ")
+	builder.WriteString("handled_message_types=")
+	builder.WriteString(c.HandledMessageTypes)
 	builder.WriteString(", ")
 	builder.WriteString("unhandled_message_types=")
 	builder.WriteString(c.UnhandledMessageTypes)

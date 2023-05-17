@@ -38,9 +38,13 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 			EncodingConfig: encodingConfig,
 		}
 		if chain.HasCustomIndexer {
-			config.MessageHandler = indexer.NewCustomMessageHandler("http://localhost:50002")
+			config.MessageHandler = indexer.NewCustomMessageHandler(config.ChainInfo, config.EncodingConfig, "http://localhost:50002")
 		} else {
 			config.MessageHandler = indexer.NewBaseMessageHandler(config.ChainInfo, config.EncodingConfig)
+		}
+		var handledMessageTypes = make(map[string]struct{})
+		for _, msgType := range chain.HandledMessageTypes {
+			handledMessageTypes[msgType] = struct{}{}
 		}
 		var unhandledMessageTypes = make(map[string]struct{})
 		for _, msgType := range chain.UnhandledMessageTypes {
@@ -50,6 +54,7 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 			ChainId:               chain.Id,
 			Height:                chain.IndexingHeight,
 			LatestHeight:          0,
+			HandledMessageTypes:   handledMessageTypes,
 			UnhandledMessageTypes: unhandledMessageTypes,
 		}
 		var indx = indexer.NewIndexer(config)
@@ -75,6 +80,10 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 				return
 			}
 
+			var handledMessageTypes []string
+			for msgType := range update.HandledMessageTypes {
+				handledMessageTypes = append(handledMessageTypes, msgType)
+			}
 			var unhandledMessageTypes []string
 			for msgType := range update.UnhandledMessageTypes {
 				unhandledMessageTypes = append(unhandledMessageTypes, msgType)
@@ -82,6 +91,7 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 			updates[update.ChainId] = &indexerpb.Chain{
 				Id:                    update.ChainId,
 				IndexingHeight:        update.Height,
+				HandledMessageTypes:   handledMessageTypes,
 				UnhandledMessageTypes: unhandledMessageTypes,
 			}
 

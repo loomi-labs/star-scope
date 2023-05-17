@@ -31,6 +31,9 @@ func (Chain) Fields() []ent.Field {
 		field.Bool("has_custom_indexer").
 			Default(false),
 
+		// comma separated list of message types that are handled by the indexer
+		field.String("handled_message_types").
+			Default(""),
 		// comma separated list of message types that are not handled by the indexer
 		field.String("unhandled_message_types").
 			Default(""),

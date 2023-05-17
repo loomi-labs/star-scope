@@ -32,9 +32,10 @@ func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) T
 	}
 }
 
-func addToResultIfNoError(result *indexerpb.HandleTxsResponse, msg []byte) {
-	if msg != nil {
-		result.ProtoMessages = append(result.ProtoMessages, msg)
+func addToResultIfNoError(result *indexerpb.HandleTxsResponse, msg sdktypes.Msg, protoMsg []byte) {
+	if protoMsg != nil {
+		result.ProtoMessages = append(result.ProtoMessages, protoMsg)
+		result.HandledMessageTypes = append(result.HandledMessageTypes, fmt.Sprintf("%T", msg))
 	}
 	result.CountProcessed++
 }
@@ -42,23 +43,23 @@ func addToResultIfNoError(result *indexerpb.HandleTxsResponse, msg []byte) {
 func (m *baseMessageHandler) handleMsg(tx []byte, anyMsg sdktypes.Msg, result *indexerpb.HandleTxsResponse) error {
 	switch msg := anyMsg.(type) {
 	case *banktypes.MsgSend:
-		newMsg, err := m.handleMsgSend(msg, tx)
+		protoMsg, err := m.handleMsgSend(msg, tx)
 		if err != nil {
 			return err
 		}
-		addToResultIfNoError(result, newMsg)
+		addToResultIfNoError(result, msg, protoMsg)
 	case *ibcChannel.MsgRecvPacket:
-		newMsg, err := m.handleMsgRecvPacket(msg, tx)
+		protoMsg, err := m.handleMsgRecvPacket(msg, tx)
 		if err != nil {
 			return err
 		}
-		addToResultIfNoError(result, newMsg)
+		addToResultIfNoError(result, msg, protoMsg)
 	case *stakingtypes.MsgUndelegate:
-		newMsg, err := m.handleMsgUndelegate(msg, tx)
+		protoMsg, err := m.handleMsgUndelegate(msg, tx)
 		if err != nil {
 			return err
 		}
-		addToResultIfNoError(result, newMsg)
+		addToResultIfNoError(result, msg, protoMsg)
 	case *authz.MsgExec:
 		for _, authzEncMsg := range msg.Msgs {
 			authzMsg, err := sdktypes.GetMsgFromTypeURL(m.txHelper.encodingConfig.Codec, authzEncMsg.GetTypeUrl())
@@ -162,7 +163,7 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 	})
 	if err != nil {
 		// check out this tx -> https://www.mintscan.io/osmosis/txs/8822ACEB04702476DB2D6ACA8E9AE398C7412B012DFEBDEE39BCBBCE50B872E1?height=9415274
-		log.Sugar.Warn(err)
+		//log.Sugar.Warn(err)
 		return nil, nil
 	}
 	if result[success] != "true" {

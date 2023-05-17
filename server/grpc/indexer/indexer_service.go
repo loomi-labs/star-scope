@@ -44,7 +44,7 @@ func (i IndexerService) GetIndexingChains(ctx context.Context, _ *connect.Reques
 
 func (i IndexerService) UpdateIndexingChains(ctx context.Context, request *connect.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect.Response[emptypb.Empty], error) {
 	for _, chain := range request.Msg.GetChains() {
-		err := i.chainManager.Update(ctx, int(chain.GetId()), chain.GetIndexingHeight(), chain.GetUnhandledMessageTypes())
+		err := i.chainManager.Update(ctx, int(chain.GetId()), chain.GetIndexingHeight(), chain.GetHandledMessageTypes(), chain.GetUnhandledMessageTypes())
 		if err != nil {
 			log.Sugar.Errorf("error while updating chain: %v", err)
 		}

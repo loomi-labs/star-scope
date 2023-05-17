@@ -88,6 +88,20 @@ func (cu *ChainUpdate) SetNillableHasCustomIndexer(b *bool) *ChainUpdate {
 	return cu
 }
 
+// SetHandledMessageTypes sets the "handled_message_types" field.
+func (cu *ChainUpdate) SetHandledMessageTypes(s string) *ChainUpdate {
+	cu.mutation.SetHandledMessageTypes(s)
+	return cu
+}
+
+// SetNillableHandledMessageTypes sets the "handled_message_types" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableHandledMessageTypes(s *string) *ChainUpdate {
+	if s != nil {
+		cu.SetHandledMessageTypes(*s)
+	}
+	return cu
+}
+
 // SetUnhandledMessageTypes sets the "unhandled_message_types" field.
 func (cu *ChainUpdate) SetUnhandledMessageTypes(s string) *ChainUpdate {
 	cu.mutation.SetUnhandledMessageTypes(s)
@@ -208,6 +222,9 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.HasCustomIndexer(); ok {
 		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
+	}
+	if value, ok := cu.mutation.HandledMessageTypes(); ok {
+		_spec.SetField(chain.FieldHandledMessageTypes, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.UnhandledMessageTypes(); ok {
 		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
@@ -332,6 +349,20 @@ func (cuo *ChainUpdateOne) SetHasCustomIndexer(b bool) *ChainUpdateOne {
 func (cuo *ChainUpdateOne) SetNillableHasCustomIndexer(b *bool) *ChainUpdateOne {
 	if b != nil {
 		cuo.SetHasCustomIndexer(*b)
+	}
+	return cuo
+}
+
+// SetHandledMessageTypes sets the "handled_message_types" field.
+func (cuo *ChainUpdateOne) SetHandledMessageTypes(s string) *ChainUpdateOne {
+	cuo.mutation.SetHandledMessageTypes(s)
+	return cuo
+}
+
+// SetNillableHandledMessageTypes sets the "handled_message_types" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableHandledMessageTypes(s *string) *ChainUpdateOne {
+	if s != nil {
+		cuo.SetHandledMessageTypes(*s)
 	}
 	return cuo
 }
@@ -486,6 +517,9 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	}
 	if value, ok := cuo.mutation.HasCustomIndexer(); ok {
 		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
+	}
+	if value, ok := cuo.mutation.HandledMessageTypes(); ok {
+		_spec.SetField(chain.FieldHandledMessageTypes, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.UnhandledMessageTypes(); ok {
 		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)

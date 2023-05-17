@@ -95,6 +95,20 @@ func (cc *ChainCreate) SetNillableHasCustomIndexer(b *bool) *ChainCreate {
 	return cc
 }
 
+// SetHandledMessageTypes sets the "handled_message_types" field.
+func (cc *ChainCreate) SetHandledMessageTypes(s string) *ChainCreate {
+	cc.mutation.SetHandledMessageTypes(s)
+	return cc
+}
+
+// SetNillableHandledMessageTypes sets the "handled_message_types" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableHandledMessageTypes(s *string) *ChainCreate {
+	if s != nil {
+		cc.SetHandledMessageTypes(*s)
+	}
+	return cc
+}
+
 // SetUnhandledMessageTypes sets the "unhandled_message_types" field.
 func (cc *ChainCreate) SetUnhandledMessageTypes(s string) *ChainCreate {
 	cc.mutation.SetUnhandledMessageTypes(s)
@@ -175,6 +189,10 @@ func (cc *ChainCreate) defaults() {
 		v := chain.DefaultHasCustomIndexer
 		cc.mutation.SetHasCustomIndexer(v)
 	}
+	if _, ok := cc.mutation.HandledMessageTypes(); !ok {
+		v := chain.DefaultHandledMessageTypes
+		cc.mutation.SetHandledMessageTypes(v)
+	}
 	if _, ok := cc.mutation.UnhandledMessageTypes(); !ok {
 		v := chain.DefaultUnhandledMessageTypes
 		cc.mutation.SetUnhandledMessageTypes(v)
@@ -203,6 +221,9 @@ func (cc *ChainCreate) check() error {
 	}
 	if _, ok := cc.mutation.HasCustomIndexer(); !ok {
 		return &ValidationError{Name: "has_custom_indexer", err: errors.New(`ent: missing required field "Chain.has_custom_indexer"`)}
+	}
+	if _, ok := cc.mutation.HandledMessageTypes(); !ok {
+		return &ValidationError{Name: "handled_message_types", err: errors.New(`ent: missing required field "Chain.handled_message_types"`)}
 	}
 	if _, ok := cc.mutation.UnhandledMessageTypes(); !ok {
 		return &ValidationError{Name: "unhandled_message_types", err: errors.New(`ent: missing required field "Chain.unhandled_message_types"`)}
@@ -260,6 +281,10 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.HasCustomIndexer(); ok {
 		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
 		_node.HasCustomIndexer = value
+	}
+	if value, ok := cc.mutation.HandledMessageTypes(); ok {
+		_spec.SetField(chain.FieldHandledMessageTypes, field.TypeString, value)
+		_node.HandledMessageTypes = value
 	}
 	if value, ok := cc.mutation.UnhandledMessageTypes(); ok {
 		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)

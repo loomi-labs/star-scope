@@ -51,6 +51,7 @@ type ChainMutation struct {
 	addindexing_height      *int64
 	_path                   *string
 	has_custom_indexer      *bool
+	handled_message_types   *string
 	unhandled_message_types *string
 	clearedFields           map[string]struct{}
 	event_listeners         map[int]struct{}
@@ -431,6 +432,42 @@ func (m *ChainMutation) ResetHasCustomIndexer() {
 	m.has_custom_indexer = nil
 }
 
+// SetHandledMessageTypes sets the "handled_message_types" field.
+func (m *ChainMutation) SetHandledMessageTypes(s string) {
+	m.handled_message_types = &s
+}
+
+// HandledMessageTypes returns the value of the "handled_message_types" field in the mutation.
+func (m *ChainMutation) HandledMessageTypes() (r string, exists bool) {
+	v := m.handled_message_types
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHandledMessageTypes returns the old "handled_message_types" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldHandledMessageTypes(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHandledMessageTypes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHandledMessageTypes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHandledMessageTypes: %w", err)
+	}
+	return oldValue.HandledMessageTypes, nil
+}
+
+// ResetHandledMessageTypes resets all changes to the "handled_message_types" field.
+func (m *ChainMutation) ResetHandledMessageTypes() {
+	m.handled_message_types = nil
+}
+
 // SetUnhandledMessageTypes sets the "unhandled_message_types" field.
 func (m *ChainMutation) SetUnhandledMessageTypes(s string) {
 	m.unhandled_message_types = &s
@@ -555,7 +592,7 @@ func (m *ChainMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChainMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.create_time != nil {
 		fields = append(fields, chain.FieldCreateTime)
 	}
@@ -576,6 +613,9 @@ func (m *ChainMutation) Fields() []string {
 	}
 	if m.has_custom_indexer != nil {
 		fields = append(fields, chain.FieldHasCustomIndexer)
+	}
+	if m.handled_message_types != nil {
+		fields = append(fields, chain.FieldHandledMessageTypes)
 	}
 	if m.unhandled_message_types != nil {
 		fields = append(fields, chain.FieldUnhandledMessageTypes)
@@ -602,6 +642,8 @@ func (m *ChainMutation) Field(name string) (ent.Value, bool) {
 		return m.Path()
 	case chain.FieldHasCustomIndexer:
 		return m.HasCustomIndexer()
+	case chain.FieldHandledMessageTypes:
+		return m.HandledMessageTypes()
 	case chain.FieldUnhandledMessageTypes:
 		return m.UnhandledMessageTypes()
 	}
@@ -627,6 +669,8 @@ func (m *ChainMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldPath(ctx)
 	case chain.FieldHasCustomIndexer:
 		return m.OldHasCustomIndexer(ctx)
+	case chain.FieldHandledMessageTypes:
+		return m.OldHandledMessageTypes(ctx)
 	case chain.FieldUnhandledMessageTypes:
 		return m.OldUnhandledMessageTypes(ctx)
 	}
@@ -686,6 +730,13 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetHasCustomIndexer(v)
+		return nil
+	case chain.FieldHandledMessageTypes:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHandledMessageTypes(v)
 		return nil
 	case chain.FieldUnhandledMessageTypes:
 		v, ok := value.(string)
@@ -778,6 +829,9 @@ func (m *ChainMutation) ResetField(name string) error {
 		return nil
 	case chain.FieldHasCustomIndexer:
 		m.ResetHasCustomIndexer()
+		return nil
+	case chain.FieldHandledMessageTypes:
+		m.ResetHandledMessageTypes()
 		return nil
 	case chain.FieldUnhandledMessageTypes:
 		m.ResetUnhandledMessageTypes()

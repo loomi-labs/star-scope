@@ -18,6 +18,7 @@ var (
 		{Name: "indexing_height", Type: field.TypeUint64, Default: 0},
 		{Name: "path", Type: field.TypeString},
 		{Name: "has_custom_indexer", Type: field.TypeBool, Default: false},
+		{Name: "handled_message_types", Type: field.TypeString, Default: ""},
 		{Name: "unhandled_message_types", Type: field.TypeString, Default: ""},
 	}
 	// ChainsTable holds the schema information for the "chains" table.

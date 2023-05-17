@@ -1,7 +1,11 @@
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516202109-3f8f12997364.1 h1:qyQJYNfsjeSLT2lhKeZ2/s+4TCuH4EwQcZ1Smm45caY=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516202109-3f8f12997364.1/go.mod h1:b44dT0KkP5J0PtNffbLMbrnV05Ctd+N8aEt9JtdKRbM=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1 h1:oP1I+fqUK/k96ZxGm1kXQpBK1a3FmWXrijoJS8Nysm4=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1/go.mod h1:PCpnvvWZIdoIHVCxgJlIikD25nSWfRl7KfIDUBlEEV4=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516202109-3f8f12997364.1 h1:xdD5VQ6EaWXuVZCuojBBcxS9FTLcTnPafoIKp4DTchA=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516202109-3f8f12997364.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1 h1:3PmoQxUoB2Yf6wWVM3CPj/eGF9AHTE4BlXEP6NqjNbk=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=

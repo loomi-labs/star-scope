@@ -28,6 +28,8 @@ const (
 	FieldPath = "path"
 	// FieldHasCustomIndexer holds the string denoting the has_custom_indexer field in the database.
 	FieldHasCustomIndexer = "has_custom_indexer"
+	// FieldHandledMessageTypes holds the string denoting the handled_message_types field in the database.
+	FieldHandledMessageTypes = "handled_message_types"
 	// FieldUnhandledMessageTypes holds the string denoting the unhandled_message_types field in the database.
 	FieldUnhandledMessageTypes = "unhandled_message_types"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
@@ -53,6 +55,7 @@ var Columns = []string{
 	FieldIndexingHeight,
 	FieldPath,
 	FieldHasCustomIndexer,
+	FieldHandledMessageTypes,
 	FieldUnhandledMessageTypes,
 }
 
@@ -77,6 +80,8 @@ var (
 	DefaultIndexingHeight uint64
 	// DefaultHasCustomIndexer holds the default value on creation for the "has_custom_indexer" field.
 	DefaultHasCustomIndexer bool
+	// DefaultHandledMessageTypes holds the default value on creation for the "handled_message_types" field.
+	DefaultHandledMessageTypes string
 	// DefaultUnhandledMessageTypes holds the default value on creation for the "unhandled_message_types" field.
 	DefaultUnhandledMessageTypes string
 )
@@ -122,6 +127,11 @@ func ByPath(opts ...sql.OrderTermOption) OrderOption {
 // ByHasCustomIndexer orders the results by the has_custom_indexer field.
 func ByHasCustomIndexer(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHasCustomIndexer, opts...).ToFunc()
+}
+
+// ByHandledMessageTypes orders the results by the handled_message_types field.
+func ByHandledMessageTypes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHandledMessageTypes, opts...).ToFunc()
 }
 
 // ByUnhandledMessageTypes orders the results by the unhandled_message_types field.

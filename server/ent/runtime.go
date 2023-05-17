@@ -41,8 +41,12 @@ func init() {
 	chainDescHasCustomIndexer := chainFields[4].Descriptor()
 	// chain.DefaultHasCustomIndexer holds the default value on creation for the has_custom_indexer field.
 	chain.DefaultHasCustomIndexer = chainDescHasCustomIndexer.Default.(bool)
+	// chainDescHandledMessageTypes is the schema descriptor for handled_message_types field.
+	chainDescHandledMessageTypes := chainFields[5].Descriptor()
+	// chain.DefaultHandledMessageTypes holds the default value on creation for the handled_message_types field.
+	chain.DefaultHandledMessageTypes = chainDescHandledMessageTypes.Default.(string)
 	// chainDescUnhandledMessageTypes is the schema descriptor for unhandled_message_types field.
-	chainDescUnhandledMessageTypes := chainFields[5].Descriptor()
+	chainDescUnhandledMessageTypes := chainFields[6].Descriptor()
 	// chain.DefaultUnhandledMessageTypes holds the default value on creation for the unhandled_message_types field.
 	chain.DefaultUnhandledMessageTypes = chainDescUnhandledMessageTypes.Default.(string)
 	channelMixin := schema.Channel{}.Mixin()
