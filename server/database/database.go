@@ -319,18 +319,21 @@ func InitDb() {
 		Query().
 		Where(chain.NameEQ("Neutron")).
 		ExistX(ctx)
-	if !doesNeutronExist {
-		_, err := client.Chain.
-			Create().
-			SetName("Neutron").
-			SetPath("neutron").
-			SetIndexingHeight(0).
-			SetHasCustomIndexer(false).
-			SetImage("").
-			Save(ctx)
-		if err != nil {
-			log.Sugar.Panicf("failed to init database: %v", err)
-		}
+	//if !doesNeutronExist {
+	//	_, err := client.Chain.
+	//		Create().
+	//		SetName("Neutron").
+	//		SetPath("neutron").
+	//		SetIndexingHeight(0).
+	//		SetHasCustomIndexer(false).
+	//		SetImage("").
+	//		Save(ctx)
+	//	if err != nil {
+	//		log.Sugar.Panicf("failed to init database: %v", err)
+	//	}
+	//}
+	if doesNeutronExist {
+		client.Chain.Delete().Where(chain.NameEQ("Neutron")).ExecX(ctx)
 	}
 	doesTerra2Exist := client.Chain.
 		Query().

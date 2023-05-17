@@ -166,7 +166,9 @@ func (i *Indexer) getLatestHeight(syncStatus *SyncStatus) {
 		log.Sugar.Panic(err)
 	}
 	if resp.StatusCode != 200 {
-		panic(fmt.Sprintf("Failed to get latest block: %v", resp.StatusCode))
+		log.Sugar.Warnf("Failed to get latest block: %v", resp.StatusCode)
+		time.Sleep(5 * time.Second)
+		i.getLatestHeight(syncStatus)
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer resp.Body.Close()
@@ -227,7 +229,7 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 			} else if status >= 500 {
 				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			} else {
-				log.Sugar.Panicf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
+				log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			}
 		} else {
 			err = i.handleBlock(&blockResponse, syncStatus)
@@ -242,6 +244,7 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 			sleepTime = setSleepTime(sleepTime, attempts)
 			time.Sleep(sleepTime)
 		} else {
+			// TODO: make this a bit smarter
 			catchUp = syncStatus.Height < syncStatus.LatestHeight
 		}
 	}
