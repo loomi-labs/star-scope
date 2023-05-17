@@ -298,6 +298,23 @@ func InitDb() {
 			log.Sugar.Panicf("failed to init database: %v", err)
 		}
 	}
+	doesMarsExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Mars")).
+		ExistX(ctx)
+	if !doesMarsExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Mars").
+			SetPath("mars").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
 	log.Sugar.Info("database initialized successfully")
 }
 
