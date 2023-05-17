@@ -72,7 +72,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-client.outputs.tags }}
           labels: ${{ steps.meta-client.outputs.labels }}
-          build-args: GRPC_WEB_ENDPOINT_URL=https://grpc.star-scope.decrypto.online
+          build-args: GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
 
       - name: Extract metadata (tags, labels) for indexer image
         id: meta-indexer
