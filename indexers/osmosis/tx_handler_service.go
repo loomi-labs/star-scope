@@ -38,6 +38,7 @@ func NewTxHandlerServiceHandler() indexerpbconnect.TxHandlerServiceHandler {
 }
 
 func (t TxHandlerService) HandleTxs(_ context.Context, request *connect.Request[indexerpb.HandleTxsRequest]) (*connect.Response[indexerpb.HandleTxsResponse], error) {
+	log.Sugar.Debugf("Handle %v Tx's", len(request.Msg.GetTxs()))
 	var response = indexerpb.HandleTxsResponse{ProtoMessages: make([][]byte, 0)}
 	for _, tx := range request.Msg.GetTxs() {
 		txDecoded, err := t.txHelper.encodingConfig.TxConfig.TxDecoder()(tx)
