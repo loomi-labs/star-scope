@@ -315,6 +315,57 @@ func InitDb() {
 			log.Sugar.Panicf("failed to init database: %v", err)
 		}
 	}
+	doesNeutronExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Neutron")).
+		ExistX(ctx)
+	if !doesNeutronExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Neutron").
+			SetPath("neutron").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
+	doesTerra2Exist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Terra 2")).
+		ExistX(ctx)
+	if !doesTerra2Exist {
+		_, err := client.Chain.
+			Create().
+			SetName("Terra 2").
+			SetPath("terra2").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
+	doesInjectiveExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Injective")).
+		ExistX(ctx)
+	if !doesInjectiveExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Injective").
+			SetPath("injective").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
 	log.Sugar.Info("database initialized successfully")
 }
 
