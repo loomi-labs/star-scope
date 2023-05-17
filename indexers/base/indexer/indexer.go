@@ -108,6 +108,10 @@ func (h *TxHelper) WasTxSuccessful(tx []byte) (bool, error) {
 	return len(txResponse.Events) > 0, nil
 }
 
+func (h *TxHelper) GetTxTimestamp(txResponse *sdktypes.TxResponse) (time.Time, error) {
+	return time.Parse(time.RFC3339, txResponse.Timestamp)
+}
+
 func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse, syncStatus SyncStatus) error {
 	var data = blockResponse.GetBlock().GetData()
 	var txs = data.GetTxs()

@@ -264,6 +264,40 @@ func InitDb() {
 			log.Sugar.Panicf("failed to init database: %v", err)
 		}
 	}
+	doesCrescentExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Crescent")).
+		ExistX(ctx)
+	if !doesCrescentExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Crescent").
+			SetPath("crescent").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
+	doesJunoExist := client.Chain.
+		Query().
+		Where(chain.NameEQ("Juno")).
+		ExistX(ctx)
+	if !doesJunoExist {
+		_, err := client.Chain.
+			Create().
+			SetName("Juno").
+			SetPath("juno").
+			SetIndexingHeight(0).
+			SetHasCustomIndexer(false).
+			SetImage("").
+			Save(ctx)
+		if err != nil {
+			log.Sugar.Panicf("failed to init database: %v", err)
+		}
+	}
 	log.Sugar.Info("database initialized successfully")
 }
 

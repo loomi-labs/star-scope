@@ -128,6 +128,9 @@ func (k *Kafka) ProcessIndexedEvents() {
 				case *indexevent.TxEvent_OsmosisPoolUnlock:
 					_, err = k.eventListenerManager.UpdateAddEvent(ctx, el, event.TypeTxEvent_OsmosisPoolUnlock, txEvent.NotifyTime.AsTime(), msg.Value)
 					log.Sugar.Infof("%v will unlock pool at %v", txEvent.WalletAddress, txEvent.GetOsmosisPoolUnlock().UnlockTime)
+				case *indexevent.TxEvent_Unstake:
+					_, err = k.eventListenerManager.UpdateAddEvent(ctx, el, event.TypeTxEvent_Unstake, txEvent.NotifyTime.AsTime(), msg.Value)
+					log.Sugar.Infof("%v will unstake %v%v at %v", txEvent.WalletAddress, txEvent.GetUnstake().GetCoin().Amount, txEvent.GetUnstake().GetCoin().Denom, txEvent.GetUnstake().CompletionTime)
 				}
 				if err != nil {
 					log.Sugar.Errorf("failed to update event for %v: %v", txEvent.WalletAddress, err)
@@ -141,7 +144,6 @@ func (k *Kafka) ProcessIndexedEvents() {
 				log.Sugar.Debugf("Discard event %v with address %v", msg.Offset, txEvent.WalletAddress)
 			}
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 

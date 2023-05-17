@@ -61,7 +61,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock"}},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock", "TxEvent_Unstake"}},
 		{Name: "tx_event", Type: field.TypeBytes},
 		{Name: "notify_time", Type: field.TypeTime},
 		{Name: "event_listener_events", Type: field.TypeInt, Nullable: true},

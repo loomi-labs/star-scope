@@ -27,6 +27,7 @@ func (Event) Fields() []ent.Field {
 	var events = []interface{}{
 		indexevent.TxEvent_CoinReceived{},
 		indexevent.TxEvent_OsmosisPoolUnlock{},
+		indexevent.TxEvent_Unstake{},
 	}
 	for _, t := range events {
 		types = append(types, reflect.TypeOf(t).Name())

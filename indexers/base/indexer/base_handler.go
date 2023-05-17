@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcChannel "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/shifty11/go-logger/log"
@@ -14,7 +16,6 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
-	"time"
 )
 
 type baseMessageHandler struct {
@@ -28,6 +29,13 @@ func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) T
 		chainInfo: chainInfo,
 		txHelper:  NewTxHelper(chainInfo, encodingConfig),
 	}
+}
+
+func addToResultIfNoError(result *indexerpb.HandleTxsResponse, msg []byte) {
+	if msg != nil {
+		result.ProtoMessages = append(result.ProtoMessages, msg)
+	}
+	result.CountProcessed++
 }
 
 func (m *baseMessageHandler) HandleTxs(txs [][]byte) (*indexerpb.HandleTxsResponse, error) {
@@ -53,15 +61,21 @@ func (m *baseMessageHandler) HandleTxs(txs [][]byte) (*indexerpb.HandleTxsRespon
 				if err != nil {
 					return nil, err
 				}
-				result.ProtoMessages = append(result.ProtoMessages, newMsg)
-				result.CountProcessed++
+				addToResultIfNoError(&result, newMsg)
 			case *ibcChannel.MsgRecvPacket:
 				newMsg, err := m.handleMsgRecvPacket(msg, tx)
 				if err != nil {
 					return nil, err
 				}
-				result.ProtoMessages = append(result.ProtoMessages, newMsg)
-				result.CountProcessed++
+				addToResultIfNoError(&result, newMsg)
+			case *stakingtypes.MsgUndelegate:
+				newMsg, err := m.handleMsgUndelegate(msg, tx)
+				if err != nil {
+					return nil, err
+				}
+				addToResultIfNoError(&result, newMsg)
+			case *authz.MsgExec:
+				log.Sugar.Infof("Authz MsgExec: %s", msg)
 			default:
 				result.UnhandledMessageTypes = append(result.UnhandledMessageTypes, fmt.Sprintf("%T", msg))
 				result.CountSkipped++
@@ -104,7 +118,7 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 	if txResponse == nil || len(txResponse.Events) == 0 {
 		return nil, nil
 	}
-	var timestamp, err = time.Parse(time.RFC3339, txResponse.Timestamp)
+	var timestamp, err = i.txHelper.GetTxTimestamp(txResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +162,8 @@ func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([
 		var txEvent = &indexevent.TxEvent{
 			ChainName:     i.chainInfo.Name,
 			WalletAddress: msg.ToAddress,
-			NotifyTime:    timestamppb.Now(),
+			//Timestamp:     TODO: get timestamp from tx
+			NotifyTime: timestamppb.Now(),
 			Event: &indexevent.TxEvent_CoinReceived{
 				CoinReceived: &indexevent.CoinReceivedEvent{
 					Sender: msg.FromAddress,
@@ -170,4 +185,44 @@ func (i *baseMessageHandler) handleMsgRecvPacket(_ *ibcChannel.MsgRecvPacket, tx
 		return nil, err
 	}
 	return i.handleFungibleTokenPacketEvent(txResponse)
+}
+
+func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate, tx []byte) ([]byte, error) {
+	txResponse, err := i.txHelper.GetTxResponse(tx)
+	if err != nil {
+		return nil, err
+	}
+	if txResponse == nil || len(txResponse.Events) == 0 {
+		return nil, nil
+	}
+
+	timestamp, err := i.txHelper.GetTxTimestamp(txResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	var completionTimeStr, amount = "completion_time", "amount"
+	result, err := getRawEventResult(txResponse.Events, RawEvent{
+		Type:       "unbond",
+		Attributes: []string{completionTimeStr, amount},
+	})
+	completionTime, err := parseTime(result[completionTimeStr])
+	if err != nil {
+		return nil, err
+	}
+	txEvent := &indexevent.TxEvent{
+		ChainName:  i.chainInfo.Name,
+		Timestamp:  timestamppb.New(timestamp),
+		NotifyTime: timestamppb.Now(),
+		Event: &indexevent.TxEvent_Unstake{
+			Unstake: &indexevent.UnstakeEvent{
+				Coin: &indexevent.Coin{
+					Denom:  msg.Amount.Denom,
+					Amount: msg.Amount.Amount.String(),
+				},
+				CompletionTime: completionTime,
+			},
+		},
+	}
+	return proto.Marshal(txEvent)
 }
