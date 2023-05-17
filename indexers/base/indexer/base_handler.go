@@ -5,6 +5,7 @@ import (
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"errors"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -38,6 +39,48 @@ func addToResultIfNoError(result *indexerpb.HandleTxsResponse, msg []byte) {
 	result.CountProcessed++
 }
 
+func (m *baseMessageHandler) handleMsg(tx []byte, anyMsg sdktypes.Msg, result *indexerpb.HandleTxsResponse) error {
+	switch msg := anyMsg.(type) {
+	case *banktypes.MsgSend:
+		newMsg, err := m.handleMsgSend(msg, tx)
+		if err != nil {
+			return err
+		}
+		addToResultIfNoError(result, newMsg)
+	case *ibcChannel.MsgRecvPacket:
+		newMsg, err := m.handleMsgRecvPacket(msg, tx)
+		if err != nil {
+			return err
+		}
+		addToResultIfNoError(result, newMsg)
+	case *stakingtypes.MsgUndelegate:
+		newMsg, err := m.handleMsgUndelegate(msg, tx)
+		if err != nil {
+			return err
+		}
+		addToResultIfNoError(result, newMsg)
+	case *authz.MsgExec:
+		for _, authzEncMsg := range msg.Msgs {
+			authzMsg, err := sdktypes.GetMsgFromTypeURL(m.txHelper.encodingConfig.Codec, authzEncMsg.GetTypeUrl())
+			if err != nil {
+				return err
+			}
+			err = m.txHelper.encodingConfig.Codec.Unmarshal(authzEncMsg.GetValue(), authzMsg.(codec.ProtoMarshaler))
+			if err != nil {
+				return err
+			}
+			err = m.handleMsg(tx, authzMsg, result)
+			if err != nil {
+				return err
+			}
+		}
+	default:
+		result.UnhandledMessageTypes = append(result.UnhandledMessageTypes, fmt.Sprintf("%T", msg))
+		result.CountSkipped++
+	}
+	return nil
+}
+
 func (m *baseMessageHandler) HandleTxs(txs [][]byte) (*indexerpb.HandleTxsResponse, error) {
 	var result indexerpb.HandleTxsResponse
 	for _, tx := range txs {
@@ -55,30 +98,9 @@ func (m *baseMessageHandler) HandleTxs(txs [][]byte) (*indexerpb.HandleTxsRespon
 			continue
 		}
 		for _, anyMsg := range txDecoded.GetMsgs() {
-			switch msg := anyMsg.(type) {
-			case *banktypes.MsgSend:
-				newMsg, err := m.handleMsgSend(msg, tx)
-				if err != nil {
-					return nil, err
-				}
-				addToResultIfNoError(&result, newMsg)
-			case *ibcChannel.MsgRecvPacket:
-				newMsg, err := m.handleMsgRecvPacket(msg, tx)
-				if err != nil {
-					return nil, err
-				}
-				addToResultIfNoError(&result, newMsg)
-			case *stakingtypes.MsgUndelegate:
-				newMsg, err := m.handleMsgUndelegate(msg, tx)
-				if err != nil {
-					return nil, err
-				}
-				addToResultIfNoError(&result, newMsg)
-			case *authz.MsgExec:
-				log.Sugar.Infof("Authz MsgExec: %s", msg)
-			default:
-				result.UnhandledMessageTypes = append(result.UnhandledMessageTypes, fmt.Sprintf("%T", msg))
-				result.CountSkipped++
+			err = m.handleMsg(tx, anyMsg, &result)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
