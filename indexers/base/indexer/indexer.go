@@ -137,8 +137,9 @@ func (i *Indexer) handleBlock(blockResponse *cmtservice.GetBlockByHeightResponse
 		behindText = fmt.Sprintf(" (%v behind latest)", behind)
 	}
 	var total = result.CountProcessed + result.CountSkipped
-	log.Sugar.Infof("Block %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
-		blockResponse.GetBlock().GetHeader().Height, behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages))
+	log.Sugar.Infof("%-15sBlock %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v",
+		i.chainInfo.Name, blockResponse.GetBlock().GetHeader().Height,
+		behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages))
 	return nil
 }
 
@@ -185,35 +186,58 @@ func (i *Indexer) updateSyncStatus(syncStatus *SyncStatus, updateChannel chan Sy
 	syncStatus.Height++
 }
 
+const startSleepTime = 5 * time.Second
+const incrementSleepTime = 1 * time.Second
+const maxSleepTime = 10 * time.Second
+
+func setSleepTime(sleepTime time.Duration, attempts int) time.Duration {
+	if attempts == 1 {
+		sleepTime -= incrementSleepTime
+		if sleepTime < startSleepTime {
+			sleepTime = startSleepTime
+		}
+	} else if attempts > 2 {
+		sleepTime += incrementSleepTime
+		if sleepTime > maxSleepTime {
+			sleepTime = maxSleepTime
+		}
+	}
+	return sleepTime
+}
+
 func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncStatus) {
 	i.getLatestHeight(&syncStatus)
+	var sleepTime = startSleepTime
 	var catchUp = syncStatus.Height < syncStatus.LatestHeight
-	log.Sugar.Infof("Start indexing at height: %v", syncStatus.Height)
+	log.Sugar.Infof("%-15sStart indexing at height: %v", i.chainInfo.Name, syncStatus.Height)
 	for true {
+		var attempts = 1
 		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.chainInfo.RestEndpoint, syncStatus.Height)
 		var blockResponse cmtservice.GetBlockByHeightResponse
 		status, err := GetAndDecode(url, i.encodingConfig, &blockResponse)
 		if err != nil {
 			if status == 400 {
-				log.Sugar.Debugf("Block does not yet exist: %v", syncStatus.Height)
+				log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chainInfo.Name, syncStatus.Height)
+				attempts++
 			} else if status > 400 && status < 500 {
-				log.Sugar.Warnf("Failed to get block: %v %v", status, err)
+				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			} else if status >= 500 {
-				log.Sugar.Warnf("Failed to get block: %v %v", status, err)
+				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			} else {
-				log.Sugar.Panicf("Failed to get block: %v %v", status, err)
+				log.Sugar.Panicf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			}
 		} else {
 			err = i.handleBlock(&blockResponse, syncStatus)
 			if err != nil {
-				log.Sugar.Errorf("Failed to handle block %v (try again): %v", syncStatus.Height, err)
+				log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chainInfo.Name, syncStatus.Height, err)
 				time.Sleep(200 * time.Millisecond)
 			} else {
 				i.updateSyncStatus(&syncStatus, updateChannel)
 			}
 		}
 		if !catchUp {
-			time.Sleep(1 * time.Second)
+			sleepTime = setSleepTime(sleepTime, attempts)
+			time.Sleep(sleepTime)
 		} else {
 			catchUp = syncStatus.Height < syncStatus.LatestHeight
 		}
