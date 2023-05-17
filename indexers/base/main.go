@@ -67,7 +67,14 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 
 	for {
 		select {
-		case update := <-updateChannel:
+		case update, ok := <-updateChannel:
+			if !ok {
+				// Channel is closed, call sendUpdates and exit the function
+				log.Sugar.Info("Update channel closed, exiting")
+				sendUpdates(grpcClient, updates)
+				return
+			}
+
 			var unhandledMessageTypes []string
 			for msgType := range update.UnhandledMessageTypes {
 				unhandledMessageTypes = append(unhandledMessageTypes, msgType)
@@ -121,6 +128,7 @@ func main() {
 	}()
 
 	var updateChannel = make(chan indexer.SyncStatus)
+	defer close(updateChannel)
 	grpcClient := startIndexers(updateChannel)
 	listenForUpdates(grpcClient, updateChannel)
 }
