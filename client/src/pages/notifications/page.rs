@@ -1,3 +1,4 @@
+use std::fmt;
 use js_sys::Date;
 use log::debug;
 use prost_types::Timestamp;
@@ -136,13 +137,24 @@ fn subscribe_to_events(cx: Scope) {
     });
 }
 
-#[component]
-pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
+#[derive(Debug)]
+pub enum Filter {
+    ALL,
+    FUNDING,
+    STAKING,
+    DEXES,
+    GOVERNANCE,
+}
+
+#[component(inline_props)]
+pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: Filter) -> View<G> {
     provide_context(cx, OverviewState::new());
 
     // query_channels(cx.to_owned()).await;
     query_events(cx.to_owned()).await;
     subscribe_to_events(cx.to_owned());
+
+    debug!("filter: {:?}", filter);
 
     view! {cx,
         div(class="flex flex-col h-full w-full p-8") {

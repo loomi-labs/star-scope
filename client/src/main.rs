@@ -7,7 +7,7 @@ use log::Level;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
-use sycamore_router::{navigate, HistoryIntegration, Route, Router};
+use sycamore_router::{HistoryIntegration, navigate, Route, Router};
 use uuid::Uuid;
 
 use crate::components::layout::LayoutWrapper;
@@ -16,7 +16,7 @@ use crate::config::keys;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
-use crate::pages::notifications::page::Notifications;
+use crate::pages::notifications::page::{Notifications, Filter};
 use crate::services::auth::AuthService;
 use crate::services::grpc::{GrpcClient, User};
 
@@ -31,6 +31,14 @@ pub enum AppRoutes {
     Home,
     #[to("/notifications")]
     Notifications,
+    #[to("/notifications/funding")]
+    NotificationsFunding,
+    #[to("/notifications/staking")]
+    NotificationsStaking,
+    #[to("/notifications/dex")]
+    NotificationsDex,
+    #[to("/notifications/governance")]
+    NotificationsGovernance,
     #[to("/communication")]
     Communication,
     #[to("/login")]
@@ -44,6 +52,10 @@ impl ToString for AppRoutes {
         match self {
             AppRoutes::Home => "/".to_string(),
             AppRoutes::Notifications => "/notifications".to_string(),
+            AppRoutes::NotificationsFunding => "/notifications/funding".to_string(),
+            AppRoutes::NotificationsStaking => "/notifications/staking".to_string(),
+            AppRoutes::NotificationsDex => "/notifications/dex".to_string(),
+            AppRoutes::NotificationsGovernance => "/notifications/governance".to_string(),
             AppRoutes::Communication => "/communication".to_string(),
             AppRoutes::Login => "/login".to_string(),
             AppRoutes::NotFound => "/404".to_string(),
@@ -195,6 +207,10 @@ fn has_access_permission(auth_service: &AuthService, route: &AppRoutes) -> bool 
     match route {
         AppRoutes::Home => true,
         AppRoutes::Notifications => is_user || is_admin,
+        AppRoutes::NotificationsFunding => is_user || is_admin,
+        AppRoutes::NotificationsStaking => is_user || is_admin,
+        AppRoutes::NotificationsDex => is_user || is_admin,
+        AppRoutes::NotificationsGovernance => is_user || is_admin,
         AppRoutes::Communication => is_user || is_admin,
         AppRoutes::Login => true,
         AppRoutes::NotFound => true,
@@ -209,7 +225,11 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
         app_state.route.set(route.clone());
         match route {
             AppRoutes::Home => view!(cx, LayoutWrapper{Home {}}),
-            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
+            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications(filter=Filter::ALL)}),
+            AppRoutes::NotificationsFunding => view!(cx, LayoutWrapper{Notifications(filter=Filter::FUNDING)}),
+            AppRoutes::NotificationsStaking => view!(cx, LayoutWrapper{Notifications(filter=Filter::STAKING)}),
+            AppRoutes::NotificationsDex => view!(cx, LayoutWrapper{Notifications(filter=Filter::DEXES)}),
+            AppRoutes::NotificationsGovernance => view!(cx, LayoutWrapper{Notifications(filter=Filter::GOVERNANCE)}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
             AppRoutes::Login => Login(cx),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},

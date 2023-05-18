@@ -42,7 +42,7 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
 
 fn highlight_active_route(route: &AppRoutes, current_route: &AppRoutes) -> String {
     if route.to_string() == current_route.to_string() {
-        "text-white".to_string()
+        "text-primary".to_string()
     } else {
         "".to_string()
     }
@@ -61,7 +61,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             div(class="overflow-y-auto overflow-x-hidden flex flex-col justify-between flex-grow") {
                 ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Notifications, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Notifications, app_state.route.get().as_ref()))) {
+                        a(href=AppRoutes::Notifications, class=a_class) {
                             span(class=format!("{} icon-[mdi--bell]", span_icon_class)) {
                                 i(class="fas fa-chart-line") {}
                             }
@@ -77,7 +77,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                a(href=AppRoutes::Notifications, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Notifications, app_state.route.get().as_ref()))) {
+                                a(href=AppRoutes::NotificationsFunding, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsFunding, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[ep--coin]", span_icon_class)) {
                                         i(class="fas fa-chart-line") {}
                                     }
@@ -85,7 +85,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                a(href=AppRoutes::Notifications, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Notifications, app_state.route.get().as_ref()))) {
+                                a(href=AppRoutes::NotificationsStaking, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsStaking, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[arcticons--coinstats]", span_icon_class)) {
                                         i(class="fas fa-chart-line") {}
                                     }
@@ -93,7 +93,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                a(href=AppRoutes::Notifications, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Notifications, app_state.route.get().as_ref()))) {
+                                a(href=AppRoutes::NotificationsDex, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsDex, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[fluent--money-24-regular]", span_icon_class)) {
                                         i(class="fas fa-chart-line") {}
                                     }
@@ -101,7 +101,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                a(href=AppRoutes::Notifications, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Notifications, app_state.route.get().as_ref()))) {
+                                a(href=AppRoutes::NotificationsGovernance, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsGovernance, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[icon-park-outline--palace]", span_icon_class)) {
                                         i(class="fas fa-chart-line") {}
                                     }
