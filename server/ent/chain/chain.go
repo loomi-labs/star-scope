@@ -18,20 +18,28 @@ const (
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
+	// FieldChainID holds the string denoting the chain_id field in the database.
+	FieldChainID = "chain_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldImage holds the string denoting the image field in the database.
-	FieldImage = "image"
-	// FieldIndexingHeight holds the string denoting the indexing_height field in the database.
-	FieldIndexingHeight = "indexing_height"
+	// FieldPrettyName holds the string denoting the pretty_name field in the database.
+	FieldPrettyName = "pretty_name"
 	// FieldPath holds the string denoting the path field in the database.
 	FieldPath = "path"
+	// FieldImage holds the string denoting the image field in the database.
+	FieldImage = "image"
+	// FieldBech32Prefix holds the string denoting the bech32_prefix field in the database.
+	FieldBech32Prefix = "bech32_prefix"
+	// FieldIndexingHeight holds the string denoting the indexing_height field in the database.
+	FieldIndexingHeight = "indexing_height"
 	// FieldHasCustomIndexer holds the string denoting the has_custom_indexer field in the database.
 	FieldHasCustomIndexer = "has_custom_indexer"
 	// FieldHandledMessageTypes holds the string denoting the handled_message_types field in the database.
 	FieldHandledMessageTypes = "handled_message_types"
 	// FieldUnhandledMessageTypes holds the string denoting the unhandled_message_types field in the database.
 	FieldUnhandledMessageTypes = "unhandled_message_types"
+	// FieldIsEnabled holds the string denoting the is_enabled field in the database.
+	FieldIsEnabled = "is_enabled"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// Table holds the table name of the chain in the database.
@@ -50,13 +58,17 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
+	FieldChainID,
 	FieldName,
-	FieldImage,
-	FieldIndexingHeight,
+	FieldPrettyName,
 	FieldPath,
+	FieldImage,
+	FieldBech32Prefix,
+	FieldIndexingHeight,
 	FieldHasCustomIndexer,
 	FieldHandledMessageTypes,
 	FieldUnhandledMessageTypes,
+	FieldIsEnabled,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -84,6 +96,8 @@ var (
 	DefaultHandledMessageTypes string
 	// DefaultUnhandledMessageTypes holds the default value on creation for the "unhandled_message_types" field.
 	DefaultUnhandledMessageTypes string
+	// DefaultIsEnabled holds the default value on creation for the "is_enabled" field.
+	DefaultIsEnabled bool
 )
 
 // OrderOption defines the ordering options for the Chain queries.
@@ -104,9 +118,24 @@ func ByUpdateTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdateTime, opts...).ToFunc()
 }
 
+// ByChainID orders the results by the chain_id field.
+func ByChainID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldChainID, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByPrettyName orders the results by the pretty_name field.
+func ByPrettyName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPrettyName, opts...).ToFunc()
+}
+
+// ByPath orders the results by the path field.
+func ByPath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPath, opts...).ToFunc()
 }
 
 // ByImage orders the results by the image field.
@@ -114,14 +143,14 @@ func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
 }
 
+// ByBech32Prefix orders the results by the bech32_prefix field.
+func ByBech32Prefix(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBech32Prefix, opts...).ToFunc()
+}
+
 // ByIndexingHeight orders the results by the indexing_height field.
 func ByIndexingHeight(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIndexingHeight, opts...).ToFunc()
-}
-
-// ByPath orders the results by the path field.
-func ByPath(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPath, opts...).ToFunc()
 }
 
 // ByHasCustomIndexer orders the results by the has_custom_indexer field.
@@ -137,6 +166,11 @@ func ByHandledMessageTypes(opts ...sql.OrderTermOption) OrderOption {
 // ByUnhandledMessageTypes orders the results by the unhandled_message_types field.
 func ByUnhandledMessageTypes(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUnhandledMessageTypes, opts...).ToFunc()
+}
+
+// ByIsEnabled orders the results by the is_enabled field.
+func ByIsEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsEnabled, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.

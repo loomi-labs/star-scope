@@ -12,10 +12,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // EventListenerUpdate is the builder for updating EventListener entities.
@@ -43,23 +43,23 @@ func (elu *EventListenerUpdate) SetWalletAddress(s string) *EventListenerUpdate 
 	return elu
 }
 
-// SetChannelID sets the "channel" edge to the Channel entity by ID.
-func (elu *EventListenerUpdate) SetChannelID(id int) *EventListenerUpdate {
-	elu.mutation.SetChannelID(id)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (elu *EventListenerUpdate) SetUserID(id int) *EventListenerUpdate {
+	elu.mutation.SetUserID(id)
 	return elu
 }
 
-// SetNillableChannelID sets the "channel" edge to the Channel entity by ID if the given value is not nil.
-func (elu *EventListenerUpdate) SetNillableChannelID(id *int) *EventListenerUpdate {
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (elu *EventListenerUpdate) SetNillableUserID(id *int) *EventListenerUpdate {
 	if id != nil {
-		elu = elu.SetChannelID(*id)
+		elu = elu.SetUserID(*id)
 	}
 	return elu
 }
 
-// SetChannel sets the "channel" edge to the Channel entity.
-func (elu *EventListenerUpdate) SetChannel(c *Channel) *EventListenerUpdate {
-	return elu.SetChannelID(c.ID)
+// SetUser sets the "user" edge to the User entity.
+func (elu *EventListenerUpdate) SetUser(u *User) *EventListenerUpdate {
+	return elu.SetUserID(u.ID)
 }
 
 // SetChainID sets the "chain" edge to the Chain entity by ID.
@@ -101,9 +101,9 @@ func (elu *EventListenerUpdate) Mutation() *EventListenerMutation {
 	return elu.mutation
 }
 
-// ClearChannel clears the "channel" edge to the Channel entity.
-func (elu *EventListenerUpdate) ClearChannel() *EventListenerUpdate {
-	elu.mutation.ClearChannel()
+// ClearUser clears the "user" edge to the User entity.
+func (elu *EventListenerUpdate) ClearUser() *EventListenerUpdate {
+	elu.mutation.ClearUser()
 	return elu
 }
 
@@ -185,28 +185,28 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := elu.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
 	}
-	if elu.mutation.ChannelCleared() {
+	if elu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   eventlistener.ChannelTable,
-			Columns: []string{eventlistener.ChannelColumn},
+			Table:   eventlistener.UserTable,
+			Columns: []string{eventlistener.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(channel.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := elu.mutation.ChannelIDs(); len(nodes) > 0 {
+	if nodes := elu.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   eventlistener.ChannelTable,
-			Columns: []string{eventlistener.ChannelColumn},
+			Table:   eventlistener.UserTable,
+			Columns: []string{eventlistener.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(channel.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -320,23 +320,23 @@ func (eluo *EventListenerUpdateOne) SetWalletAddress(s string) *EventListenerUpd
 	return eluo
 }
 
-// SetChannelID sets the "channel" edge to the Channel entity by ID.
-func (eluo *EventListenerUpdateOne) SetChannelID(id int) *EventListenerUpdateOne {
-	eluo.mutation.SetChannelID(id)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (eluo *EventListenerUpdateOne) SetUserID(id int) *EventListenerUpdateOne {
+	eluo.mutation.SetUserID(id)
 	return eluo
 }
 
-// SetNillableChannelID sets the "channel" edge to the Channel entity by ID if the given value is not nil.
-func (eluo *EventListenerUpdateOne) SetNillableChannelID(id *int) *EventListenerUpdateOne {
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (eluo *EventListenerUpdateOne) SetNillableUserID(id *int) *EventListenerUpdateOne {
 	if id != nil {
-		eluo = eluo.SetChannelID(*id)
+		eluo = eluo.SetUserID(*id)
 	}
 	return eluo
 }
 
-// SetChannel sets the "channel" edge to the Channel entity.
-func (eluo *EventListenerUpdateOne) SetChannel(c *Channel) *EventListenerUpdateOne {
-	return eluo.SetChannelID(c.ID)
+// SetUser sets the "user" edge to the User entity.
+func (eluo *EventListenerUpdateOne) SetUser(u *User) *EventListenerUpdateOne {
+	return eluo.SetUserID(u.ID)
 }
 
 // SetChainID sets the "chain" edge to the Chain entity by ID.
@@ -378,9 +378,9 @@ func (eluo *EventListenerUpdateOne) Mutation() *EventListenerMutation {
 	return eluo.mutation
 }
 
-// ClearChannel clears the "channel" edge to the Channel entity.
-func (eluo *EventListenerUpdateOne) ClearChannel() *EventListenerUpdateOne {
-	eluo.mutation.ClearChannel()
+// ClearUser clears the "user" edge to the User entity.
+func (eluo *EventListenerUpdateOne) ClearUser() *EventListenerUpdateOne {
+	eluo.mutation.ClearUser()
 	return eluo
 }
 
@@ -492,28 +492,28 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 	if value, ok := eluo.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
 	}
-	if eluo.mutation.ChannelCleared() {
+	if eluo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   eventlistener.ChannelTable,
-			Columns: []string{eventlistener.ChannelColumn},
+			Table:   eventlistener.UserTable,
+			Columns: []string{eventlistener.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(channel.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eluo.mutation.ChannelIDs(); len(nodes) > 0 {
+	if nodes := eluo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   eventlistener.ChannelTable,
-			Columns: []string{eventlistener.ChannelColumn},
+			Table:   eventlistener.UserTable,
+			Columns: []string{eventlistener.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(channel.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -35,20 +35,20 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// Projects holds the value of the projects edge.
-	Projects []*Project `json:"projects,omitempty"`
+	// EventListeners holds the value of the event_listeners edge.
+	EventListeners []*EventListener `json:"event_listeners,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// ProjectsOrErr returns the Projects value or an error if the edge
+// EventListenersOrErr returns the EventListeners value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) ProjectsOrErr() ([]*Project, error) {
+func (e UserEdges) EventListenersOrErr() ([]*EventListener, error) {
 	if e.loadedTypes[0] {
-		return e.Projects, nil
+		return e.EventListeners, nil
 	}
-	return nil, &NotLoadedError{edge: "projects"}
+	return nil, &NotLoadedError{edge: "event_listeners"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -126,9 +126,9 @@ func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
 }
 
-// QueryProjects queries the "projects" edge of the User entity.
-func (u *User) QueryProjects() *ProjectQuery {
-	return NewUserClient(u.config).QueryProjects(u)
+// QueryEventListeners queries the "event_listeners" edge of the User entity.
+func (u *User) QueryEventListeners() *EventListenerQuery {
+	return NewUserClient(u.config).QueryEventListeners(u)
 }
 
 // Update returns a builder for updating this User.

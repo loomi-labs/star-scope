@@ -21,20 +21,28 @@ type Chain struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
+	// ChainID holds the value of the "chain_id" field.
+	ChainID string `json:"chain_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// Image holds the value of the "image" field.
-	Image string `json:"image,omitempty"`
-	// IndexingHeight holds the value of the "indexing_height" field.
-	IndexingHeight uint64 `json:"indexing_height,omitempty"`
+	// PrettyName holds the value of the "pretty_name" field.
+	PrettyName string `json:"pretty_name,omitempty"`
 	// Path holds the value of the "path" field.
 	Path string `json:"path,omitempty"`
+	// Image holds the value of the "image" field.
+	Image string `json:"image,omitempty"`
+	// Bech32Prefix holds the value of the "bech32_prefix" field.
+	Bech32Prefix string `json:"bech32_prefix,omitempty"`
+	// IndexingHeight holds the value of the "indexing_height" field.
+	IndexingHeight uint64 `json:"indexing_height,omitempty"`
 	// HasCustomIndexer holds the value of the "has_custom_indexer" field.
 	HasCustomIndexer bool `json:"has_custom_indexer,omitempty"`
 	// HandledMessageTypes holds the value of the "handled_message_types" field.
 	HandledMessageTypes string `json:"handled_message_types,omitempty"`
 	// UnhandledMessageTypes holds the value of the "unhandled_message_types" field.
 	UnhandledMessageTypes string `json:"unhandled_message_types,omitempty"`
+	// IsEnabled holds the value of the "is_enabled" field.
+	IsEnabled bool `json:"is_enabled,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
 	Edges        ChainEdges `json:"edges"`
@@ -64,11 +72,11 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case chain.FieldHasCustomIndexer:
+		case chain.FieldHasCustomIndexer, chain.FieldIsEnabled:
 			values[i] = new(sql.NullBool)
 		case chain.FieldID, chain.FieldIndexingHeight:
 			values[i] = new(sql.NullInt64)
-		case chain.FieldName, chain.FieldImage, chain.FieldPath, chain.FieldHandledMessageTypes, chain.FieldUnhandledMessageTypes:
+		case chain.FieldChainID, chain.FieldName, chain.FieldPrettyName, chain.FieldPath, chain.FieldImage, chain.FieldBech32Prefix, chain.FieldHandledMessageTypes, chain.FieldUnhandledMessageTypes:
 			values[i] = new(sql.NullString)
 		case chain.FieldCreateTime, chain.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -105,11 +113,29 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.UpdateTime = value.Time
 			}
+		case chain.FieldChainID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field chain_id", values[i])
+			} else if value.Valid {
+				c.ChainID = value.String
+			}
 		case chain.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				c.Name = value.String
+			}
+		case chain.FieldPrettyName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field pretty_name", values[i])
+			} else if value.Valid {
+				c.PrettyName = value.String
+			}
+		case chain.FieldPath:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field path", values[i])
+			} else if value.Valid {
+				c.Path = value.String
 			}
 		case chain.FieldImage:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -117,17 +143,17 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.Image = value.String
 			}
+		case chain.FieldBech32Prefix:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bech32_prefix", values[i])
+			} else if value.Valid {
+				c.Bech32Prefix = value.String
+			}
 		case chain.FieldIndexingHeight:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field indexing_height", values[i])
 			} else if value.Valid {
 				c.IndexingHeight = uint64(value.Int64)
-			}
-		case chain.FieldPath:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field path", values[i])
-			} else if value.Valid {
-				c.Path = value.String
 			}
 		case chain.FieldHasCustomIndexer:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -146,6 +172,12 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field unhandled_message_types", values[i])
 			} else if value.Valid {
 				c.UnhandledMessageTypes = value.String
+			}
+		case chain.FieldIsEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_enabled", values[i])
+			} else if value.Valid {
+				c.IsEnabled = value.Bool
 			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
@@ -194,17 +226,26 @@ func (c *Chain) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(c.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("chain_id=")
+	builder.WriteString(c.ChainID)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(c.Name)
+	builder.WriteString(", ")
+	builder.WriteString("pretty_name=")
+	builder.WriteString(c.PrettyName)
+	builder.WriteString(", ")
+	builder.WriteString("path=")
+	builder.WriteString(c.Path)
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(c.Image)
 	builder.WriteString(", ")
+	builder.WriteString("bech32_prefix=")
+	builder.WriteString(c.Bech32Prefix)
+	builder.WriteString(", ")
 	builder.WriteString("indexing_height=")
 	builder.WriteString(fmt.Sprintf("%v", c.IndexingHeight))
-	builder.WriteString(", ")
-	builder.WriteString("path=")
-	builder.WriteString(c.Path)
 	builder.WriteString(", ")
 	builder.WriteString("has_custom_indexer=")
 	builder.WriteString(fmt.Sprintf("%v", c.HasCustomIndexer))
@@ -214,6 +255,9 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("unhandled_message_types=")
 	builder.WriteString(c.UnhandledMessageTypes)
+	builder.WriteString(", ")
+	builder.WriteString("is_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", c.IsEnabled))
 	builder.WriteByte(')')
 	return builder.String()
 }

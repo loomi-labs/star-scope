@@ -35,7 +35,7 @@ jobs:
               - 'server/**'
             client:
               - 'client/**'
-            main-indexer:
+            base-indexer:
               - 'indexer/base/**'
             osmosis-indexer:
               - 'indexers/osmosis/**'
@@ -76,21 +76,21 @@ jobs:
           labels: ${{ steps.meta-client.outputs.labels }}
           build-args: GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
 
-      - name: Extract metadata (tags, labels) for main-indexer image
-        id: meta-main-indexer
+      - name: Extract metadata (tags, labels) for base-indexer image
+        id: meta-base-indexer
         uses: docker/metadata-action@v4.3.0
-        if: steps.changes.outputs.main-indexer == 'true'
+        if: steps.changes.outputs.base-indexer == 'true'
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-main-indexer
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-base-indexer
 
       - name: Build and push indexer Docker image
         uses: docker/build-push-action@v4.0.0
-        if: steps.changes.outputs.main-indexer == 'true'
+        if: steps.changes.outputs.base-indexer == 'true'
         with:
           context: indexers/base/
           push: true
-          tags: ${{ steps.meta-main-indexer.outputs.tags }}
-          labels: ${{ steps.meta-main-indexer.outputs.labels }}
+          tags: ${{ steps.meta-base-indexer.outputs.tags }}
+          labels: ${{ steps.meta-base-indexer.outputs.labels }}
 
       - name: Extract metadata (tags, labels) for osmosis-indexer image
         id: meta-osmosis-indexer

@@ -28,7 +28,7 @@ func (EventListener) Fields() []ent.Field {
 // Edges of the EventListener.
 func (EventListener) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("channel", Channel.Type).
+		edge.From("user", User.Type).
 			Ref("event_listeners").
 			Unique(),
 		edge.From("chain", Chain.Type).

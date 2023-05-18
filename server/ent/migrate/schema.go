@@ -13,13 +13,17 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
+		{Name: "chain_id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "pretty_name", Type: field.TypeString, Unique: true},
+		{Name: "path", Type: field.TypeString, Unique: true},
 		{Name: "image", Type: field.TypeString},
+		{Name: "bech32_prefix", Type: field.TypeString},
 		{Name: "indexing_height", Type: field.TypeUint64, Default: 0},
-		{Name: "path", Type: field.TypeString},
 		{Name: "has_custom_indexer", Type: field.TypeBool, Default: false},
 		{Name: "handled_message_types", Type: field.TypeString, Default: ""},
 		{Name: "unhandled_message_types", Type: field.TypeString, Default: ""},
+		{Name: "is_enabled", Type: field.TypeBool, Default: false},
 	}
 	// ChainsTable holds the schema information for the "chains" table.
 	ChainsTable = &schema.Table{
@@ -30,30 +34,7 @@ var (
 			{
 				Name:    "chain_name",
 				Unique:  true,
-				Columns: []*schema.Column{ChainsColumns[3]},
-			},
-		},
-	}
-	// ChannelsColumns holds the columns for the "channels" table.
-	ChannelsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "create_time", Type: field.TypeTime},
-		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"funding", "staking", "governance", "dex", "other"}},
-		{Name: "project_channels", Type: field.TypeInt, Nullable: true},
-	}
-	// ChannelsTable holds the schema information for the "channels" table.
-	ChannelsTable = &schema.Table{
-		Name:       "channels",
-		Columns:    ChannelsColumns,
-		PrimaryKey: []*schema.Column{ChannelsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "channels_projects_channels",
-				Columns:    []*schema.Column{ChannelsColumns[5]},
-				RefColumns: []*schema.Column{ProjectsColumns[0]},
-				OnDelete:   schema.SetNull,
+				Columns: []*schema.Column{ChainsColumns[4]},
 			},
 		},
 	}
@@ -88,7 +69,7 @@ var (
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "wallet_address", Type: field.TypeString},
 		{Name: "chain_event_listeners", Type: field.TypeInt, Nullable: true},
-		{Name: "channel_event_listeners", Type: field.TypeInt, Nullable: true},
+		{Name: "user_event_listeners", Type: field.TypeInt, Nullable: true},
 	}
 	// EventListenersTable holds the schema information for the "event_listeners" table.
 	EventListenersTable = &schema.Table{
@@ -103,30 +84,8 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "event_listeners_channels_event_listeners",
+				Symbol:     "event_listeners_users_event_listeners",
 				Columns:    []*schema.Column{EventListenersColumns[5]},
-				RefColumns: []*schema.Column{ChannelsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
-	// ProjectsColumns holds the columns for the "projects" table.
-	ProjectsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "create_time", Type: field.TypeTime},
-		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString},
-		{Name: "user_projects", Type: field.TypeInt, Nullable: true},
-	}
-	// ProjectsTable holds the schema information for the "projects" table.
-	ProjectsTable = &schema.Table{
-		Name:       "projects",
-		Columns:    ProjectsColumns,
-		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "projects_users_projects",
-				Columns:    []*schema.Column{ProjectsColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -150,18 +109,14 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ChainsTable,
-		ChannelsTable,
 		EventsTable,
 		EventListenersTable,
-		ProjectsTable,
 		UsersTable,
 	}
 )
 
 func init() {
-	ChannelsTable.ForeignKeys[0].RefTable = ProjectsTable
 	EventsTable.ForeignKeys[0].RefTable = EventListenersTable
 	EventListenersTable.ForeignKeys[0].RefTable = ChainsTable
-	EventListenersTable.ForeignKeys[1].RefTable = ChannelsTable
-	ProjectsTable.ForeignKeys[0].RefTable = UsersTable
+	EventListenersTable.ForeignKeys[1].RefTable = UsersTable
 }

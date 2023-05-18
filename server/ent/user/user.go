@@ -25,17 +25,17 @@ const (
 	FieldWalletAddress = "wallet_address"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
-	// EdgeProjects holds the string denoting the projects edge name in mutations.
-	EdgeProjects = "projects"
+	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
+	EdgeEventListeners = "event_listeners"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// ProjectsTable is the table that holds the projects relation/edge.
-	ProjectsTable = "projects"
-	// ProjectsInverseTable is the table name for the Project entity.
-	// It exists in this package in order to avoid circular dependency with the "project" package.
-	ProjectsInverseTable = "projects"
-	// ProjectsColumn is the table column denoting the projects relation/edge.
-	ProjectsColumn = "user_projects"
+	// EventListenersTable is the table that holds the event_listeners relation/edge.
+	EventListenersTable = "event_listeners"
+	// EventListenersInverseTable is the table name for the EventListener entity.
+	// It exists in this package in order to avoid circular dependency with the "eventlistener" package.
+	EventListenersInverseTable = "event_listeners"
+	// EventListenersColumn is the table column denoting the event_listeners relation/edge.
+	EventListenersColumn = "user_event_listeners"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -128,23 +128,23 @@ func ByRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRole, opts...).ToFunc()
 }
 
-// ByProjectsCount orders the results by projects count.
-func ByProjectsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByEventListenersCount orders the results by event_listeners count.
+func ByEventListenersCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newProjectsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newEventListenersStep(), opts...)
 	}
 }
 
-// ByProjects orders the results by projects terms.
-func ByProjects(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByEventListeners orders the results by event_listeners terms.
+func ByEventListeners(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newProjectsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newEventListenersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newProjectsStep() *sqlgraph.Step {
+func newEventListenersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ProjectsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ProjectsTable, ProjectsColumn),
+		sqlgraph.To(EventListenersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EventListenersTable, EventListenersColumn),
 	)
 }

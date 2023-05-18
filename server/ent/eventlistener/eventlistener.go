@@ -20,21 +20,21 @@ const (
 	FieldUpdateTime = "update_time"
 	// FieldWalletAddress holds the string denoting the wallet_address field in the database.
 	FieldWalletAddress = "wallet_address"
-	// EdgeChannel holds the string denoting the channel edge name in mutations.
-	EdgeChannel = "channel"
+	// EdgeUser holds the string denoting the user edge name in mutations.
+	EdgeUser = "user"
 	// EdgeChain holds the string denoting the chain edge name in mutations.
 	EdgeChain = "chain"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
 	EdgeEvents = "events"
 	// Table holds the table name of the eventlistener in the database.
 	Table = "event_listeners"
-	// ChannelTable is the table that holds the channel relation/edge.
-	ChannelTable = "event_listeners"
-	// ChannelInverseTable is the table name for the Channel entity.
-	// It exists in this package in order to avoid circular dependency with the "channel" package.
-	ChannelInverseTable = "channels"
-	// ChannelColumn is the table column denoting the channel relation/edge.
-	ChannelColumn = "channel_event_listeners"
+	// UserTable is the table that holds the user relation/edge.
+	UserTable = "event_listeners"
+	// UserInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UserInverseTable = "users"
+	// UserColumn is the table column denoting the user relation/edge.
+	UserColumn = "user_event_listeners"
 	// ChainTable is the table that holds the chain relation/edge.
 	ChainTable = "event_listeners"
 	// ChainInverseTable is the table name for the Chain entity.
@@ -63,7 +63,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"chain_event_listeners",
-	"channel_event_listeners",
+	"user_event_listeners",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -113,10 +113,10 @@ func ByWalletAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWalletAddress, opts...).ToFunc()
 }
 
-// ByChannelField orders the results by channel field.
-func ByChannelField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByUserField orders the results by user field.
+func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newChannelStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -140,11 +140,11 @@ func ByEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newChannelStep() *sqlgraph.Step {
+func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ChannelInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, ChannelTable, ChannelColumn),
+		sqlgraph.To(UserInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
 	)
 }
 func newChainStep() *sqlgraph.Step {

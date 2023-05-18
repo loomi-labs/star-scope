@@ -11,9 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // EventListenerCreate is the builder for creating a EventListener entity.
@@ -57,23 +57,23 @@ func (elc *EventListenerCreate) SetWalletAddress(s string) *EventListenerCreate 
 	return elc
 }
 
-// SetChannelID sets the "channel" edge to the Channel entity by ID.
-func (elc *EventListenerCreate) SetChannelID(id int) *EventListenerCreate {
-	elc.mutation.SetChannelID(id)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (elc *EventListenerCreate) SetUserID(id int) *EventListenerCreate {
+	elc.mutation.SetUserID(id)
 	return elc
 }
 
-// SetNillableChannelID sets the "channel" edge to the Channel entity by ID if the given value is not nil.
-func (elc *EventListenerCreate) SetNillableChannelID(id *int) *EventListenerCreate {
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (elc *EventListenerCreate) SetNillableUserID(id *int) *EventListenerCreate {
 	if id != nil {
-		elc = elc.SetChannelID(*id)
+		elc = elc.SetUserID(*id)
 	}
 	return elc
 }
 
-// SetChannel sets the "channel" edge to the Channel entity.
-func (elc *EventListenerCreate) SetChannel(c *Channel) *EventListenerCreate {
-	return elc.SetChannelID(c.ID)
+// SetUser sets the "user" edge to the User entity.
+func (elc *EventListenerCreate) SetUser(u *User) *EventListenerCreate {
+	return elc.SetUserID(u.ID)
 }
 
 // SetChainID sets the "chain" edge to the Chain entity by ID.
@@ -204,21 +204,21 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
 		_node.WalletAddress = value
 	}
-	if nodes := elc.mutation.ChannelIDs(); len(nodes) > 0 {
+	if nodes := elc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   eventlistener.ChannelTable,
-			Columns: []string{eventlistener.ChannelColumn},
+			Table:   eventlistener.UserTable,
+			Columns: []string{eventlistener.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(channel.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.channel_event_listeners = &nodes[0]
+		_node.user_event_listeners = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := elc.mutation.ChainIDs(); len(nodes) > 0 {

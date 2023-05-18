@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/loomi-labs/star-scope/ent/chain"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // EventListener is the model entity for the EventListener schema.
@@ -27,16 +27,16 @@ type EventListener struct {
 	WalletAddress string `json:"wallet_address,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventListenerQuery when eager-loading is set.
-	Edges                   EventListenerEdges `json:"edges"`
-	chain_event_listeners   *int
-	channel_event_listeners *int
-	selectValues            sql.SelectValues
+	Edges                 EventListenerEdges `json:"edges"`
+	chain_event_listeners *int
+	user_event_listeners  *int
+	selectValues          sql.SelectValues
 }
 
 // EventListenerEdges holds the relations/edges for other nodes in the graph.
 type EventListenerEdges struct {
-	// Channel holds the value of the channel edge.
-	Channel *Channel `json:"channel,omitempty"`
+	// User holds the value of the user edge.
+	User *User `json:"user,omitempty"`
 	// Chain holds the value of the chain edge.
 	Chain *Chain `json:"chain,omitempty"`
 	// Events holds the value of the events edge.
@@ -46,17 +46,17 @@ type EventListenerEdges struct {
 	loadedTypes [3]bool
 }
 
-// ChannelOrErr returns the Channel value or an error if the edge
+// UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e EventListenerEdges) ChannelOrErr() (*Channel, error) {
+func (e EventListenerEdges) UserOrErr() (*User, error) {
 	if e.loadedTypes[0] {
-		if e.Channel == nil {
+		if e.User == nil {
 			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: channel.Label}
+			return nil, &NotFoundError{label: user.Label}
 		}
-		return e.Channel, nil
+		return e.User, nil
 	}
-	return nil, &NotLoadedError{edge: "channel"}
+	return nil, &NotLoadedError{edge: "user"}
 }
 
 // ChainOrErr returns the Chain value or an error if the edge
@@ -94,7 +94,7 @@ func (*EventListener) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case eventlistener.ForeignKeys[0]: // chain_event_listeners
 			values[i] = new(sql.NullInt64)
-		case eventlistener.ForeignKeys[1]: // channel_event_listeners
+		case eventlistener.ForeignKeys[1]: // user_event_listeners
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -144,10 +144,10 @@ func (el *EventListener) assignValues(columns []string, values []any) error {
 			}
 		case eventlistener.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field channel_event_listeners", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_event_listeners", value)
 			} else if value.Valid {
-				el.channel_event_listeners = new(int)
-				*el.channel_event_listeners = int(value.Int64)
+				el.user_event_listeners = new(int)
+				*el.user_event_listeners = int(value.Int64)
 			}
 		default:
 			el.selectValues.Set(columns[i], values[i])
@@ -162,9 +162,9 @@ func (el *EventListener) Value(name string) (ent.Value, error) {
 	return el.selectValues.Get(name)
 }
 
-// QueryChannel queries the "channel" edge of the EventListener entity.
-func (el *EventListener) QueryChannel() *ChannelQuery {
-	return NewEventListenerClient(el.config).QueryChannel(el)
+// QueryUser queries the "user" edge of the EventListener entity.
+func (el *EventListener) QueryUser() *UserQuery {
+	return NewEventListenerClient(el.config).QueryUser(el)
 }
 
 // QueryChain queries the "chain" edge of the EventListener entity.

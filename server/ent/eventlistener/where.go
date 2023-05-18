@@ -215,21 +215,21 @@ func WalletAddressContainsFold(v string) predicate.EventListener {
 	return predicate.EventListener(sql.FieldContainsFold(FieldWalletAddress, v))
 }
 
-// HasChannel applies the HasEdge predicate on the "channel" edge.
-func HasChannel() predicate.EventListener {
+// HasUser applies the HasEdge predicate on the "user" edge.
+func HasUser() predicate.EventListener {
 	return predicate.EventListener(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ChannelTable, ChannelColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasChannelWith applies the HasEdge predicate on the "channel" edge with a given conditions (other predicates).
-func HasChannelWith(preds ...predicate.Channel) predicate.EventListener {
+// HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
+func HasUserWith(preds ...predicate.User) predicate.EventListener {
 	return predicate.EventListener(func(s *sql.Selector) {
-		step := newChannelStep()
+		step := newUserStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

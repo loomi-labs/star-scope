@@ -35,15 +35,33 @@ func (cu *ChainUpdate) SetUpdateTime(t time.Time) *ChainUpdate {
 	return cu
 }
 
+// SetChainID sets the "chain_id" field.
+func (cu *ChainUpdate) SetChainID(s string) *ChainUpdate {
+	cu.mutation.SetChainID(s)
+	return cu
+}
+
 // SetName sets the "name" field.
 func (cu *ChainUpdate) SetName(s string) *ChainUpdate {
 	cu.mutation.SetName(s)
 	return cu
 }
 
+// SetPrettyName sets the "pretty_name" field.
+func (cu *ChainUpdate) SetPrettyName(s string) *ChainUpdate {
+	cu.mutation.SetPrettyName(s)
+	return cu
+}
+
 // SetImage sets the "image" field.
 func (cu *ChainUpdate) SetImage(s string) *ChainUpdate {
 	cu.mutation.SetImage(s)
+	return cu
+}
+
+// SetBech32Prefix sets the "bech32_prefix" field.
+func (cu *ChainUpdate) SetBech32Prefix(s string) *ChainUpdate {
+	cu.mutation.SetBech32Prefix(s)
 	return cu
 }
 
@@ -65,12 +83,6 @@ func (cu *ChainUpdate) SetNillableIndexingHeight(u *uint64) *ChainUpdate {
 // AddIndexingHeight adds u to the "indexing_height" field.
 func (cu *ChainUpdate) AddIndexingHeight(u int64) *ChainUpdate {
 	cu.mutation.AddIndexingHeight(u)
-	return cu
-}
-
-// SetPath sets the "path" field.
-func (cu *ChainUpdate) SetPath(s string) *ChainUpdate {
-	cu.mutation.SetPath(s)
 	return cu
 }
 
@@ -112,6 +124,20 @@ func (cu *ChainUpdate) SetUnhandledMessageTypes(s string) *ChainUpdate {
 func (cu *ChainUpdate) SetNillableUnhandledMessageTypes(s *string) *ChainUpdate {
 	if s != nil {
 		cu.SetUnhandledMessageTypes(*s)
+	}
+	return cu
+}
+
+// SetIsEnabled sets the "is_enabled" field.
+func (cu *ChainUpdate) SetIsEnabled(b bool) *ChainUpdate {
+	cu.mutation.SetIsEnabled(b)
+	return cu
+}
+
+// SetNillableIsEnabled sets the "is_enabled" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableIsEnabled(b *bool) *ChainUpdate {
+	if b != nil {
+		cu.SetIsEnabled(*b)
 	}
 	return cu
 }
@@ -205,20 +231,26 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.UpdateTime(); ok {
 		_spec.SetField(chain.FieldUpdateTime, field.TypeTime, value)
 	}
+	if value, ok := cu.mutation.ChainID(); ok {
+		_spec.SetField(chain.FieldChainID, field.TypeString, value)
+	}
 	if value, ok := cu.mutation.Name(); ok {
 		_spec.SetField(chain.FieldName, field.TypeString, value)
 	}
+	if value, ok := cu.mutation.PrettyName(); ok {
+		_spec.SetField(chain.FieldPrettyName, field.TypeString, value)
+	}
 	if value, ok := cu.mutation.Image(); ok {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
+	}
+	if value, ok := cu.mutation.Bech32Prefix(); ok {
+		_spec.SetField(chain.FieldBech32Prefix, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.IndexingHeight(); ok {
 		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 	}
 	if value, ok := cu.mutation.AddedIndexingHeight(); ok {
 		_spec.AddField(chain.FieldIndexingHeight, field.TypeUint64, value)
-	}
-	if value, ok := cu.mutation.Path(); ok {
-		_spec.SetField(chain.FieldPath, field.TypeString, value)
 	}
 	if value, ok := cu.mutation.HasCustomIndexer(); ok {
 		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
@@ -228,6 +260,9 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.UnhandledMessageTypes(); ok {
 		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
+	}
+	if value, ok := cu.mutation.IsEnabled(); ok {
+		_spec.SetField(chain.FieldIsEnabled, field.TypeBool, value)
 	}
 	if cu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -300,15 +335,33 @@ func (cuo *ChainUpdateOne) SetUpdateTime(t time.Time) *ChainUpdateOne {
 	return cuo
 }
 
+// SetChainID sets the "chain_id" field.
+func (cuo *ChainUpdateOne) SetChainID(s string) *ChainUpdateOne {
+	cuo.mutation.SetChainID(s)
+	return cuo
+}
+
 // SetName sets the "name" field.
 func (cuo *ChainUpdateOne) SetName(s string) *ChainUpdateOne {
 	cuo.mutation.SetName(s)
 	return cuo
 }
 
+// SetPrettyName sets the "pretty_name" field.
+func (cuo *ChainUpdateOne) SetPrettyName(s string) *ChainUpdateOne {
+	cuo.mutation.SetPrettyName(s)
+	return cuo
+}
+
 // SetImage sets the "image" field.
 func (cuo *ChainUpdateOne) SetImage(s string) *ChainUpdateOne {
 	cuo.mutation.SetImage(s)
+	return cuo
+}
+
+// SetBech32Prefix sets the "bech32_prefix" field.
+func (cuo *ChainUpdateOne) SetBech32Prefix(s string) *ChainUpdateOne {
+	cuo.mutation.SetBech32Prefix(s)
 	return cuo
 }
 
@@ -330,12 +383,6 @@ func (cuo *ChainUpdateOne) SetNillableIndexingHeight(u *uint64) *ChainUpdateOne 
 // AddIndexingHeight adds u to the "indexing_height" field.
 func (cuo *ChainUpdateOne) AddIndexingHeight(u int64) *ChainUpdateOne {
 	cuo.mutation.AddIndexingHeight(u)
-	return cuo
-}
-
-// SetPath sets the "path" field.
-func (cuo *ChainUpdateOne) SetPath(s string) *ChainUpdateOne {
-	cuo.mutation.SetPath(s)
 	return cuo
 }
 
@@ -377,6 +424,20 @@ func (cuo *ChainUpdateOne) SetUnhandledMessageTypes(s string) *ChainUpdateOne {
 func (cuo *ChainUpdateOne) SetNillableUnhandledMessageTypes(s *string) *ChainUpdateOne {
 	if s != nil {
 		cuo.SetUnhandledMessageTypes(*s)
+	}
+	return cuo
+}
+
+// SetIsEnabled sets the "is_enabled" field.
+func (cuo *ChainUpdateOne) SetIsEnabled(b bool) *ChainUpdateOne {
+	cuo.mutation.SetIsEnabled(b)
+	return cuo
+}
+
+// SetNillableIsEnabled sets the "is_enabled" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableIsEnabled(b *bool) *ChainUpdateOne {
+	if b != nil {
+		cuo.SetIsEnabled(*b)
 	}
 	return cuo
 }
@@ -500,20 +561,26 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	if value, ok := cuo.mutation.UpdateTime(); ok {
 		_spec.SetField(chain.FieldUpdateTime, field.TypeTime, value)
 	}
+	if value, ok := cuo.mutation.ChainID(); ok {
+		_spec.SetField(chain.FieldChainID, field.TypeString, value)
+	}
 	if value, ok := cuo.mutation.Name(); ok {
 		_spec.SetField(chain.FieldName, field.TypeString, value)
 	}
+	if value, ok := cuo.mutation.PrettyName(); ok {
+		_spec.SetField(chain.FieldPrettyName, field.TypeString, value)
+	}
 	if value, ok := cuo.mutation.Image(); ok {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.Bech32Prefix(); ok {
+		_spec.SetField(chain.FieldBech32Prefix, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.IndexingHeight(); ok {
 		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 	}
 	if value, ok := cuo.mutation.AddedIndexingHeight(); ok {
 		_spec.AddField(chain.FieldIndexingHeight, field.TypeUint64, value)
-	}
-	if value, ok := cuo.mutation.Path(); ok {
-		_spec.SetField(chain.FieldPath, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.HasCustomIndexer(); ok {
 		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
@@ -523,6 +590,9 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	}
 	if value, ok := cuo.mutation.UnhandledMessageTypes(); ok {
 		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.IsEnabled(); ok {
+		_spec.SetField(chain.FieldIsEnabled, field.TypeBool, value)
 	}
 	if cuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -13,10 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/loomi-labs/star-scope/ent/chain"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
-	"github.com/loomi-labs/star-scope/ent/project"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
 
@@ -79,10 +77,8 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			chain.Table:         chain.ValidColumn,
-			channel.Table:       channel.ValidColumn,
 			event.Table:         event.ValidColumn,
 			eventlistener.Table: eventlistener.ValidColumn,
-			project.Table:       project.ValidColumn,
 			user.Table:          user.ValidColumn,
 		})
 	})
