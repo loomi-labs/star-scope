@@ -2,14 +2,14 @@ package indexer
 
 import (
 	"context"
-	connect_go "github.com/bufbuild/connect-go"
+	"fmt"
+	"github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb"
 	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb/indexerpbconnect"
 	"github.com/shifty11/go-logger/log"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"strings"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -24,26 +24,31 @@ func NewIndexerServiceHandler(dbManagers *database.DbManagers) indexerpbconnect.
 	}
 }
 
-func (i IndexerService) GetHeight(ctx context.Context, request *connect_go.Request[indexerpb.GetHeightRequest]) (*connect_go.Response[indexerpb.Height], error) {
-	chain, err := i.chainManager.QueryByName(ctx, request.Msg.GetChainName())
-	if err != nil {
-		log.Sugar.Errorf("failed to query chain by name: %v", err)
-		return nil, err
+func (i IndexerService) GetIndexingChains(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[indexerpb.GetIndexingChainsResponse], error) {
+	chains := i.chainManager.QueryAll(ctx)
+	pbChains := make([]*indexerpb.Chain, len(chains))
+	for ix, chain := range chains {
+		pbChains[ix] = &indexerpb.Chain{
+			Id:                    uint64(chain.ID),
+			Name:                  chain.Name,
+			Path:                  chain.Path,
+			RpcUrl:                fmt.Sprintf("https://rest.cosmos.directory/%s", chain.Path),
+			IndexingHeight:        chain.IndexingHeight,
+			UnhandledMessageTypes: strings.Split(chain.UnhandledMessageTypes, ","),
+			HasCustomIndexer:      chain.HasCustomIndexer,
+		}
 	}
-	return connect_go.NewResponse(&indexerpb.Height{
-		Height: chain.IndexingHeight,
-	}), nil
+
+	return connect.NewResponse(&indexerpb.GetIndexingChainsResponse{Chains: pbChains}), nil
 }
 
-func (i IndexerService) UpdateHeight(ctx context.Context, request *connect_go.Request[indexerpb.UpdateHeightRequest]) (*connect_go.Response[emptypb.Empty], error) {
-	if request.Msg.GetHeight() < 0 {
-		return nil, status.Error(codes.InvalidArgument, "height must be positive")
+func (i IndexerService) UpdateIndexingChains(ctx context.Context, request *connect.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect.Response[emptypb.Empty], error) {
+	for _, chain := range request.Msg.GetChains() {
+		err := i.chainManager.Update(ctx, int(chain.GetId()), chain.GetIndexingHeight(), chain.GetHandledMessageTypes(), chain.GetUnhandledMessageTypes())
+		if err != nil {
+			log.Sugar.Errorf("error while updating chain: %v", err)
+		}
 	}
 
-	_, err := i.chainManager.UpdateIndexingHeight(ctx, request.Msg.GetChainName(), request.Msg.GetHeight())
-	if err != nil {
-		return nil, err
-	}
-
-	return connect_go.NewResponse(&emptypb.Empty{}), nil
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }

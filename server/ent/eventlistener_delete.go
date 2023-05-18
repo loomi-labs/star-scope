@@ -27,7 +27,7 @@ func (eld *EventListenerDelete) Where(ps ...predicate.EventListener) *EventListe
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (eld *EventListenerDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks[int, EventListenerMutation](ctx, eld.sqlExec, eld.mutation, eld.hooks)
+	return withHooks(ctx, eld.sqlExec, eld.mutation, eld.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.

@@ -98,7 +98,7 @@ func (pc *ProjectCreate) Mutation() *ProjectMutation {
 // Save creates the Project in the database.
 func (pc *ProjectCreate) Save(ctx context.Context) (*Project, error) {
 	pc.defaults()
-	return withHooks[*Project, ProjectMutation](ctx, pc.sqlSave, pc.mutation, pc.hooks)
+	return withHooks(ctx, pc.sqlSave, pc.mutation, pc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.

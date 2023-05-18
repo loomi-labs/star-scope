@@ -40,22 +40,26 @@ const (
 // ChainMutation represents an operation that mutates the Chain nodes in the graph.
 type ChainMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *int
-	create_time            *time.Time
-	update_time            *time.Time
-	name                   *string
-	image                  *string
-	indexing_height        *int64
-	addindexing_height     *int64
-	clearedFields          map[string]struct{}
-	event_listeners        map[int]struct{}
-	removedevent_listeners map[int]struct{}
-	clearedevent_listeners bool
-	done                   bool
-	oldValue               func(context.Context) (*Chain, error)
-	predicates             []predicate.Chain
+	op                      Op
+	typ                     string
+	id                      *int
+	create_time             *time.Time
+	update_time             *time.Time
+	name                    *string
+	image                   *string
+	indexing_height         *uint64
+	addindexing_height      *int64
+	_path                   *string
+	has_custom_indexer      *bool
+	handled_message_types   *string
+	unhandled_message_types *string
+	clearedFields           map[string]struct{}
+	event_listeners         map[int]struct{}
+	removedevent_listeners  map[int]struct{}
+	clearedevent_listeners  bool
+	done                    bool
+	oldValue                func(context.Context) (*Chain, error)
+	predicates              []predicate.Chain
 }
 
 var _ ent.Mutation = (*ChainMutation)(nil)
@@ -301,13 +305,13 @@ func (m *ChainMutation) ResetImage() {
 }
 
 // SetIndexingHeight sets the "indexing_height" field.
-func (m *ChainMutation) SetIndexingHeight(i int64) {
-	m.indexing_height = &i
+func (m *ChainMutation) SetIndexingHeight(u uint64) {
+	m.indexing_height = &u
 	m.addindexing_height = nil
 }
 
 // IndexingHeight returns the value of the "indexing_height" field in the mutation.
-func (m *ChainMutation) IndexingHeight() (r int64, exists bool) {
+func (m *ChainMutation) IndexingHeight() (r uint64, exists bool) {
 	v := m.indexing_height
 	if v == nil {
 		return
@@ -318,7 +322,7 @@ func (m *ChainMutation) IndexingHeight() (r int64, exists bool) {
 // OldIndexingHeight returns the old "indexing_height" field's value of the Chain entity.
 // If the Chain object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChainMutation) OldIndexingHeight(ctx context.Context) (v int64, err error) {
+func (m *ChainMutation) OldIndexingHeight(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldIndexingHeight is only allowed on UpdateOne operations")
 	}
@@ -332,12 +336,12 @@ func (m *ChainMutation) OldIndexingHeight(ctx context.Context) (v int64, err err
 	return oldValue.IndexingHeight, nil
 }
 
-// AddIndexingHeight adds i to the "indexing_height" field.
-func (m *ChainMutation) AddIndexingHeight(i int64) {
+// AddIndexingHeight adds u to the "indexing_height" field.
+func (m *ChainMutation) AddIndexingHeight(u int64) {
 	if m.addindexing_height != nil {
-		*m.addindexing_height += i
+		*m.addindexing_height += u
 	} else {
-		m.addindexing_height = &i
+		m.addindexing_height = &u
 	}
 }
 
@@ -354,6 +358,150 @@ func (m *ChainMutation) AddedIndexingHeight() (r int64, exists bool) {
 func (m *ChainMutation) ResetIndexingHeight() {
 	m.indexing_height = nil
 	m.addindexing_height = nil
+}
+
+// SetPath sets the "path" field.
+func (m *ChainMutation) SetPath(s string) {
+	m._path = &s
+}
+
+// Path returns the value of the "path" field in the mutation.
+func (m *ChainMutation) Path() (r string, exists bool) {
+	v := m._path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPath returns the old "path" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPath: %w", err)
+	}
+	return oldValue.Path, nil
+}
+
+// ResetPath resets all changes to the "path" field.
+func (m *ChainMutation) ResetPath() {
+	m._path = nil
+}
+
+// SetHasCustomIndexer sets the "has_custom_indexer" field.
+func (m *ChainMutation) SetHasCustomIndexer(b bool) {
+	m.has_custom_indexer = &b
+}
+
+// HasCustomIndexer returns the value of the "has_custom_indexer" field in the mutation.
+func (m *ChainMutation) HasCustomIndexer() (r bool, exists bool) {
+	v := m.has_custom_indexer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHasCustomIndexer returns the old "has_custom_indexer" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldHasCustomIndexer(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHasCustomIndexer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHasCustomIndexer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHasCustomIndexer: %w", err)
+	}
+	return oldValue.HasCustomIndexer, nil
+}
+
+// ResetHasCustomIndexer resets all changes to the "has_custom_indexer" field.
+func (m *ChainMutation) ResetHasCustomIndexer() {
+	m.has_custom_indexer = nil
+}
+
+// SetHandledMessageTypes sets the "handled_message_types" field.
+func (m *ChainMutation) SetHandledMessageTypes(s string) {
+	m.handled_message_types = &s
+}
+
+// HandledMessageTypes returns the value of the "handled_message_types" field in the mutation.
+func (m *ChainMutation) HandledMessageTypes() (r string, exists bool) {
+	v := m.handled_message_types
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHandledMessageTypes returns the old "handled_message_types" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldHandledMessageTypes(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHandledMessageTypes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHandledMessageTypes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHandledMessageTypes: %w", err)
+	}
+	return oldValue.HandledMessageTypes, nil
+}
+
+// ResetHandledMessageTypes resets all changes to the "handled_message_types" field.
+func (m *ChainMutation) ResetHandledMessageTypes() {
+	m.handled_message_types = nil
+}
+
+// SetUnhandledMessageTypes sets the "unhandled_message_types" field.
+func (m *ChainMutation) SetUnhandledMessageTypes(s string) {
+	m.unhandled_message_types = &s
+}
+
+// UnhandledMessageTypes returns the value of the "unhandled_message_types" field in the mutation.
+func (m *ChainMutation) UnhandledMessageTypes() (r string, exists bool) {
+	v := m.unhandled_message_types
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnhandledMessageTypes returns the old "unhandled_message_types" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldUnhandledMessageTypes(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnhandledMessageTypes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnhandledMessageTypes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnhandledMessageTypes: %w", err)
+	}
+	return oldValue.UnhandledMessageTypes, nil
+}
+
+// ResetUnhandledMessageTypes resets all changes to the "unhandled_message_types" field.
+func (m *ChainMutation) ResetUnhandledMessageTypes() {
+	m.unhandled_message_types = nil
 }
 
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
@@ -444,7 +592,7 @@ func (m *ChainMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChainMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 9)
 	if m.create_time != nil {
 		fields = append(fields, chain.FieldCreateTime)
 	}
@@ -459,6 +607,18 @@ func (m *ChainMutation) Fields() []string {
 	}
 	if m.indexing_height != nil {
 		fields = append(fields, chain.FieldIndexingHeight)
+	}
+	if m._path != nil {
+		fields = append(fields, chain.FieldPath)
+	}
+	if m.has_custom_indexer != nil {
+		fields = append(fields, chain.FieldHasCustomIndexer)
+	}
+	if m.handled_message_types != nil {
+		fields = append(fields, chain.FieldHandledMessageTypes)
+	}
+	if m.unhandled_message_types != nil {
+		fields = append(fields, chain.FieldUnhandledMessageTypes)
 	}
 	return fields
 }
@@ -478,6 +638,14 @@ func (m *ChainMutation) Field(name string) (ent.Value, bool) {
 		return m.Image()
 	case chain.FieldIndexingHeight:
 		return m.IndexingHeight()
+	case chain.FieldPath:
+		return m.Path()
+	case chain.FieldHasCustomIndexer:
+		return m.HasCustomIndexer()
+	case chain.FieldHandledMessageTypes:
+		return m.HandledMessageTypes()
+	case chain.FieldUnhandledMessageTypes:
+		return m.UnhandledMessageTypes()
 	}
 	return nil, false
 }
@@ -497,6 +665,14 @@ func (m *ChainMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldImage(ctx)
 	case chain.FieldIndexingHeight:
 		return m.OldIndexingHeight(ctx)
+	case chain.FieldPath:
+		return m.OldPath(ctx)
+	case chain.FieldHasCustomIndexer:
+		return m.OldHasCustomIndexer(ctx)
+	case chain.FieldHandledMessageTypes:
+		return m.OldHandledMessageTypes(ctx)
+	case chain.FieldUnhandledMessageTypes:
+		return m.OldUnhandledMessageTypes(ctx)
 	}
 	return nil, fmt.Errorf("unknown Chain field %s", name)
 }
@@ -535,11 +711,39 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 		m.SetImage(v)
 		return nil
 	case chain.FieldIndexingHeight:
-		v, ok := value.(int64)
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIndexingHeight(v)
+		return nil
+	case chain.FieldPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPath(v)
+		return nil
+	case chain.FieldHasCustomIndexer:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHasCustomIndexer(v)
+		return nil
+	case chain.FieldHandledMessageTypes:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHandledMessageTypes(v)
+		return nil
+	case chain.FieldUnhandledMessageTypes:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnhandledMessageTypes(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)
@@ -619,6 +823,18 @@ func (m *ChainMutation) ResetField(name string) error {
 		return nil
 	case chain.FieldIndexingHeight:
 		m.ResetIndexingHeight()
+		return nil
+	case chain.FieldPath:
+		m.ResetPath()
+		return nil
+	case chain.FieldHasCustomIndexer:
+		m.ResetHasCustomIndexer()
+		return nil
+	case chain.FieldHandledMessageTypes:
+		m.ResetHandledMessageTypes()
+		return nil
+	case chain.FieldUnhandledMessageTypes:
+		m.ResetUnhandledMessageTypes()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)

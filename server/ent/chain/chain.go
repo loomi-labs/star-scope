@@ -24,6 +24,14 @@ const (
 	FieldImage = "image"
 	// FieldIndexingHeight holds the string denoting the indexing_height field in the database.
 	FieldIndexingHeight = "indexing_height"
+	// FieldPath holds the string denoting the path field in the database.
+	FieldPath = "path"
+	// FieldHasCustomIndexer holds the string denoting the has_custom_indexer field in the database.
+	FieldHasCustomIndexer = "has_custom_indexer"
+	// FieldHandledMessageTypes holds the string denoting the handled_message_types field in the database.
+	FieldHandledMessageTypes = "handled_message_types"
+	// FieldUnhandledMessageTypes holds the string denoting the unhandled_message_types field in the database.
+	FieldUnhandledMessageTypes = "unhandled_message_types"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// Table holds the table name of the chain in the database.
@@ -45,6 +53,10 @@ var Columns = []string{
 	FieldName,
 	FieldImage,
 	FieldIndexingHeight,
+	FieldPath,
+	FieldHasCustomIndexer,
+	FieldHandledMessageTypes,
+	FieldUnhandledMessageTypes,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -65,7 +77,13 @@ var (
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
 	// DefaultIndexingHeight holds the default value on creation for the "indexing_height" field.
-	DefaultIndexingHeight int64
+	DefaultIndexingHeight uint64
+	// DefaultHasCustomIndexer holds the default value on creation for the "has_custom_indexer" field.
+	DefaultHasCustomIndexer bool
+	// DefaultHandledMessageTypes holds the default value on creation for the "handled_message_types" field.
+	DefaultHandledMessageTypes string
+	// DefaultUnhandledMessageTypes holds the default value on creation for the "unhandled_message_types" field.
+	DefaultUnhandledMessageTypes string
 )
 
 // OrderOption defines the ordering options for the Chain queries.
@@ -99,6 +117,26 @@ func ByImage(opts ...sql.OrderTermOption) OrderOption {
 // ByIndexingHeight orders the results by the indexing_height field.
 func ByIndexingHeight(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIndexingHeight, opts...).ToFunc()
+}
+
+// ByPath orders the results by the path field.
+func ByPath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPath, opts...).ToFunc()
+}
+
+// ByHasCustomIndexer orders the results by the has_custom_indexer field.
+func ByHasCustomIndexer(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHasCustomIndexer, opts...).ToFunc()
+}
+
+// ByHandledMessageTypes orders the results by the handled_message_types field.
+func ByHandledMessageTypes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHandledMessageTypes, opts...).ToFunc()
+}
+
+// ByUnhandledMessageTypes orders the results by the unhandled_message_types field.
+func ByUnhandledMessageTypes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnhandledMessageTypes, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.

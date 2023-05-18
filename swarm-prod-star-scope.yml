@@ -48,6 +48,9 @@ services:
   kafdrop:
     image: obsidiandynamics/kafdrop
     container_name: starscope_kafdrop
+    networks:
+      - caddy
+      - default
     environment:
       KAFKA_BROKERCONNECT: 'kafka:29092'
       JVM_OPTS: '-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify'
@@ -68,18 +71,31 @@ services:
         constraints:
           - node.role != manager
 
-  indexer-osmosis:
-    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
-    container_name: starscope_indexer_osmosis
+  main-indexer:
+    image: ghcr.io/loomi-labs/star-scope-main-indexer:main
+    container_name: starscope_main_indexer
     working_dir: /app
     environment:
       - DEBUG=true
       - INDEXER_AUTH_TOKEN=jkasdfgiouwersdas
       - KAFKA_TOPIC=index-events
-      - REST_ENDPOINT=https://rest.cosmos.directory/osmosis
       - KAFKA_BROKERS=kafka:29092
       - INDEXER_GRPC_ENDPOINT=http://grpc:50001
-      - FORCE_START_FROM_LATEST_BLOCK=true
+    secrets:
+      - starscope-env
+    command: /indexer
+    restart: on-failure
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  osmosis-indexer:
+    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
+    container_name: starscope_osmosis_indexer
+    working_dir: /app
+    environment:
+      - DEBUG=true
     secrets:
       - starscope-env
     command: /indexer

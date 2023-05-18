@@ -3,12 +3,11 @@ package indexer
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
-	"github.com/osmosis-labs/osmosis/osmoutils/noapptest"
 	"io"
 	"net/http"
 )
 
-func GetAndDecode(url string, encodingConfig noapptest.TestEncodingConfig, target proto.Message) (int, error) {
+func GetAndDecode(url string, encodingConfig EncodingConfig, target proto.Message) (int, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return 503, err

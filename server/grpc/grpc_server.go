@@ -47,26 +47,6 @@ func NewGRPCServer(
 	}
 }
 
-// needed if used without envoy
-//
-//goland:noinspection GoUnusedFunction
-func corsHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Connect-Protocol-Version, X-grpc-web, X-user-agent")
-
-		// If the request method is OPTIONS, just return with no content
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		// Call the next handler in the chain
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (s GRPCServer) Run() {
 	log.Sugar.Infof("Starting GRPC server on port %v", s.config.Port)
 	jwtManager := auth.NewJWTManager([]byte(s.config.JwtSecretKey), s.config.AccessTokenDuration, s.config.RefreshTokenDuration)
@@ -97,11 +77,9 @@ func (s GRPCServer) Run() {
 		interceptors,
 	))
 
-	//handler := corsHandler(mux) // Wrap the mux router with the CORS handler
-	handler := mux
 	err := http.ListenAndServe(
 		fmt.Sprintf("0.0.0.0:%v", s.config.Port),
-		h2c.NewHandler(handler, &http2.Server{}),
+		h2c.NewHandler(mux, &http2.Server{}),
 	)
 	if err != nil {
 		log.Sugar.Fatal(err)

@@ -117,7 +117,7 @@ func (cu *ChannelUpdate) RemoveEventListeners(e ...*EventListener) *ChannelUpdat
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *ChannelUpdate) Save(ctx context.Context) (int, error) {
 	cu.defaults()
-	return withHooks[int, ChannelMutation](ctx, cu.sqlSave, cu.mutation, cu.hooks)
+	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -375,7 +375,7 @@ func (cuo *ChannelUpdateOne) Select(field string, fields ...string) *ChannelUpda
 // Save executes the query and returns the updated Channel entity.
 func (cuo *ChannelUpdateOne) Save(ctx context.Context) (*Channel, error) {
 	cuo.defaults()
-	return withHooks[*Channel, ChannelMutation](ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
+	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.

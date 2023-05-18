@@ -7,19 +7,41 @@ package starscope.grpc;
 option go_package = "github.com/loomi-labs/star-scope/grpc/indexer/indexerpb";
 
 service IndexerService {
-  rpc GetHeight (GetHeightRequest) returns (Height) {}
-  rpc UpdateHeight (UpdateHeightRequest) returns (google.protobuf.Empty) {}
+  rpc GetIndexingChains (google.protobuf.Empty) returns (GetIndexingChainsResponse) {}
+  rpc UpdateIndexingChains (UpdateIndexingChainsRequest) returns (google.protobuf.Empty) {}
 }
 
-message GetHeightRequest {
-  string chain_name = 1;
+message Chain {
+  uint64 id = 1;
+  string name = 2;
+  string path = 3;
+  string rpc_url = 4;
+  uint64 indexing_height = 5;
+  repeated string handled_message_types = 6;
+  repeated string unhandled_message_types = 7;
+  bool has_custom_indexer = 8;
 }
 
-message Height {
-  int64 height = 1;
+message GetIndexingChainsResponse {
+  repeated Chain chains = 1;
 }
 
-message UpdateHeightRequest {
-  string chain_name = 1;
-  int64 height = 2;
+message UpdateIndexingChainsRequest {
+  repeated Chain chains = 1;
+}
+
+service TxHandlerService {
+  rpc HandleTxs (HandleTxsRequest) returns (HandleTxsResponse) {}
+}
+
+message HandleTxsRequest {
+  repeated bytes txs = 1;
+}
+
+message HandleTxsResponse {
+  repeated bytes proto_messages = 1;
+  int32 count_skipped = 2;
+  int32 count_processed = 3;
+  repeated string handled_message_types = 4;
+  repeated string unhandled_message_types = 5;
 }

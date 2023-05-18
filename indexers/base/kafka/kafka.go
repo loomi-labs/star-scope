@@ -1,9 +1,9 @@
-package indexer
+package kafka
 
 import (
 	"context"
 	"fmt"
-	"github.com/loomi-labs/star-scope/indexers/osmosis/common"
+	"github.com/loomi-labs/star-scope/indexers/base/common"
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 )

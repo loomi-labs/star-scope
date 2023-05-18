@@ -102,7 +102,7 @@ func (ec *EventCreate) Mutation() *EventMutation {
 // Save creates the Event in the database.
 func (ec *EventCreate) Save(ctx context.Context) (*Event, error) {
 	ec.defaults()
-	return withHooks[*Event, EventMutation](ctx, ec.sqlSave, ec.mutation, ec.hooks)
+	return withHooks(ctx, ec.sqlSave, ec.mutation, ec.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
