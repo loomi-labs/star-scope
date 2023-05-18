@@ -1,4 +1,3 @@
-use std::fmt;
 use js_sys::Date;
 use log::debug;
 use prost_types::Timestamp;
@@ -138,7 +137,7 @@ fn subscribe_to_events(cx: Scope) {
 }
 
 #[component]
-pub async fn Overview<G: Html>(cx: Scope<'_>) -> View<G> {
+pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     provide_context(cx, OverviewState::new());
 
     // query_channels(cx.to_owned()).await;
@@ -148,7 +147,7 @@ pub async fn Overview<G: Html>(cx: Scope<'_>) -> View<G> {
     view! {cx,
         div(class="flex flex-col h-full w-full p-8") {
             h1(class="text-4xl font-bold pb-4") { "Overview" }
-            div(class="flex flex-col p-8 bg-white dark:bg-gray-600 rounded-lg shadow") {
+            div(class="flex flex-col p-8 bg-white dark:bg-purple-500 rounded-lg shadow") {
                 Events {}
             }
         }

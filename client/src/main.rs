@@ -16,7 +16,7 @@ use crate::config::keys;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
-use crate::pages::overview::page::Overview;
+use crate::pages::notifications::page::Notifications;
 use crate::services::auth::AuthService;
 use crate::services::grpc::{GrpcClient, User};
 
@@ -29,8 +29,8 @@ mod services;
 pub enum AppRoutes {
     #[to("/")]
     Home,
-    #[to("/overview")]
-    Overview,
+    #[to("/notifications")]
+    Notifications,
     #[to("/communication")]
     Communication,
     #[to("/login")]
@@ -43,7 +43,7 @@ impl ToString for AppRoutes {
     fn to_string(&self) -> String {
         match self {
             AppRoutes::Home => "/".to_string(),
-            AppRoutes::Overview => "/overview".to_string(),
+            AppRoutes::Notifications => "/notifications".to_string(),
             AppRoutes::Communication => "/communication".to_string(),
             AppRoutes::Login => "/login".to_string(),
             AppRoutes::NotFound => "/404".to_string(),
@@ -125,7 +125,7 @@ impl AppState {
         Self {
             auth_service,
             auth_state: create_rc_signal(auth_state),
-            route: create_rc_signal(AppRoutes::Overview),
+            route: create_rc_signal(AppRoutes::Notifications),
             messages: create_rc_signal(vec![]),
             user: create_rc_signal(None),
         }
@@ -194,7 +194,7 @@ fn has_access_permission(auth_service: &AuthService, route: &AppRoutes) -> bool 
     let is_user = auth_service.is_user();
     match route {
         AppRoutes::Home => true,
-        AppRoutes::Overview => is_user || is_admin,
+        AppRoutes::Notifications => is_user || is_admin,
         AppRoutes::Communication => is_user || is_admin,
         AppRoutes::Login => true,
         AppRoutes::NotFound => true,
@@ -209,7 +209,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
         app_state.route.set(route.clone());
         match route {
             AppRoutes::Home => view!(cx, LayoutWrapper{Home {}}),
-            AppRoutes::Overview => view!(cx, LayoutWrapper{Overview {}}),
+            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
             AppRoutes::Login => Login(cx),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
@@ -254,7 +254,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     start_jwt_refresh_timer(cx.to_owned());
 
     view! {cx,
-        div(class="flex min-h-screen") {
+        div(class="flex min-h-screen bg-white dark:bg-purple-900 text-black dark:text-white") {
             MessageOverlay {}
             Router(
                 integration=HistoryIntegration::new(),
@@ -270,7 +270,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                                 spawn_local_scoped(cx, async move {
                                     query_user_info(cx).await;
                                 });
-                                navigate(AppRoutes::Overview.to_string().as_str())
+                                navigate(AppRoutes::Notifications.to_string().as_str())
                             },
                             AuthState::LoggingIn => {}
                         }
