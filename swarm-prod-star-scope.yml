@@ -21,7 +21,7 @@ services:
     working_dir: /app
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/star-scope-db?sslmode=disable
-    command: "/starscope db migrate"
+    command: "/starscope db migrate && /starscope service crawler"
     deploy:
       placement:
         constraints:
