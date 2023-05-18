@@ -4,6 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"github.com/loomi-labs/star-scope/chain_crawler"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/grpc"
@@ -61,9 +62,20 @@ var startEventConsumerCmd = &cobra.Command{
 	},
 }
 
+var startCrawlerCmd = &cobra.Command{
+	Use:   "crawler",
+	Short: "Start the chain crwaler",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
+		chainCrawler.AddOrUpdateChains()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(serviceCmd)
 
 	serviceCmd.AddCommand(startGrpcServerCmd)
 	serviceCmd.AddCommand(startEventConsumerCmd)
+	serviceCmd.AddCommand(startCrawlerCmd)
 }

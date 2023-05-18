@@ -8,7 +8,7 @@ use wasm_bindgen::JsValue;
 
 use crate::components::messages::create_error_msg_from_status;
 use crate::Services;
-use crate::services::grpc::{Channel, Event};
+use crate::services::grpc::{Event};
 
 fn displayTimestamp(option: Option<Timestamp>) -> String {
     if let Some(timestamp) = option {
@@ -37,15 +37,6 @@ pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
 #[component]
 pub fn Events<G: Html>(cx: Scope) -> View<G> {
     let overview_state = use_context::<OverviewState>(cx);
-    let channels = create_memo(cx, || {
-        overview_state
-            .channels
-            .get()
-            .iter()
-            .take(10)
-            .cloned()
-            .collect::<Vec<_>>()
-    });
     let pastEvents = create_memo(cx, || {
         overview_state
             .pastEvents
@@ -95,7 +86,6 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
 
 #[derive(Debug, Clone)]
 pub struct OverviewState {
-    channels: RcSignal<Vec<Channel>>,
     pastEvents: RcSignal<Vec<Event>>,
     newEvents: RcSignal<Vec<Event>>,
 }
@@ -103,28 +93,9 @@ pub struct OverviewState {
 impl OverviewState {
     pub fn new() -> Self {
         Self {
-            channels: create_rc_signal(vec![]),
             pastEvents: create_rc_signal(vec![]),
             newEvents: create_rc_signal(vec![]),
         }
-    }
-}
-
-async fn query_channels(cx: Scope<'_>) {
-    let overview_state = use_context::<OverviewState>(cx);
-    let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
-    let response = services
-        .grpc_client
-        .get_user_service()
-        .list_channels(request)
-        .await
-        .map(|res| res.into_inner());
-    if let Ok(response) = response {
-        *overview_state.channels.modify() = response.channels;
-        debug!("Channels: {:?}", *overview_state.channels.get());
-    } else {
-        create_error_msg_from_status(cx, response.err().unwrap());
     }
 }
 

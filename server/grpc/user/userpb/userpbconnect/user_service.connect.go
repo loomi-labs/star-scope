@@ -36,15 +36,11 @@ const (
 const (
 	// UserServiceGetUserProcedure is the fully-qualified name of the UserService's GetUser RPC.
 	UserServiceGetUserProcedure = "/starscope.grpc.UserService/GetUser"
-	// UserServiceListChannelsProcedure is the fully-qualified name of the UserService's ListChannels
-	// RPC.
-	UserServiceListChannelsProcedure = "/starscope.grpc.UserService/ListChannels"
 )
 
 // UserServiceClient is a client for the starscope.grpc.UserService service.
 type UserServiceClient interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
-	ListChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the starscope.grpc.UserService service. By default,
@@ -62,18 +58,12 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+UserServiceGetUserProcedure,
 			opts...,
 		),
-		listChannels: connect_go.NewClient[emptypb.Empty, userpb.ListChannelsResponse](
-			httpClient,
-			baseURL+UserServiceListChannelsProcedure,
-			opts...,
-		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getUser      *connect_go.Client[emptypb.Empty, userpb.User]
-	listChannels *connect_go.Client[emptypb.Empty, userpb.ListChannelsResponse]
+	getUser *connect_go.Client[emptypb.Empty, userpb.User]
 }
 
 // GetUser calls starscope.grpc.UserService.GetUser.
@@ -81,15 +71,9 @@ func (c *userServiceClient) GetUser(ctx context.Context, req *connect_go.Request
 	return c.getUser.CallUnary(ctx, req)
 }
 
-// ListChannels calls starscope.grpc.UserService.ListChannels.
-func (c *userServiceClient) ListChannels(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error) {
-	return c.listChannels.CallUnary(ctx, req)
-}
-
 // UserServiceHandler is an implementation of the starscope.grpc.UserService service.
 type UserServiceHandler interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
-	ListChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -104,11 +88,6 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetUser,
 		opts...,
 	))
-	mux.Handle(UserServiceListChannelsProcedure, connect_go.NewUnaryHandler(
-		UserServiceListChannelsProcedure,
-		svc.ListChannels,
-		opts...,
-	))
 	return "/starscope.grpc.UserService/", mux
 }
 
@@ -117,8 +96,4 @@ type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.GetUser is not implemented"))
-}
-
-func (UnimplementedUserServiceHandler) ListChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.ListChannelsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.ListChannels is not implemented"))
 }

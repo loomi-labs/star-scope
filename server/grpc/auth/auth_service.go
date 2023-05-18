@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bufbuild/connect-go"
+	"github.com/cosmos/btcutil/bech32"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb"
@@ -16,16 +17,18 @@ import (
 //goland:noinspection GoNameStartsWithPackageName
 type AuthService struct {
 	authpbconnect.UnimplementedAuthServiceHandler
-	userManager    *database.UserManager
-	projectManager *database.ProjectManager
-	jwtManager     *JWTManager
+	userManager          *database.UserManager
+	chainManager         *database.ChainManager
+	eventListenerManager *database.EventListenerManager
+	jwtManager           *JWTManager
 }
 
 func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager) authpbconnect.AuthServiceHandler {
 	return &AuthService{
-		userManager:    dbManagers.UserManager,
-		projectManager: dbManagers.ProjectManager,
-		jwtManager:     jwtManager,
+		userManager:          dbManagers.UserManager,
+		chainManager:         dbManagers.ChainManager,
+		eventListenerManager: dbManagers.EventListenerManager,
+		jwtManager:           jwtManager,
 	}
 }
 
@@ -112,9 +115,21 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 	user, err := s.userManager.QueryByWalletAddress(ctx, address)
 	if err != nil && ent.IsNotFound(err) {
 		user = s.userManager.CreateOrUpdate(ctx, address, address)
-		_, err := s.projectManager.CreateCosmosProject(ctx, user, address)
+
+		hrp, _, err := bech32.Decode(address, 1023)
 		if err != nil {
-			log.Sugar.Errorf("error while creating cosmos project: %v", err)
+			log.Sugar.Errorf("error while decoding bech32: %v", err)
+			return nil, ErrorLoginFailed
+		}
+
+		chain, err := s.chainManager.QueryByBech32Prefix(ctx, hrp)
+		if err != nil {
+			log.Sugar.Errorf("error while querying chain by bech32 prefix: %v", err)
+			return nil, ErrorLoginFailed
+		}
+		_, err = s.eventListenerManager.Create(ctx, user, chain, address)
+		if err != nil {
+			log.Sugar.Errorf("error while creating event listener: %v", err)
 			return nil, ErrorLoginFailed
 		}
 	} else if err != nil {

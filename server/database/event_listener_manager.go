@@ -3,10 +3,8 @@ package database
 import (
 	"context"
 	"github.com/loomi-labs/star-scope/ent"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
-	"github.com/loomi-labs/star-scope/ent/project"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"time"
 )
@@ -29,10 +27,8 @@ func (m *EventListenerManager) QueryByUser(ctx context.Context, entUser *ent.Use
 	return m.client.EventListener.
 		Query().
 		Where(
-			eventlistener.HasChannelWith(
-				channel.HasProjectWith(
-					project.HasUserWith(
-						user.IDEQ(entUser.ID)))),
+			eventlistener.HasUserWith(
+				user.IDEQ(entUser.ID)),
 		).
 		WithEvents().
 		AllX(ctx)
@@ -51,5 +47,19 @@ func (m *EventListenerManager) UpdateAddEvent(
 		SetType(eventType).
 		SetNotifyTime(notifyTime).
 		SetTxEvent(txEvent).
+		Save(ctx)
+}
+
+func (m *EventListenerManager) Create(
+	ctx context.Context,
+	entUser *ent.User,
+	entChain *ent.Chain,
+	walletAddress string,
+) (*ent.EventListener, error) {
+	return m.client.EventListener.
+		Create().
+		SetUser(entUser).
+		SetChain(entChain).
+		SetWalletAddress(walletAddress).
 		Save(ctx)
 }

@@ -6,6 +6,8 @@ require (
 	ariga.io/atlas v0.10.2-0.20230427182402-87a07dfb83bf
 	entgo.io/ent v0.12.3
 	github.com/bufbuild/connect-go v1.7.0
+	github.com/bufbuild/connect-grpcreflect-go v1.0.0
+	github.com/cosmos/btcutil v1.0.5
 	github.com/cosmos/cosmos-sdk v0.47.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -26,8 +28,6 @@ require (
 	github.com/TheZeroSlave/zapsentry v1.15.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/bufbuild/connect-grpcreflect-go v1.0.0 // indirect
-	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/docker/docker v23.0.5+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/getsentry/sentry-go v0.20.0 // indirect
@@ -45,6 +45,7 @@ require (
 	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zclconf/go-cty v1.13.1 // indirect

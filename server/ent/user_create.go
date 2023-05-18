@@ -10,7 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/loomi-labs/star-scope/ent/project"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
 
@@ -75,19 +75,19 @@ func (uc *UserCreate) SetNillableRole(u *user.Role) *UserCreate {
 	return uc
 }
 
-// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
-func (uc *UserCreate) AddProjectIDs(ids ...int) *UserCreate {
-	uc.mutation.AddProjectIDs(ids...)
+// AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
+func (uc *UserCreate) AddEventListenerIDs(ids ...int) *UserCreate {
+	uc.mutation.AddEventListenerIDs(ids...)
 	return uc
 }
 
-// AddProjects adds the "projects" edges to the Project entity.
-func (uc *UserCreate) AddProjects(p ...*Project) *UserCreate {
-	ids := make([]int, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
+// AddEventListeners adds the "event_listeners" edges to the EventListener entity.
+func (uc *UserCreate) AddEventListeners(e ...*EventListener) *UserCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
-	return uc.AddProjectIDs(ids...)
+	return uc.AddEventListenerIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -212,15 +212,15 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
 	}
-	if nodes := uc.mutation.ProjectsIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ProjectsTable,
-			Columns: []string{user.ProjectsColumn},
+			Table:   user.EventListenersTable,
+			Columns: []string{user.EventListenersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -49,15 +49,39 @@ func (cc *ChainCreate) SetNillableUpdateTime(t *time.Time) *ChainCreate {
 	return cc
 }
 
+// SetChainID sets the "chain_id" field.
+func (cc *ChainCreate) SetChainID(s string) *ChainCreate {
+	cc.mutation.SetChainID(s)
+	return cc
+}
+
 // SetName sets the "name" field.
 func (cc *ChainCreate) SetName(s string) *ChainCreate {
 	cc.mutation.SetName(s)
 	return cc
 }
 
+// SetPrettyName sets the "pretty_name" field.
+func (cc *ChainCreate) SetPrettyName(s string) *ChainCreate {
+	cc.mutation.SetPrettyName(s)
+	return cc
+}
+
+// SetPath sets the "path" field.
+func (cc *ChainCreate) SetPath(s string) *ChainCreate {
+	cc.mutation.SetPath(s)
+	return cc
+}
+
 // SetImage sets the "image" field.
 func (cc *ChainCreate) SetImage(s string) *ChainCreate {
 	cc.mutation.SetImage(s)
+	return cc
+}
+
+// SetBech32Prefix sets the "bech32_prefix" field.
+func (cc *ChainCreate) SetBech32Prefix(s string) *ChainCreate {
+	cc.mutation.SetBech32Prefix(s)
 	return cc
 }
 
@@ -72,12 +96,6 @@ func (cc *ChainCreate) SetNillableIndexingHeight(u *uint64) *ChainCreate {
 	if u != nil {
 		cc.SetIndexingHeight(*u)
 	}
-	return cc
-}
-
-// SetPath sets the "path" field.
-func (cc *ChainCreate) SetPath(s string) *ChainCreate {
-	cc.mutation.SetPath(s)
 	return cc
 }
 
@@ -119,6 +137,20 @@ func (cc *ChainCreate) SetUnhandledMessageTypes(s string) *ChainCreate {
 func (cc *ChainCreate) SetNillableUnhandledMessageTypes(s *string) *ChainCreate {
 	if s != nil {
 		cc.SetUnhandledMessageTypes(*s)
+	}
+	return cc
+}
+
+// SetIsEnabled sets the "is_enabled" field.
+func (cc *ChainCreate) SetIsEnabled(b bool) *ChainCreate {
+	cc.mutation.SetIsEnabled(b)
+	return cc
+}
+
+// SetNillableIsEnabled sets the "is_enabled" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableIsEnabled(b *bool) *ChainCreate {
+	if b != nil {
+		cc.SetIsEnabled(*b)
 	}
 	return cc
 }
@@ -197,6 +229,10 @@ func (cc *ChainCreate) defaults() {
 		v := chain.DefaultUnhandledMessageTypes
 		cc.mutation.SetUnhandledMessageTypes(v)
 	}
+	if _, ok := cc.mutation.IsEnabled(); !ok {
+		v := chain.DefaultIsEnabled
+		cc.mutation.SetIsEnabled(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -207,17 +243,26 @@ func (cc *ChainCreate) check() error {
 	if _, ok := cc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Chain.update_time"`)}
 	}
+	if _, ok := cc.mutation.ChainID(); !ok {
+		return &ValidationError{Name: "chain_id", err: errors.New(`ent: missing required field "Chain.chain_id"`)}
+	}
 	if _, ok := cc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Chain.name"`)}
+	}
+	if _, ok := cc.mutation.PrettyName(); !ok {
+		return &ValidationError{Name: "pretty_name", err: errors.New(`ent: missing required field "Chain.pretty_name"`)}
+	}
+	if _, ok := cc.mutation.Path(); !ok {
+		return &ValidationError{Name: "path", err: errors.New(`ent: missing required field "Chain.path"`)}
 	}
 	if _, ok := cc.mutation.Image(); !ok {
 		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "Chain.image"`)}
 	}
+	if _, ok := cc.mutation.Bech32Prefix(); !ok {
+		return &ValidationError{Name: "bech32_prefix", err: errors.New(`ent: missing required field "Chain.bech32_prefix"`)}
+	}
 	if _, ok := cc.mutation.IndexingHeight(); !ok {
 		return &ValidationError{Name: "indexing_height", err: errors.New(`ent: missing required field "Chain.indexing_height"`)}
-	}
-	if _, ok := cc.mutation.Path(); !ok {
-		return &ValidationError{Name: "path", err: errors.New(`ent: missing required field "Chain.path"`)}
 	}
 	if _, ok := cc.mutation.HasCustomIndexer(); !ok {
 		return &ValidationError{Name: "has_custom_indexer", err: errors.New(`ent: missing required field "Chain.has_custom_indexer"`)}
@@ -227,6 +272,9 @@ func (cc *ChainCreate) check() error {
 	}
 	if _, ok := cc.mutation.UnhandledMessageTypes(); !ok {
 		return &ValidationError{Name: "unhandled_message_types", err: errors.New(`ent: missing required field "Chain.unhandled_message_types"`)}
+	}
+	if _, ok := cc.mutation.IsEnabled(); !ok {
+		return &ValidationError{Name: "is_enabled", err: errors.New(`ent: missing required field "Chain.is_enabled"`)}
 	}
 	return nil
 }
@@ -262,21 +310,33 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 		_spec.SetField(chain.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
+	if value, ok := cc.mutation.ChainID(); ok {
+		_spec.SetField(chain.FieldChainID, field.TypeString, value)
+		_node.ChainID = value
+	}
 	if value, ok := cc.mutation.Name(); ok {
 		_spec.SetField(chain.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := cc.mutation.PrettyName(); ok {
+		_spec.SetField(chain.FieldPrettyName, field.TypeString, value)
+		_node.PrettyName = value
+	}
+	if value, ok := cc.mutation.Path(); ok {
+		_spec.SetField(chain.FieldPath, field.TypeString, value)
+		_node.Path = value
 	}
 	if value, ok := cc.mutation.Image(); ok {
 		_spec.SetField(chain.FieldImage, field.TypeString, value)
 		_node.Image = value
 	}
+	if value, ok := cc.mutation.Bech32Prefix(); ok {
+		_spec.SetField(chain.FieldBech32Prefix, field.TypeString, value)
+		_node.Bech32Prefix = value
+	}
 	if value, ok := cc.mutation.IndexingHeight(); ok {
 		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 		_node.IndexingHeight = value
-	}
-	if value, ok := cc.mutation.Path(); ok {
-		_spec.SetField(chain.FieldPath, field.TypeString, value)
-		_node.Path = value
 	}
 	if value, ok := cc.mutation.HasCustomIndexer(); ok {
 		_spec.SetField(chain.FieldHasCustomIndexer, field.TypeBool, value)
@@ -289,6 +349,10 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.UnhandledMessageTypes(); ok {
 		_spec.SetField(chain.FieldUnhandledMessageTypes, field.TypeString, value)
 		_node.UnhandledMessageTypes = value
+	}
+	if value, ok := cc.mutation.IsEnabled(); ok {
+		_spec.SetField(chain.FieldIsEnabled, field.TypeBool, value)
+		_node.IsEnabled = value
 	}
 	if nodes := cc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

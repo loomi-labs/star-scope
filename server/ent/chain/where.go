@@ -65,9 +65,24 @@ func UpdateTime(v time.Time) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldUpdateTime, v))
 }
 
+// ChainID applies equality check predicate on the "chain_id" field. It's identical to ChainIDEQ.
+func ChainID(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldChainID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldName, v))
+}
+
+// PrettyName applies equality check predicate on the "pretty_name" field. It's identical to PrettyNameEQ.
+func PrettyName(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldPrettyName, v))
+}
+
+// Path applies equality check predicate on the "path" field. It's identical to PathEQ.
+func Path(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldPath, v))
 }
 
 // Image applies equality check predicate on the "image" field. It's identical to ImageEQ.
@@ -75,14 +90,14 @@ func Image(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldImage, v))
 }
 
+// Bech32Prefix applies equality check predicate on the "bech32_prefix" field. It's identical to Bech32PrefixEQ.
+func Bech32Prefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldBech32Prefix, v))
+}
+
 // IndexingHeight applies equality check predicate on the "indexing_height" field. It's identical to IndexingHeightEQ.
 func IndexingHeight(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
-}
-
-// Path applies equality check predicate on the "path" field. It's identical to PathEQ.
-func Path(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldEQ(FieldPath, v))
 }
 
 // HasCustomIndexer applies equality check predicate on the "has_custom_indexer" field. It's identical to HasCustomIndexerEQ.
@@ -98,6 +113,11 @@ func HandledMessageTypes(v string) predicate.Chain {
 // UnhandledMessageTypes applies equality check predicate on the "unhandled_message_types" field. It's identical to UnhandledMessageTypesEQ.
 func UnhandledMessageTypes(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldUnhandledMessageTypes, v))
+}
+
+// IsEnabled applies equality check predicate on the "is_enabled" field. It's identical to IsEnabledEQ.
+func IsEnabled(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIsEnabled, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -180,6 +200,71 @@ func UpdateTimeLTE(v time.Time) predicate.Chain {
 	return predicate.Chain(sql.FieldLTE(FieldUpdateTime, v))
 }
 
+// ChainIDEQ applies the EQ predicate on the "chain_id" field.
+func ChainIDEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldChainID, v))
+}
+
+// ChainIDNEQ applies the NEQ predicate on the "chain_id" field.
+func ChainIDNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldChainID, v))
+}
+
+// ChainIDIn applies the In predicate on the "chain_id" field.
+func ChainIDIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldChainID, vs...))
+}
+
+// ChainIDNotIn applies the NotIn predicate on the "chain_id" field.
+func ChainIDNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldChainID, vs...))
+}
+
+// ChainIDGT applies the GT predicate on the "chain_id" field.
+func ChainIDGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldChainID, v))
+}
+
+// ChainIDGTE applies the GTE predicate on the "chain_id" field.
+func ChainIDGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldChainID, v))
+}
+
+// ChainIDLT applies the LT predicate on the "chain_id" field.
+func ChainIDLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldChainID, v))
+}
+
+// ChainIDLTE applies the LTE predicate on the "chain_id" field.
+func ChainIDLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldChainID, v))
+}
+
+// ChainIDContains applies the Contains predicate on the "chain_id" field.
+func ChainIDContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldChainID, v))
+}
+
+// ChainIDHasPrefix applies the HasPrefix predicate on the "chain_id" field.
+func ChainIDHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldChainID, v))
+}
+
+// ChainIDHasSuffix applies the HasSuffix predicate on the "chain_id" field.
+func ChainIDHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldChainID, v))
+}
+
+// ChainIDEqualFold applies the EqualFold predicate on the "chain_id" field.
+func ChainIDEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldChainID, v))
+}
+
+// ChainIDContainsFold applies the ContainsFold predicate on the "chain_id" field.
+func ChainIDContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldChainID, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldName, v))
@@ -243,6 +328,136 @@ func NameEqualFold(v string) predicate.Chain {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldContainsFold(FieldName, v))
+}
+
+// PrettyNameEQ applies the EQ predicate on the "pretty_name" field.
+func PrettyNameEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldPrettyName, v))
+}
+
+// PrettyNameNEQ applies the NEQ predicate on the "pretty_name" field.
+func PrettyNameNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldPrettyName, v))
+}
+
+// PrettyNameIn applies the In predicate on the "pretty_name" field.
+func PrettyNameIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldPrettyName, vs...))
+}
+
+// PrettyNameNotIn applies the NotIn predicate on the "pretty_name" field.
+func PrettyNameNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldPrettyName, vs...))
+}
+
+// PrettyNameGT applies the GT predicate on the "pretty_name" field.
+func PrettyNameGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldPrettyName, v))
+}
+
+// PrettyNameGTE applies the GTE predicate on the "pretty_name" field.
+func PrettyNameGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldPrettyName, v))
+}
+
+// PrettyNameLT applies the LT predicate on the "pretty_name" field.
+func PrettyNameLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldPrettyName, v))
+}
+
+// PrettyNameLTE applies the LTE predicate on the "pretty_name" field.
+func PrettyNameLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldPrettyName, v))
+}
+
+// PrettyNameContains applies the Contains predicate on the "pretty_name" field.
+func PrettyNameContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldPrettyName, v))
+}
+
+// PrettyNameHasPrefix applies the HasPrefix predicate on the "pretty_name" field.
+func PrettyNameHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldPrettyName, v))
+}
+
+// PrettyNameHasSuffix applies the HasSuffix predicate on the "pretty_name" field.
+func PrettyNameHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldPrettyName, v))
+}
+
+// PrettyNameEqualFold applies the EqualFold predicate on the "pretty_name" field.
+func PrettyNameEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldPrettyName, v))
+}
+
+// PrettyNameContainsFold applies the ContainsFold predicate on the "pretty_name" field.
+func PrettyNameContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldPrettyName, v))
+}
+
+// PathEQ applies the EQ predicate on the "path" field.
+func PathEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldPath, v))
+}
+
+// PathNEQ applies the NEQ predicate on the "path" field.
+func PathNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldPath, v))
+}
+
+// PathIn applies the In predicate on the "path" field.
+func PathIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldPath, vs...))
+}
+
+// PathNotIn applies the NotIn predicate on the "path" field.
+func PathNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldPath, vs...))
+}
+
+// PathGT applies the GT predicate on the "path" field.
+func PathGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldPath, v))
+}
+
+// PathGTE applies the GTE predicate on the "path" field.
+func PathGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldPath, v))
+}
+
+// PathLT applies the LT predicate on the "path" field.
+func PathLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldPath, v))
+}
+
+// PathLTE applies the LTE predicate on the "path" field.
+func PathLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldPath, v))
+}
+
+// PathContains applies the Contains predicate on the "path" field.
+func PathContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldPath, v))
+}
+
+// PathHasPrefix applies the HasPrefix predicate on the "path" field.
+func PathHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldPath, v))
+}
+
+// PathHasSuffix applies the HasSuffix predicate on the "path" field.
+func PathHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldPath, v))
+}
+
+// PathEqualFold applies the EqualFold predicate on the "path" field.
+func PathEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldPath, v))
+}
+
+// PathContainsFold applies the ContainsFold predicate on the "path" field.
+func PathContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldPath, v))
 }
 
 // ImageEQ applies the EQ predicate on the "image" field.
@@ -310,6 +525,71 @@ func ImageContainsFold(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldContainsFold(FieldImage, v))
 }
 
+// Bech32PrefixEQ applies the EQ predicate on the "bech32_prefix" field.
+func Bech32PrefixEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixNEQ applies the NEQ predicate on the "bech32_prefix" field.
+func Bech32PrefixNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixIn applies the In predicate on the "bech32_prefix" field.
+func Bech32PrefixIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldBech32Prefix, vs...))
+}
+
+// Bech32PrefixNotIn applies the NotIn predicate on the "bech32_prefix" field.
+func Bech32PrefixNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldBech32Prefix, vs...))
+}
+
+// Bech32PrefixGT applies the GT predicate on the "bech32_prefix" field.
+func Bech32PrefixGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixGTE applies the GTE predicate on the "bech32_prefix" field.
+func Bech32PrefixGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixLT applies the LT predicate on the "bech32_prefix" field.
+func Bech32PrefixLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixLTE applies the LTE predicate on the "bech32_prefix" field.
+func Bech32PrefixLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixContains applies the Contains predicate on the "bech32_prefix" field.
+func Bech32PrefixContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixHasPrefix applies the HasPrefix predicate on the "bech32_prefix" field.
+func Bech32PrefixHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixHasSuffix applies the HasSuffix predicate on the "bech32_prefix" field.
+func Bech32PrefixHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixEqualFold applies the EqualFold predicate on the "bech32_prefix" field.
+func Bech32PrefixEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldBech32Prefix, v))
+}
+
+// Bech32PrefixContainsFold applies the ContainsFold predicate on the "bech32_prefix" field.
+func Bech32PrefixContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldBech32Prefix, v))
+}
+
 // IndexingHeightEQ applies the EQ predicate on the "indexing_height" field.
 func IndexingHeightEQ(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
@@ -348,71 +628,6 @@ func IndexingHeightLT(v uint64) predicate.Chain {
 // IndexingHeightLTE applies the LTE predicate on the "indexing_height" field.
 func IndexingHeightLTE(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldLTE(FieldIndexingHeight, v))
-}
-
-// PathEQ applies the EQ predicate on the "path" field.
-func PathEQ(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldEQ(FieldPath, v))
-}
-
-// PathNEQ applies the NEQ predicate on the "path" field.
-func PathNEQ(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldNEQ(FieldPath, v))
-}
-
-// PathIn applies the In predicate on the "path" field.
-func PathIn(vs ...string) predicate.Chain {
-	return predicate.Chain(sql.FieldIn(FieldPath, vs...))
-}
-
-// PathNotIn applies the NotIn predicate on the "path" field.
-func PathNotIn(vs ...string) predicate.Chain {
-	return predicate.Chain(sql.FieldNotIn(FieldPath, vs...))
-}
-
-// PathGT applies the GT predicate on the "path" field.
-func PathGT(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldGT(FieldPath, v))
-}
-
-// PathGTE applies the GTE predicate on the "path" field.
-func PathGTE(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldGTE(FieldPath, v))
-}
-
-// PathLT applies the LT predicate on the "path" field.
-func PathLT(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldLT(FieldPath, v))
-}
-
-// PathLTE applies the LTE predicate on the "path" field.
-func PathLTE(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldLTE(FieldPath, v))
-}
-
-// PathContains applies the Contains predicate on the "path" field.
-func PathContains(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldContains(FieldPath, v))
-}
-
-// PathHasPrefix applies the HasPrefix predicate on the "path" field.
-func PathHasPrefix(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldHasPrefix(FieldPath, v))
-}
-
-// PathHasSuffix applies the HasSuffix predicate on the "path" field.
-func PathHasSuffix(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldHasSuffix(FieldPath, v))
-}
-
-// PathEqualFold applies the EqualFold predicate on the "path" field.
-func PathEqualFold(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldEqualFold(FieldPath, v))
-}
-
-// PathContainsFold applies the ContainsFold predicate on the "path" field.
-func PathContainsFold(v string) predicate.Chain {
-	return predicate.Chain(sql.FieldContainsFold(FieldPath, v))
 }
 
 // HasCustomIndexerEQ applies the EQ predicate on the "has_custom_indexer" field.
@@ -553,6 +768,16 @@ func UnhandledMessageTypesEqualFold(v string) predicate.Chain {
 // UnhandledMessageTypesContainsFold applies the ContainsFold predicate on the "unhandled_message_types" field.
 func UnhandledMessageTypesContainsFold(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldContainsFold(FieldUnhandledMessageTypes, v))
+}
+
+// IsEnabledEQ applies the EQ predicate on the "is_enabled" field.
+func IsEnabledEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIsEnabled, v))
+}
+
+// IsEnabledNEQ applies the NEQ predicate on the "is_enabled" field.
+func IsEnabledNEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldIsEnabled, v))
 }
 
 // HasEventListeners applies the HasEdge predicate on the "event_listeners" edge.

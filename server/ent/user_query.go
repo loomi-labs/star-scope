@@ -11,19 +11,19 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
-	"github.com/loomi-labs/star-scope/ent/project"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx          *QueryContext
-	order        []user.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.User
-	withProjects *ProjectQuery
+	ctx                *QueryContext
+	order              []user.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.User
+	withEventListeners *EventListenerQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -60,9 +60,9 @@ func (uq *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return uq
 }
 
-// QueryProjects chains the current query on the "projects" edge.
-func (uq *UserQuery) QueryProjects() *ProjectQuery {
-	query := (&ProjectClient{config: uq.config}).Query()
+// QueryEventListeners chains the current query on the "event_listeners" edge.
+func (uq *UserQuery) QueryEventListeners() *EventListenerQuery {
+	query := (&EventListenerClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -73,8 +73,8 @@ func (uq *UserQuery) QueryProjects() *ProjectQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(project.Table, project.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.ProjectsTable, user.ProjectsColumn),
+			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EventListenersTable, user.EventListenersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,26 +269,26 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:       uq.config,
-		ctx:          uq.ctx.Clone(),
-		order:        append([]user.OrderOption{}, uq.order...),
-		inters:       append([]Interceptor{}, uq.inters...),
-		predicates:   append([]predicate.User{}, uq.predicates...),
-		withProjects: uq.withProjects.Clone(),
+		config:             uq.config,
+		ctx:                uq.ctx.Clone(),
+		order:              append([]user.OrderOption{}, uq.order...),
+		inters:             append([]Interceptor{}, uq.inters...),
+		predicates:         append([]predicate.User{}, uq.predicates...),
+		withEventListeners: uq.withEventListeners.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
 	}
 }
 
-// WithProjects tells the query-builder to eager-load the nodes that are connected to
-// the "projects" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithProjects(opts ...func(*ProjectQuery)) *UserQuery {
-	query := (&ProjectClient{config: uq.config}).Query()
+// WithEventListeners tells the query-builder to eager-load the nodes that are connected to
+// the "event_listeners" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithEventListeners(opts ...func(*EventListenerQuery)) *UserQuery {
+	query := (&EventListenerClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withProjects = query
+	uq.withEventListeners = query
 	return uq
 }
 
@@ -371,7 +371,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
 		loadedTypes = [1]bool{
-			uq.withProjects != nil,
+			uq.withEventListeners != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -392,17 +392,17 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := uq.withProjects; query != nil {
-		if err := uq.loadProjects(ctx, query, nodes,
-			func(n *User) { n.Edges.Projects = []*Project{} },
-			func(n *User, e *Project) { n.Edges.Projects = append(n.Edges.Projects, e) }); err != nil {
+	if query := uq.withEventListeners; query != nil {
+		if err := uq.loadEventListeners(ctx, query, nodes,
+			func(n *User) { n.Edges.EventListeners = []*EventListener{} },
+			func(n *User, e *EventListener) { n.Edges.EventListeners = append(n.Edges.EventListeners, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (uq *UserQuery) loadProjects(ctx context.Context, query *ProjectQuery, nodes []*User, init func(*User), assign func(*User, *Project)) error {
+func (uq *UserQuery) loadEventListeners(ctx context.Context, query *EventListenerQuery, nodes []*User, init func(*User), assign func(*User, *EventListener)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*User)
 	for i := range nodes {
@@ -413,21 +413,21 @@ func (uq *UserQuery) loadProjects(ctx context.Context, query *ProjectQuery, node
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Project(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.ProjectsColumn), fks...))
+	query.Where(predicate.EventListener(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.EventListenersColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_projects
+		fk := n.user_event_listeners
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_projects" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_event_listeners" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_projects" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_event_listeners" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

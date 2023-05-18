@@ -12,23 +12,23 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // EventListenerQuery is the builder for querying EventListener entities.
 type EventListenerQuery struct {
 	config
-	ctx         *QueryContext
-	order       []eventlistener.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.EventListener
-	withChannel *ChannelQuery
-	withChain   *ChainQuery
-	withEvents  *EventQuery
-	withFKs     bool
+	ctx        *QueryContext
+	order      []eventlistener.OrderOption
+	inters     []Interceptor
+	predicates []predicate.EventListener
+	withUser   *UserQuery
+	withChain  *ChainQuery
+	withEvents *EventQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,9 +65,9 @@ func (elq *EventListenerQuery) Order(o ...eventlistener.OrderOption) *EventListe
 	return elq
 }
 
-// QueryChannel chains the current query on the "channel" edge.
-func (elq *EventListenerQuery) QueryChannel() *ChannelQuery {
-	query := (&ChannelClient{config: elq.config}).Query()
+// QueryUser chains the current query on the "user" edge.
+func (elq *EventListenerQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: elq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := elq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -78,8 +78,8 @@ func (elq *EventListenerQuery) QueryChannel() *ChannelQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, selector),
-			sqlgraph.To(channel.Table, channel.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, eventlistener.ChannelTable, eventlistener.ChannelColumn),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, eventlistener.UserTable, eventlistener.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(elq.driver.Dialect(), step)
 		return fromU, nil
@@ -318,28 +318,28 @@ func (elq *EventListenerQuery) Clone() *EventListenerQuery {
 		return nil
 	}
 	return &EventListenerQuery{
-		config:      elq.config,
-		ctx:         elq.ctx.Clone(),
-		order:       append([]eventlistener.OrderOption{}, elq.order...),
-		inters:      append([]Interceptor{}, elq.inters...),
-		predicates:  append([]predicate.EventListener{}, elq.predicates...),
-		withChannel: elq.withChannel.Clone(),
-		withChain:   elq.withChain.Clone(),
-		withEvents:  elq.withEvents.Clone(),
+		config:     elq.config,
+		ctx:        elq.ctx.Clone(),
+		order:      append([]eventlistener.OrderOption{}, elq.order...),
+		inters:     append([]Interceptor{}, elq.inters...),
+		predicates: append([]predicate.EventListener{}, elq.predicates...),
+		withUser:   elq.withUser.Clone(),
+		withChain:  elq.withChain.Clone(),
+		withEvents: elq.withEvents.Clone(),
 		// clone intermediate query.
 		sql:  elq.sql.Clone(),
 		path: elq.path,
 	}
 }
 
-// WithChannel tells the query-builder to eager-load the nodes that are connected to
-// the "channel" edge. The optional arguments are used to configure the query builder of the edge.
-func (elq *EventListenerQuery) WithChannel(opts ...func(*ChannelQuery)) *EventListenerQuery {
-	query := (&ChannelClient{config: elq.config}).Query()
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (elq *EventListenerQuery) WithUser(opts ...func(*UserQuery)) *EventListenerQuery {
+	query := (&UserClient{config: elq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	elq.withChannel = query
+	elq.withUser = query
 	return elq
 }
 
@@ -445,12 +445,12 @@ func (elq *EventListenerQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 		withFKs     = elq.withFKs
 		_spec       = elq.querySpec()
 		loadedTypes = [3]bool{
-			elq.withChannel != nil,
+			elq.withUser != nil,
 			elq.withChain != nil,
 			elq.withEvents != nil,
 		}
 	)
-	if elq.withChannel != nil || elq.withChain != nil {
+	if elq.withUser != nil || elq.withChain != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -474,9 +474,9 @@ func (elq *EventListenerQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := elq.withChannel; query != nil {
-		if err := elq.loadChannel(ctx, query, nodes, nil,
-			func(n *EventListener, e *Channel) { n.Edges.Channel = e }); err != nil {
+	if query := elq.withUser; query != nil {
+		if err := elq.loadUser(ctx, query, nodes, nil,
+			func(n *EventListener, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -496,14 +496,14 @@ func (elq *EventListenerQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	return nodes, nil
 }
 
-func (elq *EventListenerQuery) loadChannel(ctx context.Context, query *ChannelQuery, nodes []*EventListener, init func(*EventListener), assign func(*EventListener, *Channel)) error {
+func (elq *EventListenerQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*EventListener, init func(*EventListener), assign func(*EventListener, *User)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*EventListener)
 	for i := range nodes {
-		if nodes[i].channel_event_listeners == nil {
+		if nodes[i].user_event_listeners == nil {
 			continue
 		}
-		fk := *nodes[i].channel_event_listeners
+		fk := *nodes[i].user_event_listeners
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -512,7 +512,7 @@ func (elq *EventListenerQuery) loadChannel(ctx context.Context, query *ChannelQu
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(channel.IDIn(ids...))
+	query.Where(user.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -520,7 +520,7 @@ func (elq *EventListenerQuery) loadChannel(ctx context.Context, query *ChannelQu
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "channel_event_listeners" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_event_listeners" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

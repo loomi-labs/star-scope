@@ -22,12 +22,19 @@ func (Chain) Mixin() []ent.Mixin {
 // Fields of the Chain.
 func (Chain) Fields() []ent.Field {
 	return []ent.Field{
+		field.String("chain_id"),
 		field.String("name").
 			Unique(),
+		field.String("pretty_name").
+			Unique(),
+		field.String("path").
+			Unique().
+			Immutable(),
 		field.String("image"),
+		field.String("bech32_prefix"),
+
 		field.Uint64("indexing_height").
 			Default(0),
-		field.String("path"),
 		field.Bool("has_custom_indexer").
 			Default(false),
 
@@ -37,6 +44,9 @@ func (Chain) Fields() []ent.Field {
 		// comma separated list of message types that are not handled by the indexer
 		field.String("unhandled_message_types").
 			Default(""),
+
+		field.Bool("is_enabled").
+			Default(false),
 	}
 }
 

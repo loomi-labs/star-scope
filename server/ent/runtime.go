@@ -6,10 +6,8 @@ import (
 	"time"
 
 	"github.com/loomi-labs/star-scope/ent/chain"
-	"github.com/loomi-labs/star-scope/ent/channel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
-	"github.com/loomi-labs/star-scope/ent/project"
 	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
@@ -34,36 +32,25 @@ func init() {
 	// chain.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	chain.UpdateDefaultUpdateTime = chainDescUpdateTime.UpdateDefault.(func() time.Time)
 	// chainDescIndexingHeight is the schema descriptor for indexing_height field.
-	chainDescIndexingHeight := chainFields[2].Descriptor()
+	chainDescIndexingHeight := chainFields[6].Descriptor()
 	// chain.DefaultIndexingHeight holds the default value on creation for the indexing_height field.
 	chain.DefaultIndexingHeight = chainDescIndexingHeight.Default.(uint64)
 	// chainDescHasCustomIndexer is the schema descriptor for has_custom_indexer field.
-	chainDescHasCustomIndexer := chainFields[4].Descriptor()
+	chainDescHasCustomIndexer := chainFields[7].Descriptor()
 	// chain.DefaultHasCustomIndexer holds the default value on creation for the has_custom_indexer field.
 	chain.DefaultHasCustomIndexer = chainDescHasCustomIndexer.Default.(bool)
 	// chainDescHandledMessageTypes is the schema descriptor for handled_message_types field.
-	chainDescHandledMessageTypes := chainFields[5].Descriptor()
+	chainDescHandledMessageTypes := chainFields[8].Descriptor()
 	// chain.DefaultHandledMessageTypes holds the default value on creation for the handled_message_types field.
 	chain.DefaultHandledMessageTypes = chainDescHandledMessageTypes.Default.(string)
 	// chainDescUnhandledMessageTypes is the schema descriptor for unhandled_message_types field.
-	chainDescUnhandledMessageTypes := chainFields[6].Descriptor()
+	chainDescUnhandledMessageTypes := chainFields[9].Descriptor()
 	// chain.DefaultUnhandledMessageTypes holds the default value on creation for the unhandled_message_types field.
 	chain.DefaultUnhandledMessageTypes = chainDescUnhandledMessageTypes.Default.(string)
-	channelMixin := schema.Channel{}.Mixin()
-	channelMixinFields0 := channelMixin[0].Fields()
-	_ = channelMixinFields0
-	channelFields := schema.Channel{}.Fields()
-	_ = channelFields
-	// channelDescCreateTime is the schema descriptor for create_time field.
-	channelDescCreateTime := channelMixinFields0[0].Descriptor()
-	// channel.DefaultCreateTime holds the default value on creation for the create_time field.
-	channel.DefaultCreateTime = channelDescCreateTime.Default.(func() time.Time)
-	// channelDescUpdateTime is the schema descriptor for update_time field.
-	channelDescUpdateTime := channelMixinFields0[1].Descriptor()
-	// channel.DefaultUpdateTime holds the default value on creation for the update_time field.
-	channel.DefaultUpdateTime = channelDescUpdateTime.Default.(func() time.Time)
-	// channel.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
-	channel.UpdateDefaultUpdateTime = channelDescUpdateTime.UpdateDefault.(func() time.Time)
+	// chainDescIsEnabled is the schema descriptor for is_enabled field.
+	chainDescIsEnabled := chainFields[10].Descriptor()
+	// chain.DefaultIsEnabled holds the default value on creation for the is_enabled field.
+	chain.DefaultIsEnabled = chainDescIsEnabled.Default.(bool)
 	eventMixin := schema.Event{}.Mixin()
 	eventMixinFields0 := eventMixin[0].Fields()
 	_ = eventMixinFields0
@@ -98,21 +85,6 @@ func init() {
 	eventlistener.DefaultUpdateTime = eventlistenerDescUpdateTime.Default.(func() time.Time)
 	// eventlistener.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	eventlistener.UpdateDefaultUpdateTime = eventlistenerDescUpdateTime.UpdateDefault.(func() time.Time)
-	projectMixin := schema.Project{}.Mixin()
-	projectMixinFields0 := projectMixin[0].Fields()
-	_ = projectMixinFields0
-	projectFields := schema.Project{}.Fields()
-	_ = projectFields
-	// projectDescCreateTime is the schema descriptor for create_time field.
-	projectDescCreateTime := projectMixinFields0[0].Descriptor()
-	// project.DefaultCreateTime holds the default value on creation for the create_time field.
-	project.DefaultCreateTime = projectDescCreateTime.Default.(func() time.Time)
-	// projectDescUpdateTime is the schema descriptor for update_time field.
-	projectDescUpdateTime := projectMixinFields0[1].Descriptor()
-	// project.DefaultUpdateTime holds the default value on creation for the update_time field.
-	project.DefaultUpdateTime = projectDescUpdateTime.Default.(func() time.Time)
-	// project.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
-	project.UpdateDefaultUpdateTime = projectDescUpdateTime.UpdateDefault.(func() time.Time)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

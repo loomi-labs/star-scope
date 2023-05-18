@@ -15,8 +15,8 @@ import (
 
 // infoCmd represents the info command
 var infoCmd = &cobra.Command{
-	Use:   "info",
-	Short: "Info commands",
+	Use:   "chain",
+	Short: "Chain commands",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cmd.Help()
 		if err != nil {
@@ -52,8 +52,48 @@ var listUnhandledMsgTypesCmd = &cobra.Command{
 	},
 }
 
+func enableChain(args []string, enable bool) {
+	if len(args) == 0 {
+		fmt.Println("Missing chain name")
+		os.Exit(1)
+	}
+	chainManager := database.NewDefaultDbManagers().ChainManager
+	chains := chainManager.QueryByName(context.Background(), args[0])
+	if len(chains) == 0 {
+		fmt.Println("Chain not found")
+		os.Exit(1)
+	}
+	chain, err := chainManager.UpdateSetEnabled(context.Background(), chains[0], enable)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Printf("Chain %s is now %s\n", chain.Name, func() string {
+		if enable {
+			return "enabled"
+		}
+		return "disabled"
+	}())
+}
+
+var enableChainCmd = &cobra.Command{
+	Use:   "enable",
+	Short: "Enable/disable chain",
+	Args:  cobra.RangeArgs(0, 1),
+	Run: func(cmd *cobra.Command, args []string) {
+		enable, err := cmd.Flags().GetBool("enable")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		enableChain(args, enable)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(infoCmd)
 	infoCmd.AddCommand(listHandledMsgTypesCmd)
 	infoCmd.AddCommand(listUnhandledMsgTypesCmd)
+	infoCmd.AddCommand(enableChainCmd)
+	enableChainCmd.Flags().BoolP("enable", "e", true, "Enable chain")
 }

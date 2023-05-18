@@ -21,18 +21,6 @@ func (f ChainFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChainMutation", m)
 }
 
-// The ChannelFunc type is an adapter to allow the use of ordinary
-// function as Channel mutator.
-type ChannelFunc func(context.Context, *ent.ChannelMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ChannelFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ChannelMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChannelMutation", m)
-}
-
 // The EventFunc type is an adapter to allow the use of ordinary
 // function as Event mutator.
 type EventFunc func(context.Context, *ent.EventMutation) (ent.Value, error)
@@ -55,18 +43,6 @@ func (f EventListenerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EventListenerMutation", m)
-}
-
-// The ProjectFunc type is an adapter to allow the use of ordinary
-// function as Project mutator.
-type ProjectFunc func(context.Context, *ent.ProjectMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ProjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ProjectMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

@@ -33,36 +33,3 @@ func (e UserService) GetUser(ctx context.Context, _ *connect.Request[emptypb.Emp
 		Name: user.Name,
 	}), nil
 }
-
-func (e UserService) ListChannels(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.ListChannelsResponse], error) {
-	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
-	if !ok {
-		log.Sugar.Error("invalid user")
-		return nil, types.UserNotFoundErr
-	}
-
-	channels, err := user.
-		QueryProjects().
-		QueryChannels().
-		//WithEventListeners(
-		//	func(query *ent.EventListenerQuery) {
-		//		query.WithEvents()
-		//	}).
-		All(ctx)
-	if err != nil {
-		log.Sugar.Errorf("failed to query channels: %v", err)
-		return nil, err
-	}
-
-	var channelPbs []*userpb.Channel
-	for _, channel := range channels {
-		channelPbs = append(channelPbs, &userpb.Channel{
-			Id:   int64(channel.ID),
-			Name: channel.Name,
-		})
-	}
-
-	return connect.NewResponse(&userpb.ListChannelsResponse{
-		Channels: channelPbs,
-	}), nil
-}

@@ -14,14 +14,10 @@ type Tx struct {
 	config
 	// Chain is the client for interacting with the Chain builders.
 	Chain *ChainClient
-	// Channel is the client for interacting with the Channel builders.
-	Channel *ChannelClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// EventListener is the client for interacting with the EventListener builders.
 	EventListener *EventListenerClient
-	// Project is the client for interacting with the Project builders.
-	Project *ProjectClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -156,10 +152,8 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Chain = NewChainClient(tx.config)
-	tx.Channel = NewChannelClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.EventListener = NewEventListenerClient(tx.config)
-	tx.Project = NewProjectClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
