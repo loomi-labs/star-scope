@@ -79,13 +79,13 @@ jobs:
       - name: Extract metadata (tags, labels) for main-indexer image
         id: meta-main-indexer
         uses: docker/metadata-action@v4.3.0
-        if: steps.changes.outputs.main-indexer == 'true'
+#        if: steps.changes.outputs.main-indexer == 'true'
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-main-indexer
 
       - name: Build and push indexer Docker image
         uses: docker/build-push-action@v4.0.0
-        if: steps.changes.outputs.main-indexer == 'true'
+#        if: steps.changes.outputs.main-indexer == 'true'
         with:
           context: indexers/base/
           push: true
@@ -95,13 +95,13 @@ jobs:
       - name: Extract metadata (tags, labels) for osmosis-indexer image
         id: meta-osmosis-indexer
         uses: docker/metadata-action@v4.3.0
-        if: steps.changes.outputs.osmosis-indexer == 'true'
+#        if: steps.changes.outputs.osmosis-indexer == 'true'
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-osmosis-indexer
 
       - name: Build and push indexer Docker image
         uses: docker/build-push-action@v4.0.0
-        if: steps.changes.outputs.osmosis-indexer == 'true'
+#        if: steps.changes.outputs.osmosis-indexer == 'true'
         with:
           context: indexers/osmosis/
           push: true
