@@ -264,61 +264,61 @@ func InitDb() {
 			log.Sugar.Panicf("failed to init database: %v", err)
 		}
 	}
-	doesCrescentExist := client.Chain.
-		Query().
-		Where(chain.NameEQ("Crescent")).
-		ExistX(ctx)
-	if !doesCrescentExist {
-		_, err := client.Chain.
-			Create().
-			SetName("Crescent").
-			SetPath("crescent").
-			SetIndexingHeight(0).
-			SetHasCustomIndexer(false).
-			SetImage("").
-			Save(ctx)
-		if err != nil {
-			log.Sugar.Panicf("failed to init database: %v", err)
-		}
-	}
-	doesJunoExist := client.Chain.
-		Query().
-		Where(chain.NameEQ("Juno")).
-		ExistX(ctx)
-	if !doesJunoExist {
-		_, err := client.Chain.
-			Create().
-			SetName("Juno").
-			SetPath("juno").
-			SetIndexingHeight(0).
-			SetHasCustomIndexer(false).
-			SetImage("").
-			Save(ctx)
-		if err != nil {
-			log.Sugar.Panicf("failed to init database: %v", err)
-		}
-	}
-	doesMarsExist := client.Chain.
-		Query().
-		Where(chain.NameEQ("Mars")).
-		ExistX(ctx)
-	if !doesMarsExist {
-		_, err := client.Chain.
-			Create().
-			SetName("Mars").
-			SetPath("mars").
-			SetIndexingHeight(0).
-			SetHasCustomIndexer(false).
-			SetImage("").
-			Save(ctx)
-		if err != nil {
-			log.Sugar.Panicf("failed to init database: %v", err)
-		}
-	}
-	doesNeutronExist := client.Chain.
-		Query().
-		Where(chain.NameEQ("Neutron")).
-		ExistX(ctx)
+	//doesCrescentExist := client.Chain.
+	//	Query().
+	//	Where(chain.NameEQ("Crescent")).
+	//	ExistX(ctx)
+	//if !doesCrescentExist {
+	//	_, err := client.Chain.
+	//		Create().
+	//		SetName("Crescent").
+	//		SetPath("crescent").
+	//		SetIndexingHeight(0).
+	//		SetHasCustomIndexer(false).
+	//		SetImage("").
+	//		Save(ctx)
+	//	if err != nil {
+	//		log.Sugar.Panicf("failed to init database: %v", err)
+	//	}
+	//}
+	//doesJunoExist := client.Chain.
+	//	Query().
+	//	Where(chain.NameEQ("Juno")).
+	//	ExistX(ctx)
+	//if !doesJunoExist {
+	//	_, err := client.Chain.
+	//		Create().
+	//		SetName("Juno").
+	//		SetPath("juno").
+	//		SetIndexingHeight(0).
+	//		SetHasCustomIndexer(false).
+	//		SetImage("").
+	//		Save(ctx)
+	//	if err != nil {
+	//		log.Sugar.Panicf("failed to init database: %v", err)
+	//	}
+	//}
+	//doesMarsExist := client.Chain.
+	//	Query().
+	//	Where(chain.NameEQ("Mars")).
+	//	ExistX(ctx)
+	//if !doesMarsExist {
+	//	_, err := client.Chain.
+	//		Create().
+	//		SetName("Mars").
+	//		SetPath("mars").
+	//		SetIndexingHeight(0).
+	//		SetHasCustomIndexer(false).
+	//		SetImage("").
+	//		Save(ctx)
+	//	if err != nil {
+	//		log.Sugar.Panicf("failed to init database: %v", err)
+	//	}
+	//}
+	//doesNeutronExist := client.Chain.
+	//	Query().
+	//	Where(chain.NameEQ("Neutron")).
+	//	ExistX(ctx)
 	//if !doesNeutronExist {
 	//	_, err := client.Chain.
 	//		Create().
@@ -332,9 +332,9 @@ func InitDb() {
 	//		log.Sugar.Panicf("failed to init database: %v", err)
 	//	}
 	//}
-	if doesNeutronExist {
-		client.Chain.Delete().Where(chain.NameEQ("Neutron")).ExecX(ctx)
-	}
+	//if doesNeutronExist {
+	//	client.Chain.Delete().Where(chain.NameEQ("Neutron")).ExecX(ctx)
+	//}
 	doesTerra2Exist := client.Chain.
 		Query().
 		Where(chain.NameEQ("Terra 2")).

@@ -48,6 +48,9 @@ services:
   kafdrop:
     image: obsidiandynamics/kafdrop
     container_name: starscope_kafdrop
+    networks:
+      - caddy
+      - default
     environment:
       KAFKA_BROKERCONNECT: 'kafka:29092'
       JVM_OPTS: '-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify'
