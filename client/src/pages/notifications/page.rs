@@ -8,7 +8,7 @@ use crate::components::messages::create_error_msg_from_status;
 use crate::{EventsState, Services};
 use crate::services::grpc::{Event, ListEventsRequest, EventType};
 
-fn displayTimestamp(option: Option<Timestamp>) -> String {
+fn display_timestamp(option: Option<Timestamp>) -> String {
     if let Some(timestamp) = option {
         let datetime = Date::new(&JsValue::from_f64(timestamp.seconds as f64 * 1000.0));
         let asString = datetime.to_locale_string("en-US", &JsValue::from_str("date"));
@@ -17,14 +17,13 @@ fn displayTimestamp(option: Option<Timestamp>) -> String {
     return "".to_string();
 }
 
-fn getTypeIcon(event_type: EventType) -> String {
+fn get_type_icon(event_type: EventType) -> String {
     match event_type {
         EventType::Funding => "icon-[ep--coin]".to_string(),
         EventType::Staking => "icon-[arcticons--coinstats]".to_string(),
         EventType::Dex => "icon-[fluent--money-24-regular]".to_string(),
         EventType::Governance => "icon-[icon-park-outline--palace]".to_string(),
     }.to_string()
-
 }
 
 
@@ -41,7 +40,7 @@ pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
                     }
                     div(class="flex flex-col") {
                         p(class="text-lg font-bold") { (event.title.clone()) }
-                        p(class="text-sm") { (displayTimestamp(event.timestamp.clone())) }
+                        p(class="text-sm") { (display_timestamp(event.timestamp.clone())) }
                         p(class="text-sm") { (event.description.clone()) }
                     }
                 }
