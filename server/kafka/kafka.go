@@ -21,12 +21,14 @@ var (
 
 type Kafka struct {
 	addresses            []string
+	chainManager         *database.ChainManager
 	eventListenerManager *database.EventListenerManager
 }
 
 func NewKafka(dbManager *database.DbManagers, addresses ...string) *Kafka {
 	return &Kafka{
 		addresses:            addresses,
+		chainManager:         dbManager.ChainManager,
 		eventListenerManager: dbManager.EventListenerManager,
 	}
 }
@@ -147,7 +149,7 @@ func (k *Kafka) ProcessIndexedEvents() {
 	}
 }
 
-func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, eventsChannel chan *eventpb.Event) {
+func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, eventsChannel chan *eventpb.EventList) {
 	log.Sugar.Debugf("Start processed-events consumer for user %v", user.WalletAddress)
 	r := k.processedEventsReader()
 	defer k.closeReader(r)
@@ -157,6 +159,8 @@ func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, even
 		log.Sugar.Errorf("failed to set offset: %v", err)
 		eventsChannel <- nil
 	}
+
+	chains := k.chainManager.QueryAll(context.Background())
 
 	for {
 		select {
@@ -168,11 +172,11 @@ func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, even
 			if err != nil {
 				break
 			}
-			txEvent, err := TxEventToProto(msg.Value)
+			txEvent, err := kafkaMsgToProto(msg.Value, chains)
 			if err != nil {
 				log.Sugar.Error(err)
 			}
-			eventsChannel <- txEvent
+			eventsChannel <- &eventpb.EventList{Events: []*eventpb.Event{txEvent}}
 		}
 	}
 }

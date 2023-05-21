@@ -1,14 +1,12 @@
-use std::fmt;
 use js_sys::Date;
 use log::debug;
 use prost_types::Timestamp;
-use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::JsValue;
 
 use crate::components::messages::create_error_msg_from_status;
-use crate::Services;
-use crate::services::grpc::{Event};
+use crate::{EventsState, Services};
+use crate::services::grpc::{Event, ListEventsRequest, EventType};
 
 fn displayTimestamp(option: Option<Timestamp>) -> String {
     if let Some(timestamp) = option {
@@ -19,15 +17,33 @@ fn displayTimestamp(option: Option<Timestamp>) -> String {
     return "".to_string();
 }
 
+fn getTypeIcon(event_type: EventType) -> String {
+    match event_type {
+        EventType::Funding => "icon-[ep--coin]".to_string(),
+        EventType::Staking => "icon-[arcticons--coinstats]".to_string(),
+        EventType::Dex => "icon-[fluent--money-24-regular]".to_string(),
+        EventType::Governance => "icon-[icon-park-outline--palace]".to_string(),
+    }.to_string()
+
+}
+
+
 #[component(inline_props)]
 pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
+    let event_type = event.event_type();
+
     view! {cx,
-        div(class="flex flex-col my-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow") {
+        div(class="flex flex-col my-4 p-4 bg-gray-100 dark:bg-purple-700 rounded-lg shadow") {
             div(class="flex flex-row justify-between") {
-                div(class="flex flex-col") {
-                    p(class="text-lg font-bold") { (event.title.clone()) }
-                    p(class="text-sm") { (displayTimestamp(event.timestamp.clone())) }
-                    p(class="text-sm") { (event.description.clone()) }
+                div(class="flex flex-row items-center") {
+                    div(class="rounded-full h-14 w-14 bg-gray-300 dark:bg-purple-600 flex items-center justify-center mr-4") {
+                        img(src=event.chain_image_url, alt="Event Logo", class="h-12 w-12")
+                    }
+                    div(class="flex flex-col") {
+                        p(class="text-lg font-bold") { (event.title.clone()) }
+                        p(class="text-sm") { (displayTimestamp(event.timestamp.clone())) }
+                        p(class="text-sm") { (event.description.clone()) }
+                    }
                 }
             }
         }
@@ -36,19 +52,10 @@ pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
 
 #[component]
 pub fn Events<G: Html>(cx: Scope) -> View<G> {
-    let overview_state = use_context::<OverviewState>(cx);
-    let pastEvents = create_memo(cx, || {
-        overview_state
-            .pastEvents
-            .get()
-            .iter()
-            .take(10)
-            .cloned()
-            .collect::<Vec<_>>()
-    });
-    let newEvents = create_memo(cx, || {
-        overview_state
-            .newEvents
+    let events_state = use_context::<EventsState>(cx);
+    let events = create_memo(cx, || {
+        events_state
+            .events
             .get()
             .iter()
             .take(10)
@@ -57,23 +64,10 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
     });
 
     view! {cx,
-        p(class="text-2xl font-bold") { "Past events" }
         div(class="flex flex-col") {
             Keyed(
-                iterable=pastEvents,
-                key=|event| event.id.clone(),
-                view=|cx,event| {
-                    view!{cx,
-                        EventComponent(event=event)
-                    }
-                }
-            )
-        }
-        p(class="text-2xl font-bold") { "New events" }
-        div(class="flex flex-col") {
-            Keyed(
-                iterable=newEvents,
-                key=|event| event.id.clone(),
+                iterable=events,
+                key=|event| event.timestamp.clone(),
                 view=|cx,event| {
                     view!{cx,
                         EventComponent(event=event)
@@ -85,24 +79,20 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
 }
 
 #[derive(Debug, Clone)]
-pub struct OverviewState {
-    pastEvents: RcSignal<Vec<Event>>,
-    newEvents: RcSignal<Vec<Event>>,
+pub struct NotificationsState {
 }
 
-impl OverviewState {
+impl NotificationsState {
     pub fn new() -> Self {
         Self {
-            pastEvents: create_rc_signal(vec![]),
-            newEvents: create_rc_signal(vec![]),
         }
     }
 }
 
 async fn query_events(cx: Scope<'_>) {
-    let overview_state = use_context::<OverviewState>(cx);
+    let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(ListEventsRequest{start_time: None});
     let response = services
         .grpc_client
         .get_event_service()
@@ -110,31 +100,10 @@ async fn query_events(cx: Scope<'_>) {
         .await
         .map(|res| res.into_inner());
     if let Ok(response) = response {
-        *overview_state.pastEvents.modify() = response.events;
-        debug!("Events: {:?}", *overview_state.pastEvents.get());
+        events_state.addEvents(response.events);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
-}
-
-fn subscribe_to_events(cx: Scope) {
-    spawn_local_scoped(cx, async move {
-        let overview_state = use_context::<OverviewState>(cx);
-        let services = use_context::<Services>(cx);
-        let mut event_stream = services
-            .grpc_client
-            .get_event_service()
-            .event_stream(services.grpc_client.create_request({}))
-            .await
-            .unwrap()
-            .into_inner();
-        while let Some(event) = event_stream.message().await.unwrap() {
-            debug!("Received event: {:?}", event);
-            let mut events = overview_state.newEvents.modify();
-            events.push(event);
-            *overview_state.newEvents.modify() = events.clone();
-        }
-    });
 }
 
 #[derive(Debug)]
@@ -148,18 +117,16 @@ pub enum Filter {
 
 #[component(inline_props)]
 pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: Filter) -> View<G> {
-    provide_context(cx, OverviewState::new());
+    provide_context(cx, NotificationsState::new());
 
-    // query_channels(cx.to_owned()).await;
     query_events(cx.to_owned()).await;
-    subscribe_to_events(cx.to_owned());
 
     debug!("filter: {:?}", filter);
 
     view! {cx,
         div(class="flex flex-col h-full w-full p-8") {
-            h1(class="text-4xl font-bold pb-4") { "Overview" }
-            div(class="flex flex-col p-8 bg-white dark:bg-purple-500 rounded-lg shadow") {
+            h1(class="text-4xl font-bold pb-4") { "Notifications" }
+            div(class="flex flex-col") {
                 Events {}
             }
         }

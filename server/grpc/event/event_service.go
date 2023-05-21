@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	connect_go "github.com/bufbuild/connect-go"
+	"github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
@@ -12,6 +12,7 @@ import (
 	"github.com/loomi-labs/star-scope/kafka"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"time"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -28,38 +29,46 @@ func NewEventServiceHandler(dbManagers *database.DbManagers, kafka *kafka.Kafka)
 	}
 }
 
-func (e EventService) EventStream(ctx context.Context, _ *connect_go.Request[emptypb.Empty], stream *connect_go.ServerStream[eventpb.Event]) error {
+func (e EventService) EventStream(ctx context.Context, _ *connect.Request[emptypb.Empty], stream *connect.ServerStream[eventpb.EventList]) error {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
 		return types.UserNotFoundErr
 	}
 
-	// TODO: cancel the stream when the client disconnects
-	processedEvents := make(chan *eventpb.Event, 100)
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	processedEvents := make(chan *eventpb.EventList, 100)
 
 	go e.kafka.ConsumeProcessedEvents(ctx, user, processedEvents)
 
+	// Timer for sending empty message every 30 seconds
+	timer := time.NewTicker(30 * time.Second)
+	defer timer.Stop()
+
 	for {
-		event, ok := <-processedEvents
-		if !ok {
-			log.Sugar.Debugf("processed events channel closed")
-			return types.UnknownErr
-		}
-		log.Sugar.Debugf("received processed event: %v", event)
-		// TODO: set correct channel Id
-		//event.ChannelId = 1
-		err := stream.Send(event)
-		if err != nil {
-			log.Sugar.Error(err)
-			return types.UnknownErr
+		select {
+		case event, ok := <-processedEvents:
+			if !ok {
+				log.Sugar.Debugf("processed events channel closed")
+				return types.UnknownErr
+			}
+			log.Sugar.Debugf("received processed event: %v", event)
+			err := stream.Send(event)
+			if err != nil {
+				log.Sugar.Debugf("error sending processed event: %v", err)
+				return types.UnknownErr
+			}
+		case <-timer.C:
+			log.Sugar.Debugf("sending empty message")
+			err := stream.Send(&eventpb.EventList{})
+			if err != nil {
+				log.Sugar.Debugf("error sending empty message: %v", err)
+				return types.UnknownErr
+			}
 		}
 	}
 }
 
-func (e EventService) ListEvents(ctx context.Context, _ *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsResponse], error) {
+func (e EventService) ListEvents(ctx context.Context, request *connect.Request[eventpb.ListEventsRequest]) (*connect.Response[eventpb.EventList], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -70,7 +79,7 @@ func (e EventService) ListEvents(ctx context.Context, _ *connect_go.Request[empt
 	events := make([]*eventpb.Event, 0)
 	for _, el := range els {
 		for _, event := range el.Edges.Events {
-			pbEvent, err := kafka.EntEventToProto(event)
+			pbEvent, err := kafka.EntEventToProto(event, el.Edges.Chain)
 			if err != nil {
 				log.Sugar.Error(err)
 				return nil, types.UnknownErr
@@ -78,7 +87,7 @@ func (e EventService) ListEvents(ctx context.Context, _ *connect_go.Request[empt
 			events = append(events, pbEvent)
 		}
 	}
-	return connect_go.NewResponse(&eventpb.ListEventsResponse{
+	return connect.NewResponse(&eventpb.EventList{
 		Events: events,
 	}), nil
 }

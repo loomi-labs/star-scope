@@ -18,7 +18,7 @@ use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
 use crate::pages::notifications::page::{Notifications, Filter};
 use crate::services::auth::AuthService;
-use crate::services::grpc::{GrpcClient, User};
+use crate::services::grpc::{Event, GrpcClient, User};
 
 mod components;
 mod config;
@@ -183,6 +183,30 @@ impl AppState {
     }
 }
 
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EventsState {
+    pub events: RcSignal<Vec<Event>>,
+}
+
+impl EventsState {
+    pub fn new() -> Self {
+        Self {
+            events: create_rc_signal(vec![]),
+        }
+    }
+
+    pub fn addEvents(&self, new_events: Vec<Event>) {
+        let mut events = self.events.modify();
+        for e in new_events {
+            events.insert(0, e);
+        }
+        // sort events by timestamp
+        // events.sort_by(|a, b| b.timestamp.partial_cmp(&a.timestamp).unwrap());
+        *self.events.modify() = events.clone();
+    }
+}
+
 fn start_jwt_refresh_timer(cx: Scope) {
     spawn_local_scoped(cx, async move {
         gloo_timers::future::TimeoutFuture::new(1000 * 60).await;
@@ -263,13 +287,35 @@ async fn query_user_info(cx: Scope<'_>) {
     }
 }
 
+
+fn subscribe_to_events(cx: Scope) {
+    spawn_local_scoped(cx, async move {
+        let overview_state = use_context::<EventsState>(cx);
+        let services = use_context::<Services>(cx);
+        let mut event_stream = services
+            .grpc_client
+            .get_event_service()
+            .event_stream(services.grpc_client.create_request({}))
+            .await
+            .unwrap()
+            .into_inner();
+        while let Some(response) = event_stream.message().await.unwrap() {
+            debug!("Received events: {:?}", response.events);
+            overview_state.addEvents(response.events);
+        }
+    });
+}
+
+
 #[component]
 pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
+    let events_state = EventsState::new();
 
     provide_context(cx, services.clone());
     provide_context(cx, app_state.clone());
+    provide_context(cx, events_state);
 
     start_jwt_refresh_timer(cx.to_owned());
 
@@ -289,6 +335,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                             AuthState::LoggedIn => {
                                 spawn_local_scoped(cx, async move {
                                     query_user_info(cx).await;
+                                    subscribe_to_events(cx.to_owned());
                                 });
                                 navigate(AppRoutes::Notifications.to_string().as_str())
                             },

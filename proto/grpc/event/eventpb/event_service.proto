@@ -9,19 +9,31 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/event/eventpb";
 
 
 service EventService {
-  rpc EventStream (google.protobuf.Empty) returns (stream Event) {}
-  rpc ListEvents (google.protobuf.Empty) returns (ListEventsResponse) {}
+  rpc EventStream (google.protobuf.Empty) returns (stream EventList) {}
+  rpc ListEvents (ListEventsRequest) returns (EventList) {}
+}
+
+enum EventType {
+  FUNDING = 0;
+  STAKING = 1;
+  DEX = 2;
+  GOVERNANCE = 3;
 }
 
 message Event {
   int64 id = 1;
   string title = 2;
   string description = 3;
-  int64 channel_id = 4;
-  google.protobuf.Timestamp timestamp = 5;
+  google.protobuf.Timestamp timestamp = 4;
+  EventType event_type = 5;
+  string chain_image_url = 6;
 }
 
-message ListEventsResponse {
+message EventList {
   repeated Event events = 1;
+}
+
+message ListEventsRequest {
+  google.protobuf.Timestamp start_time = 4;
 }
 

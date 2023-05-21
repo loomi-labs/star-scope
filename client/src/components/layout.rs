@@ -63,7 +63,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     li() {
                         a(href=AppRoutes::Notifications, class=a_class) {
                             span(class=format!("{} icon-[mdi--bell]", span_icon_class)) {
-                                i(class="fas fa-chart-line") {}
+                                div(class="w-16 h-16")
                             }
                             span(class=format!("{} uppercase", span_text_class)) { "Notifications" }
                         }
@@ -71,7 +71,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             li() {
                                 a(href=AppRoutes::Notifications, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::Notifications, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[lucide--copy-check]", span_icon_class)) {
-                                        i(class="fas fa-chart-line") {}
+                                        div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "All" }
                                 }
@@ -79,7 +79,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             li() {
                                 a(href=AppRoutes::NotificationsFunding, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsFunding, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[ep--coin]", span_icon_class)) {
-                                        i(class="fas fa-chart-line") {}
+                                        div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Funding" }
                                 }
@@ -87,7 +87,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             li() {
                                 a(href=AppRoutes::NotificationsStaking, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsStaking, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[arcticons--coinstats]", span_icon_class)) {
-                                        i(class="fas fa-chart-line") {}
+                                        div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Staking" }
                                 }
@@ -95,7 +95,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             li() {
                                 a(href=AppRoutes::NotificationsDex, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsDex, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[fluent--money-24-regular]", span_icon_class)) {
-                                        i(class="fas fa-chart-line") {}
+                                        div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "DEX'es" }
                                 }
@@ -103,7 +103,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             li() {
                                 a(href=AppRoutes::NotificationsGovernance, class=format!("{} {}", a_class, highlight_active_route(&AppRoutes::NotificationsGovernance, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[icon-park-outline--palace]", span_icon_class)) {
-                                        i(class="fas fa-chart-line") {}
+                                        div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Governance" }
                                 }

@@ -10,6 +10,7 @@ import (
 	"github.com/loomi-labs/star-scope/grpc"
 	"github.com/loomi-labs/star-scope/kafka"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -57,8 +58,16 @@ var startEventConsumerCmd = &cobra.Command{
 	Short: "Start the event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
-		eventConsumer := kafka.NewKafka(dbManagers, common.GetEnvX("KAFKA_BROKERS"))
-		eventConsumer.ProcessIndexedEvents()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		if cmd.Flag("fake").Value.String() == "true" {
+			log.Println("Creating fake events")
+			fakeWalletAddresses := strings.Split(common.GetEnvX("FAKE_WALLET_ADDRESSES"), ",")
+			fakeEventCreator := kafka.NewFakeEventCreator(dbManagers, fakeWalletAddresses, kafkaBrokers...)
+			fakeEventCreator.CreateFakeEvents()
+		} else {
+			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
+			eventConsumer.ProcessIndexedEvents()
+		}
 	},
 }
 
@@ -78,4 +87,6 @@ func init() {
 	serviceCmd.AddCommand(startGrpcServerCmd)
 	serviceCmd.AddCommand(startEventConsumerCmd)
 	serviceCmd.AddCommand(startCrawlerCmd)
+
+	startEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }
