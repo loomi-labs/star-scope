@@ -344,11 +344,22 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: EventTypeFilter) -> V
 
     view! {cx,
         div(class="flex flex-col") {
-            div(class="flex flex-row justify-between items-center") {
+            div(class="hidden lg:flex flex-row justify-between items-center") {
                 h1(class="text-4xl font-bold pb-4") { "Notifications" }
                 div(class="flex flex-row space-x-4 h-8") {
                     ReadStatusFilterDropdown {}
                     TimeFilterDropdown {}
+                }
+            }
+            div(class="lg:hidden flex flex-col") {
+                h1(class="text-4xl font-bold pb-4") { "Notifications" }
+                div(class="flex flex-wrap") {
+                    div(class="w-full sm:w-auto flex-shrink-0 flex-grow-0 mb-4 sm:mb-0 sm:mr-4") {
+                        ReadStatusFilterDropdown {}
+                    }
+                    div(class="w-full sm:w-auto flex-shrink-0 flex-grow-0") {
+                        TimeFilterDropdown {}
+                    }
                 }
             }
             div(class="flex flex-col") {
