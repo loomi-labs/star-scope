@@ -7,7 +7,8 @@ use prost_types::Timestamp;
 use sycamore::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
-use web_sys::{Event, HtmlSelectElement, KeyboardEvent, UiEvent};
+use web_sys::{Event, HtmlSelectElement};
+use enum_iterator::{all, Sequence};
 
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
@@ -140,7 +141,7 @@ pub enum EventTypeFilter {
     GOVERNANCE,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Sequence)]
 pub enum ReadStatusFilter {
     ALL,
     READ,
@@ -187,6 +188,11 @@ impl FromStr for ReadStatusFilter {
     }
 }
 
+const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center";
+const DROPDOWN_ICON_CLASS: &str = "absolute left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
+const DROPDOWN_SELECT_CLASS: &str = "block capitalize pl-8 pr-4 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
+
+
 #[component]
 pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
@@ -199,21 +205,29 @@ pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
             .set(ReadStatusFilter::from_str(&target.value()).unwrap());
     };
 
+    let options = View::new_fragment(
+        all::<ReadStatusFilter>().map(|f| {
+            let cloned_f = f.clone();
+            view! { cx, option(value=cloned_f.to_string(), class="capitalize") { (f.to_string()) } }
+        }).collect()
+    );
+
     view! { cx,
-       div(class="relative inline-block") {
+        div(class=DROPDOWN_DIV_CLASS) {
+            div(class=DROPDOWN_ICON_CLASS) {
+                span(class="icon-[mdi--envelope-outline]")
+            }
             select(ref=input_ref,
-                class="block border-0 w-full h-full rounded drop-shadow-md bg-white dark:text-purple-600 dark:bg-purple-700 duration-300 hover:bg-sky-400 dark:hover:bg-purple-700",
+                class=DROPDOWN_SELECT_CLASS,
                 on:change=handle_change,
             ) {
-                option(value=ReadStatusFilter::ALL.to_string()) { "All" }
-                option(value=ReadStatusFilter::READ.to_string()) { "Read" }
-                option(value=ReadStatusFilter::UNREAD.to_string()) { "Unread" }
+                (options)
             }
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Sequence)]
 pub enum TimeFilter {
     All,
     Today,
@@ -247,9 +261,9 @@ impl TimeFilter {
             TimeFilter::All => "all".to_string(),
             TimeFilter::Today => "today".to_string(),
             TimeFilter::Yesterday => "yesterday".to_string(),
-            TimeFilter::OneWeek => "this_week".to_string(),
-            TimeFilter::OneMonth => "this_month".to_string(),
-            TimeFilter::OneYear => "this_year".to_string(),
+            TimeFilter::OneWeek => "one week".to_string(),
+            TimeFilter::OneMonth => "one month".to_string(),
+            TimeFilter::OneYear => "one year".to_string(),
         }
     }
 
@@ -297,18 +311,23 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
             .set(TimeFilter::from_str(&target.value()).unwrap());
     };
 
+    let options = View::new_fragment(
+        all::<TimeFilter>().map(|f| {
+            let cloned_f = f.clone();
+            view! { cx, option(value=cloned_f.to_string(), class="capitalize") { (f.to_string()) } }
+        }).collect()
+    );
+
     view! { cx,
-       div(class="relative inline-block") {
+        div(class=DROPDOWN_DIV_CLASS) {
+            div(class=DROPDOWN_ICON_CLASS) {
+                span(class="icon-[system-uicons--cubes]")
+            }
             select(ref=input_ref,
-                class="block border-0 w-full h-full rounded drop-shadow-md bg-white dark:text-purple-600 dark:bg-purple-700 duration-300 hover:bg-sky-400 dark:hover:bg-purple-700",
+                class=DROPDOWN_SELECT_CLASS,
                 on:change=handle_change,
             ) {
-                option(value=TimeFilter::All.to_string()) { "All" }
-                option(value=TimeFilter::Today.to_string()) { "Today" }
-                option(value=TimeFilter::Yesterday.to_string()) { "Yesterday" }
-                option(value=TimeFilter::OneWeek.to_string()) { "This Week" }
-                option(value=TimeFilter::OneMonth.to_string()) { "This Month" }
-                option(value=TimeFilter::OneYear.to_string()) { "This Year" }
+                (options)
             }
         }
     }
@@ -327,7 +346,7 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: EventTypeFilter) -> V
         div(class="flex flex-col") {
             div(class="flex flex-row justify-between items-center") {
                 h1(class="text-4xl font-bold pb-4") { "Notifications" }
-                div(class="flex flex-row space-x-4") {
+                div(class="flex flex-row space-x-4 h-8") {
                     ReadStatusFilterDropdown {}
                     TimeFilterDropdown {}
                 }

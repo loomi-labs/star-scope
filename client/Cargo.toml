@@ -29,6 +29,7 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
 web-sys = { version = "0.3.61", features = ["Storage", "StorageEvent", "Window", "Location", "HtmlSelectElement"] }
 chrono = "0.4.24"
+enum-iterator = "1.4.1"
 
 [build-dependencies]
 tonic-build = { version = "0.9.1", default-features = false, features = ["prost"] }
