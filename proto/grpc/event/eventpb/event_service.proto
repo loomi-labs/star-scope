@@ -11,6 +11,7 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/event/eventpb";
 service EventService {
   rpc EventStream (google.protobuf.Empty) returns (stream EventList) {}
   rpc ListEvents (ListEventsRequest) returns (EventList) {}
+  rpc ListChains (google.protobuf.Empty) returns (ChainList) {}
 }
 
 enum EventType {
@@ -26,7 +27,7 @@ message Event {
   string description = 3;
   google.protobuf.Timestamp timestamp = 4;
   EventType event_type = 5;
-  string chain_image_url = 6;
+  ChainData chain = 6;
 }
 
 message EventList {
@@ -37,3 +38,12 @@ message ListEventsRequest {
   google.protobuf.Timestamp start_time = 4;
 }
 
+message ChainData {
+  int64 id = 1;
+  string name = 2;
+  string image_url = 3;
+}
+
+message ChainList {
+  repeated ChainData chains = 1;
+}

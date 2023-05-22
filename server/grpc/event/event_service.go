@@ -19,12 +19,14 @@ import (
 type EventService struct {
 	eventpbconnect.UnimplementedEventServiceHandler
 	kafka                *kafka.Kafka
+	chainManager         *database.ChainManager
 	eventListenerManager *database.EventListenerManager
 }
 
 func NewEventServiceHandler(dbManagers *database.DbManagers, kafka *kafka.Kafka) eventpbconnect.EventServiceHandler {
 	return &EventService{
 		kafka:                kafka,
+		chainManager:         dbManagers.ChainManager,
 		eventListenerManager: dbManagers.EventListenerManager,
 	}
 }
@@ -89,5 +91,21 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 	}
 	return connect.NewResponse(&eventpb.EventList{
 		Events: events,
+	}), nil
+}
+
+func (e EventService) ListChains(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[eventpb.ChainList], error) {
+	chains := e.chainManager.QueryEnabled(ctx)
+	pbChains := make([]*eventpb.ChainData, len(chains))
+	for i, chain := range chains {
+		pbChains[i] = &eventpb.ChainData{
+			Id:       int64(chain.ID),
+			Name:     chain.Name,
+			ImageUrl: chain.Image,
+		}
+	}
+
+	return connect.NewResponse(&eventpb.ChainList{
+		Chains: pbChains,
 	}), nil
 }

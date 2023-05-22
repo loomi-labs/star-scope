@@ -48,7 +48,11 @@ func kafkaMsgToProto(data []byte, chains []*ent.Chain) (*eventpb.Event, error) {
 	}
 	for _, chain := range chains {
 		if chain.Path == txEvent.ChainPath {
-			pbEvent.ChainImageUrl = chain.Image
+			pbEvent.Chain = &eventpb.ChainData{
+				Id:       int64(chain.ID),
+				Name:     chain.Name,
+				ImageUrl: chain.Image,
+			}
 			break
 		}
 	}
@@ -61,6 +65,10 @@ func EntEventToProto(entEvent *ent.Event, chain *ent.Chain) (*eventpb.Event, err
 		return nil, err
 	}
 	pbEvent.Id = int64(entEvent.ID)
-	pbEvent.ChainImageUrl = chain.Image
+	pbEvent.Chain = &eventpb.ChainData{
+		Id:       int64(chain.ID),
+		Name:     chain.Name,
+		ImageUrl: chain.Image,
+	}
 	return pbEvent, nil
 }
