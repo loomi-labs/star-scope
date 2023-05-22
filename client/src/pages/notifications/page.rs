@@ -1,12 +1,17 @@
+use std::str::FromStr;
+
+use chrono::{Duration, NaiveDateTime};
 use js_sys::Date;
 use log::debug;
 use prost_types::Timestamp;
 use sycamore::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
+use web_sys::{Event, HtmlSelectElement, KeyboardEvent, UiEvent};
 
-use crate::components::messages::create_error_msg_from_status;
 use crate::{EventsState, Services};
-use crate::services::grpc::{Event, ListEventsRequest, EventType};
+use crate::components::messages::create_error_msg_from_status;
+use crate::services::grpc;
 
 fn display_timestamp(option: Option<Timestamp>) -> String {
     if let Some(timestamp) = option {
@@ -17,25 +22,25 @@ fn display_timestamp(option: Option<Timestamp>) -> String {
     return "".to_string();
 }
 
-fn get_type_icon(event_type: EventType) -> String {
-    match event_type {
-        EventType::Funding => "icon-[ep--coin]".to_string(),
-        EventType::Staking => "icon-[arcticons--coinstats]".to_string(),
-        EventType::Dex => "icon-[fluent--money-24-regular]".to_string(),
-        EventType::Governance => "icon-[icon-park-outline--palace]".to_string(),
-    }.to_string()
-}
+// fn get_type_icon(event_type: grpc::EventType) -> String {
+//     match event_type {
+//         grpc::EventType::Funding => "icon-[ep--coin]".to_string(),
+//         grpc::EventType::Staking => "icon-[arcticons--coinstats]".to_string(),
+//         grpc::EventType::Dex => "icon-[fluent--money-24-regular]".to_string(),
+//         grpc::EventType::Governance => "icon-[icon-park-outline--palace]".to_string(),
+//     }.to_string()
+// }
 
 
 #[component(inline_props)]
-pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
+pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
     let event_type = event.event_type();
 
     view! {cx,
         div(class="flex flex-col my-4 p-4 bg-gray-100 dark:bg-purple-700 rounded-lg shadow") {
             div(class="flex flex-row justify-between") {
                 div(class="flex flex-row items-center") {
-                    div(class="rounded-full h-14 w-14 bg-gray-300 dark:bg-purple-600 flex items-center justify-center mr-4") {
+                    div(class="rounded-full h-14 w-14 aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center") {
                         img(src=event.chain_image_url, alt="Event Logo", class="h-12 w-12")
                     }
                     div(class="flex flex-col") {
@@ -52,11 +57,28 @@ pub fn EventComponent<G: Html>(cx: Scope, event: Event) -> View<G> {
 #[component]
 pub fn Events<G: Html>(cx: Scope) -> View<G> {
     let events_state = use_context::<EventsState>(cx);
+    let notifications_state = use_context::<NotificationsState>(cx);
     let events = create_memo(cx, || {
         events_state
             .events
             .get()
             .iter()
+            .filter(|_event| {
+                let read_status_filter = notifications_state.read_status_filter.get();
+                match read_status_filter.as_ref() {
+                    ReadStatusFilter::ALL => true,
+                    ReadStatusFilter::READ => true,
+                    ReadStatusFilter::UNREAD => true,
+                }
+            }).filter(|event| {
+            let time_filter = notifications_state.time_filter.get();
+            match time_filter.as_ref().as_time_range() {
+                None => true,
+                Some((start, end)) => {
+                    event.timestamp.clone().unwrap().seconds > start.timestamp() && event.timestamp.clone().unwrap().seconds <= end.timestamp()
+                }
+            }
+        })
             .take(10)
             .cloned()
             .collect::<Vec<_>>()
@@ -79,11 +101,15 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
 
 #[derive(Debug, Clone)]
 pub struct NotificationsState {
+    read_status_filter: RcSignal<ReadStatusFilter>,
+    time_filter: RcSignal<TimeFilter>,
 }
 
 impl NotificationsState {
     pub fn new() -> Self {
         Self {
+            read_status_filter: create_rc_signal(ReadStatusFilter::default()),
+            time_filter: create_rc_signal(TimeFilter::default()),
         }
     }
 }
@@ -91,7 +117,7 @@ impl NotificationsState {
 async fn query_events(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(ListEventsRequest{start_time: None});
+    let request = services.grpc_client.create_request(grpc::ListEventsRequest { start_time: None });
     let response = services
         .grpc_client
         .get_event_service()
@@ -106,7 +132,7 @@ async fn query_events(cx: Scope<'_>) {
 }
 
 #[derive(Debug)]
-pub enum Filter {
+pub enum EventTypeFilter {
     ALL,
     FUNDING,
     STAKING,
@@ -114,8 +140,183 @@ pub enum Filter {
     GOVERNANCE,
 }
 
+#[derive(Debug, Clone)]
+pub enum ReadStatusFilter {
+    ALL,
+    READ,
+    UNREAD,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ReadStatusFilterError;
+
+impl ReadStatusFilter {
+    fn get_filter_from_hash() -> Self {
+        let hash = web_sys::window().unwrap().location().hash().unwrap();
+
+        match hash.as_str() {
+            "#/read" => ReadStatusFilter::READ,
+            "#/unread" => ReadStatusFilter::UNREAD,
+            _ => ReadStatusFilter::ALL,
+        }
+    }
+
+    fn default() -> Self {
+        ReadStatusFilter::get_filter_from_hash()
+    }
+
+    fn to_string(&self) -> String {
+        match self {
+            ReadStatusFilter::ALL => "all".to_string(),
+            ReadStatusFilter::READ => "read".to_string(),
+            ReadStatusFilter::UNREAD => "unread".to_string(),
+        }
+    }
+}
+
+impl FromStr for ReadStatusFilter {
+    type Err = ReadStatusFilterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "all" => Ok(ReadStatusFilter::ALL),
+            "read" => Ok(ReadStatusFilter::READ),
+            "unread" => Ok(ReadStatusFilter::UNREAD),
+            _ => Err(ReadStatusFilterError),
+        }
+    }
+}
+
+#[component]
+pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
+    let notifications_state = use_context::<NotificationsState>(cx);
+    let input_ref = create_node_ref(cx);
+
+    let handle_change = |event: Event| {
+        let target: HtmlSelectElement = event.target().unwrap().unchecked_into();
+        notifications_state
+            .read_status_filter
+            .set(ReadStatusFilter::from_str(&target.value()).unwrap());
+    };
+
+    view! { cx,
+       div(class="relative inline-block") {
+            select(ref=input_ref,
+                class="block border-0 w-full h-full rounded drop-shadow-md bg-white dark:text-purple-600 dark:bg-purple-700 duration-300 hover:bg-sky-400 dark:hover:bg-purple-700",
+                on:change=handle_change,
+            ) {
+                option(value=ReadStatusFilter::ALL.to_string()) { "All" }
+                option(value=ReadStatusFilter::READ.to_string()) { "Read" }
+                option(value=ReadStatusFilter::UNREAD.to_string()) { "Unread" }
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum TimeFilter {
+    All,
+    Today,
+    Yesterday,
+    OneWeek,
+    OneMonth,
+    OneYear,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct TimeFilterError;
+
+impl TimeFilter {
+    // fn get_filter_from_hash() -> Self {
+    //     let hash = web_sys::window().unwrap().location().hash().unwrap();
+    //
+    //     match hash.as_str() {
+    //         "#/read" => TimeFilter::READ,
+    //         "#/unread" => TimeFilter::UNREAD,
+    //         _ => TimeFilter::ALL,
+    //     }
+    // }
+
+    fn default() -> Self {
+        // TimeFilter::get_filter_from_hash()
+        TimeFilter::All
+    }
+
+    fn to_string(&self) -> String {
+        match self {
+            TimeFilter::All => "all".to_string(),
+            TimeFilter::Today => "today".to_string(),
+            TimeFilter::Yesterday => "yesterday".to_string(),
+            TimeFilter::OneWeek => "this_week".to_string(),
+            TimeFilter::OneMonth => "this_month".to_string(),
+            TimeFilter::OneYear => "this_year".to_string(),
+        }
+    }
+
+    fn as_time_range(&self) -> Option<(NaiveDateTime, NaiveDateTime)> {
+        let js_date = Date::new_0();
+        let milliseconds = js_date.get_time();
+        let seconds = (milliseconds / 1000.0) as i64;
+        let today = NaiveDateTime::from_timestamp_opt(seconds, 0).unwrap().date().and_hms_opt(0, 0, 0).unwrap();
+        match self {
+            TimeFilter::All => None,
+            TimeFilter::Today => Some((today, today + Duration::days(1))),
+            TimeFilter::Yesterday => Some((today - Duration::days(1), today)),
+            TimeFilter::OneWeek => Some((today - Duration::days(7), today + Duration::days(1))),
+            TimeFilter::OneMonth => Some((today - Duration::days(7), today + Duration::days(30))),
+            TimeFilter::OneYear => Some((today - Duration::days(7), today + Duration::days(365))),
+        }
+    }
+}
+
+impl FromStr for TimeFilter {
+    type Err = TimeFilterError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "all" => Ok(TimeFilter::All),
+            "today" => Ok(TimeFilter::Today),
+            "yesterday" => Ok(TimeFilter::Yesterday),
+            "this_week" => Ok(TimeFilter::OneWeek),
+            "this_month" => Ok(TimeFilter::OneMonth),
+            "this_year" => Ok(TimeFilter::OneYear),
+            _ => Err(TimeFilterError),
+        }
+    }
+}
+
+#[component]
+pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
+    let notifications_state = use_context::<NotificationsState>(cx);
+    let input_ref = create_node_ref(cx);
+
+    let handle_change = |event: Event| {
+        let target: HtmlSelectElement = event.target().unwrap().unchecked_into();
+        notifications_state
+            .time_filter
+            .set(TimeFilter::from_str(&target.value()).unwrap());
+    };
+
+    view! { cx,
+       div(class="relative inline-block") {
+            select(ref=input_ref,
+                class="block border-0 w-full h-full rounded drop-shadow-md bg-white dark:text-purple-600 dark:bg-purple-700 duration-300 hover:bg-sky-400 dark:hover:bg-purple-700",
+                on:change=handle_change,
+            ) {
+                option(value=TimeFilter::All.to_string()) { "All" }
+                option(value=TimeFilter::Today.to_string()) { "Today" }
+                option(value=TimeFilter::Yesterday.to_string()) { "Yesterday" }
+                option(value=TimeFilter::OneWeek.to_string()) { "This Week" }
+                option(value=TimeFilter::OneMonth.to_string()) { "This Month" }
+                option(value=TimeFilter::OneYear.to_string()) { "This Year" }
+            }
+        }
+    }
+}
+
+
 #[component(inline_props)]
-pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: Filter) -> View<G> {
+pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: EventTypeFilter) -> View<G> {
     provide_context(cx, NotificationsState::new());
 
     query_events(cx.to_owned()).await;
@@ -123,8 +324,14 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: Filter) -> View<G> {
     debug!("filter: {:?}", filter);
 
     view! {cx,
-        div(class="flex flex-col h-full w-full p-8") {
-            h1(class="text-4xl font-bold pb-4") { "Notifications" }
+        div(class="flex flex-col") {
+            div(class="flex flex-row justify-between items-center") {
+                h1(class="text-4xl font-bold pb-4") { "Notifications" }
+                div(class="flex flex-row space-x-4") {
+                    ReadStatusFilterDropdown {}
+                    TimeFilterDropdown {}
+                }
+            }
             div(class="flex flex-col") {
                 Events {}
             }

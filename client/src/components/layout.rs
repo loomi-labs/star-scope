@@ -7,7 +7,7 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     view!(cx,
-        div(class="w-full flex items-center justify-between h-14 text-white z-10 dark:bg-purple-800") {
+        div(class="flex items-center justify-between h-14 mr-8 text-white z-10 dark:bg-purple-800") {
             div(class="flex items-center justify-start pl-4 h-14 w-14 lg:w-64 border-none") {
                 span(class="icon-[game-icons--ringed-planet] h-10 w-10 text-primary") {}
             }
@@ -120,12 +120,12 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
     let children = children.call(cx);
     view! { cx,
-        div(class="min-h-screen flex justify-center items-center flex-auto flex-shrink-0 antialiased") {
-            div(class="flex flex-col h-full w-full max-w-screen-xl") {
+        div(class="min-h-screen flex justify-center items-center flex-auto flex-shrink-0 antialiased dark:bg-purple-900") {
+            div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl") {
                 Header{}
-                div(class="flex flex-row h-full w-full") {
+                div(class="flex flex-row") {
                     Sidebar{}
-                    div(class="h-full w-full dark:bg-purple-900") {
+                    div(class="p-8 max-w-[90vw] md:max-w-auto") {
                         (children)
                     }
                 }

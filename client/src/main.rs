@@ -16,7 +16,7 @@ use crate::config::keys;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
-use crate::pages::notifications::page::{Notifications, Filter};
+use crate::pages::notifications::page::{Notifications, EventTypeFilter};
 use crate::services::auth::AuthService;
 use crate::services::grpc::{Event, GrpcClient, User};
 
@@ -249,11 +249,11 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
         app_state.route.set(route.clone());
         match route {
             AppRoutes::Home => view!(cx, LayoutWrapper{Home {}}),
-            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications(filter=Filter::ALL)}),
-            AppRoutes::NotificationsFunding => view!(cx, LayoutWrapper{Notifications(filter=Filter::FUNDING)}),
-            AppRoutes::NotificationsStaking => view!(cx, LayoutWrapper{Notifications(filter=Filter::STAKING)}),
-            AppRoutes::NotificationsDex => view!(cx, LayoutWrapper{Notifications(filter=Filter::DEXES)}),
-            AppRoutes::NotificationsGovernance => view!(cx, LayoutWrapper{Notifications(filter=Filter::GOVERNANCE)}),
+            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::ALL)}),
+            AppRoutes::NotificationsFunding => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::FUNDING)}),
+            AppRoutes::NotificationsStaking => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::STAKING)}),
+            AppRoutes::NotificationsDex => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::DEXES)}),
+            AppRoutes::NotificationsGovernance => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::GOVERNANCE)}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
             AppRoutes::Login => Login(cx),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
