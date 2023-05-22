@@ -121,11 +121,11 @@ pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> V
     let children = children.call(cx);
     view! { cx,
         div(class="min-h-screen flex justify-center items-center flex-auto flex-shrink-0 antialiased dark:bg-purple-900") {
-            div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl") {
+            div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
                 Header{}
-                div(class="flex flex-row") {
+                div(class="flex flex-row h-full w-full") {
                     Sidebar{}
-                    div(class="p-8 max-w-[90vw] md:max-w-auto") {
+                    div(class="p-8 max-w-[90vw] md:max-w-auto h-full w-full") {
                         (children)
                     }
                 }
