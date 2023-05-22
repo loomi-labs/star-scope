@@ -16,7 +16,7 @@ use crate::config::keys;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
-use crate::pages::notifications::page::{Notifications, EventTypeFilter};
+use crate::pages::notifications::page::{EventTypeFilter, Notifications};
 use crate::services::auth::AuthService;
 use crate::services::grpc::{Event, GrpcClient, User};
 
@@ -189,6 +189,13 @@ pub struct EventsState {
     pub events: RcSignal<Vec<Event>>,
 }
 
+impl Default for EventsState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+
 impl EventsState {
     pub fn new() -> Self {
         Self {
@@ -249,11 +256,11 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
         app_state.route.set(route.clone());
         match route {
             AppRoutes::Home => view!(cx, LayoutWrapper{Home {}}),
-            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::ALL)}),
-            AppRoutes::NotificationsFunding => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::FUNDING)}),
-            AppRoutes::NotificationsStaking => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::STAKING)}),
-            AppRoutes::NotificationsDex => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::DEXES)}),
-            AppRoutes::NotificationsGovernance => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::GOVERNANCE)}),
+            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::All)}),
+            AppRoutes::NotificationsFunding => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::Funding)}),
+            AppRoutes::NotificationsStaking => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::Staking)}),
+            AppRoutes::NotificationsDex => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::Dexes)}),
+            AppRoutes::NotificationsGovernance => view!(cx, LayoutWrapper{Notifications(filter=EventTypeFilter::Governance)}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
             AppRoutes::Login => Login(cx),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
@@ -273,7 +280,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
 async fn query_user_info(cx: Scope<'_>) {
     let app_state = use_context::<AppState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(());
     let response = services
         .grpc_client
         .get_user_service()
@@ -295,7 +302,7 @@ fn subscribe_to_events(cx: Scope) {
         let mut event_stream = services
             .grpc_client
             .get_event_service()
-            .event_stream(services.grpc_client.create_request({}))
+            .event_stream(services.grpc_client.create_request(()))
             .await
             .unwrap()
             .into_inner();
@@ -313,8 +320,8 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let app_state = AppState::new(services.auth_manager.clone());
     let events_state = EventsState::new();
 
-    provide_context(cx, services.clone());
-    provide_context(cx, app_state.clone());
+    provide_context(cx, services);
+    provide_context(cx, app_state);
     provide_context(cx, events_state);
 
     start_jwt_refresh_timer(cx.to_owned());

@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use chrono::{Duration, NaiveDateTime};
@@ -19,9 +20,9 @@ fn display_timestamp(option: Option<Timestamp>) -> String {
     if let Some(timestamp) = option {
         let datetime = Date::new(&JsValue::from_f64(timestamp.seconds as f64 * 1000.0));
         let asString = datetime.to_locale_string("en-US", &JsValue::from_str("date"));
-        return format!("{}", asString);
+        return format!("{}", asString)
     }
-    return "".to_string();
+    "".to_string()
 }
 
 // fn get_type_icon(event_type: grpc::EventType) -> String {
@@ -68,9 +69,9 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
             .filter(|_event| {
                 let read_status_filter = notifications_state.read_status_filter.get();
                 match read_status_filter.as_ref() {
-                    ReadStatusFilter::ALL => true,
-                    ReadStatusFilter::READ => true,
-                    ReadStatusFilter::UNREAD => true,
+                    ReadStatusFilter::All => true,
+                    ReadStatusFilter::Read => true,
+                    ReadStatusFilter::Unread => true,
                 }
             })
             .filter(|event| {
@@ -153,7 +154,7 @@ async fn query_events(cx: Scope<'_>) {
 async fn query_chains(cx: Scope<'_>) {
     let notifications_state = use_context::<NotificationsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(());
     let response = services
         .grpc_client
         .get_event_service()
@@ -170,18 +171,18 @@ async fn query_chains(cx: Scope<'_>) {
 
 #[derive(Debug)]
 pub enum EventTypeFilter {
-    ALL,
-    FUNDING,
-    STAKING,
-    DEXES,
-    GOVERNANCE,
+    All,
+    Funding,
+    Staking,
+    Dexes,
+    Governance,
 }
 
 #[derive(Debug, Clone, Sequence)]
 pub enum ReadStatusFilter {
-    ALL,
-    READ,
-    UNREAD,
+    All,
+    Read,
+    Unread,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -192,21 +193,23 @@ impl ReadStatusFilter {
         let hash = web_sys::window().unwrap().location().hash().unwrap();
 
         match hash.as_str() {
-            "#/read" => ReadStatusFilter::READ,
-            "#/unread" => ReadStatusFilter::UNREAD,
-            _ => ReadStatusFilter::ALL,
+            "#/read" => ReadStatusFilter::Read,
+            "#/unread" => ReadStatusFilter::Unread,
+            _ => ReadStatusFilter::All,
         }
     }
 
     fn default() -> Self {
         ReadStatusFilter::get_filter_from_hash()
     }
+}
 
-    fn to_string(&self) -> String {
+impl Display for ReadStatusFilter {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadStatusFilter::ALL => "all".to_string(),
-            ReadStatusFilter::READ => "read".to_string(),
-            ReadStatusFilter::UNREAD => "unread".to_string(),
+            ReadStatusFilter::All => write!(f, "All"),
+            ReadStatusFilter::Read => write!(f, "Read"),
+            ReadStatusFilter::Unread => write!(f, "Unread"),
         }
     }
 }
@@ -216,9 +219,9 @@ impl FromStr for ReadStatusFilter {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "all" => Ok(ReadStatusFilter::ALL),
-            "read" => Ok(ReadStatusFilter::READ),
-            "unread" => Ok(ReadStatusFilter::UNREAD),
+            "all" => Ok(ReadStatusFilter::All),
+            "read" => Ok(ReadStatusFilter::Read),
+            "unread" => Ok(ReadStatusFilter::Unread),
             _ => Err(ReadStatusFilterError),
         }
     }
@@ -361,17 +364,6 @@ impl TimeFilter {
         TimeFilter::All
     }
 
-    fn to_string(&self) -> String {
-        match self {
-            TimeFilter::All => "all".to_string(),
-            TimeFilter::Today => "today".to_string(),
-            TimeFilter::Yesterday => "yesterday".to_string(),
-            TimeFilter::OneWeek => "one week".to_string(),
-            TimeFilter::OneMonth => "one month".to_string(),
-            TimeFilter::OneYear => "one year".to_string(),
-        }
-    }
-
     fn as_time_range(&self) -> Option<(NaiveDateTime, NaiveDateTime)> {
         let js_date = Date::new_0();
         let milliseconds = js_date.get_time();
@@ -384,6 +376,19 @@ impl TimeFilter {
             TimeFilter::OneWeek => Some((today - Duration::days(7), today + Duration::days(1))),
             TimeFilter::OneMonth => Some((today - Duration::days(7), today + Duration::days(30))),
             TimeFilter::OneYear => Some((today - Duration::days(7), today + Duration::days(365))),
+        }
+    }
+}
+
+impl Display for TimeFilter {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TimeFilter::All => write!(f, "All"),
+            TimeFilter::Today => write!(f, "Today"),
+            TimeFilter::Yesterday => write!(f, "Yesterday"),
+            TimeFilter::OneWeek => write!(f, "One Week"),
+            TimeFilter::OneMonth => write!(f, "One Month"),
+            TimeFilter::OneYear => write!(f, "One Year"),
         }
     }
 }
