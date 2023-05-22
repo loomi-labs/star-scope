@@ -39,8 +39,10 @@ func (d *FakeEventCreator) getEventListenerMap() map[string]*ent.EventListener {
 }
 
 func createTxEvent(walletAddress string) indexevent.TxEvent {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	chains := []string{"cosmoshub", "osmosis", "juno", "neutron", "injective"}
 	return indexevent.TxEvent{
-		ChainPath:     "cosmoshub",
+		ChainPath:     chains[r.Intn(len(chains))],
 		WalletAddress: walletAddress,
 		Timestamp:     timestamppb.New(time.Now()),
 		NotifyTime:    timestamppb.New(time.Now()),
