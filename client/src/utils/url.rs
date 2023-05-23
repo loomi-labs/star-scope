@@ -1,5 +1,8 @@
 use log::debug;
+use sycamore::prelude::{Scope, use_context};
+use sycamore_router::navigate;
 use wasm_bindgen::JsValue;
+use crate::{AppRoutes, AppState};
 
 #[allow(dead_code)]
 pub fn add_or_update_query_params(key: &str, value: &str) {
@@ -36,5 +39,12 @@ pub fn get_query_param(key: &str) -> Option<String> {
         Some(query_params[index].1.to_string())
     } else {
         None
+    }
+}
+
+pub fn safe_navigate(cx: Scope, route: AppRoutes) {
+    let app_state = use_context::<AppState>(cx);
+    if app_state.route.get().as_ref() != &route {
+        navigate(route.to_string().as_str());
     }
 }

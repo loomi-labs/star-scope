@@ -26,7 +26,7 @@ mod pages;
 mod services;
 mod utils;
 
-#[derive(Route, Debug, Clone)]
+#[derive(Route, Debug, Clone, PartialEq)]
 pub enum AppRoutes {
     #[to("/")]
     Home,
@@ -117,6 +117,12 @@ pub struct AppState {
     pub user: RcSignal<Option<User>>,
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new(AuthService::default())
+    }
+}
+
 impl AppState {
     pub fn new(auth_service: AuthService) -> Self {
         let auth_state = match auth_service.is_jwt_valid() {
@@ -126,7 +132,7 @@ impl AppState {
         Self {
             auth_service,
             auth_state: create_rc_signal(auth_state),
-            route: create_rc_signal(AppRoutes::Notifications),
+            route: create_rc_signal(AppRoutes::default()),
             messages: create_rc_signal(vec![]),
             user: create_rc_signal(None),
         }
