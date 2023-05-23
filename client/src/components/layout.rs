@@ -55,7 +55,7 @@ fn highlight_active_route(event_type: Option<EventType>, notifications_state: &N
 pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
 
-    let a_class = "relative flex flex-row items-center h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
+    let button_class = "relative flex flex-row items-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
     let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
     let span_text_class = "ml-2 text-sm tracking-wide truncate";
 
@@ -69,7 +69,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             div(class="overflow-y-auto overflow-x-hidden flex flex-col justify-between flex-grow") {
                 ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Notifications, class=a_class) {
+                        a(href=AppRoutes::Notifications, class=button_class) {
                             span(class=format!("{} icon-[mdi--bell]", span_icon_class)) {
                                 div(class="w-16 h-16")
                             }
@@ -77,7 +77,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                         }
                         ul() {
                             li() {
-                                button(on:click=move |_| handle_click(None), class=format!("{} {}", a_class, highlight_active_route(None, notifications_state))) {
+                                button(on:click=move |_| handle_click(None), class=format!("{} {}", button_class, highlight_active_route(None, notifications_state))) {
                                     span(class=format!("{} icon-[lucide--copy-check]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -85,7 +85,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(Some(EventType::Funding)), class=format!("{} {}", a_class, highlight_active_route(Some(EventType::Funding), notifications_state))) {
+                                button(on:click=move |_| handle_click(Some(EventType::Funding)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Funding), notifications_state))) {
                                     span(class=format!("{} icon-[ep--coin]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -93,7 +93,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(Some(EventType::Staking)), class=format!("{} {}", a_class, highlight_active_route(Some(EventType::Staking), notifications_state))) {
+                                button(on:click=move |_| handle_click(Some(EventType::Staking)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Staking), notifications_state))) {
                                     span(class=format!("{} icon-[arcticons--coinstats]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -101,7 +101,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(Some(EventType::Dex)), class=format!("{} {}", a_class, highlight_active_route(Some(EventType::Dex), notifications_state))) {
+                                button(on:click=move |_| handle_click(Some(EventType::Dex)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Dex), notifications_state))) {
                                     span(class=format!("{} icon-[fluent--money-24-regular]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -109,7 +109,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(Some(EventType::Governance)), class=format!("{} {}", a_class, highlight_active_route(Some(EventType::Governance), notifications_state))) {
+                                button(on:click=move |_| handle_click(Some(EventType::Governance)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Governance), notifications_state))) {
                                     span(class=format!("{} icon-[icon-park-outline--palace]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
