@@ -1,6 +1,7 @@
 use log::debug;
 use wasm_bindgen::JsValue;
 
+#[allow(dead_code)]
 pub fn add_or_update_query_params(key: &str, value: &str) {
     let window = web_sys::window().unwrap();
     let history = window.history().unwrap();

@@ -224,6 +224,7 @@ impl ReadStatusFilter {
         }
     }
 
+    #[allow(dead_code)]
     fn to_hash(&self) -> String {
         if self == &ReadStatusFilter::All {
             "".to_string()
@@ -232,6 +233,7 @@ impl ReadStatusFilter {
         }
     }
 
+    #[allow(dead_code)]
     fn set_filter_as_query_param(&self) {
         add_or_update_query_params(ReadStatusFilter::QUERY_PARAM, self.to_hash().as_str());
     }
@@ -399,6 +401,7 @@ impl TimeFilter {
         }
     }
 
+    #[allow(dead_code)]
     fn to_hash(&self) -> String {
         if self == &TimeFilter::All {
             "".to_string()
@@ -407,6 +410,7 @@ impl TimeFilter {
         }
     }
 
+    #[allow(dead_code)]
     fn set_filter_as_query_param(&self) {
         add_or_update_query_params(TimeFilter::QUERY_PARAM, self.to_hash().as_str());
     }
@@ -470,7 +474,7 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
         let filter = TimeFilter::from_str(&target.value()).unwrap();
         notifications_state
             .time_filter
-            .set(TimeFilter::from_str(&target.value()).unwrap());
+            .set(filter);
         // filter.set_filter_as_query_param();
     };
 

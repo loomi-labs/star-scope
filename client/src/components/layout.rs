@@ -53,7 +53,6 @@ fn highlight_active_route(event_type: Option<EventType>, notifications_state: &N
 
 #[component]
 pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
-    let app_state = use_context::<AppState>(cx);
     let notifications_state = use_context::<NotificationsState>(cx);
 
     let a_class = "relative flex flex-row items-center h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
