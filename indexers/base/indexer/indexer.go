@@ -148,31 +148,34 @@ type SyncStatus struct {
 }
 
 func (i *Indexer) getLatestHeight(syncStatus *SyncStatus) {
-	log.Sugar.Infof("Getting latest height of chain %v", i.chainInfo.Name)
+	// get latest height if we don't have it or if we are more than 100 blocks behind
+	if syncStatus.LatestHeight == 0 || syncStatus.LatestHeight < syncStatus.Height-100 {
+		log.Sugar.Debugf("Getting latest height of chain %v", i.chainInfo.Name)
 
-	var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/latest", i.chainInfo.RestEndpoint)
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Sugar.Panic(err)
-	}
-	if resp.StatusCode != 200 {
-		log.Sugar.Warnf("Failed to get latest block: %v", resp.StatusCode)
-		time.Sleep(5 * time.Second)
-		i.getLatestHeight(syncStatus)
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Sugar.Panic(err)
-	}
-	var response cmtservice.GetLatestBlockResponse
-	if err := i.encodingConfig.Codec.UnmarshalJSON(body, &response); err != nil {
-		log.Sugar.Panic(err)
-	}
-	syncStatus.LatestHeight = uint64(response.GetBlock().GetHeader().Height)
-	if syncStatus.Height == 0 {
-		syncStatus.Height = syncStatus.LatestHeight
+		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/latest", i.chainInfo.RestEndpoint)
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Sugar.Panic(err)
+		}
+		if resp.StatusCode != 200 {
+			log.Sugar.Warnf("Failed to get latest block: %v", resp.StatusCode)
+			time.Sleep(5 * time.Second)
+			i.getLatestHeight(syncStatus)
+		}
+		//goland:noinspection GoUnhandledErrorResult
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Sugar.Panic(err)
+		}
+		var response cmtservice.GetLatestBlockResponse
+		if err := i.encodingConfig.Codec.UnmarshalJSON(body, &response); err != nil {
+			log.Sugar.Panic(err)
+		}
+		syncStatus.LatestHeight = uint64(response.GetBlock().GetHeader().Height)
+		if syncStatus.Height == 0 {
+			syncStatus.Height = syncStatus.LatestHeight
+		}
 	}
 }
 
@@ -201,7 +204,7 @@ func setSleepTime(sleepTime time.Duration, attempts int) time.Duration {
 	return sleepTime
 }
 
-func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncStatus, getBlockRequestDuration time.Duration, handleBlockDuration time.Duration, updateSyncStatusDuration time.Duration, sleepTime time.Duration, catchUp bool) {
+func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncStatus, getBlockRequestDuration time.Duration, handleBlockDuration time.Duration, sleepTime time.Duration, catchUp bool) {
 	var behindText = ""
 	var height = syncStatus.Height - 1
 	if syncStatus.LatestHeight > height {
@@ -213,9 +216,9 @@ func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncS
 		if !catchUp {
 			sleepTimeText = sleepTime.String()
 		}
-		log.Sugar.Infof("%-15sBlock %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v\tGet block: %v\tHandle block: %v\tUpdate sync status: %v\tSleep: %v",
+		log.Sugar.Infof("%-15sBlock %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v\tGet block: %v\tHandle block: %v\tSleep: %v",
 			i.chainInfo.Name, height,
-			behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages), getBlockRequestDuration, handleBlockDuration, updateSyncStatusDuration, sleepTimeText)
+			behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages), getBlockRequestDuration, handleBlockDuration, sleepTimeText)
 	}
 }
 
@@ -232,7 +235,6 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 		status, err := GetAndDecode(url, i.encodingConfig, &blockResponse)
 		var getBlockRequestDuration = time.Since(startGetBlockRequest)
 		var handleBlockDuration time.Duration
-		var updateSyncStatusDuration time.Duration
 		var result *indexerpb.HandleTxsResponse
 		if err != nil {
 			if status == 400 {
@@ -253,9 +255,8 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 				log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chainInfo.Name, syncStatus.Height, err)
 				time.Sleep(200 * time.Millisecond)
 			} else {
-				var startUpdateSyncStatus = time.Now()
 				i.updateSyncStatus(&syncStatus, updateChannel)
-				updateSyncStatusDuration = time.Since(startUpdateSyncStatus)
+				i.getLatestHeight(&syncStatus)
 				attempts = 1
 			}
 		}
@@ -263,9 +264,8 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 			sleepTime = setSleepTime(sleepTime, attempts)
 			time.Sleep(sleepTime)
 		} else {
-			// TODO: make this a bit smarter
 			catchUp = syncStatus.Height < syncStatus.LatestHeight
 		}
-		i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, updateSyncStatusDuration, sleepTime, catchUp)
+		i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepTime, catchUp)
 	}
 }
