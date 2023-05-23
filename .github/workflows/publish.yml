@@ -36,11 +36,11 @@ jobs:
             client:
               - 'client/**'
             base-indexer:
-              - 'indexer/base/**'
+              - 'indexer/base/**/*'
             osmosis-indexer:
-              - 'indexers/osmosis/**'
+              - 'indexers/osmosis/**/*'
             envoy:
-              - 'data/docker/envoy/**'
+              - 'data/docker/envoy/**/*'
 
       - name: Extract metadata (tags, labels) for server image
         id: meta-server
