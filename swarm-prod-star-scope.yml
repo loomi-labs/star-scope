@@ -136,7 +136,7 @@ services:
           - node.role != manager
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:7
     container_name: starscope_pgadmin
     secrets:
       - pgadmin-password

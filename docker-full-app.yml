@@ -32,7 +32,7 @@ services:
         condition: service_healthy
 
   pgadmin:
-    image: dpage/pgadmin4:7.0
+    image: dpage/pgadmin4:latest
     container_name: starscope_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
@@ -77,8 +77,6 @@ services:
     build: server
     container_name: starscope_grpc
     working_dir: /app
-    ports:
-      - "50001:50001"
     env_file:
       - server/.env.template
     command: "/starscope service grpc"
@@ -88,9 +86,23 @@ services:
       db-migration:
         condition: service_completed_successfully
 
-  indexer-osmosis:
+  main-indexer:
+    build: indexers/base
+    container_name: starscope_main_indexer
+    working_dir: /app
+    env_file:
+      - indexers/base/.env.template
+    command: "/indexer"
+    restart: on-failure
+    depends_on:
+      kafka:
+        condition: service_started
+      grpc:
+        condition: service_started
+
+  osmosis-indexer:
     build: indexers/osmosis
-    container_name: starscope_indexer_osmosis
+    container_name: starscope_osmosis_indexer
     working_dir: /app
     env_file:
       - indexers/osmosis/.env.template
