@@ -1,13 +1,5 @@
-buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516184332-95061d49b92d.1 h1:icX2aosReXS6nLCNc/UYCbd6hPcdB60gm/68pVzglkc=
-buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516184332-95061d49b92d.1/go.mod h1:LWi8Doaqms7YZNp+M/D2Pj89pI9wZb2HQrNaKuTkPI0=
-buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516202109-3f8f12997364.1 h1:qyQJYNfsjeSLT2lhKeZ2/s+4TCuH4EwQcZ1Smm45caY=
-buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230516202109-3f8f12997364.1/go.mod h1:b44dT0KkP5J0PtNffbLMbrnV05Ctd+N8aEt9JtdKRbM=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1 h1:oP1I+fqUK/k96ZxGm1kXQpBK1a3FmWXrijoJS8Nysm4=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1/go.mod h1:PCpnvvWZIdoIHVCxgJlIikD25nSWfRl7KfIDUBlEEV4=
-buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516184332-95061d49b92d.1 h1:CrtYDlXk2VpEC8oBo8OVOwaGFWciXOfdrRA/FVybaQQ=
-buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516184332-95061d49b92d.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
-buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516202109-3f8f12997364.1 h1:xdD5VQ6EaWXuVZCuojBBcxS9FTLcTnPafoIKp4DTchA=
-buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230516202109-3f8f12997364.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1 h1:3PmoQxUoB2Yf6wWVM3CPj/eGF9AHTE4BlXEP6NqjNbk=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
@@ -228,8 +220,8 @@ github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 h1:fAjc9m62+UWV/WA
 github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/dlclark/regexp2 v1.2.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
-github.com/docker/distribution v2.8.1+incompatible h1:Q50tZOPR6T/hjNsyc9g8/syEs6bk8XXApsHjKukMl68=
-github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
+github.com/docker/distribution v2.8.2+incompatible h1:T3de5rq0dB1j30rp0sA2rER+m322EBzniBPB6ZIzuh8=
+github.com/docker/distribution v2.8.2+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v1.4.2-0.20180625184442-8e610b2b55bf/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
