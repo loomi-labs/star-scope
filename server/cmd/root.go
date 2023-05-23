@@ -8,8 +8,8 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "backlog",
-	Short: "Backlog cli",
+	Use:   "starscope",
+	Short: "Star Scope cli",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
