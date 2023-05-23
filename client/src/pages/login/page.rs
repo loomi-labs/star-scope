@@ -1,4 +1,3 @@
-use std::error::Error;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use sycamore::futures::spawn_local_scoped;
@@ -97,16 +96,20 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                                     if *app_state.auth_state.get() == AuthState::LoggedOut {
                                         debug!("Attempt to login with wallet connect");
                                         match wallet_connect_login_wrapper() {
-                                            Ok(result) => {
-                                                let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
-                                                match response {
-                                                    Ok(_) => {
-                                                        let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
-                                                        *auth_state = AuthState::LoggedIn;
-                                                        create_message(cx, "Login success", format!("Logged in successfully"), InfoLevel::Info);
-                                                    }
-                                                    Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
-                                                }
+                                            Ok(url) => {
+                                                debug!("navigate to: {}", url.as_str());
+                                                web_sys::window().unwrap().location().set_href(url.as_str()).unwrap();
+                                                // navigate(url.as_str());
+                                                // let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
+                                                // match response {
+                                                //     Ok(url) => {
+                                                //
+                                                //         let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
+                                                //         *auth_state = AuthState::LoggedIn;
+                                                //         create_message(cx, "Login success", format!("Logged in successfully"), InfoLevel::Info);
+                                                //     }
+                                                //     Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
+                                                // }
                                             }
                                             Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
                                         }
