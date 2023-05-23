@@ -31,6 +31,7 @@ func (m *EventListenerManager) QueryByUser(ctx context.Context, entUser *ent.Use
 				user.IDEQ(entUser.ID)),
 		).
 		WithEvents().
+		WithChain().
 		AllX(ctx)
 }
 

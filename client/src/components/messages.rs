@@ -46,7 +46,7 @@ pub fn MessageOverlay<G: Html>(cx: Scope) -> View<G> {
                 let item = iItem.item.get();
                 let title = item.title.clone();
                 let message = item.message.clone();
-                let created_at = item.created_at.clone();
+                let created_at = item.created_at;
                 let id = item.id;
 
                 let state = create_signal(cx, 1.0);

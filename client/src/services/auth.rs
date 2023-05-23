@@ -15,8 +15,8 @@ use crate::services::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessToken
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum Role {
-    User = 0 as isize,
-    Admin = 1 as isize,
+    User = 0_isize,
+    Admin = 1_isize,
 }
 
 impl<'de> Deserialize<'de> for Role {

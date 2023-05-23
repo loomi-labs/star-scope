@@ -39,12 +39,15 @@ const (
 	EventServiceEventStreamProcedure = "/starscope.grpc.EventService/EventStream"
 	// EventServiceListEventsProcedure is the fully-qualified name of the EventService's ListEvents RPC.
 	EventServiceListEventsProcedure = "/starscope.grpc.EventService/ListEvents"
+	// EventServiceListChainsProcedure is the fully-qualified name of the EventService's ListChains RPC.
+	EventServiceListChainsProcedure = "/starscope.grpc.EventService/ListChains"
 )
 
 // EventServiceClient is a client for the starscope.grpc.EventService service.
 type EventServiceClient interface {
-	EventStream(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.ServerStreamForClient[eventpb.Event], error)
-	ListEvents(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsResponse], error)
+	EventStream(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.ServerStreamForClient[eventpb.EventList], error)
+	ListEvents(context.Context, *connect_go.Request[eventpb.ListEventsRequest]) (*connect_go.Response[eventpb.EventList], error)
+	ListChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ChainList], error)
 }
 
 // NewEventServiceClient constructs a client for the starscope.grpc.EventService service. By
@@ -57,14 +60,19 @@ type EventServiceClient interface {
 func NewEventServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) EventServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &eventServiceClient{
-		eventStream: connect_go.NewClient[emptypb.Empty, eventpb.Event](
+		eventStream: connect_go.NewClient[emptypb.Empty, eventpb.EventList](
 			httpClient,
 			baseURL+EventServiceEventStreamProcedure,
 			opts...,
 		),
-		listEvents: connect_go.NewClient[emptypb.Empty, eventpb.ListEventsResponse](
+		listEvents: connect_go.NewClient[eventpb.ListEventsRequest, eventpb.EventList](
 			httpClient,
 			baseURL+EventServiceListEventsProcedure,
+			opts...,
+		),
+		listChains: connect_go.NewClient[emptypb.Empty, eventpb.ChainList](
+			httpClient,
+			baseURL+EventServiceListChainsProcedure,
 			opts...,
 		),
 	}
@@ -72,24 +80,31 @@ func NewEventServiceClient(httpClient connect_go.HTTPClient, baseURL string, opt
 
 // eventServiceClient implements EventServiceClient.
 type eventServiceClient struct {
-	eventStream *connect_go.Client[emptypb.Empty, eventpb.Event]
-	listEvents  *connect_go.Client[emptypb.Empty, eventpb.ListEventsResponse]
+	eventStream *connect_go.Client[emptypb.Empty, eventpb.EventList]
+	listEvents  *connect_go.Client[eventpb.ListEventsRequest, eventpb.EventList]
+	listChains  *connect_go.Client[emptypb.Empty, eventpb.ChainList]
 }
 
 // EventStream calls starscope.grpc.EventService.EventStream.
-func (c *eventServiceClient) EventStream(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.ServerStreamForClient[eventpb.Event], error) {
+func (c *eventServiceClient) EventStream(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.ServerStreamForClient[eventpb.EventList], error) {
 	return c.eventStream.CallServerStream(ctx, req)
 }
 
 // ListEvents calls starscope.grpc.EventService.ListEvents.
-func (c *eventServiceClient) ListEvents(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsResponse], error) {
+func (c *eventServiceClient) ListEvents(ctx context.Context, req *connect_go.Request[eventpb.ListEventsRequest]) (*connect_go.Response[eventpb.EventList], error) {
 	return c.listEvents.CallUnary(ctx, req)
+}
+
+// ListChains calls starscope.grpc.EventService.ListChains.
+func (c *eventServiceClient) ListChains(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ChainList], error) {
+	return c.listChains.CallUnary(ctx, req)
 }
 
 // EventServiceHandler is an implementation of the starscope.grpc.EventService service.
 type EventServiceHandler interface {
-	EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.Event]) error
-	ListEvents(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsResponse], error)
+	EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.EventList]) error
+	ListEvents(context.Context, *connect_go.Request[eventpb.ListEventsRequest]) (*connect_go.Response[eventpb.EventList], error)
+	ListChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ChainList], error)
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -109,16 +124,25 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect_go.HandlerO
 		svc.ListEvents,
 		opts...,
 	))
+	mux.Handle(EventServiceListChainsProcedure, connect_go.NewUnaryHandler(
+		EventServiceListChainsProcedure,
+		svc.ListChains,
+		opts...,
+	))
 	return "/starscope.grpc.EventService/", mux
 }
 
 // UnimplementedEventServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedEventServiceHandler struct{}
 
-func (UnimplementedEventServiceHandler) EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.Event]) error {
+func (UnimplementedEventServiceHandler) EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.EventList]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.EventService.EventStream is not implemented"))
 }
 
-func (UnimplementedEventServiceHandler) ListEvents(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsResponse], error) {
+func (UnimplementedEventServiceHandler) ListEvents(context.Context, *connect_go.Request[eventpb.ListEventsRequest]) (*connect_go.Response[eventpb.EventList], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.EventService.ListEvents is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) ListChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ChainList], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.EventService.ListChains is not implemented"))
 }
