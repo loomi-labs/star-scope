@@ -72,7 +72,7 @@ services:
           - node.role != manager
 
   main-indexer:
-    image: ghcr.io/loomi-labs/star-scope-main-indexer:main
+    image: ghcr.io/loomi-labs/star-scope-base-indexer:main
     container_name: starscope_main_indexer
     working_dir: /app
     environment:
