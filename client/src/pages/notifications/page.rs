@@ -15,12 +15,14 @@ use web_sys::{Event, HtmlSelectElement};
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
 use crate::services::grpc;
+use crate::services::grpc::EventType;
+use crate::utils::url::{add_or_update_query_params, get_query_param};
 
 fn display_timestamp(option: Option<Timestamp>) -> String {
     if let Some(timestamp) = option {
         let datetime = Date::new(&JsValue::from_f64(timestamp.seconds as f64 * 1000.0));
         let asString = datetime.to_locale_string("en-US", &JsValue::from_str("date"));
-        return format!("{}", asString)
+        return format!("{}", asString);
     }
     "".to_string()
 }
@@ -66,6 +68,15 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
             .events
             .get()
             .iter()
+            .filter(|event| {
+                let event_type_filter = notifications_state.event_type_filter.get();
+                match event_type_filter.as_ref() {
+                    None => true,
+                    Some(filter) => {
+                        event.event_type() == *filter
+                    },
+                }
+            })
             .filter(|_event| {
                 let read_status_filter = notifications_state.read_status_filter.get();
                 match read_status_filter.as_ref() {
@@ -83,14 +94,14 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 }
             })
             .filter(|event| {
-            let time_filter = notifications_state.time_filter.get();
-            match time_filter.as_ref().as_time_range() {
-                None => true,
-                Some((start, end)) => {
-                    event.timestamp.clone().unwrap().seconds > start.timestamp() && event.timestamp.clone().unwrap().seconds <= end.timestamp()
+                let time_filter = notifications_state.time_filter.get();
+                match time_filter.as_ref().as_time_range() {
+                    None => true,
+                    Some((start, end)) => {
+                        event.timestamp.clone().unwrap().seconds > start.timestamp() && event.timestamp.clone().unwrap().seconds <= end.timestamp()
+                    }
                 }
-            }
-        })
+            })
             .take(10)
             .cloned()
             .collect::<Vec<_>>()
@@ -113,6 +124,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
 
 #[derive(Debug, Clone)]
 pub struct NotificationsState {
+    event_type_filter: RcSignal<Option<EventType>>,
     read_status_filter: RcSignal<ReadStatusFilter>,
     chain_filter: RcSignal<Option<grpc::ChainData>>,
     time_filter: RcSignal<TimeFilter>,
@@ -122,6 +134,7 @@ pub struct NotificationsState {
 impl NotificationsState {
     pub fn new() -> Self {
         Self {
+            event_type_filter: create_rc_signal(None),
             read_status_filter: create_rc_signal(ReadStatusFilter::default()),
             chain_filter: create_rc_signal(None),
             time_filter: create_rc_signal(TimeFilter::default()),
@@ -129,8 +142,24 @@ impl NotificationsState {
         }
     }
 
-    pub fn addChains(&self, chains: Vec<grpc::ChainData>) {
+    pub fn add_chains(&self, chains: Vec<grpc::ChainData>) {
         self.chains.set(chains);
+    }
+
+    pub fn apply_filter(&self, filter: Option<EventType>) {
+        self.event_type_filter.set(filter);
+    }
+
+    pub fn has_filter_applied(&self, filter: Option<EventType>) -> bool {
+        match filter {
+            None => self.event_type_filter.get().is_none(),
+            Some(et) => {
+                match self.event_type_filter.get().as_ref() {
+                    None => false,
+                    Some(f) => *f == et,
+                }
+            }
+        }
     }
 }
 
@@ -163,22 +192,13 @@ async fn query_chains(cx: Scope<'_>) {
         .map(|res| res.into_inner());
     if let Ok(response) = response {
         debug!("got {:?} chains", response.chains.len());
-        notifications_state.addChains(response.chains);
+        notifications_state.add_chains(response.chains);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
 }
 
-#[derive(Debug)]
-pub enum EventTypeFilter {
-    All,
-    Funding,
-    Staking,
-    Dexes,
-    Governance,
-}
-
-#[derive(Debug, Clone, Sequence)]
+#[derive(Debug, Clone, PartialEq, Sequence)]
 pub enum ReadStatusFilter {
     All,
     Read,
@@ -189,14 +209,31 @@ pub enum ReadStatusFilter {
 pub struct ReadStatusFilterError;
 
 impl ReadStatusFilter {
-    fn get_filter_from_hash() -> Self {
-        let hash = web_sys::window().unwrap().location().hash().unwrap();
+    const QUERY_PARAM: &'static str = "read_status";
 
-        match hash.as_str() {
-            "#/read" => ReadStatusFilter::Read,
-            "#/unread" => ReadStatusFilter::Unread,
-            _ => ReadStatusFilter::All,
+    fn get_filter_from_hash() -> Self {
+        match get_query_param(ReadStatusFilter::QUERY_PARAM) {
+            None => ReadStatusFilter::All,
+            Some(param) => {
+                match param.as_str() {
+                    "read" => ReadStatusFilter::Read,
+                    "unread" => ReadStatusFilter::Unread,
+                    _ => ReadStatusFilter::All,
+                }
+            }
         }
+    }
+
+    fn to_hash(&self) -> String {
+        if self == &ReadStatusFilter::All {
+            "".to_string()
+        } else {
+            self.to_string()
+        }
+    }
+
+    fn set_filter_as_query_param(&self) {
+        add_or_update_query_params(ReadStatusFilter::QUERY_PARAM, self.to_hash().as_str());
     }
 
     fn default() -> Self {
@@ -207,9 +244,9 @@ impl ReadStatusFilter {
 impl Display for ReadStatusFilter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadStatusFilter::All => write!(f, "All"),
-            ReadStatusFilter::Read => write!(f, "Read"),
-            ReadStatusFilter::Unread => write!(f, "Unread"),
+            ReadStatusFilter::All => write!(f, "all"),
+            ReadStatusFilter::Read => write!(f, "read"),
+            ReadStatusFilter::Unread => write!(f, "unread"),
         }
     }
 }
@@ -239,9 +276,11 @@ pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
 
     let handle_change = |event: Event| {
         let target: HtmlSelectElement = event.target().unwrap().unchecked_into();
+        let filter = ReadStatusFilter::from_str(&target.value()).unwrap();
         notifications_state
             .read_status_filter
-            .set(ReadStatusFilter::from_str(&target.value()).unwrap());
+            .set(filter.clone());
+        // filter.set_filter_as_query_param();
     };
 
     let options = View::new_fragment(
@@ -335,7 +374,7 @@ pub fn ChainFilterDropdown<G: Html>(cx: Scope) -> View<G> {
 }
 
 
-#[derive(Debug, Clone, Sequence)]
+#[derive(Debug, Clone, PartialEq, Sequence)]
 pub enum TimeFilter {
     All,
     Today,
@@ -349,19 +388,31 @@ pub enum TimeFilter {
 pub struct TimeFilterError;
 
 impl TimeFilter {
-    // fn get_filter_from_hash() -> Self {
-    //     let hash = web_sys::window().unwrap().location().hash().unwrap();
-    //
-    //     match hash.as_str() {
-    //         "#/read" => TimeFilter::READ,
-    //         "#/unread" => TimeFilter::UNREAD,
-    //         _ => TimeFilter::ALL,
-    //     }
-    // }
+    const QUERY_PARAM: &'static str = "time_filter";
+
+    fn get_filter_from_hash() -> Self {
+        match get_query_param(TimeFilter::QUERY_PARAM) {
+            None => TimeFilter::All,
+            Some(param) => {
+                TimeFilter::from_str(param.as_str()).unwrap_or_else(|_| TimeFilter::All)
+            }
+        }
+    }
+
+    fn to_hash(&self) -> String {
+        if self == &TimeFilter::All {
+            "".to_string()
+        } else {
+            self.to_string()
+        }
+    }
+
+    fn set_filter_as_query_param(&self) {
+        add_or_update_query_params(TimeFilter::QUERY_PARAM, self.to_hash().as_str());
+    }
 
     fn default() -> Self {
-        // TimeFilter::get_filter_from_hash()
-        TimeFilter::All
+        TimeFilter::get_filter_from_hash()
     }
 
     fn as_time_range(&self) -> Option<(NaiveDateTime, NaiveDateTime)> {
@@ -383,12 +434,12 @@ impl TimeFilter {
 impl Display for TimeFilter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TimeFilter::All => write!(f, "All"),
-            TimeFilter::Today => write!(f, "Today"),
-            TimeFilter::Yesterday => write!(f, "Yesterday"),
-            TimeFilter::OneWeek => write!(f, "One Week"),
-            TimeFilter::OneMonth => write!(f, "One Month"),
-            TimeFilter::OneYear => write!(f, "One Year"),
+            TimeFilter::All => write!(f, "all"),
+            TimeFilter::Today => write!(f, "today"),
+            TimeFilter::Yesterday => write!(f, "yesterday"),
+            TimeFilter::OneWeek => write!(f, "one week"),
+            TimeFilter::OneMonth => write!(f, "one month"),
+            TimeFilter::OneYear => write!(f, "one year"),
         }
     }
 }
@@ -401,9 +452,9 @@ impl FromStr for TimeFilter {
             "all" => Ok(TimeFilter::All),
             "today" => Ok(TimeFilter::Today),
             "yesterday" => Ok(TimeFilter::Yesterday),
-            "this_week" => Ok(TimeFilter::OneWeek),
-            "this_month" => Ok(TimeFilter::OneMonth),
-            "this_year" => Ok(TimeFilter::OneYear),
+            "one week" => Ok(TimeFilter::OneWeek),
+            "one month" => Ok(TimeFilter::OneMonth),
+            "one year" => Ok(TimeFilter::OneYear),
             _ => Err(TimeFilterError),
         }
     }
@@ -416,9 +467,11 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
 
     let handle_change = |event: Event| {
         let target: HtmlSelectElement = event.target().unwrap().unchecked_into();
+        let filter = TimeFilter::from_str(&target.value()).unwrap();
         notifications_state
             .time_filter
             .set(TimeFilter::from_str(&target.value()).unwrap());
+        // filter.set_filter_as_query_param();
     };
 
     let options = View::new_fragment(
@@ -444,16 +497,13 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
 }
 
 
-#[component(inline_props)]
-pub async fn Notifications<G: Html>(cx: Scope<'_>, filter: EventTypeFilter) -> View<G> {
-    provide_context(cx, NotificationsState::new());
+#[component]
+pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
 
     spawn_local_scoped(cx.to_owned(), async move {
         query_events(cx.to_owned()).await;
         query_chains(cx.to_owned()).await;
     });
-
-    debug!("filter: {:?}", filter);
 
     view! {cx,
         div(class="flex flex-col") {
