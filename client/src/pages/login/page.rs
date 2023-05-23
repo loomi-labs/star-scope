@@ -1,3 +1,4 @@
+use std::error::Error;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use sycamore::futures::spawn_local_scoped;
@@ -18,6 +19,11 @@ extern "C" {
     async fn keplr_login() -> JsValue;
 }
 
+#[wasm_bindgen(module = "/src/pages/login/wallet_connect_login.js")]
+extern "C" {
+    fn wallet_connect_login(url: String) -> JsValue;
+}
+
 async fn keplr_login_wrapper() -> Result<String, String> {
     let login_result = keplr_login().await;
     let js_result: JsResult = serde_wasm_bindgen::from_value(login_result).unwrap();
@@ -25,6 +31,18 @@ async fn keplr_login_wrapper() -> Result<String, String> {
         return Err(js_result.error);
     } else if js_result.result.is_empty() {
         return Err("Keplr login failed".to_string());
+    }
+    Ok(js_result.result)
+}
+
+fn wallet_connect_login_wrapper() -> Result<String, String> {
+    let login_result = wallet_connect_login("localhost:8080".to_string());
+    debug!("wallet_connect_login_wrapper: login_result: {:?}", login_result);
+    let js_result = serde_wasm_bindgen::from_value(login_result).unwrap_or_else(|_| JsResult { result: "".to_string(), error: "Wallet connect login failed".to_string() });
+    if !js_result.error.is_empty() {
+        return Err(js_result.error);
+    } else if js_result.result.is_empty() {
+        return Err("Wallet Connect login failed".to_string());
     }
     Ok(js_result.result)
 }
@@ -44,11 +62,11 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
             div(class="mt-8 sm:mx-auto sm:w-full sm:max-w-md") {
                 div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow sm:rounded-lg sm:px-10") {
                     div(class="space-y-6") {
-                        div { /* Submit button */
+                        div {
                             button(on:click=move |_| {
                                 spawn_local_scoped(cx, async move {
                                     if *app_state.auth_state.get() == AuthState::LoggedOut {
-                                        debug!("Attempt to login");
+                                        debug!("Attempt to login with keplr");
                                         match keplr_login_wrapper().await {
                                             Ok(result) => {
                                                 let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
@@ -67,6 +85,35 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                                 });
                             }, class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") {
                                 "Keplr Login"
+                            }
+                        }
+                    }
+                }
+                div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow sm:rounded-lg sm:px-10") {
+                    div(class="space-y-6") {
+                        div {
+                            button(on:click=move |_| {
+                                spawn_local_scoped(cx, async move {
+                                    if *app_state.auth_state.get() == AuthState::LoggedOut {
+                                        debug!("Attempt to login with wallet connect");
+                                        match wallet_connect_login_wrapper() {
+                                            Ok(result) => {
+                                                let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
+                                                match response {
+                                                    Ok(_) => {
+                                                        let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
+                                                        *auth_state = AuthState::LoggedIn;
+                                                        create_message(cx, "Login success", format!("Logged in successfully"), InfoLevel::Info);
+                                                    }
+                                                    Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
+                                                }
+                                            }
+                                            Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
+                                        }
+                                    };
+                                });
+                            }, class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") {
+                                "Wallet Connect Login"
                             }
                         }
                     }
