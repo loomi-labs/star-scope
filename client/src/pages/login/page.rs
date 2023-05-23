@@ -35,7 +35,7 @@ async fn keplr_login_wrapper() -> Result<String, String> {
 }
 
 fn wallet_connect_login_wrapper() -> Result<String, String> {
-    let login_result = wallet_connect_login("localhost:8080".to_string());
+    let login_result = wallet_connect_login("https://star-scope.decrypto.online".to_string());
     debug!("wallet_connect_login_wrapper: login_result: {:?}", login_result);
     let js_result = serde_wasm_bindgen::from_value(login_result).unwrap_or_else(|_| JsResult { result: "".to_string(), error: "Wallet connect login failed".to_string() });
     if !js_result.error.is_empty() {
