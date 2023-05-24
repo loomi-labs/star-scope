@@ -47,6 +47,7 @@ func AccessibleRoles() map[string][]Role {
 		authService + "RefreshAccessToken":      {Unauthenticated, User, Admin},
 		userService + "GetUser":                 {User, Admin},
 		userService + "ListChannels":            {User, Admin},
+		userService + "DeleteAccount":           {User, Admin},
 		eventService + "EventStream":            {User, Admin},
 		eventService + "ListEvents":             {User, Admin},
 		eventService + "ListChains":             {User, Admin},

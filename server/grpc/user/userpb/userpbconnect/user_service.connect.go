@@ -36,11 +36,15 @@ const (
 const (
 	// UserServiceGetUserProcedure is the fully-qualified name of the UserService's GetUser RPC.
 	UserServiceGetUserProcedure = "/starscope.grpc.UserService/GetUser"
+	// UserServiceDeleteAccountProcedure is the fully-qualified name of the UserService's DeleteAccount
+	// RPC.
+	UserServiceDeleteAccountProcedure = "/starscope.grpc.UserService/DeleteAccount"
 )
 
 // UserServiceClient is a client for the starscope.grpc.UserService service.
 type UserServiceClient interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
+	DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error)
 }
 
 // NewUserServiceClient constructs a client for the starscope.grpc.UserService service. By default,
@@ -58,12 +62,18 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+UserServiceGetUserProcedure,
 			opts...,
 		),
+		deleteAccount: connect_go.NewClient[emptypb.Empty, emptypb.Empty](
+			httpClient,
+			baseURL+UserServiceDeleteAccountProcedure,
+			opts...,
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getUser *connect_go.Client[emptypb.Empty, userpb.User]
+	getUser       *connect_go.Client[emptypb.Empty, userpb.User]
+	deleteAccount *connect_go.Client[emptypb.Empty, emptypb.Empty]
 }
 
 // GetUser calls starscope.grpc.UserService.GetUser.
@@ -71,9 +81,15 @@ func (c *userServiceClient) GetUser(ctx context.Context, req *connect_go.Request
 	return c.getUser.CallUnary(ctx, req)
 }
 
+// DeleteAccount calls starscope.grpc.UserService.DeleteAccount.
+func (c *userServiceClient) DeleteAccount(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.deleteAccount.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the starscope.grpc.UserService service.
 type UserServiceHandler interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
+	DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -88,6 +104,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetUser,
 		opts...,
 	))
+	mux.Handle(UserServiceDeleteAccountProcedure, connect_go.NewUnaryHandler(
+		UserServiceDeleteAccountProcedure,
+		svc.DeleteAccount,
+		opts...,
+	))
 	return "/starscope.grpc.UserService/", mux
 }
 
@@ -96,4 +117,8 @@ type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.GetUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.DeleteAccount is not implemented"))
 }

@@ -77,3 +77,9 @@ func (m *UserManager) CreateOrUpdate(ctx context.Context, userName string, walle
 	}
 	return entUser
 }
+
+func (m *UserManager) Delete(ctx context.Context, u *ent.User) error {
+	return m.client.User.
+		DeleteOne(u).
+		Exec(ctx)
+}

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+use log::debug;
 use sycamore::prelude::*;
 
 use crate::{AppRoutes, AppState};
@@ -52,17 +54,26 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
     )
 }
 
-fn highlight_active_route(event_type: Option<EventType>, notifications_state: &NotificationsState) -> String {
-    if notifications_state.has_filter_applied(event_type) {
-        "text-primary".to_string()
-    } else {
-        "".to_string()
+fn highlight_active_notification_route(event_type: Option<EventType>, notifications_state: &NotificationsState, active_route: &AppRoutes) -> String {
+    if active_route == &AppRoutes::Notifications {
+        if notifications_state.has_filter_applied(event_type) {
+            return "text-primary".to_string();
+        }
     }
+    "".to_string()
+}
+
+fn highlight_active_route(active_route: &AppRoutes, route: &AppRoutes) -> String {
+    if active_route == route {
+        return "text-primary".to_string();
+    }
+    "".to_string()
 }
 
 #[component]
 pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
+    let app_state = use_context::<AppState>(cx);
 
     let button_class = "relative flex flex-row items-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
     let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
@@ -72,10 +83,9 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
         notifications_state.apply_filter(event_type);
         safe_navigate(cx, AppRoutes::Notifications);
     };
-
     view! { cx,
-        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 h-full text-white transition-all duration-300 border-none z-10 sidebar") {
-            div(class="overflow-y-auto overflow-x-hidden flex flex-col justify-between flex-grow") {
+        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 h-full text-white transition-all duration-300 border-none z-10") {
+            div(class="overflow-y-auto overflow-x-hidden flex flex-col") {
                 ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
                         a(href=AppRoutes::Notifications, class=button_class) {
@@ -86,7 +96,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                         }
                         ul() {
                             li() {
-                                button(on:click=move |_| handle_click(cx, None), class=format!("{} {}", button_class, highlight_active_route(None, notifications_state))) {
+                                button(on:click=move |_| handle_click(cx, None), class=format!("{} {}", button_class, highlight_active_notification_route(None, notifications_state, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[lucide--copy-check]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -94,7 +104,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Funding)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Funding), notifications_state))) {
+                                button(on:click=move |_| handle_click(cx, Some(EventType::Funding)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Funding), notifications_state, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[ep--coin]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -102,7 +112,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Staking)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Staking), notifications_state))) {
+                                button(on:click=move |_| handle_click(cx, Some(EventType::Staking)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Staking), notifications_state, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[arcticons--coinstats]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -110,7 +120,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Dex)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Dex), notifications_state))) {
+                                button(on:click=move |_| handle_click(cx, Some(EventType::Dex)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Dex), notifications_state, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[fluent--money-24-regular]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
@@ -118,13 +128,26 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Governance)), class=format!("{} {}", button_class, highlight_active_route(Some(EventType::Governance), notifications_state))) {
+                                button(on:click=move |_| handle_click(cx, Some(EventType::Governance)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Governance), notifications_state, app_state.route.get().as_ref()))) {
                                     span(class=format!("{} icon-[icon-park-outline--palace]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Governance" }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+            div(class="flex flex-col", style="height: calc(100vh - 460px)")
+            div(class="overflow-y-auto overflow-x-hidden flex flex-col pb-10") {
+                ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
+                    li() {
+                        a(href=AppRoutes::Settings, class=format!("{} {}", button_class, highlight_active_route(&app_state.route.get().as_ref(), &AppRoutes::Settings))) {
+                            span(class=format!("{} icon-[streamline--interface-setting-cog-work-loading-cog-gear-settings-machine]", span_icon_class)) {
+                                div(class="w-16 h-16")
+                            }
+                            span(class=span_text_class) { "Settings" }
                         }
                     }
                 }

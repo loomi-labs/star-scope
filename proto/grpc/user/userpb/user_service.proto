@@ -9,6 +9,7 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/user/userpb";
 
 service UserService {
   rpc GetUser (google.protobuf.Empty) returns (User) {}
+  rpc DeleteAccount (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
 message User {

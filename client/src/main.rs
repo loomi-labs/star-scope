@@ -16,6 +16,7 @@ use crate::config::keys;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
+use crate::pages::settings::page::Settings;
 use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::services::auth::AuthService;
 use crate::services::grpc::{Event, GrpcClient, User};
@@ -34,6 +35,8 @@ pub enum AppRoutes {
     Notifications,
     #[to("/communication")]
     Communication,
+    #[to("/settings")]
+    Settings,
     #[to("/login")]
     Login,
     #[not_found]
@@ -46,6 +49,7 @@ impl ToString for AppRoutes {
             AppRoutes::Home => "/".to_string(),
             AppRoutes::Notifications => "/notifications".to_string(),
             AppRoutes::Communication => "/communication".to_string(),
+            AppRoutes::Settings => "/settings".to_string(),
             AppRoutes::Login => "/login".to_string(),
             AppRoutes::NotFound => "/404".to_string(),
         }
@@ -234,6 +238,7 @@ fn has_access_permission(auth_service: &AuthService, route: &AppRoutes) -> bool 
         AppRoutes::Home => true,
         AppRoutes::Notifications => is_user || is_admin,
         AppRoutes::Communication => is_user || is_admin,
+        AppRoutes::Settings => is_user || is_admin,
         AppRoutes::Login => true,
         AppRoutes::NotFound => true,
     }
@@ -249,6 +254,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
             AppRoutes::Home => view!(cx, LayoutWrapper{Home {}}),
             AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
+            AppRoutes::Settings => view!(cx, LayoutWrapper{Settings {}}),
             AppRoutes::Login => Login(cx),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
         }

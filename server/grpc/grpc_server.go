@@ -69,7 +69,7 @@ func (s GRPCServer) Run() {
 		interceptors,
 	))
 	mux.Handle(userpbconnect.NewUserServiceHandler(
-		user.NewUserServiceHandler(),
+		user.NewUserServiceHandler(s.dbManagers),
 		interceptors,
 	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
