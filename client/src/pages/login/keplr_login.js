@@ -1,7 +1,7 @@
 export async function keplr_login() {
     try {
         if (window.keplr) {
-            const CHAIN_ID = "osmosis-1"
+            const CHAIN_ID = "cosmoshub-4";
             await window.keplr.enable(CHAIN_ID);
 
             const offlineSigner = await window.getOfflineSigner(CHAIN_ID);

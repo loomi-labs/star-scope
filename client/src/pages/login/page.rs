@@ -5,7 +5,7 @@ use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
 
 use crate::{AppState, AuthState, InfoLevel, Services};
-use crate::components::messages::create_message;
+use crate::components::messages::{create_error_msg_from_status, create_message};
 
 #[derive(Serialize, Deserialize)]
 pub struct JsResult {
@@ -75,7 +75,6 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                         button(on:click=move |_| {
                             spawn_local_scoped(cx, async move {
                                 if *app_state.auth_state.get() == AuthState::LoggedOut {
-                                    debug!("Attempt to login with keplr");
                                     match keplr_login_wrapper().await {
                                         Ok(result) => {
                                             let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
@@ -85,7 +84,7 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                                                     *auth_state = AuthState::LoggedIn;
                                                     create_message(cx, "Login success", format!("Logged in successfully"), InfoLevel::Info);
                                                 }
-                                                Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
+                                                Err(status) => create_error_msg_from_status(cx, status),
                                             }
                                         }
                                         Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),

@@ -1,7 +1,7 @@
 use std::error::Error;
 
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use gloo_storage::{LocalStorage, Storage};
 use grpc_web_client::Client;
 use log::debug;
@@ -10,8 +10,8 @@ use simple_error::bail;
 use tonic::Status;
 
 use crate::config::keys;
-use crate::services::grpc::auth_service_client::AuthServiceClient;
 use crate::services::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
+use crate::services::grpc::auth_service_client::AuthServiceClient;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum Role {
@@ -21,8 +21,8 @@ enum Role {
 
 impl<'de> Deserialize<'de> for Role {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
+        where
+            D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
 
@@ -36,8 +36,8 @@ impl<'de> Deserialize<'de> for Role {
 
 impl Serialize for Role {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
+        where
+            S: serde::Serializer,
     {
         match self {
             Role::Admin => serializer.serialize_str("admin"),
@@ -63,7 +63,7 @@ impl Claims {
 
     fn is_about_to_expire(&self) -> bool {
         let now = (js_sys::Date::now() / 1000.0) as usize;
-        now > self.exp - IS_ABOUT_TO_EXPIRE
+        now > self.clone().exp - IS_ABOUT_TO_EXPIRE
     }
 }
 
@@ -165,15 +165,19 @@ impl AuthService {
         }
     }
 
-    pub async fn login(&mut self, keplr_response: String) -> Result<LoginResponse, Status> {
+    pub async fn login(&mut self, keplr_response: String) -> Result<(), Status> {
         let request = KeplrLoginRequest { keplr_response };
         let client = Client::new(self.endpoint_url.clone());
         let response = AuthServiceClient::new(client)
             .keplr_login(request)
-            .await
-            .map(|res| res.into_inner());
-        self.save_login_response(response.clone().unwrap());
-        response
+            .await;
+        match response {
+            Ok(result) => {
+                self.save_login_response(result.into_inner());
+                Ok(())
+            }
+            Err(msg) => Err(msg),
+        }
     }
 
     pub fn logout(&self) {

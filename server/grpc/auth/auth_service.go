@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bufbuild/connect-go"
-	"github.com/cosmos/btcutil/bech32"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb"
@@ -116,21 +116,17 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 	if err != nil && ent.IsNotFound(err) {
 		user = s.userManager.CreateOrUpdate(ctx, address, address)
 
-		hrp, _, err := bech32.Decode(address, 1023)
-		if err != nil {
-			log.Sugar.Errorf("error while decoding bech32: %v", err)
-			return nil, ErrorLoginFailed
-		}
-
-		chain, err := s.chainManager.QueryByBech32Prefix(ctx, hrp)
-		if err != nil {
-			log.Sugar.Errorf("error while querying chain by bech32 prefix: %v", err)
-			return nil, ErrorLoginFailed
-		}
-		_, err = s.eventListenerManager.Create(ctx, user, chain, address)
-		if err != nil {
-			log.Sugar.Errorf("error while creating event listener: %v", err)
-			return nil, ErrorLoginFailed
+		for _, chain := range s.chainManager.QueryEnabled(ctx) {
+			newAddress, err := common.ConvertWithOtherPrefix(address, chain.Bech32Prefix)
+			if err != nil {
+				log.Sugar.Errorf("error while converting address: %v", err)
+				return nil, ErrorLoginFailed
+			}
+			_, err = s.eventListenerManager.Create(ctx, user, chain, newAddress)
+			if err != nil {
+				log.Sugar.Errorf("error while creating event listener: %v", err)
+				return nil, ErrorLoginFailed
+			}
 		}
 	} else if err != nil {
 		log.Sugar.Errorf("error while querying user by wallet address: %v", err)
