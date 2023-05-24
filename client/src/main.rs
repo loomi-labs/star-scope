@@ -161,6 +161,7 @@ impl AppState {
 
     pub fn logout(&self) {
         self.auth_service.logout();
+        self.user.set(None);
         self.auth_state.set(AuthState::LoggedOut);
     }
 
@@ -200,6 +201,10 @@ impl EventsState {
         Self {
             events: create_rc_signal(vec![]),
         }
+    }
+
+    pub fn reset(&self) {
+        self.events.set(vec![]);
     }
 
     pub fn addEvents(&self, new_events: Vec<Event>) {
@@ -333,6 +338,10 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                         match auth_state.as_ref() {
                             AuthState::LoggedOut => navigate(AppRoutes::Login.to_string().as_str()),
                             AuthState::LoggedIn => {
+                                let event_state = use_context::<EventsState>(cx);
+                                let notifications_state = use_context::<NotificationsState>(cx);
+                                event_state.reset();
+                                notifications_state.reset();
                                 spawn_local_scoped(cx, async move {
                                     query_user_info(cx).await;
                                     subscribe_to_events(cx.to_owned());

@@ -142,6 +142,13 @@ impl NotificationsState {
         }
     }
 
+    pub fn reset(&self) {
+        self.event_type_filter.set(None);
+        self.read_status_filter.set(ReadStatusFilter::default());
+        self.chain_filter.set(None);
+        self.time_filter.set(TimeFilter::default());
+    }
+
     pub fn add_chains(&self, chains: Vec<grpc::ChainData>) {
         self.chains.set(chains);
     }
