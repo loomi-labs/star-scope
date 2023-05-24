@@ -198,7 +198,6 @@ async fn query_chains(cx: Scope<'_>) {
         .await
         .map(|res| res.into_inner());
     if let Ok(response) = response {
-        debug!("got {:?} chains", response.chains.len());
         notifications_state.add_chains(response.chains);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
