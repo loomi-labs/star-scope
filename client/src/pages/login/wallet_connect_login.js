@@ -31,3 +31,7 @@ export function wallet_connect_login(uri) {
         return {result: "", error: error.toString()}
     }
 }
+
+export function isMobile() {
+    return walletConnect.isMobile()
+}
