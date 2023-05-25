@@ -8,39 +8,40 @@ import (
 	"github.com/loomi-labs/star-scope/queryevent"
 )
 
-// Proposal holds the schema definition for the Proposal entity.
-type Proposal struct {
+// ContractProposal holds the schema definition for the ContractProposal entity.
+type ContractProposal struct {
 	ent.Schema
 }
 
-func (Proposal) Mixin() []ent.Mixin {
+func (ContractProposal) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		mixin.Time{},
 	}
 }
 
-// Fields of the Proposal.
-func (Proposal) Fields() []ent.Field {
+// Fields of the ContractProposal.
+func (ContractProposal) Fields() []ent.Field {
 	var statusValues []string
-	for _, status := range queryevent.ProposalStatus_name {
+	for _, status := range queryevent.ContractProposalStatus_name {
 		statusValues = append(statusValues, status)
 	}
 	return []ent.Field{
 		field.Uint64("proposal_id"),
 		field.String("title"),
 		field.String("description"),
-		field.Time("voting_start_time"),
+		field.Time("first_seen_time"),
 		field.Time("voting_end_time"),
+		field.String("contract_address"),
 		field.Enum("status").
 			Values(statusValues...),
 	}
 }
 
-// Edges of the Proposal.
-func (Proposal) Edges() []ent.Edge {
+// Edges of the ContractProposal.
+func (ContractProposal) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("chain", Chain.Type).
-			Ref("proposals").
+			Ref("contract_proposals").
 			Unique(),
 	}
 }

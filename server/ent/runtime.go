@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
@@ -52,6 +53,21 @@ func init() {
 	chainDescIsEnabled := chainFields[10].Descriptor()
 	// chain.DefaultIsEnabled holds the default value on creation for the is_enabled field.
 	chain.DefaultIsEnabled = chainDescIsEnabled.Default.(bool)
+	contractproposalMixin := schema.ContractProposal{}.Mixin()
+	contractproposalMixinFields0 := contractproposalMixin[0].Fields()
+	_ = contractproposalMixinFields0
+	contractproposalFields := schema.ContractProposal{}.Fields()
+	_ = contractproposalFields
+	// contractproposalDescCreateTime is the schema descriptor for create_time field.
+	contractproposalDescCreateTime := contractproposalMixinFields0[0].Descriptor()
+	// contractproposal.DefaultCreateTime holds the default value on creation for the create_time field.
+	contractproposal.DefaultCreateTime = contractproposalDescCreateTime.Default.(func() time.Time)
+	// contractproposalDescUpdateTime is the schema descriptor for update_time field.
+	contractproposalDescUpdateTime := contractproposalMixinFields0[1].Descriptor()
+	// contractproposal.DefaultUpdateTime holds the default value on creation for the update_time field.
+	contractproposal.DefaultUpdateTime = contractproposalDescUpdateTime.Default.(func() time.Time)
+	// contractproposal.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	contractproposal.UpdateDefaultUpdateTime = contractproposalDescUpdateTime.UpdateDefault.(func() time.Time)
 	eventMixin := schema.Event{}.Mixin()
 	eventMixinFields0 := eventMixin[0].Fields()
 	_ = eventMixinFields0

@@ -44,6 +44,8 @@ const (
 	EdgeEventListeners = "event_listeners"
 	// EdgeProposals holds the string denoting the proposals edge name in mutations.
 	EdgeProposals = "proposals"
+	// EdgeContractProposals holds the string denoting the contract_proposals edge name in mutations.
+	EdgeContractProposals = "contract_proposals"
 	// Table holds the table name of the chain in the database.
 	Table = "chains"
 	// EventListenersTable is the table that holds the event_listeners relation/edge.
@@ -60,6 +62,13 @@ const (
 	ProposalsInverseTable = "proposals"
 	// ProposalsColumn is the table column denoting the proposals relation/edge.
 	ProposalsColumn = "chain_proposals"
+	// ContractProposalsTable is the table that holds the contract_proposals relation/edge.
+	ContractProposalsTable = "contract_proposals"
+	// ContractProposalsInverseTable is the table name for the ContractProposal entity.
+	// It exists in this package in order to avoid circular dependency with the "contractproposal" package.
+	ContractProposalsInverseTable = "contract_proposals"
+	// ContractProposalsColumn is the table column denoting the contract_proposals relation/edge.
+	ContractProposalsColumn = "chain_contract_proposals"
 )
 
 // Columns holds all SQL columns for chain fields.
@@ -209,6 +218,20 @@ func ByProposals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newProposalsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByContractProposalsCount orders the results by contract_proposals count.
+func ByContractProposalsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newContractProposalsStep(), opts...)
+	}
+}
+
+// ByContractProposals orders the results by contract_proposals terms.
+func ByContractProposals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newContractProposalsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEventListenersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -221,5 +244,12 @@ func newProposalsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProposalsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ProposalsTable, ProposalsColumn),
+	)
+}
+func newContractProposalsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ContractProposalsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ContractProposalsTable, ContractProposalsColumn),
 	)
 }

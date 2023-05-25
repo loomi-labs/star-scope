@@ -13,8 +13,8 @@ import (
 	"github.com/loomi-labs/star-scope/indexers/base/types"
 	"github.com/robfig/cron/v3"
 	"github.com/shifty11/go-logger/log"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"strings"
 )
 
 const urlProposals = "%v/cosmos/gov/v1beta1/proposals"
@@ -58,12 +58,19 @@ func (c *GovernanceCrawler) createEvent(chain *indexerpb.ChainInfo, prop types.P
 
 func (c *GovernanceCrawler) fetchProposals() {
 	log.Sugar.Debug("Fetching proposals")
-	stati, err := c.grpcClient.GetGovernanceProposalStati(context.Background(), connect.NewRequest(&emptypb.Empty{}))
+	stati, err := c.grpcClient.GetGovernanceProposalStati(
+		context.Background(),
+		connect.NewRequest(&indexerpb.GetGovernanceProposalStatiRequest{}),
+	)
 	if err != nil {
 		log.Sugar.Errorf("Error getting indexing chains: %v", err)
 	}
 	var pbEvents [][]byte
 	for _, chain := range stati.Msg.GetChains() {
+		if strings.Contains(chain.Path, "neutron") {
+			continue
+		}
+
 		url := fmt.Sprintf(urlProposals+"?pagination.reverse=true&limit=100", chain.RpcUrl)
 
 		var resp types.ProposalsResponse
@@ -74,7 +81,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 		}
 		for _, prop := range resp.Proposals {
 			var found = false
-			for _, currentProp := range chain.Proposals {
+			for _, currentProp := range chain.GetProposals() {
 				if uint64(prop.ProposalId) == currentProp.GetProposalId() {
 					if prop.Status != types.ProposalStatus(currentProp.GetStatus().Number()) {
 						log.Sugar.Debugf("Proposal %v changed status from %v to %v", prop.ProposalId, currentProp.GetStatus().Number(), prop.Status)

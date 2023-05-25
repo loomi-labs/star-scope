@@ -71,6 +71,27 @@ func queryEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 			Timestamp:   queryEvent.Timestamp,
 			EventType:   eventpb.EventType_GOVERNANCE,
 		}, nil
+	case *queryevent.QueryEvent_ContractGovernanceProposal:
+		var statusText = "Proposal %v"
+		switch queryEvent.GetContractGovernanceProposal().GetProposalStatus() {
+		case queryevent.ContractProposalStatus_OPEN:
+			statusText = "New Proposal - %v"
+		case queryevent.ContractProposalStatus_PASSED:
+			statusText = "Proposal %v Passed"
+		case queryevent.ContractProposalStatus_REJECTED:
+			statusText = "Proposal %v Rejected"
+		case queryevent.ContractProposalStatus_EXECUTION_FAILED:
+			statusText = "Proposal %v Failed"
+		case queryevent.ContractProposalStatus_CLOSED:
+			statusText = "Proposal %v Closed"
+		}
+		return queryEvent.ChainId, &eventpb.Event{
+			Title:       fmt.Sprintf(statusText, queryEvent.GetContractGovernanceProposal().GetProposalId()),
+			Subtitle:    queryEvent.GetContractGovernanceProposal().GetTitle(),
+			Description: queryEvent.GetContractGovernanceProposal().GetDescription(),
+			Timestamp:   queryEvent.Timestamp,
+			EventType:   eventpb.EventType_GOVERNANCE,
+		}, nil
 	}
 	return 0, nil, errors.New(fmt.Sprintf("No type defined for event %v", queryEvent.GetEvent()))
 }

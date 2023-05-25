@@ -54,7 +54,7 @@ const (
 type IndexerServiceClient interface {
 	GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error)
 	UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[emptypb.Empty], error)
-	GetGovernanceProposalStati(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error)
+	GetGovernanceProposalStati(context.Context, *connect_go.Request[indexerpb.GetGovernanceProposalStatiRequest]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error)
 }
 
 // NewIndexerServiceClient constructs a client for the starscope.grpc.IndexerService service. By
@@ -77,7 +77,7 @@ func NewIndexerServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+IndexerServiceUpdateIndexingChainsProcedure,
 			opts...,
 		),
-		getGovernanceProposalStati: connect_go.NewClient[emptypb.Empty, indexerpb.GetGovernanceProposalStatiResponse](
+		getGovernanceProposalStati: connect_go.NewClient[indexerpb.GetGovernanceProposalStatiRequest, indexerpb.GetGovernanceProposalStatiResponse](
 			httpClient,
 			baseURL+IndexerServiceGetGovernanceProposalStatiProcedure,
 			opts...,
@@ -89,7 +89,7 @@ func NewIndexerServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 type indexerServiceClient struct {
 	getIndexingChains          *connect_go.Client[emptypb.Empty, indexerpb.GetIndexingChainsResponse]
 	updateIndexingChains       *connect_go.Client[indexerpb.UpdateIndexingChainsRequest, emptypb.Empty]
-	getGovernanceProposalStati *connect_go.Client[emptypb.Empty, indexerpb.GetGovernanceProposalStatiResponse]
+	getGovernanceProposalStati *connect_go.Client[indexerpb.GetGovernanceProposalStatiRequest, indexerpb.GetGovernanceProposalStatiResponse]
 }
 
 // GetIndexingChains calls starscope.grpc.IndexerService.GetIndexingChains.
@@ -103,7 +103,7 @@ func (c *indexerServiceClient) UpdateIndexingChains(ctx context.Context, req *co
 }
 
 // GetGovernanceProposalStati calls starscope.grpc.IndexerService.GetGovernanceProposalStati.
-func (c *indexerServiceClient) GetGovernanceProposalStati(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
+func (c *indexerServiceClient) GetGovernanceProposalStati(ctx context.Context, req *connect_go.Request[indexerpb.GetGovernanceProposalStatiRequest]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
 	return c.getGovernanceProposalStati.CallUnary(ctx, req)
 }
 
@@ -111,7 +111,7 @@ func (c *indexerServiceClient) GetGovernanceProposalStati(ctx context.Context, r
 type IndexerServiceHandler interface {
 	GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error)
 	UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[emptypb.Empty], error)
-	GetGovernanceProposalStati(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error)
+	GetGovernanceProposalStati(context.Context, *connect_go.Request[indexerpb.GetGovernanceProposalStatiRequest]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error)
 }
 
 // NewIndexerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -150,7 +150,7 @@ func (UnimplementedIndexerServiceHandler) UpdateIndexingChains(context.Context, 
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.UpdateIndexingChains is not implemented"))
 }
 
-func (UnimplementedIndexerServiceHandler) GetGovernanceProposalStati(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
+func (UnimplementedIndexerServiceHandler) GetGovernanceProposalStati(context.Context, *connect_go.Request[indexerpb.GetGovernanceProposalStatiRequest]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.GetGovernanceProposalStati is not implemented"))
 }
 

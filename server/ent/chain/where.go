@@ -826,6 +826,29 @@ func HasProposalsWith(preds ...predicate.Proposal) predicate.Chain {
 	})
 }
 
+// HasContractProposals applies the HasEdge predicate on the "contract_proposals" edge.
+func HasContractProposals() predicate.Chain {
+	return predicate.Chain(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ContractProposalsTable, ContractProposalsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasContractProposalsWith applies the HasEdge predicate on the "contract_proposals" edge with a given conditions (other predicates).
+func HasContractProposalsWith(preds ...predicate.ContractProposal) predicate.Chain {
+	return predicate.Chain(func(s *sql.Selector) {
+		step := newContractProposalsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Chain) predicate.Chain {
 	return predicate.Chain(func(s *sql.Selector) {

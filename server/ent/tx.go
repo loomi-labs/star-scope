@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Chain is the client for interacting with the Chain builders.
 	Chain *ChainClient
+	// ContractProposal is the client for interacting with the ContractProposal builders.
+	ContractProposal *ContractProposalClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// EventListener is the client for interacting with the EventListener builders.
@@ -154,6 +156,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Chain = NewChainClient(tx.config)
+	tx.ContractProposal = NewContractProposalClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.EventListener = NewEventListenerClient(tx.config)
 	tx.Proposal = NewProposalClient(tx.config)

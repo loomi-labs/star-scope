@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/queryevent"
 	"github.com/loomi-labs/star-scope/types"
@@ -59,6 +60,12 @@ func (m *ChainManager) QueryById(background context.Context, id int) (*ent.Chain
 func (m *ChainManager) QueryProposals(ctx context.Context, entChain *ent.Chain) []*ent.Proposal {
 	return entChain.
 		QueryProposals().
+		AllX(ctx)
+}
+
+func (m *ChainManager) QueryContractProposals(ctx context.Context, entChain *ent.Chain) []*ent.ContractProposal {
+	return entChain.
+		QueryContractProposals().
 		AllX(ctx)
 }
 
@@ -139,7 +146,8 @@ func (m *ChainManager) UpdateIndexStatus(
 }
 
 func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
-	return m.client.Proposal.Create().
+	return m.client.Proposal.
+		Create().
 		SetChain(entChain).
 		SetProposalID(prop.ProposalId).
 		SetStatus(proposal.Status(prop.GetProposalStatus().String())).
@@ -154,7 +162,8 @@ func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, 
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}
-	prop, err := entChain.QueryProposals().
+	prop, err := entChain.
+		QueryProposals().
 		Where(proposal.ProposalIDEQ(govProp.ProposalId)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
@@ -162,7 +171,44 @@ func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, 
 	} else if err != nil {
 		return nil, err
 	}
-	return prop.Update().
+	return prop.
+		Update().
 		SetStatus(proposal.Status(govProp.GetProposalStatus().String())).
+		Save(ctx)
+}
+
+func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+	return m.client.ContractProposal.
+		Create().
+		SetChain(entChain).
+		SetProposalID(prop.ProposalId).
+		SetStatus(contractproposal.Status(prop.GetProposalStatus().String())).
+		SetTitle(prop.GetTitle()).
+		SetDescription(prop.GetDescription()).
+		SetContractAddress(prop.GetContractAddress()).
+		SetFirstSeenTime(prop.GetFirstSeenTime().AsTime()).
+		SetVotingEndTime(prop.GetVotingEndTime().AsTime()).
+		Save(ctx)
+}
+
+func (m *ChainManager) UpdateContractProposal(ctx context.Context, entChain *ent.Chain, govProp *queryevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+	if govProp == nil {
+		return nil, errors.New("governance prop is nil")
+	}
+	prop, err := entChain.
+		QueryContractProposals().
+		Where(contractproposal.And(
+			contractproposal.ProposalIDEQ(govProp.ProposalId),
+			contractproposal.ContractAddressEQ(govProp.GetContractAddress()),
+		)).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		return m.createContractProposal(ctx, entChain, govProp)
+	} else if err != nil {
+		return nil, err
+	}
+	return prop.
+		Update().
+		SetStatus(contractproposal.Status(govProp.GetProposalStatus().String())).
 		Save(ctx)
 }

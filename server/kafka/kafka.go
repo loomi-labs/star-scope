@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
@@ -175,11 +176,22 @@ func (k *Kafka) getEventListenerMapForChains() map[uint64][]*ent.EventListener {
 	return elMap
 }
 
-func getGovernaceProposalEventType(prop *ent.Proposal) event.Type {
+func getProposalEventType(prop *ent.Proposal) event.Type {
 	switch prop.Status {
 	case proposal.StatusPROPOSAL_STATUS_UNSPECIFIED, proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD, proposal.StatusPROPOSAL_STATUS_VOTING_PERIOD:
 		return event.TypeQueryEvent_GovernanceProposal_Ongoing
 	case proposal.StatusPROPOSAL_STATUS_PASSED, proposal.StatusPROPOSAL_STATUS_REJECTED, proposal.StatusPROPOSAL_STATUS_FAILED:
+		return event.TypeQueryEvent_GovernanceProposal_Finished
+	}
+	log.Sugar.Panicf("Unknown proposal status: %v", prop.Status)
+	return event.TypeQueryEvent_GovernanceProposal_Ongoing
+}
+
+func getContractProposalEventType(prop *ent.ContractProposal) event.Type {
+	switch prop.Status {
+	case contractproposal.StatusOPEN:
+		return event.TypeQueryEvent_GovernanceProposal_Ongoing
+	case contractproposal.StatusREJECTED, contractproposal.StatusPASSED, contractproposal.StatusEXECUTED, contractproposal.StatusCLOSED, contractproposal.StatusEXECUTION_FAILED:
 		return event.TypeQueryEvent_GovernanceProposal_Finished
 	}
 	log.Sugar.Panicf("Unknown proposal status: %v", prop.Status)
@@ -207,27 +219,47 @@ func (k *Kafka) ProcessQueryEvents() {
 			if err != nil {
 				log.Sugar.Panicf("failed to find chain %v: %v", queryEvent.ChainId, err)
 			}
+			log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
 			var ctx = context.Background()
 			var pbEvents [][]byte
 			switch queryEvent.GetEvent().(type) {
 			case *queryevent.QueryEvent_GovernanceProposal:
-				log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
 				prop, err := k.chainManager.UpdateProposal(ctx, chain, queryEvent.GetGovernanceProposal())
 				if err != nil {
 					log.Sugar.Panicf("failed to update prop %v: %v", queryEvent.GetGovernanceProposal().ProposalId, err)
 				}
-				var stati = []proposal.Status{
+				var ignoredStates = []proposal.Status{
 					proposal.StatusPROPOSAL_STATUS_UNSPECIFIED,
 					proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD,
 				}
-				if slices.Contains(stati, prop.Status) {
+				if slices.Contains(ignoredStates, prop.Status) {
 					continue
 				}
 				if els, ok := elMap[queryEvent.ChainId]; ok {
 					for _, el := range els {
 						var err2 error
 						log.Sugar.Debugf("Processing event %v with address %v for %v", msg.Offset, queryEvent.ChainId, el.WalletAddress)
-						_, err2 = k.eventListenerManager.UpdateAddEvent(ctx, el, getGovernaceProposalEventType(prop), queryEvent.NotifyTime.AsTime(), msg.Value)
+						_, err2 = k.eventListenerManager.UpdateAddEvent(ctx, el, getProposalEventType(prop), queryEvent.NotifyTime.AsTime(), msg.Value)
+						if err2 != nil {
+							log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err2)
+						} else {
+							if queryEvent.NotifyTime.AsTime().Before(time.Now()) {
+								pbEvents = append(pbEvents, msg.Value)
+								log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
+							}
+						}
+					}
+				}
+			case *queryevent.QueryEvent_ContractGovernanceProposal:
+				prop, err := k.chainManager.UpdateContractProposal(ctx, chain, queryEvent.GetContractGovernanceProposal())
+				if err != nil {
+					log.Sugar.Panicf("failed to update prop %v: %v", queryEvent.GetContractGovernanceProposal().ProposalId, err)
+				}
+				if els, ok := elMap[queryEvent.ChainId]; ok {
+					for _, el := range els {
+						var err2 error
+						log.Sugar.Debugf("Processing event %v with address %v for %v", msg.Offset, queryEvent.ChainId, el.WalletAddress)
+						_, err2 = k.eventListenerManager.UpdateAddEvent(ctx, el, getContractProposalEventType(prop), queryEvent.NotifyTime.AsTime(), msg.Value)
 						if err2 != nil {
 							log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err2)
 						} else {

@@ -8,6 +8,7 @@ import (
 	"github.com/loomi-labs/star-scope/indexers/base/client"
 	"github.com/loomi-labs/star-scope/indexers/base/common"
 	"github.com/loomi-labs/star-scope/indexers/base/indexer"
+	"github.com/loomi-labs/star-scope/indexers/base/neutron"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"strings"
@@ -46,6 +47,15 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 		} else {
 			config.MessageHandler = indexer.NewBaseMessageHandler(config.ChainInfo, config.EncodingConfig)
 		}
+
+		if chain.Path == "neutron" {
+			go neutron.NewNeutronCrawler(
+				grpcClient,
+				"neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff",
+				kafkaBrokers,
+			).StartCrawling()
+		}
+
 		var handledMessageTypes = make(map[string]struct{})
 		for _, msgType := range chain.HandledMessageTypes {
 			handledMessageTypes[msgType] = struct{}{}

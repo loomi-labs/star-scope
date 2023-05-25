@@ -38,6 +38,34 @@ var (
 			},
 		},
 	}
+	// ContractProposalsColumns holds the columns for the "contract_proposals" table.
+	ContractProposalsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "proposal_id", Type: field.TypeUint64},
+		{Name: "title", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "first_seen_time", Type: field.TypeTime},
+		{Name: "voting_end_time", Type: field.TypeTime},
+		{Name: "contract_address", Type: field.TypeString},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN"}},
+		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
+	}
+	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
+	ContractProposalsTable = &schema.Table{
+		Name:       "contract_proposals",
+		Columns:    ContractProposalsColumns,
+		PrimaryKey: []*schema.Column{ContractProposalsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "contract_proposals_chains_contract_proposals",
+				Columns:    []*schema.Column{ContractProposalsColumns[10]},
+				RefColumns: []*schema.Column{ChainsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// EventsColumns holds the columns for the "events" table.
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -101,7 +129,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -136,6 +164,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ChainsTable,
+		ContractProposalsTable,
 		EventsTable,
 		EventListenersTable,
 		ProposalsTable,
@@ -144,6 +173,7 @@ var (
 )
 
 func init() {
+	ContractProposalsTable.ForeignKeys[0].RefTable = ChainsTable
 	EventsTable.ForeignKeys[0].RefTable = EventListenersTable
 	EventListenersTable.ForeignKeys[0].RefTable = ChainsTable
 	EventListenersTable.ForeignKeys[1].RefTable = UsersTable

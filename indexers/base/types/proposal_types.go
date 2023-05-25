@@ -1,15 +1,16 @@
 package types
 
 import (
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/queryevent"
 	"encoding/json"
-	cosmossdktypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"strings"
 	"time"
 )
 
-type ProposalStatus cosmossdktypes.ProposalStatus
+type ProposalStatus queryevent.ProposalStatus
 
 func (s *ProposalStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(cosmossdktypes.ProposalStatus(*s).String())
+	return json.Marshal(queryevent.ProposalStatus(*s).String())
 }
 
 func (s *ProposalStatus) UnmarshalJSON(data []byte) error {
@@ -18,7 +19,7 @@ func (s *ProposalStatus) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*s = ProposalStatus(cosmossdktypes.ProposalStatus_value[name])
+	*s = ProposalStatus(queryevent.ProposalStatus_value[strings.ToUpper(name)])
 	return nil
 }
 

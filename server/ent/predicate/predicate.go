@@ -9,6 +9,9 @@ import (
 // Chain is the predicate function for chain builders.
 type Chain func(*sql.Selector)
 
+// ContractProposal is the predicate function for contractproposal builders.
+type ContractProposal func(*sql.Selector)
+
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
 

@@ -27,7 +27,7 @@ func NewIndexerServiceHandler(dbManagers *database.DbManagers) indexerpbconnect.
 }
 
 func getRpcUrl(chain *ent.Chain) string {
-	if chain.Path == "neutron" {
+	if chain.Path == "neutron-pion" {
 		return "https://rest-palvus.pion-1.ntrn.tech"
 	}
 	return fmt.Sprintf("https://rest.cosmos.directory/%s", chain.Path)
@@ -46,7 +46,7 @@ func (i IndexerService) GetIndexingChains(ctx context.Context, _ *connect.Reques
 			UnhandledMessageTypes: strings.Split(chain.UnhandledMessageTypes, ","),
 			HasCustomIndexer:      chain.HasCustomIndexer,
 		}
-		if chain.Path == "neutron" {
+		if chain.Path == "neutron-pion" {
 			pbChains[ix].RpcUrl = "https://rest-palvus.pion-1.ntrn.tech"
 		}
 	}
@@ -65,25 +65,46 @@ func (i IndexerService) UpdateIndexingChains(ctx context.Context, request *conne
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
-func (i IndexerService) GetGovernanceProposalStati(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
+func (i IndexerService) shouldSendChain(chainPath string, chainPaths []string) bool {
+	if len(chainPaths) == 0 {
+		return true
+	}
+	for _, path := range chainPaths {
+		if path == chainPath {
+			return true
+		}
+	}
+	return false
+}
+
+func (i IndexerService) GetGovernanceProposalStati(ctx context.Context, request *connect.Request[indexerpb.GetGovernanceProposalStatiRequest]) (*connect.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
 	chains := i.chainManager.QueryEnabled(ctx)
 	var pbChains []*indexerpb.ChainInfo
 	for _, chain := range chains {
-		if chain.Path == "neutron" {
+		if !i.shouldSendChain(chain.Path, request.Msg.GetChainPaths()) {
 			continue
 		}
 		pbChains = append(pbChains, &indexerpb.ChainInfo{
-			Id:        uint64(chain.ID),
-			Name:      chain.Name,
-			Path:      chain.Path,
-			RpcUrl:    getRpcUrl(chain),
-			Proposals: []*indexerpb.GovernanceProposal{},
+			Id:                uint64(chain.ID),
+			Name:              chain.Name,
+			Path:              chain.Path,
+			RpcUrl:            getRpcUrl(chain),
+			Proposals:         []*indexerpb.GovernanceProposal{},
+			ContractProposals: []*indexerpb.ContractGovernanceProposal{},
 		})
 		proposals := i.chainManager.QueryProposals(ctx, chain)
 		for _, proposal := range proposals {
 			pbChains[len(pbChains)-1].Proposals = append(pbChains[len(pbChains)-1].Proposals, &indexerpb.GovernanceProposal{
 				ProposalId: proposal.ProposalID,
 				Status:     queryevent.ProposalStatus(queryevent.ProposalStatus_value[proposal.Status.String()]),
+			})
+		}
+		contractProposals := i.chainManager.QueryContractProposals(ctx, chain)
+		for _, proposal := range contractProposals {
+			pbChains[len(pbChains)-1].ContractProposals = append(pbChains[len(pbChains)-1].ContractProposals, &indexerpb.ContractGovernanceProposal{
+				ProposalId:      proposal.ProposalID,
+				Status:          queryevent.ContractProposalStatus(queryevent.ContractProposalStatus_value[proposal.Status.String()]),
+				ContractAddress: proposal.ContractAddress,
 			})
 		}
 	}

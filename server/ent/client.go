@@ -15,6 +15,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
@@ -28,6 +29,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Chain is the client for interacting with the Chain builders.
 	Chain *ChainClient
+	// ContractProposal is the client for interacting with the ContractProposal builders.
+	ContractProposal *ContractProposalClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// EventListener is the client for interacting with the EventListener builders.
@@ -50,6 +53,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Chain = NewChainClient(c.config)
+	c.ContractProposal = NewContractProposalClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.EventListener = NewEventListenerClient(c.config)
 	c.Proposal = NewProposalClient(c.config)
@@ -134,13 +138,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		Chain:         NewChainClient(cfg),
-		Event:         NewEventClient(cfg),
-		EventListener: NewEventListenerClient(cfg),
-		Proposal:      NewProposalClient(cfg),
-		User:          NewUserClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		Chain:            NewChainClient(cfg),
+		ContractProposal: NewContractProposalClient(cfg),
+		Event:            NewEventClient(cfg),
+		EventListener:    NewEventListenerClient(cfg),
+		Proposal:         NewProposalClient(cfg),
+		User:             NewUserClient(cfg),
 	}, nil
 }
 
@@ -158,13 +163,14 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		Chain:         NewChainClient(cfg),
-		Event:         NewEventClient(cfg),
-		EventListener: NewEventListenerClient(cfg),
-		Proposal:      NewProposalClient(cfg),
-		User:          NewUserClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		Chain:            NewChainClient(cfg),
+		ContractProposal: NewContractProposalClient(cfg),
+		Event:            NewEventClient(cfg),
+		EventListener:    NewEventListenerClient(cfg),
+		Proposal:         NewProposalClient(cfg),
+		User:             NewUserClient(cfg),
 	}, nil
 }
 
@@ -193,21 +199,21 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Chain.Use(hooks...)
-	c.Event.Use(hooks...)
-	c.EventListener.Use(hooks...)
-	c.Proposal.Use(hooks...)
-	c.User.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Chain, c.ContractProposal, c.Event, c.EventListener, c.Proposal, c.User,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Chain.Intercept(interceptors...)
-	c.Event.Intercept(interceptors...)
-	c.EventListener.Intercept(interceptors...)
-	c.Proposal.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Chain, c.ContractProposal, c.Event, c.EventListener, c.Proposal, c.User,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -215,6 +221,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ChainMutation:
 		return c.Chain.mutate(ctx, m)
+	case *ContractProposalMutation:
+		return c.ContractProposal.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
 	case *EventListenerMutation:
@@ -353,6 +361,22 @@ func (c *ChainClient) QueryProposals(ch *Chain) *ProposalQuery {
 	return query
 }
 
+// QueryContractProposals queries the contract_proposals edge of a Chain.
+func (c *ChainClient) QueryContractProposals(ch *Chain) *ContractProposalQuery {
+	query := (&ContractProposalClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, id),
+			sqlgraph.To(contractproposal.Table, contractproposal.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, chain.ContractProposalsTable, chain.ContractProposalsColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ChainClient) Hooks() []Hook {
 	return c.hooks.Chain
@@ -375,6 +399,140 @@ func (c *ChainClient) mutate(ctx context.Context, m *ChainMutation) (Value, erro
 		return (&ChainDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Chain mutation op: %q", m.Op())
+	}
+}
+
+// ContractProposalClient is a client for the ContractProposal schema.
+type ContractProposalClient struct {
+	config
+}
+
+// NewContractProposalClient returns a client for the ContractProposal from the given config.
+func NewContractProposalClient(c config) *ContractProposalClient {
+	return &ContractProposalClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `contractproposal.Hooks(f(g(h())))`.
+func (c *ContractProposalClient) Use(hooks ...Hook) {
+	c.hooks.ContractProposal = append(c.hooks.ContractProposal, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `contractproposal.Intercept(f(g(h())))`.
+func (c *ContractProposalClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ContractProposal = append(c.inters.ContractProposal, interceptors...)
+}
+
+// Create returns a builder for creating a ContractProposal entity.
+func (c *ContractProposalClient) Create() *ContractProposalCreate {
+	mutation := newContractProposalMutation(c.config, OpCreate)
+	return &ContractProposalCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ContractProposal entities.
+func (c *ContractProposalClient) CreateBulk(builders ...*ContractProposalCreate) *ContractProposalCreateBulk {
+	return &ContractProposalCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ContractProposal.
+func (c *ContractProposalClient) Update() *ContractProposalUpdate {
+	mutation := newContractProposalMutation(c.config, OpUpdate)
+	return &ContractProposalUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ContractProposalClient) UpdateOne(cp *ContractProposal) *ContractProposalUpdateOne {
+	mutation := newContractProposalMutation(c.config, OpUpdateOne, withContractProposal(cp))
+	return &ContractProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ContractProposalClient) UpdateOneID(id int) *ContractProposalUpdateOne {
+	mutation := newContractProposalMutation(c.config, OpUpdateOne, withContractProposalID(id))
+	return &ContractProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ContractProposal.
+func (c *ContractProposalClient) Delete() *ContractProposalDelete {
+	mutation := newContractProposalMutation(c.config, OpDelete)
+	return &ContractProposalDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ContractProposalClient) DeleteOne(cp *ContractProposal) *ContractProposalDeleteOne {
+	return c.DeleteOneID(cp.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ContractProposalClient) DeleteOneID(id int) *ContractProposalDeleteOne {
+	builder := c.Delete().Where(contractproposal.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ContractProposalDeleteOne{builder}
+}
+
+// Query returns a query builder for ContractProposal.
+func (c *ContractProposalClient) Query() *ContractProposalQuery {
+	return &ContractProposalQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeContractProposal},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ContractProposal entity by its id.
+func (c *ContractProposalClient) Get(ctx context.Context, id int) (*ContractProposal, error) {
+	return c.Query().Where(contractproposal.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ContractProposalClient) GetX(ctx context.Context, id int) *ContractProposal {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryChain queries the chain edge of a ContractProposal.
+func (c *ContractProposalClient) QueryChain(cp *ContractProposal) *ChainQuery {
+	query := (&ChainClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contractproposal.Table, contractproposal.FieldID, id),
+			sqlgraph.To(chain.Table, chain.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, contractproposal.ChainTable, contractproposal.ChainColumn),
+		)
+		fromV = sqlgraph.Neighbors(cp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ContractProposalClient) Hooks() []Hook {
+	return c.hooks.ContractProposal
+}
+
+// Interceptors returns the client interceptors.
+func (c *ContractProposalClient) Interceptors() []Interceptor {
+	return c.inters.ContractProposal
+}
+
+func (c *ContractProposalClient) mutate(ctx context.Context, m *ContractProposalMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ContractProposalCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ContractProposalUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ContractProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ContractProposalDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ContractProposal mutation op: %q", m.Op())
 	}
 }
 
@@ -949,9 +1107,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Chain, Event, EventListener, Proposal, User []ent.Hook
+		Chain, ContractProposal, Event, EventListener, Proposal, User []ent.Hook
 	}
 	inters struct {
-		Chain, Event, EventListener, Proposal, User []ent.Interceptor
+		Chain, ContractProposal, Event, EventListener, Proposal, User []ent.Interceptor
 	}
 )

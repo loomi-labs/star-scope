@@ -10,7 +10,7 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/indexer/indexerpb";
 service IndexerService {
   rpc GetIndexingChains (google.protobuf.Empty) returns (GetIndexingChainsResponse) {}
   rpc UpdateIndexingChains (UpdateIndexingChainsRequest) returns (google.protobuf.Empty) {}
-  rpc GetGovernanceProposalStati (google.protobuf.Empty) returns (GetGovernanceProposalStatiResponse) {}
+  rpc GetGovernanceProposalStati (GetGovernanceProposalStatiRequest) returns (GetGovernanceProposalStatiResponse) {}
 }
 
 message IndexingChain {
@@ -48,9 +48,19 @@ message HandleTxsResponse {
   repeated string unhandled_message_types = 5;
 }
 
+message GetGovernanceProposalStatiRequest {
+  repeated string chain_paths = 1;
+}
+
 message GovernanceProposal {
   uint64 proposal_id = 1;
   starscope.queryevent.ProposalStatus status = 2;
+}
+
+message ContractGovernanceProposal {
+  uint64 proposal_id = 1;
+  starscope.queryevent.ContractProposalStatus status = 2;
+  string contract_address = 3;
 }
 
 message ChainInfo {
@@ -59,6 +69,7 @@ message ChainInfo {
   string path = 3;
   string rpc_url = 4;
   repeated GovernanceProposal proposals = 5;
+  repeated ContractGovernanceProposal contract_proposals = 6;
 }
 
 message GetGovernanceProposalStatiResponse {

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
@@ -28,43 +29,47 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeChain         = "Chain"
-	TypeEvent         = "Event"
-	TypeEventListener = "EventListener"
-	TypeProposal      = "Proposal"
-	TypeUser          = "User"
+	TypeChain            = "Chain"
+	TypeContractProposal = "ContractProposal"
+	TypeEvent            = "Event"
+	TypeEventListener    = "EventListener"
+	TypeProposal         = "Proposal"
+	TypeUser             = "User"
 )
 
 // ChainMutation represents an operation that mutates the Chain nodes in the graph.
 type ChainMutation struct {
 	config
-	op                      Op
-	typ                     string
-	id                      *int
-	create_time             *time.Time
-	update_time             *time.Time
-	chain_id                *string
-	name                    *string
-	pretty_name             *string
-	_path                   *string
-	image                   *string
-	bech32_prefix           *string
-	indexing_height         *uint64
-	addindexing_height      *int64
-	has_custom_indexer      *bool
-	handled_message_types   *string
-	unhandled_message_types *string
-	is_enabled              *bool
-	clearedFields           map[string]struct{}
-	event_listeners         map[int]struct{}
-	removedevent_listeners  map[int]struct{}
-	clearedevent_listeners  bool
-	proposals               map[int]struct{}
-	removedproposals        map[int]struct{}
-	clearedproposals        bool
-	done                    bool
-	oldValue                func(context.Context) (*Chain, error)
-	predicates              []predicate.Chain
+	op                        Op
+	typ                       string
+	id                        *int
+	create_time               *time.Time
+	update_time               *time.Time
+	chain_id                  *string
+	name                      *string
+	pretty_name               *string
+	_path                     *string
+	image                     *string
+	bech32_prefix             *string
+	indexing_height           *uint64
+	addindexing_height        *int64
+	has_custom_indexer        *bool
+	handled_message_types     *string
+	unhandled_message_types   *string
+	is_enabled                *bool
+	clearedFields             map[string]struct{}
+	event_listeners           map[int]struct{}
+	removedevent_listeners    map[int]struct{}
+	clearedevent_listeners    bool
+	proposals                 map[int]struct{}
+	removedproposals          map[int]struct{}
+	clearedproposals          bool
+	contract_proposals        map[int]struct{}
+	removedcontract_proposals map[int]struct{}
+	clearedcontract_proposals bool
+	done                      bool
+	oldValue                  func(context.Context) (*Chain, error)
+	predicates                []predicate.Chain
 }
 
 var _ ent.Mutation = (*ChainMutation)(nil)
@@ -761,6 +766,60 @@ func (m *ChainMutation) ResetProposals() {
 	m.removedproposals = nil
 }
 
+// AddContractProposalIDs adds the "contract_proposals" edge to the ContractProposal entity by ids.
+func (m *ChainMutation) AddContractProposalIDs(ids ...int) {
+	if m.contract_proposals == nil {
+		m.contract_proposals = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.contract_proposals[ids[i]] = struct{}{}
+	}
+}
+
+// ClearContractProposals clears the "contract_proposals" edge to the ContractProposal entity.
+func (m *ChainMutation) ClearContractProposals() {
+	m.clearedcontract_proposals = true
+}
+
+// ContractProposalsCleared reports if the "contract_proposals" edge to the ContractProposal entity was cleared.
+func (m *ChainMutation) ContractProposalsCleared() bool {
+	return m.clearedcontract_proposals
+}
+
+// RemoveContractProposalIDs removes the "contract_proposals" edge to the ContractProposal entity by IDs.
+func (m *ChainMutation) RemoveContractProposalIDs(ids ...int) {
+	if m.removedcontract_proposals == nil {
+		m.removedcontract_proposals = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.contract_proposals, ids[i])
+		m.removedcontract_proposals[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedContractProposals returns the removed IDs of the "contract_proposals" edge to the ContractProposal entity.
+func (m *ChainMutation) RemovedContractProposalsIDs() (ids []int) {
+	for id := range m.removedcontract_proposals {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ContractProposalsIDs returns the "contract_proposals" edge IDs in the mutation.
+func (m *ChainMutation) ContractProposalsIDs() (ids []int) {
+	for id := range m.contract_proposals {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetContractProposals resets all changes to the "contract_proposals" edge.
+func (m *ChainMutation) ResetContractProposals() {
+	m.contract_proposals = nil
+	m.clearedcontract_proposals = false
+	m.removedcontract_proposals = nil
+}
+
 // Where appends a list predicates to the ChainMutation builder.
 func (m *ChainMutation) Where(ps ...predicate.Chain) {
 	m.predicates = append(m.predicates, ps...)
@@ -1113,12 +1172,15 @@ func (m *ChainMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ChainMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.event_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
 	if m.proposals != nil {
 		edges = append(edges, chain.EdgeProposals)
+	}
+	if m.contract_proposals != nil {
+		edges = append(edges, chain.EdgeContractProposals)
 	}
 	return edges
 }
@@ -1139,18 +1201,27 @@ func (m *ChainMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeContractProposals:
+		ids := make([]ent.Value, 0, len(m.contract_proposals))
+		for id := range m.contract_proposals {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ChainMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedevent_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
 	if m.removedproposals != nil {
 		edges = append(edges, chain.EdgeProposals)
+	}
+	if m.removedcontract_proposals != nil {
+		edges = append(edges, chain.EdgeContractProposals)
 	}
 	return edges
 }
@@ -1171,18 +1242,27 @@ func (m *ChainMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeContractProposals:
+		ids := make([]ent.Value, 0, len(m.removedcontract_proposals))
+		for id := range m.removedcontract_proposals {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ChainMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedevent_listeners {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
 	if m.clearedproposals {
 		edges = append(edges, chain.EdgeProposals)
+	}
+	if m.clearedcontract_proposals {
+		edges = append(edges, chain.EdgeContractProposals)
 	}
 	return edges
 }
@@ -1195,6 +1275,8 @@ func (m *ChainMutation) EdgeCleared(name string) bool {
 		return m.clearedevent_listeners
 	case chain.EdgeProposals:
 		return m.clearedproposals
+	case chain.EdgeContractProposals:
+		return m.clearedcontract_proposals
 	}
 	return false
 }
@@ -1217,8 +1299,872 @@ func (m *ChainMutation) ResetEdge(name string) error {
 	case chain.EdgeProposals:
 		m.ResetProposals()
 		return nil
+	case chain.EdgeContractProposals:
+		m.ResetContractProposals()
+		return nil
 	}
 	return fmt.Errorf("unknown Chain edge %s", name)
+}
+
+// ContractProposalMutation represents an operation that mutates the ContractProposal nodes in the graph.
+type ContractProposalMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	create_time      *time.Time
+	update_time      *time.Time
+	proposal_id      *uint64
+	addproposal_id   *int64
+	title            *string
+	description      *string
+	first_seen_time  *time.Time
+	voting_end_time  *time.Time
+	contract_address *string
+	status           *contractproposal.Status
+	clearedFields    map[string]struct{}
+	chain            *int
+	clearedchain     bool
+	done             bool
+	oldValue         func(context.Context) (*ContractProposal, error)
+	predicates       []predicate.ContractProposal
+}
+
+var _ ent.Mutation = (*ContractProposalMutation)(nil)
+
+// contractproposalOption allows management of the mutation configuration using functional options.
+type contractproposalOption func(*ContractProposalMutation)
+
+// newContractProposalMutation creates new mutation for the ContractProposal entity.
+func newContractProposalMutation(c config, op Op, opts ...contractproposalOption) *ContractProposalMutation {
+	m := &ContractProposalMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeContractProposal,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withContractProposalID sets the ID field of the mutation.
+func withContractProposalID(id int) contractproposalOption {
+	return func(m *ContractProposalMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ContractProposal
+		)
+		m.oldValue = func(ctx context.Context) (*ContractProposal, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ContractProposal.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withContractProposal sets the old ContractProposal of the mutation.
+func withContractProposal(node *ContractProposal) contractproposalOption {
+	return func(m *ContractProposalMutation) {
+		m.oldValue = func(context.Context) (*ContractProposal, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ContractProposalMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ContractProposalMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ContractProposalMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ContractProposalMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ContractProposal.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *ContractProposalMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *ContractProposalMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *ContractProposalMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *ContractProposalMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *ContractProposalMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *ContractProposalMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetProposalID sets the "proposal_id" field.
+func (m *ContractProposalMutation) SetProposalID(u uint64) {
+	m.proposal_id = &u
+	m.addproposal_id = nil
+}
+
+// ProposalID returns the value of the "proposal_id" field in the mutation.
+func (m *ContractProposalMutation) ProposalID() (r uint64, exists bool) {
+	v := m.proposal_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProposalID returns the old "proposal_id" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldProposalID(ctx context.Context) (v uint64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProposalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProposalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProposalID: %w", err)
+	}
+	return oldValue.ProposalID, nil
+}
+
+// AddProposalID adds u to the "proposal_id" field.
+func (m *ContractProposalMutation) AddProposalID(u int64) {
+	if m.addproposal_id != nil {
+		*m.addproposal_id += u
+	} else {
+		m.addproposal_id = &u
+	}
+}
+
+// AddedProposalID returns the value that was added to the "proposal_id" field in this mutation.
+func (m *ContractProposalMutation) AddedProposalID() (r int64, exists bool) {
+	v := m.addproposal_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetProposalID resets all changes to the "proposal_id" field.
+func (m *ContractProposalMutation) ResetProposalID() {
+	m.proposal_id = nil
+	m.addproposal_id = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *ContractProposalMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *ContractProposalMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *ContractProposalMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *ContractProposalMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *ContractProposalMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *ContractProposalMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetFirstSeenTime sets the "first_seen_time" field.
+func (m *ContractProposalMutation) SetFirstSeenTime(t time.Time) {
+	m.first_seen_time = &t
+}
+
+// FirstSeenTime returns the value of the "first_seen_time" field in the mutation.
+func (m *ContractProposalMutation) FirstSeenTime() (r time.Time, exists bool) {
+	v := m.first_seen_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstSeenTime returns the old "first_seen_time" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldFirstSeenTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstSeenTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstSeenTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstSeenTime: %w", err)
+	}
+	return oldValue.FirstSeenTime, nil
+}
+
+// ResetFirstSeenTime resets all changes to the "first_seen_time" field.
+func (m *ContractProposalMutation) ResetFirstSeenTime() {
+	m.first_seen_time = nil
+}
+
+// SetVotingEndTime sets the "voting_end_time" field.
+func (m *ContractProposalMutation) SetVotingEndTime(t time.Time) {
+	m.voting_end_time = &t
+}
+
+// VotingEndTime returns the value of the "voting_end_time" field in the mutation.
+func (m *ContractProposalMutation) VotingEndTime() (r time.Time, exists bool) {
+	v := m.voting_end_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVotingEndTime returns the old "voting_end_time" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldVotingEndTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVotingEndTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVotingEndTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVotingEndTime: %w", err)
+	}
+	return oldValue.VotingEndTime, nil
+}
+
+// ResetVotingEndTime resets all changes to the "voting_end_time" field.
+func (m *ContractProposalMutation) ResetVotingEndTime() {
+	m.voting_end_time = nil
+}
+
+// SetContractAddress sets the "contract_address" field.
+func (m *ContractProposalMutation) SetContractAddress(s string) {
+	m.contract_address = &s
+}
+
+// ContractAddress returns the value of the "contract_address" field in the mutation.
+func (m *ContractProposalMutation) ContractAddress() (r string, exists bool) {
+	v := m.contract_address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContractAddress returns the old "contract_address" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldContractAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContractAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContractAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContractAddress: %w", err)
+	}
+	return oldValue.ContractAddress, nil
+}
+
+// ResetContractAddress resets all changes to the "contract_address" field.
+func (m *ContractProposalMutation) ResetContractAddress() {
+	m.contract_address = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *ContractProposalMutation) SetStatus(c contractproposal.Status) {
+	m.status = &c
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *ContractProposalMutation) Status() (r contractproposal.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the ContractProposal entity.
+// If the ContractProposal object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractProposalMutation) OldStatus(ctx context.Context) (v contractproposal.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *ContractProposalMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetChainID sets the "chain" edge to the Chain entity by id.
+func (m *ContractProposalMutation) SetChainID(id int) {
+	m.chain = &id
+}
+
+// ClearChain clears the "chain" edge to the Chain entity.
+func (m *ContractProposalMutation) ClearChain() {
+	m.clearedchain = true
+}
+
+// ChainCleared reports if the "chain" edge to the Chain entity was cleared.
+func (m *ContractProposalMutation) ChainCleared() bool {
+	return m.clearedchain
+}
+
+// ChainID returns the "chain" edge ID in the mutation.
+func (m *ContractProposalMutation) ChainID() (id int, exists bool) {
+	if m.chain != nil {
+		return *m.chain, true
+	}
+	return
+}
+
+// ChainIDs returns the "chain" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ChainID instead. It exists only for internal usage by the builders.
+func (m *ContractProposalMutation) ChainIDs() (ids []int) {
+	if id := m.chain; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetChain resets all changes to the "chain" edge.
+func (m *ContractProposalMutation) ResetChain() {
+	m.chain = nil
+	m.clearedchain = false
+}
+
+// Where appends a list predicates to the ContractProposalMutation builder.
+func (m *ContractProposalMutation) Where(ps ...predicate.ContractProposal) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ContractProposalMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ContractProposalMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ContractProposal, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ContractProposalMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ContractProposalMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ContractProposal).
+func (m *ContractProposalMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ContractProposalMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.create_time != nil {
+		fields = append(fields, contractproposal.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, contractproposal.FieldUpdateTime)
+	}
+	if m.proposal_id != nil {
+		fields = append(fields, contractproposal.FieldProposalID)
+	}
+	if m.title != nil {
+		fields = append(fields, contractproposal.FieldTitle)
+	}
+	if m.description != nil {
+		fields = append(fields, contractproposal.FieldDescription)
+	}
+	if m.first_seen_time != nil {
+		fields = append(fields, contractproposal.FieldFirstSeenTime)
+	}
+	if m.voting_end_time != nil {
+		fields = append(fields, contractproposal.FieldVotingEndTime)
+	}
+	if m.contract_address != nil {
+		fields = append(fields, contractproposal.FieldContractAddress)
+	}
+	if m.status != nil {
+		fields = append(fields, contractproposal.FieldStatus)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ContractProposalMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case contractproposal.FieldCreateTime:
+		return m.CreateTime()
+	case contractproposal.FieldUpdateTime:
+		return m.UpdateTime()
+	case contractproposal.FieldProposalID:
+		return m.ProposalID()
+	case contractproposal.FieldTitle:
+		return m.Title()
+	case contractproposal.FieldDescription:
+		return m.Description()
+	case contractproposal.FieldFirstSeenTime:
+		return m.FirstSeenTime()
+	case contractproposal.FieldVotingEndTime:
+		return m.VotingEndTime()
+	case contractproposal.FieldContractAddress:
+		return m.ContractAddress()
+	case contractproposal.FieldStatus:
+		return m.Status()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ContractProposalMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case contractproposal.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case contractproposal.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case contractproposal.FieldProposalID:
+		return m.OldProposalID(ctx)
+	case contractproposal.FieldTitle:
+		return m.OldTitle(ctx)
+	case contractproposal.FieldDescription:
+		return m.OldDescription(ctx)
+	case contractproposal.FieldFirstSeenTime:
+		return m.OldFirstSeenTime(ctx)
+	case contractproposal.FieldVotingEndTime:
+		return m.OldVotingEndTime(ctx)
+	case contractproposal.FieldContractAddress:
+		return m.OldContractAddress(ctx)
+	case contractproposal.FieldStatus:
+		return m.OldStatus(ctx)
+	}
+	return nil, fmt.Errorf("unknown ContractProposal field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ContractProposalMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case contractproposal.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case contractproposal.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case contractproposal.FieldProposalID:
+		v, ok := value.(uint64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProposalID(v)
+		return nil
+	case contractproposal.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case contractproposal.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case contractproposal.FieldFirstSeenTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenTime(v)
+		return nil
+	case contractproposal.FieldVotingEndTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVotingEndTime(v)
+		return nil
+	case contractproposal.FieldContractAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContractAddress(v)
+		return nil
+	case contractproposal.FieldStatus:
+		v, ok := value.(contractproposal.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ContractProposal field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ContractProposalMutation) AddedFields() []string {
+	var fields []string
+	if m.addproposal_id != nil {
+		fields = append(fields, contractproposal.FieldProposalID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ContractProposalMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case contractproposal.FieldProposalID:
+		return m.AddedProposalID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ContractProposalMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case contractproposal.FieldProposalID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProposalID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ContractProposal numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ContractProposalMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ContractProposalMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ContractProposalMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ContractProposal nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ContractProposalMutation) ResetField(name string) error {
+	switch name {
+	case contractproposal.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case contractproposal.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case contractproposal.FieldProposalID:
+		m.ResetProposalID()
+		return nil
+	case contractproposal.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case contractproposal.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case contractproposal.FieldFirstSeenTime:
+		m.ResetFirstSeenTime()
+		return nil
+	case contractproposal.FieldVotingEndTime:
+		m.ResetVotingEndTime()
+		return nil
+	case contractproposal.FieldContractAddress:
+		m.ResetContractAddress()
+		return nil
+	case contractproposal.FieldStatus:
+		m.ResetStatus()
+		return nil
+	}
+	return fmt.Errorf("unknown ContractProposal field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ContractProposalMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.chain != nil {
+		edges = append(edges, contractproposal.EdgeChain)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ContractProposalMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case contractproposal.EdgeChain:
+		if id := m.chain; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ContractProposalMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ContractProposalMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ContractProposalMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedchain {
+		edges = append(edges, contractproposal.EdgeChain)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ContractProposalMutation) EdgeCleared(name string) bool {
+	switch name {
+	case contractproposal.EdgeChain:
+		return m.clearedchain
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ContractProposalMutation) ClearEdge(name string) error {
+	switch name {
+	case contractproposal.EdgeChain:
+		m.ClearChain()
+		return nil
+	}
+	return fmt.Errorf("unknown ContractProposal unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ContractProposalMutation) ResetEdge(name string) error {
+	switch name {
+	case contractproposal.EdgeChain:
+		m.ResetChain()
+		return nil
+	}
+	return fmt.Errorf("unknown ContractProposal edge %s", name)
 }
 
 // EventMutation represents an operation that mutates the Event nodes in the graph.
