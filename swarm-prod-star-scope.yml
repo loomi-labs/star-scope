@@ -188,8 +188,6 @@ services:
       labels:
         caddy: kafdrop.star-scope.decrypto.online
         caddy.reverse_proxy: "kafdrop:9000"
-        caddy.basicauth: "/"
-        caddy.basicauth.admin: "$2a$14$taT2X9NK67CZ8vT2PmM42.Q4ZVrBGmD4GPAPHmc0s0PeWSwUSHUwW"
       placement:
         constraints:
           - node.role != manager
