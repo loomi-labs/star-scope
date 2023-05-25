@@ -317,7 +317,7 @@ fn subscribe_to_events(cx: Scope) {
 async fn query_events(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(grpc::ListEventsRequest { start_time: None });
+    let request = services.grpc_client.create_request(grpc::ListEventsRequest { start_time: None, end_time: None, limit: 0, offset: 0 });
     let response = services
         .grpc_client
         .get_event_service()

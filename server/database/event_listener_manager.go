@@ -6,6 +6,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 )
 
@@ -37,9 +38,29 @@ func (m *EventListenerManager) QueryByUser(ctx context.Context, entUser *ent.Use
 			eventlistener.HasUserWith(
 				user.IDEQ(entUser.ID)),
 		).
-		WithEvents().
 		WithChain().
 		AllX(ctx)
+}
+
+func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
+	if startTime == nil {
+		startTime = timestamppb.Now()
+	}
+	if endTime == nil {
+		endTime = timestamppb.New(time.Now().AddDate(-1, 0, 0))
+	}
+	if limit == 0 {
+		limit = 100
+	}
+	return el.
+		QueryEvents().
+		Where(
+			event.NotifyTimeGTE(startTime.AsTime()),
+			event.NotifyTimeLTE(endTime.AsTime()),
+		).
+		Offset(int(offset)).
+		Limit(int(limit)).
+		All(ctx)
 }
 
 func (m *EventListenerManager) UpdateAddEvent(

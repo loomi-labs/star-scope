@@ -78,19 +78,31 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 	}
 
 	els := e.eventListenerManager.QueryByUser(ctx, user)
-	events := make([]*eventpb.Event, 0)
+	pbEvents := make([]*eventpb.Event, 0)
 	for _, el := range els {
-		for _, event := range el.Edges.Events {
+		events, err := e.eventListenerManager.QueryEvents(
+			ctx,
+			el,
+			request.Msg.GetStartTime(),
+			request.Msg.GetEndTime(),
+			request.Msg.GetLimit(),
+			request.Msg.GetOffset(),
+		)
+		if err != nil {
+			log.Sugar.Error(err)
+			return nil, types.UnknownErr
+		}
+		for _, event := range events {
 			pbEvent, err := kafka.EntEventToProto(event, el.Edges.Chain)
 			if err != nil {
 				log.Sugar.Error(err)
 				return nil, types.UnknownErr
 			}
-			events = append(events, pbEvent)
+			pbEvents = append(pbEvents, pbEvent)
 		}
 	}
 	return connect.NewResponse(&eventpb.EventList{
-		Events: events,
+		Events: pbEvents,
 	}), nil
 }
 

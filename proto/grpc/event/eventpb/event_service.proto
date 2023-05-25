@@ -33,10 +33,14 @@ message Event {
 
 message EventList {
   repeated Event events = 1;
+  string next_page_token = 2;
 }
 
 message ListEventsRequest {
-  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  int32 limit = 3;
+  int64 offset = 4;
 }
 
 message ChainData {
