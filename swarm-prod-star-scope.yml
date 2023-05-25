@@ -106,13 +106,25 @@ services:
         constraints:
           - node.role != manager
 
-  event-consumer:
+  index-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
     container_name: starscope_event_consumer
     working_dir: /app
     secrets:
       - starscope-env
-    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service event-consumer"
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service index-event-consumer"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  query-event-consumer:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_event_consumer
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service query-event-consumer"
     deploy:
       placement:
         constraints:
