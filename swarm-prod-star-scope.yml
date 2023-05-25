@@ -135,8 +135,8 @@ services:
         constraints:
           - node.role != manager
 
-  pgadmin:
-    image: dpage/pgadmin4:7
+  pgadmin-ss:
+    image: dpage/pgadmin4:latest
     container_name: starscope_pgadmin
     secrets:
       - pgadmin-password
@@ -186,7 +186,7 @@ services:
     deploy:
       labels:
         caddy: pgadmin.star-scope.decrypto.online
-        caddy.reverse_proxy: "pgadmin:80"
+        caddy.reverse_proxy: "pgadmin-ss:80"
       placement:
         constraints:
           - node.role != manager
