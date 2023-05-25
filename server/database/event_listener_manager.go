@@ -23,6 +23,13 @@ func (m *EventListenerManager) QueryAll(ctx context.Context) []*ent.EventListene
 		AllX(ctx)
 }
 
+func (m *EventListenerManager) QueryAllWithChain(ctx context.Context) []*ent.EventListener {
+	return m.client.EventListener.
+		Query().
+		WithChain().
+		AllX(ctx)
+}
+
 func (m *EventListenerManager) QueryByUser(ctx context.Context, entUser *ent.User) []*ent.EventListener {
 	return m.client.EventListener.
 		Query().

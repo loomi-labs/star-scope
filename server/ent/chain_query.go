@@ -14,6 +14,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/proposal"
 )
 
 // ChainQuery is the builder for querying Chain entities.
@@ -24,6 +25,7 @@ type ChainQuery struct {
 	inters             []Interceptor
 	predicates         []predicate.Chain
 	withEventListeners *EventListenerQuery
+	withProposals      *ProposalQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +77,28 @@ func (cq *ChainQuery) QueryEventListeners() *EventListenerQuery {
 			sqlgraph.From(chain.Table, chain.FieldID, selector),
 			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chain.EventListenersTable, chain.EventListenersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProposals chains the current query on the "proposals" edge.
+func (cq *ChainQuery) QueryProposals() *ProposalQuery {
+	query := (&ProposalClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, selector),
+			sqlgraph.To(proposal.Table, proposal.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, chain.ProposalsTable, chain.ProposalsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -275,6 +299,7 @@ func (cq *ChainQuery) Clone() *ChainQuery {
 		inters:             append([]Interceptor{}, cq.inters...),
 		predicates:         append([]predicate.Chain{}, cq.predicates...),
 		withEventListeners: cq.withEventListeners.Clone(),
+		withProposals:      cq.withProposals.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -289,6 +314,17 @@ func (cq *ChainQuery) WithEventListeners(opts ...func(*EventListenerQuery)) *Cha
 		opt(query)
 	}
 	cq.withEventListeners = query
+	return cq
+}
+
+// WithProposals tells the query-builder to eager-load the nodes that are connected to
+// the "proposals" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *ChainQuery) WithProposals(opts ...func(*ProposalQuery)) *ChainQuery {
+	query := (&ProposalClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withProposals = query
 	return cq
 }
 
@@ -370,8 +406,9 @@ func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain,
 	var (
 		nodes       = []*Chain{}
 		_spec       = cq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			cq.withEventListeners != nil,
+			cq.withProposals != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -396,6 +433,13 @@ func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain,
 		if err := cq.loadEventListeners(ctx, query, nodes,
 			func(n *Chain) { n.Edges.EventListeners = []*EventListener{} },
 			func(n *Chain, e *EventListener) { n.Edges.EventListeners = append(n.Edges.EventListeners, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withProposals; query != nil {
+		if err := cq.loadProposals(ctx, query, nodes,
+			func(n *Chain) { n.Edges.Proposals = []*Proposal{} },
+			func(n *Chain, e *Proposal) { n.Edges.Proposals = append(n.Edges.Proposals, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -428,6 +472,37 @@ func (cq *ChainQuery) loadEventListeners(ctx context.Context, query *EventListen
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "chain_event_listeners" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *ChainQuery) loadProposals(ctx context.Context, query *ProposalQuery, nodes []*Chain, init func(*Chain), assign func(*Chain, *Proposal)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Chain)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Proposal(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(chain.ProposalsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.chain_proposals
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "chain_proposals" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "chain_proposals" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

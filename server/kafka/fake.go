@@ -17,6 +17,7 @@ import (
 type FakeEventCreator struct {
 	walletAddresses      []string
 	eventListenerManager *database.EventListenerManager
+	chainManager         *database.ChainManager
 	kafka                *Kafka
 }
 
@@ -24,6 +25,7 @@ func NewFakeEventCreator(dbManager *database.DbManagers, walletAddresses []strin
 	return &FakeEventCreator{
 		walletAddresses:      walletAddresses,
 		eventListenerManager: dbManager.EventListenerManager,
+		chainManager:         dbManager.ChainManager,
 		kafka:                NewKafka(dbManager, kafkaBrokers...),
 	}
 }
@@ -38,19 +40,19 @@ func (d *FakeEventCreator) getEventListenerMap() map[string]*ent.EventListener {
 	return elMap
 }
 
-func createTxEvent(walletAddress string) indexevent.TxEvent {
+func createTxEvent(walletAddress string, chains []*ent.Chain) indexevent.TxEvent {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	chains := []string{"cosmoshub", "osmosis", "juno", "neutron", "injective"}
+	chain := chains[r.Intn(len(chains))]
 	return indexevent.TxEvent{
-		ChainPath:     chains[r.Intn(len(chains))],
+		ChainId:       uint64(chain.ID),
 		WalletAddress: walletAddress,
 		Timestamp:     timestamppb.New(time.Now()),
 		NotifyTime:    timestamppb.New(time.Now()),
 	}
 }
 
-func createCoinReceivedEvent(walletAddress string) *indexevent.TxEvent {
-	var txEvent = createTxEvent(walletAddress)
+func createCoinReceivedEvent(walletAddress string, chains []*ent.Chain) *indexevent.TxEvent {
+	var txEvent = createTxEvent(walletAddress, chains)
 	txEvent.Event = &indexevent.TxEvent_CoinReceived{
 		CoinReceived: &indexevent.CoinReceivedEvent{
 			Sender: "cosmos1h872wxm58laz23rld32hlsqq6067j257txh8j6",
@@ -60,8 +62,8 @@ func createCoinReceivedEvent(walletAddress string) *indexevent.TxEvent {
 	return &txEvent
 }
 
-func createUnstakeEvent(walletAddress string) *indexevent.TxEvent {
-	var txEvent = createTxEvent(walletAddress)
+func createUnstakeEvent(walletAddress string, chains []*ent.Chain) *indexevent.TxEvent {
+	var txEvent = createTxEvent(walletAddress, chains)
 	txEvent.Event = &indexevent.TxEvent_Unstake{
 		Unstake: &indexevent.UnstakeEvent{
 			CompletionTime: timestamppb.New(time.Now()),
@@ -71,8 +73,8 @@ func createUnstakeEvent(walletAddress string) *indexevent.TxEvent {
 	return &txEvent
 }
 
-func createOsmoPoolUnlockEvent(walletAddress string) *indexevent.TxEvent {
-	var txEvent = createTxEvent(walletAddress)
+func createOsmoPoolUnlockEvent(walletAddress string, chains []*ent.Chain) *indexevent.TxEvent {
+	var txEvent = createTxEvent(walletAddress, chains)
 	txEvent.Event = &indexevent.TxEvent_Unstake{
 		Unstake: &indexevent.UnstakeEvent{
 			CompletionTime: timestamppb.New(time.Now()),
@@ -82,7 +84,7 @@ func createOsmoPoolUnlockEvent(walletAddress string) *indexevent.TxEvent {
 	return &txEvent
 }
 
-func (d *FakeEventCreator) createRandomTxEvents() []*indexevent.TxEvent {
+func (d *FakeEventCreator) createRandomTxEvents(chains []*ent.Chain) []*indexevent.TxEvent {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var txEvents []*indexevent.TxEvent
 	for _, walletAddress := range d.walletAddresses {
@@ -90,11 +92,11 @@ func (d *FakeEventCreator) createRandomTxEvents() []*indexevent.TxEvent {
 		randNbr := r.Intn(3)
 		switch randNbr {
 		case 0:
-			txEvent = *createCoinReceivedEvent(walletAddress)
+			txEvent = *createCoinReceivedEvent(walletAddress, chains)
 		case 1:
-			txEvent = *createUnstakeEvent(walletAddress)
+			txEvent = *createUnstakeEvent(walletAddress, chains)
 		case 2:
-			txEvent = *createOsmoPoolUnlockEvent(walletAddress)
+			txEvent = *createOsmoPoolUnlockEvent(walletAddress, chains)
 		}
 		log.Sugar.Debugf("create random event %v", randNbr)
 		txEvents = append(txEvents, &txEvent)
@@ -105,9 +107,11 @@ func (d *FakeEventCreator) createRandomTxEvents() []*indexevent.TxEvent {
 func (d *FakeEventCreator) CreateFakeEvents() {
 	log.Sugar.Info("Start creating fake events")
 
+	chains := d.chainManager.QueryEnabled(context.Background())
+
 	for {
 		elMap := d.getEventListenerMap()
-		msgs := d.createRandomTxEvents()
+		msgs := d.createRandomTxEvents(chains)
 		for _, msg := range msgs {
 			if el, ok := elMap[msg.WalletAddress]; ok {
 				var ctx = context.Background()

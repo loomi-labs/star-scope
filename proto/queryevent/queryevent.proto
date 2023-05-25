@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+package starscope.queryevent;
+
+option go_package = "github.com/loomi-labs/star-scope/queryevent/queryevent";
+
+
+enum ProposalType {
+  PROPOSAL_TYPE_UNSPECIFIED = 0;
+  PROPOSAL_TYPE_TEXT = 1;
+  PROPOSAL_TYPE_PARAM_CHANGE = 2;
+  PROPOSAL_TYPE_UPGRADE = 3;
+  PROPOSAL_TYPE_CANCEL_SOFTWARE_UPGRADE = 4;
+  PROPOSAL_TYPE_COMMUNITY_POOL_SPEND = 5;
+}
+
+enum ProposalStatus {
+  PROPOSAL_STATUS_UNSPECIFIED = 0;
+  PROPOSAL_STATUS_DEPOSIT_PERIOD = 1;
+  PROPOSAL_STATUS_VOTING_PERIOD = 2;
+  PROPOSAL_STATUS_PASSED = 3;
+  PROPOSAL_STATUS_REJECTED = 4;
+  PROPOSAL_STATUS_FAILED = 5;
+}
+
+message GovernanceProposalEvent {
+  uint64 proposal_id = 1;
+  string title = 2;
+  string description = 3;
+  ProposalType proposal_type = 4;
+  ProposalStatus proposal_status = 5;
+  google.protobuf.Timestamp voting_start_time = 6;
+  google.protobuf.Timestamp voting_end_time = 7;
+}
+
+message QueryEvent {
+  uint64 chain_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  google.protobuf.Timestamp notify_time = 3;
+  oneof event {
+    GovernanceProposalEvent governance_proposal = 4;
+  }
+}

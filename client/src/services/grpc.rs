@@ -6,11 +6,10 @@ use tonic::Request;
 use crate::config::keys;
 
 use crate::services::auth::AuthService;
-use crate::services::grpc::auth_service_client::AuthServiceClient;
-use crate::services::grpc::event_service_client::EventServiceClient;
-use crate::services::grpc::user_service_client::UserServiceClient;
+use crate::types::types::grpc::auth_service_client::AuthServiceClient;
+use crate::types::types::grpc::event_service_client::EventServiceClient;
+use crate::types::types::grpc::user_service_client::UserServiceClient;
 
-tonic::include_proto!("starscope.grpc");
 
 #[derive(Debug, Clone)]
 pub struct GrpcClient {

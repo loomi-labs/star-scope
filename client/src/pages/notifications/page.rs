@@ -4,7 +4,6 @@ use std::str::FromStr;
 use chrono::{Duration, NaiveDateTime};
 use enum_iterator::{all, Sequence};
 use js_sys::Date;
-use log::debug;
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
@@ -14,8 +13,8 @@ use web_sys::{Event, HtmlSelectElement};
 
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
-use crate::services::grpc;
-use crate::services::grpc::EventType;
+use crate::types::types::grpc::EventType;
+use crate::types::types::grpc;
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 
 fn display_timestamp(option: Option<Timestamp>) -> String {
@@ -41,6 +40,10 @@ fn display_timestamp(option: Option<Timestamp>) -> String {
 pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
     let event_type = event.event_type();
 
+    let is_collapsed = create_signal(cx, true);
+    let description_length = event.description.len();
+    let max_length = 500;
+
     view! {cx,
         div(class="flex flex-col my-4 p-4 bg-gray-100 dark:bg-purple-700 rounded-lg shadow") {
             div(class="flex flex-row justify-between") {
@@ -49,15 +52,28 @@ pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
                         img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="h-12 w-12")
                     }
                     div(class="flex flex-col") {
-                        p(class="text-lg font-bold") { (event.title.clone()) }
-                        p(class="text-sm") { (display_timestamp(event.timestamp.clone())) }
-                        p(class="text-sm") { (event.description.clone()) }
+                        div(class="flex flex-row justify-between") {
+                            p(class="text-lg font-bold") { (event.title.clone()) }
+                            p(class="text-sm dark:text-purple-600") { (display_timestamp(event.timestamp.clone())) }
+                        }
+                        p(class="text-sm font-bold") { (event.subtitle.clone()) }
+                        div(class={if *is_collapsed.get() { "text-sm overflow-hidden max-h-16" } else { "text-sm" }}) { (event.description.clone()) }
+                        (if description_length > max_length {
+                            view!{cx,
+                                div(class="text-sm text-purple-600 font-bold mt-2", on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
+                                    (if *is_collapsed.get() { "Show more" } else { "Show less" })
+                                }
+                            }
+                        } else {
+                            view!{cx, div()}
+                        })
                     }
                 }
             }
         }
     }
 }
+
 
 #[component]
 pub fn Events<G: Html>(cx: Scope) -> View<G> {
@@ -167,23 +183,6 @@ impl NotificationsState {
                 }
             }
         }
-    }
-}
-
-async fn query_events(cx: Scope<'_>) {
-    let events_state = use_context::<EventsState>(cx);
-    let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(grpc::ListEventsRequest { start_time: None });
-    let response = services
-        .grpc_client
-        .get_event_service()
-        .list_events(request)
-        .await
-        .map(|res| res.into_inner());
-    if let Ok(response) = response {
-        events_state.addEvents(response.events);
-    } else {
-        create_error_msg_from_status(cx, response.err().unwrap());
     }
 }
 
@@ -511,7 +510,6 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
 pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
 
     spawn_local_scoped(cx.to_owned(), async move {
-        query_events(cx.to_owned()).await;
         query_chains(cx.to_owned()).await;
     });
 

@@ -5,7 +5,7 @@ import "google/protobuf/duration.proto";
 //import "cosmos/base/v1beta1/coin.proto";
 //import "gogoproto/gogo.proto";
 
-package starscope.event;
+package starscope.indexevent;
 
 option go_package = "github.com/loomi-labs/star-scope/indexevent/indexevent";
 
@@ -30,7 +30,7 @@ message UnstakeEvent {
 }
 
 message TxEvent {
-  string chain_path = 1;
+  uint64 chain_id = 1;
   string wallet_address = 2;
   google.protobuf.Timestamp timestamp = 3;
   google.protobuf.Timestamp notify_time = 4;

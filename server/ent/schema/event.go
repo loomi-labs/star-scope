@@ -5,7 +5,9 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
+	"fmt"
 	"github.com/loomi-labs/star-scope/indexevent"
+	"github.com/loomi-labs/star-scope/queryevent"
 	"reflect"
 	"time"
 )
@@ -31,6 +33,11 @@ func (Event) Fields() []ent.Field {
 	}
 	for _, t := range events {
 		types = append(types, reflect.TypeOf(t).Name())
+	}
+	var govBase = reflect.TypeOf(queryevent.QueryEvent_GovernanceProposal{}).Name()
+	var govEvents = []string{"Ongoing", "Finished"}
+	for _, govEvent := range govEvents {
+		types = append(types, fmt.Sprintf("%s_%s", govBase, govEvent))
 	}
 	return []ent.Field{
 		field.Enum("type").

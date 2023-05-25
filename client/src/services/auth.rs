@@ -10,8 +10,8 @@ use simple_error::bail;
 use tonic::Status;
 
 use crate::config::keys;
-use crate::services::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
-use crate::services::grpc::auth_service_client::AuthServiceClient;
+use crate::types::types::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
+use crate::types::types::grpc::auth_service_client::AuthServiceClient;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum Role {

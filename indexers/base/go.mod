@@ -3,8 +3,8 @@ module github.com/loomi-labs/star-scope/indexers/base
 go 1.20
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1
-	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1
+	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230524173830-15a6303455d3.1
+	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230524173830-15a6303455d3.1
 	github.com/bufbuild/connect-go v1.7.0
 	github.com/cosmos/cosmos-sdk v0.46.7
 	github.com/cosmos/ibc-go/v6 v6.1.0
@@ -107,6 +107,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/regen-network/cosmos-proto v0.3.1 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

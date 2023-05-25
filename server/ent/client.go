@@ -17,6 +17,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
 
@@ -31,6 +32,8 @@ type Client struct {
 	Event *EventClient
 	// EventListener is the client for interacting with the EventListener builders.
 	EventListener *EventListenerClient
+	// Proposal is the client for interacting with the Proposal builders.
+	Proposal *ProposalClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -49,6 +52,7 @@ func (c *Client) init() {
 	c.Chain = NewChainClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.EventListener = NewEventListenerClient(c.config)
+	c.Proposal = NewProposalClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -135,6 +139,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Chain:         NewChainClient(cfg),
 		Event:         NewEventClient(cfg),
 		EventListener: NewEventListenerClient(cfg),
+		Proposal:      NewProposalClient(cfg),
 		User:          NewUserClient(cfg),
 	}, nil
 }
@@ -158,6 +163,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Chain:         NewChainClient(cfg),
 		Event:         NewEventClient(cfg),
 		EventListener: NewEventListenerClient(cfg),
+		Proposal:      NewProposalClient(cfg),
 		User:          NewUserClient(cfg),
 	}, nil
 }
@@ -190,6 +196,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Chain.Use(hooks...)
 	c.Event.Use(hooks...)
 	c.EventListener.Use(hooks...)
+	c.Proposal.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -199,6 +206,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Chain.Intercept(interceptors...)
 	c.Event.Intercept(interceptors...)
 	c.EventListener.Intercept(interceptors...)
+	c.Proposal.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -211,6 +219,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Event.mutate(ctx, m)
 	case *EventListenerMutation:
 		return c.EventListener.mutate(ctx, m)
+	case *ProposalMutation:
+		return c.Proposal.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -320,6 +330,22 @@ func (c *ChainClient) QueryEventListeners(ch *Chain) *EventListenerQuery {
 			sqlgraph.From(chain.Table, chain.FieldID, id),
 			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chain.EventListenersTable, chain.EventListenersColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProposals queries the proposals edge of a Chain.
+func (c *ChainClient) QueryProposals(ch *Chain) *ProposalQuery {
+	query := (&ProposalClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, id),
+			sqlgraph.To(proposal.Table, proposal.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, chain.ProposalsTable, chain.ProposalsColumn),
 		)
 		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
 		return fromV, nil
@@ -652,6 +678,140 @@ func (c *EventListenerClient) mutate(ctx context.Context, m *EventListenerMutati
 	}
 }
 
+// ProposalClient is a client for the Proposal schema.
+type ProposalClient struct {
+	config
+}
+
+// NewProposalClient returns a client for the Proposal from the given config.
+func NewProposalClient(c config) *ProposalClient {
+	return &ProposalClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `proposal.Hooks(f(g(h())))`.
+func (c *ProposalClient) Use(hooks ...Hook) {
+	c.hooks.Proposal = append(c.hooks.Proposal, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `proposal.Intercept(f(g(h())))`.
+func (c *ProposalClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Proposal = append(c.inters.Proposal, interceptors...)
+}
+
+// Create returns a builder for creating a Proposal entity.
+func (c *ProposalClient) Create() *ProposalCreate {
+	mutation := newProposalMutation(c.config, OpCreate)
+	return &ProposalCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Proposal entities.
+func (c *ProposalClient) CreateBulk(builders ...*ProposalCreate) *ProposalCreateBulk {
+	return &ProposalCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Proposal.
+func (c *ProposalClient) Update() *ProposalUpdate {
+	mutation := newProposalMutation(c.config, OpUpdate)
+	return &ProposalUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProposalClient) UpdateOne(pr *Proposal) *ProposalUpdateOne {
+	mutation := newProposalMutation(c.config, OpUpdateOne, withProposal(pr))
+	return &ProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProposalClient) UpdateOneID(id int) *ProposalUpdateOne {
+	mutation := newProposalMutation(c.config, OpUpdateOne, withProposalID(id))
+	return &ProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Proposal.
+func (c *ProposalClient) Delete() *ProposalDelete {
+	mutation := newProposalMutation(c.config, OpDelete)
+	return &ProposalDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProposalClient) DeleteOne(pr *Proposal) *ProposalDeleteOne {
+	return c.DeleteOneID(pr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProposalClient) DeleteOneID(id int) *ProposalDeleteOne {
+	builder := c.Delete().Where(proposal.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProposalDeleteOne{builder}
+}
+
+// Query returns a query builder for Proposal.
+func (c *ProposalClient) Query() *ProposalQuery {
+	return &ProposalQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProposal},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Proposal entity by its id.
+func (c *ProposalClient) Get(ctx context.Context, id int) (*Proposal, error) {
+	return c.Query().Where(proposal.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProposalClient) GetX(ctx context.Context, id int) *Proposal {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryChain queries the chain edge of a Proposal.
+func (c *ProposalClient) QueryChain(pr *Proposal) *ChainQuery {
+	query := (&ChainClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(proposal.Table, proposal.FieldID, id),
+			sqlgraph.To(chain.Table, chain.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, proposal.ChainTable, proposal.ChainColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ProposalClient) Hooks() []Hook {
+	return c.hooks.Proposal
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProposalClient) Interceptors() []Interceptor {
+	return c.inters.Proposal
+}
+
+func (c *ProposalClient) mutate(ctx context.Context, m *ProposalMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProposalCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProposalUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProposalUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProposalDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Proposal mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -789,9 +949,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Chain, Event, EventListener, User []ent.Hook
+		Chain, Event, EventListener, Proposal, User []ent.Hook
 	}
 	inters struct {
-		Chain, Event, EventListener, User []ent.Interceptor
+		Chain, Event, EventListener, Proposal, User []ent.Interceptor
 	}
 )

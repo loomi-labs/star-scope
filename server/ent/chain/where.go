@@ -803,6 +803,29 @@ func HasEventListenersWith(preds ...predicate.EventListener) predicate.Chain {
 	})
 }
 
+// HasProposals applies the HasEdge predicate on the "proposals" edge.
+func HasProposals() predicate.Chain {
+	return predicate.Chain(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ProposalsTable, ProposalsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProposalsWith applies the HasEdge predicate on the "proposals" edge with a given conditions (other predicates).
+func HasProposalsWith(preds ...predicate.Proposal) predicate.Chain {
+	return predicate.Chain(func(s *sql.Selector) {
+		step := newProposalsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Chain) predicate.Chain {
 	return predicate.Chain(func(s *sql.Selector) {

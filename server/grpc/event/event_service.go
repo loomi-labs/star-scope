@@ -48,15 +48,15 @@ func (e EventService) EventStream(ctx context.Context, _ *connect.Request[emptyp
 
 	for {
 		select {
-		case event, ok := <-processedEvents:
+		case eventList, ok := <-processedEvents:
 			if !ok {
 				log.Sugar.Debugf("processed events channel closed")
 				return types.UnknownErr
 			}
-			log.Sugar.Debugf("received processed event: %v", event)
-			err := stream.Send(event)
+			log.Sugar.Debugf("received processed %v events", len(eventList.GetEvents()))
+			err := stream.Send(eventList)
 			if err != nil {
-				log.Sugar.Debugf("error sending processed event: %v", err)
+				log.Sugar.Debugf("error sending processed eventList: %v", err)
 				return types.UnknownErr
 			}
 		case <-timer.C:

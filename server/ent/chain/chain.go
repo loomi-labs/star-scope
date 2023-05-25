@@ -42,6 +42,8 @@ const (
 	FieldIsEnabled = "is_enabled"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
+	// EdgeProposals holds the string denoting the proposals edge name in mutations.
+	EdgeProposals = "proposals"
 	// Table holds the table name of the chain in the database.
 	Table = "chains"
 	// EventListenersTable is the table that holds the event_listeners relation/edge.
@@ -51,6 +53,13 @@ const (
 	EventListenersInverseTable = "event_listeners"
 	// EventListenersColumn is the table column denoting the event_listeners relation/edge.
 	EventListenersColumn = "chain_event_listeners"
+	// ProposalsTable is the table that holds the proposals relation/edge.
+	ProposalsTable = "proposals"
+	// ProposalsInverseTable is the table name for the Proposal entity.
+	// It exists in this package in order to avoid circular dependency with the "proposal" package.
+	ProposalsInverseTable = "proposals"
+	// ProposalsColumn is the table column denoting the proposals relation/edge.
+	ProposalsColumn = "chain_proposals"
 )
 
 // Columns holds all SQL columns for chain fields.
@@ -186,10 +195,31 @@ func ByEventListeners(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEventListenersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByProposalsCount orders the results by proposals count.
+func ByProposalsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newProposalsStep(), opts...)
+	}
+}
+
+// ByProposals orders the results by proposals terms.
+func ByProposals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProposalsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEventListenersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EventListenersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EventListenersTable, EventListenersColumn),
+	)
+}
+func newProposalsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProposalsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ProposalsTable, ProposalsColumn),
 	)
 }

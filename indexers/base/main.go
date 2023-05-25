@@ -27,9 +27,13 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 		log.Sugar.Panicf("Error getting indexing chains: %v", err)
 	}
 
+	governanceCrawler := indexer.NewGovernanceCrawler(grpcClient, kafkaBrokers)
+	go governanceCrawler.StartGovernanceCrawling()
+
 	for _, chain := range response.Msg.GetChains() {
 		var config = indexer.Config{
 			ChainInfo: indexer.ChainInfo{
+				ChainId:      chain.Id,
 				Path:         chain.Path,
 				RestEndpoint: chain.RpcUrl,
 				Name:         chain.Name,
@@ -66,7 +70,7 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus) {
 	const updateBatchTimeout = 5 * time.Second // Time duration to wait for more updates
 
-	var updates = make(map[uint64]*indexerpb.Chain)
+	var updates = make(map[uint64]*indexerpb.IndexingChain)
 	var timer *time.Timer
 	var timerExpired <-chan time.Time
 
@@ -88,7 +92,7 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 			for msgType := range update.UnhandledMessageTypes {
 				unhandledMessageTypes = append(unhandledMessageTypes, msgType)
 			}
-			updates[update.ChainId] = &indexerpb.Chain{
+			updates[update.ChainId] = &indexerpb.IndexingChain{
 				Id:                    update.ChainId,
 				IndexingHeight:        update.Height,
 				HandledMessageTypes:   handledMessageTypes,
@@ -104,15 +108,15 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 			sendUpdates(grpcClient, updates) // Send the batch when the timer expires
 			timer.Stop()
 			timer = nil // Reset the timer
-			updates = make(map[uint64]*indexerpb.Chain)
+			updates = make(map[uint64]*indexerpb.IndexingChain)
 		}
 	}
 }
 
-func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[uint64]*indexerpb.Chain) {
+func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[uint64]*indexerpb.IndexingChain) {
 	if len(updates) > 0 {
 		log.Sugar.Debugf("Sending %d updates", len(updates))
-		var chains []*indexerpb.Chain
+		var chains []*indexerpb.IndexingChain
 		for _, update := range updates {
 			chains = append(chains, update)
 		}
@@ -139,6 +143,7 @@ func main() {
 
 	var updateChannel = make(chan indexer.SyncStatus)
 	defer close(updateChannel)
+
 	grpcClient := startIndexers(updateChannel)
 	listenForUpdates(grpcClient, updateChannel)
 }

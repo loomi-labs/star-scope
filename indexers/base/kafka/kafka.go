@@ -3,21 +3,25 @@ package kafka
 import (
 	"context"
 	"fmt"
-	"github.com/loomi-labs/star-scope/indexers/base/common"
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 )
 
+type Topic string
+
 var (
-	topic = common.GetEnvX("KAFKA_TOPIC")
+	IndexEventsTopic Topic = "index-events"
+	QueryEventsTopic Topic = "query-events"
 )
 
 type KafkaProducer struct {
+	topic     Topic
 	addresses []string
 }
 
-func NewKafkaProducer(addresses ...string) *KafkaProducer {
+func NewKafkaProducer(topic Topic, addresses ...string) *KafkaProducer {
 	return &KafkaProducer{
+		topic:     topic,
 		addresses: addresses,
 	}
 }
@@ -25,7 +29,7 @@ func NewKafkaProducer(addresses ...string) *KafkaProducer {
 func (k *KafkaProducer) writer() *kafka.Writer {
 	return &kafka.Writer{
 		Addr:                   kafka.TCP(k.addresses...),
-		Topic:                  topic,
+		Topic:                  string(k.topic),
 		Balancer:               &kafka.LeastBytes{},
 		AllowAutoTopicCreation: true,
 		//Logger:                 kafka.LoggerFunc(log.Sugar.Debugf),

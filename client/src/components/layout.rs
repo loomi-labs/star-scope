@@ -1,10 +1,8 @@
-use std::rc::Rc;
-use log::debug;
 use sycamore::prelude::*;
 
 use crate::{AppRoutes, AppState};
 use crate::pages::notifications::page::NotificationsState;
-use crate::services::grpc::EventType;
+use crate::types::types::grpc::EventType;
 use crate::utils::url::safe_navigate;
 
 #[component]
@@ -165,7 +163,7 @@ pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> V
                 Header{}
                 div(class="flex flex-row h-full w-full") {
                     Sidebar{}
-                    div(class="p-8 max-w-[90vw] md:max-w-auto h-full w-full") {
+                    div(class="p-8 w-full max-w-[90vw] md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto") {
                         (children)
                     }
                 }

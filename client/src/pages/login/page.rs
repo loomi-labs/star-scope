@@ -1,4 +1,3 @@
-use log::debug;
 use serde::{Deserialize, Serialize};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
@@ -36,6 +35,7 @@ extern "C" {
     fn isMobile(url: String) -> JsValue;
 }
 
+#[allow(dead_code)]
 fn wallet_connect_login_wrapper() -> Result<String, String> {
     let login_result = wallet_connect_login("https://star-scope.decrypto.online".to_string());
     let js_result = serde_wasm_bindgen::from_value(login_result).unwrap_or_else(|_| JsResult { result: "".to_string(), error: "Wallet connect login failed".to_string() });

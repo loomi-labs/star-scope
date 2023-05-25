@@ -53,9 +53,9 @@ var startGrpcServerCmd = &cobra.Command{
 	},
 }
 
-var startEventConsumerCmd = &cobra.Command{
-	Use:   "event-consumer",
-	Short: "Start the event consumer",
+var startIndexEventConsumerCmd = &cobra.Command{
+	Use:   "index-event-consumer",
+	Short: "Start the index event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
@@ -68,6 +68,17 @@ var startEventConsumerCmd = &cobra.Command{
 			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
 			eventConsumer.ProcessIndexedEvents()
 		}
+	},
+}
+
+var startQueryEventConsumerCmd = &cobra.Command{
+	Use:   "query-event-consumer",
+	Short: "Start the query event consumer",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
+		eventConsumer.ProcessQueryEvents()
 	},
 }
 
@@ -85,8 +96,9 @@ func init() {
 	rootCmd.AddCommand(serviceCmd)
 
 	serviceCmd.AddCommand(startGrpcServerCmd)
-	serviceCmd.AddCommand(startEventConsumerCmd)
+	serviceCmd.AddCommand(startIndexEventConsumerCmd)
+	serviceCmd.AddCommand(startQueryEventConsumerCmd)
 	serviceCmd.AddCommand(startCrawlerCmd)
 
-	startEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
+	startIndexEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }

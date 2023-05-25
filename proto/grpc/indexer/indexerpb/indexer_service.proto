@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
+import "queryevent/queryevent.proto";
 
 package starscope.grpc;
 
@@ -9,9 +10,10 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/indexer/indexerpb";
 service IndexerService {
   rpc GetIndexingChains (google.protobuf.Empty) returns (GetIndexingChainsResponse) {}
   rpc UpdateIndexingChains (UpdateIndexingChainsRequest) returns (google.protobuf.Empty) {}
+  rpc GetGovernanceProposalStati (google.protobuf.Empty) returns (GetGovernanceProposalStatiResponse) {}
 }
 
-message Chain {
+message IndexingChain {
   uint64 id = 1;
   string name = 2;
   string path = 3;
@@ -23,11 +25,11 @@ message Chain {
 }
 
 message GetIndexingChainsResponse {
-  repeated Chain chains = 1;
+  repeated IndexingChain chains = 1;
 }
 
 message UpdateIndexingChainsRequest {
-  repeated Chain chains = 1;
+  repeated IndexingChain chains = 1;
 }
 
 service TxHandlerService {
@@ -44,4 +46,21 @@ message HandleTxsResponse {
   int32 count_processed = 3;
   repeated string handled_message_types = 4;
   repeated string unhandled_message_types = 5;
+}
+
+message GovernanceProposal {
+  uint64 proposal_id = 1;
+  starscope.queryevent.ProposalStatus status = 2;
+}
+
+message ChainInfo {
+  uint64 id = 1;
+  string name = 2;
+  string path = 3;
+  string rpc_url = 4;
+  repeated GovernanceProposal proposals = 5;
+}
+
+message GetGovernanceProposalStatiResponse {
+  repeated ChainInfo chains = 1;
 }
