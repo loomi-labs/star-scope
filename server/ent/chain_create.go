@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/proposal"
 )
 
 // ChainCreate is the builder for creating a Chain entity.
@@ -168,6 +169,21 @@ func (cc *ChainCreate) AddEventListeners(e ...*EventListener) *ChainCreate {
 		ids[i] = e[i].ID
 	}
 	return cc.AddEventListenerIDs(ids...)
+}
+
+// AddProposalIDs adds the "proposals" edge to the Proposal entity by IDs.
+func (cc *ChainCreate) AddProposalIDs(ids ...int) *ChainCreate {
+	cc.mutation.AddProposalIDs(ids...)
+	return cc
+}
+
+// AddProposals adds the "proposals" edges to the Proposal entity.
+func (cc *ChainCreate) AddProposals(p ...*Proposal) *ChainCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return cc.AddProposalIDs(ids...)
 }
 
 // Mutation returns the ChainMutation object of the builder.
@@ -363,6 +379,22 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.ProposalsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ProposalsTable,
+			Columns: []string{chain.ProposalsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(proposal.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

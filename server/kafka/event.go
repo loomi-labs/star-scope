@@ -7,47 +7,84 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/indexevent"
+	"github.com/loomi-labs/star-scope/queryevent"
+	"github.com/shifty11/go-logger/log"
 )
 
-func txEventToProto(data []byte) (*indexevent.TxEvent, *eventpb.Event, error) {
+func txEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 	var txEvent indexevent.TxEvent
 	err := proto.Unmarshal(data, &txEvent)
 	if err != nil {
-		return nil, nil, err
+		return 0, nil, err
 	}
 	switch txEvent.GetEvent().(type) {
 	case *indexevent.TxEvent_CoinReceived:
-		return &txEvent, &eventpb.Event{
+		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Token Received",
 			Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
 			Timestamp:   txEvent.Timestamp,
 			EventType:   eventpb.EventType_FUNDING,
 		}, nil
 	case *indexevent.TxEvent_OsmosisPoolUnlock:
-		return &txEvent, &eventpb.Event{
+		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Pool Unlock",
 			Description: fmt.Sprintf("%v will unlock pool at %v", txEvent.WalletAddress, txEvent.GetOsmosisPoolUnlock().UnlockTime),
 			Timestamp:   txEvent.Timestamp,
 			EventType:   eventpb.EventType_DEX,
 		}, nil
 	case *indexevent.TxEvent_Unstake:
-		return &txEvent, &eventpb.Event{
+		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Unstake",
 			Description: fmt.Sprintf("%v will unstake %v%v at %v", txEvent.WalletAddress, txEvent.GetUnstake().GetCoin().Amount, txEvent.GetUnstake().GetCoin().Denom, txEvent.GetUnstake().CompletionTime),
 			Timestamp:   txEvent.Timestamp,
 			EventType:   eventpb.EventType_STAKING,
 		}, nil
 	}
-	return nil, nil, errors.New(fmt.Sprintf("No type defined for event %v", txEvent.GetEvent()))
+	return 0, nil, errors.New(fmt.Sprintf("No type defined for event %v", txEvent.GetEvent()))
+}
+
+func queryEventToProto(data []byte) (uint64, *eventpb.Event, error) {
+	var queryEvent queryevent.QueryEvent
+	err := proto.Unmarshal(data, &queryEvent)
+	if err != nil {
+		return 0, nil, err
+	}
+	switch queryEvent.GetEvent().(type) {
+	case *queryevent.QueryEvent_GovernanceProposal:
+		var statusText = "Proposal %v"
+		switch queryEvent.GetGovernanceProposal().GetProposalStatus() {
+		case queryevent.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD:
+			statusText = "New Proposal - %v"
+		case queryevent.ProposalStatus_PROPOSAL_STATUS_PASSED:
+			statusText = "Proposal %v Passed"
+		case queryevent.ProposalStatus_PROPOSAL_STATUS_REJECTED:
+			statusText = "Proposal %v Rejected"
+		case queryevent.ProposalStatus_PROPOSAL_STATUS_FAILED:
+			statusText = "Proposal %v Failed"
+		default:
+			log.Sugar.Errorf("Unknown proposal status %v", queryEvent.GetGovernanceProposal().GetProposalStatus())
+		}
+		return queryEvent.ChainId, &eventpb.Event{
+			Title:       fmt.Sprintf(statusText, queryEvent.GetGovernanceProposal().GetProposalId()),
+			Subtitle:    queryEvent.GetGovernanceProposal().GetTitle(),
+			Description: queryEvent.GetGovernanceProposal().GetDescription(),
+			Timestamp:   queryEvent.Timestamp,
+			EventType:   eventpb.EventType_GOVERNANCE,
+		}, nil
+	}
+	return 0, nil, errors.New(fmt.Sprintf("No type defined for event %v", queryEvent.GetEvent()))
 }
 
 func kafkaMsgToProto(data []byte, chains []*ent.Chain) (*eventpb.Event, error) {
-	var txEvent, pbEvent, err = txEventToProto(data)
+	var chainId, pbEvent, err = txEventToProto(data)
 	if err != nil {
-		return nil, err
+		chainId, pbEvent, err = queryEventToProto(data)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, chain := range chains {
-		if chain.Path == txEvent.ChainPath {
+		if uint64(chain.ID) == chainId {
 			pbEvent.Chain = &eventpb.ChainData{
 				Id:       int64(chain.ID),
 				Name:     chain.Name,
@@ -62,7 +99,11 @@ func kafkaMsgToProto(data []byte, chains []*ent.Chain) (*eventpb.Event, error) {
 func EntEventToProto(entEvent *ent.Event, chain *ent.Chain) (*eventpb.Event, error) {
 	var _, pbEvent, err = txEventToProto(entEvent.TxEvent)
 	if err != nil {
-		return nil, err
+		// TODO: rename txEvent
+		_, pbEvent, err = queryEventToProto(entEvent.TxEvent)
+		if err != nil {
+			return nil, err
+		}
 	}
 	pbEvent.Id = int64(entEvent.ID)
 	pbEvent.Chain = &eventpb.ChainData{

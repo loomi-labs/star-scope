@@ -141,17 +141,13 @@ func getRawEventResult(events []types.Event, event RawEvent) (map[string]string,
 	return result, nil
 }
 
-func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes.TxResponse) ([]byte, error) {
+func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes.TxResponse, timestamp *timestamppb.Timestamp) ([]byte, error) {
 	if txResponse == nil || len(txResponse.Events) == 0 {
 		return nil, nil
 	}
-	var timestamp, err = i.txHelper.GetTxTimestamp(txResponse)
-	if err != nil {
-		return nil, err
-	}
 	txEvent := &indexevent.TxEvent{
-		ChainName:  i.chainInfo.Name,
-		Timestamp:  timestamppb.New(timestamp),
+		ChainId:    i.chainInfo.ChainId,
+		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
 		Event: &indexevent.TxEvent_CoinReceived{
 			CoinReceived: &indexevent.CoinReceivedEvent{
@@ -181,16 +177,16 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 }
 
 func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([]byte, error) {
-	wasSuccessful, err := i.txHelper.WasTxSuccessful(tx)
+	wasSuccessful, timestamp, err := i.txHelper.WasTxSuccessful(tx)
 	if err != nil {
 		return nil, err
 	}
 	if wasSuccessful {
 		var txEvent = &indexevent.TxEvent{
-			ChainName:     i.chainInfo.Name,
+			ChainId:       i.chainInfo.ChainId,
 			WalletAddress: msg.ToAddress,
-			//Timestamp:     TODO: get timestamp from tx
-			NotifyTime: timestamppb.Now(),
+			Timestamp:     timestamp,
+			NotifyTime:    timestamppb.Now(),
 			Event: &indexevent.TxEvent_CoinReceived{
 				CoinReceived: &indexevent.CoinReceivedEvent{
 					Sender: msg.FromAddress,
@@ -207,25 +203,20 @@ func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([
 }
 
 func (i *baseMessageHandler) handleMsgRecvPacket(_ *ibcChannel.MsgRecvPacket, tx []byte) ([]byte, error) {
-	txResponse, err := i.txHelper.GetTxResponse(tx)
+	txResponse, timestamp, err := i.txHelper.GetTxResponse(tx)
 	if err != nil {
 		return nil, err
 	}
-	return i.handleFungibleTokenPacketEvent(txResponse)
+	return i.handleFungibleTokenPacketEvent(txResponse, timestamp)
 }
 
 func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate, tx []byte) ([]byte, error) {
-	txResponse, err := i.txHelper.GetTxResponse(tx)
+	txResponse, timestamp, err := i.txHelper.GetTxResponse(tx)
 	if err != nil {
 		return nil, err
 	}
 	if txResponse == nil || len(txResponse.Events) == 0 {
 		return nil, nil
-	}
-
-	timestamp, err := i.txHelper.GetTxTimestamp(txResponse)
-	if err != nil {
-		return nil, err
 	}
 
 	var completionTimeStr, amount = "completion_time", "amount"
@@ -238,8 +229,8 @@ func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate
 		return nil, err
 	}
 	txEvent := &indexevent.TxEvent{
-		ChainName:  i.chainInfo.Name,
-		Timestamp:  timestamppb.New(timestamp),
+		ChainId:    i.chainInfo.ChainId,
+		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
 		Event: &indexevent.TxEvent_Unstake{
 			Unstake: &indexevent.UnstakeEvent{

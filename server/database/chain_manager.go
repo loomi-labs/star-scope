@@ -2,8 +2,11 @@ package database
 
 import (
 	"context"
+	"errors"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/queryevent"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
@@ -45,6 +48,17 @@ func (m *ChainManager) QueryByName(ctx context.Context, name string) []*ent.Chai
 			chain.NameEQ(name),
 			chain.PrettyNameEQ(name),
 		)).
+		AllX(ctx)
+}
+
+func (m *ChainManager) QueryById(background context.Context, id int) (*ent.Chain, error) {
+	return m.client.Chain.
+		Get(background, id)
+}
+
+func (m *ChainManager) QueryProposals(ctx context.Context, entChain *ent.Chain) []*ent.Proposal {
+	return entChain.
+		QueryProposals().
 		AllX(ctx)
 }
 
@@ -122,4 +136,33 @@ func (m *ChainManager) UpdateIndexStatus(
 		SetHandledMessageTypes(strings.Join(handledMessageTypes, ",")).
 		SetUnhandledMessageTypes(strings.Join(unhandledMessageTypes, ",")).
 		Exec(ctx)
+}
+
+func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+	return m.client.Proposal.Create().
+		SetChain(entChain).
+		SetProposalID(prop.ProposalId).
+		SetStatus(proposal.Status(prop.GetProposalStatus().String())).
+		SetTitle(prop.GetTitle()).
+		SetDescription(prop.GetDescription()).
+		SetVotingStartTime(prop.GetVotingStartTime().AsTime()).
+		SetVotingEndTime(prop.GetVotingEndTime().AsTime()).
+		Save(ctx)
+}
+
+func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+	if govProp == nil {
+		return nil, errors.New("governance prop is nil")
+	}
+	prop, err := entChain.QueryProposals().
+		Where(proposal.ProposalIDEQ(govProp.ProposalId)).
+		Only(ctx)
+	if ent.IsNotFound(err) {
+		return m.createProposal(ctx, entChain, govProp)
+	} else if err != nil {
+		return nil, err
+	}
+	return prop.Update().
+		SetStatus(proposal.Status(govProp.GetProposalStatus().String())).
+		Save(ctx)
 }

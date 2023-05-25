@@ -24,10 +24,11 @@ enum EventType {
 message Event {
   int64 id = 1;
   string title = 2;
-  string description = 3;
-  google.protobuf.Timestamp timestamp = 4;
-  EventType event_type = 5;
-  ChainData chain = 6;
+  string subtitle = 3;
+  string description = 4;
+  google.protobuf.Timestamp timestamp = 5;
+  EventType event_type = 6;
+  ChainData chain = 7;
 }
 
 message EventList {

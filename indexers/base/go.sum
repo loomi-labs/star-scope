@@ -1,7 +1,15 @@
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1 h1:oP1I+fqUK/k96ZxGm1kXQpBK1a3FmWXrijoJS8Nysm4=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1/go.mod h1:PCpnvvWZIdoIHVCxgJlIikD25nSWfRl7KfIDUBlEEV4=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230524160546-15aec52d211e.1 h1:l60o+wGnn9m4yBTv9DlFxMvejlfldmwuXx3TQ/4y4Ss=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230524160546-15aec52d211e.1/go.mod h1:PI6wvNvTv1eotvELpNDXN0j71/i2HN9WvvnoAKCiXzo=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230524173830-15a6303455d3.1 h1:NS8O1fCErDWI2Sjw0sUm43IUAz+dlRNErDKtp6dc8yY=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230524173830-15a6303455d3.1/go.mod h1:7AMe20rXNTzXbjgWjbvvSvJ9hNppNZkd/HtOoVaNfIk=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1 h1:3PmoQxUoB2Yf6wWVM3CPj/eGF9AHTE4BlXEP6NqjNbk=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230524160546-15aec52d211e.1 h1:iamQ/TPoVCVJE2UVM5NJocHFq8tlrfEhzgYXnYjxpig=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230524160546-15aec52d211e.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230524173830-15a6303455d3.1 h1:JcH7cBPsYSyrjKC5b7zBjkzQJCFs2yTEQoqKKa4ukp8=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230524173830-15a6303455d3.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -642,6 +650,8 @@ github.com/regen-network/cosmos-proto v0.3.1 h1:rV7iM4SSFAagvy8RiyhiACbWEGotmqzy
 github.com/regen-network/cosmos-proto v0.3.1/go.mod h1:jO0sVX6a1B36nmE8C9xBFXpNwWejXC7QqCOnH3O0+YM=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1/go.mod h1:2DjTFR1HhMQhiWC5sZ4OhQ3+NtdbZ6oBDKQwq5Ou+FI=
+github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
+github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.6.1 h1:/FiVV8dS/e+YqF2JvO3yXRFbBLTIuSDkuC7aBOAvL+k=

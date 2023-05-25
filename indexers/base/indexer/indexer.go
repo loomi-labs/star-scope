@@ -11,12 +11,14 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/loomi-labs/star-scope/indexers/base/kafka"
 	"github.com/shifty11/go-logger/log"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"net/http"
 	"time"
 )
 
 type ChainInfo struct {
+	ChainId      uint64
 	Path         string
 	RestEndpoint string
 	Name         string
@@ -44,7 +46,7 @@ func NewIndexer(config Config) Indexer {
 	return Indexer{
 		chainInfo:      config.ChainInfo,
 		encodingConfig: config.EncodingConfig,
-		kafkaProducer:  kafka.NewKafkaProducer(config.KafkaBrokers...),
+		kafkaProducer:  kafka.NewKafkaProducer(kafka.IndexEventsTopic, config.KafkaBrokers...),
 		txHandler:      config.MessageHandler,
 	}
 }
@@ -86,26 +88,31 @@ func (h *TxHelper) GetTxResult(tx []byte) (*txtypes.GetTxResponse, error) {
 	return &txResponse, nil
 }
 
-func (h *TxHelper) GetTxResponse(tx []byte) (*sdktypes.TxResponse, error) {
+func (h *TxHelper) GetTxResponse(tx []byte) (*sdktypes.TxResponse, *timestamppb.Timestamp, error) {
 	resp, err := h.GetTxResult(tx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if resp.GetTxResponse().Code == 0 {
-		return resp.GetTxResponse(), nil
+		timestamp, err := h.GetTxTimestamp(resp.GetTxResponse())
+		if err != nil {
+			log.Sugar.Errorf("Error getting tx timestamp: %s", err)
+			return resp.GetTxResponse(), nil, nil
+		}
+		return resp.GetTxResponse(), timestamppb.New(timestamp), nil
 	}
-	return nil, nil
+	return nil, nil, nil
 }
 
-func (h *TxHelper) WasTxSuccessful(tx []byte) (bool, error) {
-	txResponse, err := h.GetTxResponse(tx)
+func (h *TxHelper) WasTxSuccessful(tx []byte) (bool, *timestamppb.Timestamp, error) {
+	txResponse, timestamp, err := h.GetTxResponse(tx)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	if txResponse == nil {
-		return false, nil
+		return false, nil, nil
 	}
-	return len(txResponse.Events) > 0, nil
+	return len(txResponse.Events) > 0, timestamp, nil
 }
 
 func (h *TxHelper) GetTxTimestamp(txResponse *sdktypes.TxResponse) (time.Time, error) {

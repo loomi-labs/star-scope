@@ -53,9 +53,11 @@ type Chain struct {
 type ChainEdges struct {
 	// EventListeners holds the value of the event_listeners edge.
 	EventListeners []*EventListener `json:"event_listeners,omitempty"`
+	// Proposals holds the value of the proposals edge.
+	Proposals []*Proposal `json:"proposals,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // EventListenersOrErr returns the EventListeners value or an error if the edge
@@ -65,6 +67,15 @@ func (e ChainEdges) EventListenersOrErr() ([]*EventListener, error) {
 		return e.EventListeners, nil
 	}
 	return nil, &NotLoadedError{edge: "event_listeners"}
+}
+
+// ProposalsOrErr returns the Proposals value or an error if the edge
+// was not loaded in eager-loading.
+func (e ChainEdges) ProposalsOrErr() ([]*Proposal, error) {
+	if e.loadedTypes[1] {
+		return e.Proposals, nil
+	}
+	return nil, &NotLoadedError{edge: "proposals"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -195,6 +206,11 @@ func (c *Chain) Value(name string) (ent.Value, error) {
 // QueryEventListeners queries the "event_listeners" edge of the Chain entity.
 func (c *Chain) QueryEventListeners() *EventListenerQuery {
 	return NewChainClient(c.config).QueryEventListeners(c)
+}
+
+// QueryProposals queries the "proposals" edge of the Chain entity.
+func (c *Chain) QueryProposals() *ProposalQuery {
+	return NewChainClient(c.config).QueryProposals(c)
 }
 
 // Update returns a builder for updating this Chain.

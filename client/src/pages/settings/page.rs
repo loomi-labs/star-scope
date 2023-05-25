@@ -1,6 +1,5 @@
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
-use tonic::{Status};
 use crate::{Services};
 use crate::components::messages::create_error_msg_from_status;
 

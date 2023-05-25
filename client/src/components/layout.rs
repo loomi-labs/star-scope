@@ -1,10 +1,8 @@
-use std::rc::Rc;
-use log::debug;
 use sycamore::prelude::*;
 
 use crate::{AppRoutes, AppState};
 use crate::pages::notifications::page::NotificationsState;
-use crate::services::grpc::EventType;
+use crate::types::types::grpc::EventType;
 use crate::utils::url::safe_navigate;
 
 #[component]

@@ -19,13 +19,16 @@ use crate::pages::login::page::Login;
 use crate::pages::settings::page::Settings;
 use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::services::auth::AuthService;
-use crate::services::grpc::{Event, GrpcClient, User};
+use crate::services::grpc::GrpcClient;
+use crate::types::types::grpc;
+use crate::types::types::grpc::{Event, User};
 
 mod components;
 mod config;
 mod pages;
 mod services;
 mod utils;
+mod types;
 
 #[derive(Route, Debug, Clone, PartialEq)]
 pub enum AppRoutes {
@@ -207,7 +210,7 @@ impl EventsState {
         self.events.set(vec![]);
     }
 
-    pub fn addEvents(&self, new_events: Vec<Event>) {
+    pub fn add_events(&self, new_events: Vec<Event>) {
         let mut events = self.events.modify();
         for e in new_events {
             events.insert(0, e);
@@ -305,12 +308,28 @@ fn subscribe_to_events(cx: Scope) {
             .unwrap()
             .into_inner();
         while let Some(response) = event_stream.message().await.unwrap() {
-            debug!("Received events: {:?}", response.events);
-            overview_state.addEvents(response.events);
+            debug!("Received {:?} events", response.events.len());
+            overview_state.add_events(response.events);
         }
     });
 }
 
+async fn query_events(cx: Scope<'_>) {
+    let events_state = use_context::<EventsState>(cx);
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(grpc::ListEventsRequest { start_time: None });
+    let response = services
+        .grpc_client
+        .get_event_service()
+        .list_events(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(response) = response {
+        events_state.add_events(response.events);
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
 
 #[component]
 pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
@@ -344,7 +363,8 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                                 notifications_state.reset();
                                 spawn_local_scoped(cx, async move {
                                     query_user_info(cx).await;
-                                    subscribe_to_events(cx.to_owned());
+                                    query_events(cx).await;
+                                    subscribe_to_events(cx);
                                 });
                                 navigate(AppRoutes::Notifications.to_string().as_str())
                             },

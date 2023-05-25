@@ -42,6 +42,9 @@ const (
 	// IndexerServiceUpdateIndexingChainsProcedure is the fully-qualified name of the IndexerService's
 	// UpdateIndexingChains RPC.
 	IndexerServiceUpdateIndexingChainsProcedure = "/starscope.grpc.IndexerService/UpdateIndexingChains"
+	// IndexerServiceGetGovernanceProposalStatiProcedure is the fully-qualified name of the
+	// IndexerService's GetGovernanceProposalStati RPC.
+	IndexerServiceGetGovernanceProposalStatiProcedure = "/starscope.grpc.IndexerService/GetGovernanceProposalStati"
 	// TxHandlerServiceHandleTxsProcedure is the fully-qualified name of the TxHandlerService's
 	// HandleTxs RPC.
 	TxHandlerServiceHandleTxsProcedure = "/starscope.grpc.TxHandlerService/HandleTxs"
@@ -51,6 +54,7 @@ const (
 type IndexerServiceClient interface {
 	GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error)
 	UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[emptypb.Empty], error)
+	GetGovernanceProposalStati(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error)
 }
 
 // NewIndexerServiceClient constructs a client for the starscope.grpc.IndexerService service. By
@@ -73,13 +77,19 @@ func NewIndexerServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+IndexerServiceUpdateIndexingChainsProcedure,
 			opts...,
 		),
+		getGovernanceProposalStati: connect_go.NewClient[emptypb.Empty, indexerpb.GetGovernanceProposalStatiResponse](
+			httpClient,
+			baseURL+IndexerServiceGetGovernanceProposalStatiProcedure,
+			opts...,
+		),
 	}
 }
 
 // indexerServiceClient implements IndexerServiceClient.
 type indexerServiceClient struct {
-	getIndexingChains    *connect_go.Client[emptypb.Empty, indexerpb.GetIndexingChainsResponse]
-	updateIndexingChains *connect_go.Client[indexerpb.UpdateIndexingChainsRequest, emptypb.Empty]
+	getIndexingChains          *connect_go.Client[emptypb.Empty, indexerpb.GetIndexingChainsResponse]
+	updateIndexingChains       *connect_go.Client[indexerpb.UpdateIndexingChainsRequest, emptypb.Empty]
+	getGovernanceProposalStati *connect_go.Client[emptypb.Empty, indexerpb.GetGovernanceProposalStatiResponse]
 }
 
 // GetIndexingChains calls starscope.grpc.IndexerService.GetIndexingChains.
@@ -92,10 +102,16 @@ func (c *indexerServiceClient) UpdateIndexingChains(ctx context.Context, req *co
 	return c.updateIndexingChains.CallUnary(ctx, req)
 }
 
+// GetGovernanceProposalStati calls starscope.grpc.IndexerService.GetGovernanceProposalStati.
+func (c *indexerServiceClient) GetGovernanceProposalStati(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
+	return c.getGovernanceProposalStati.CallUnary(ctx, req)
+}
+
 // IndexerServiceHandler is an implementation of the starscope.grpc.IndexerService service.
 type IndexerServiceHandler interface {
 	GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error)
 	UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[emptypb.Empty], error)
+	GetGovernanceProposalStati(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error)
 }
 
 // NewIndexerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -115,6 +131,11 @@ func NewIndexerServiceHandler(svc IndexerServiceHandler, opts ...connect_go.Hand
 		svc.UpdateIndexingChains,
 		opts...,
 	))
+	mux.Handle(IndexerServiceGetGovernanceProposalStatiProcedure, connect_go.NewUnaryHandler(
+		IndexerServiceGetGovernanceProposalStatiProcedure,
+		svc.GetGovernanceProposalStati,
+		opts...,
+	))
 	return "/starscope.grpc.IndexerService/", mux
 }
 
@@ -127,6 +148,10 @@ func (UnimplementedIndexerServiceHandler) GetIndexingChains(context.Context, *co
 
 func (UnimplementedIndexerServiceHandler) UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[emptypb.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.UpdateIndexingChains is not implemented"))
+}
+
+func (UnimplementedIndexerServiceHandler) GetGovernanceProposalStati(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.GetGovernanceProposalStati is not implemented"))
 }
 
 // TxHandlerServiceClient is a client for the starscope.grpc.TxHandlerService service.

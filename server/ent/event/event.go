@@ -85,9 +85,11 @@ type Type string
 
 // Type values.
 const (
-	TypeTxEvent_CoinReceived      Type = "TxEvent_CoinReceived"
-	TypeTxEvent_OsmosisPoolUnlock Type = "TxEvent_OsmosisPoolUnlock"
-	TypeTxEvent_Unstake           Type = "TxEvent_Unstake"
+	TypeTxEvent_CoinReceived                   Type = "TxEvent_CoinReceived"
+	TypeTxEvent_OsmosisPoolUnlock              Type = "TxEvent_OsmosisPoolUnlock"
+	TypeTxEvent_Unstake                        Type = "TxEvent_Unstake"
+	TypeQueryEvent_GovernanceProposal_Ongoing  Type = "QueryEvent_GovernanceProposal_Ongoing"
+	TypeQueryEvent_GovernanceProposal_Finished Type = "QueryEvent_GovernanceProposal_Finished"
 )
 
 func (_type Type) String() string {
@@ -97,7 +99,7 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeTxEvent_CoinReceived, TypeTxEvent_OsmosisPoolUnlock, TypeTxEvent_Unstake:
+	case TypeTxEvent_CoinReceived, TypeTxEvent_OsmosisPoolUnlock, TypeTxEvent_Unstake, TypeQueryEvent_GovernanceProposal_Ongoing, TypeQueryEvent_GovernanceProposal_Finished:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for type field: %q", _type)
