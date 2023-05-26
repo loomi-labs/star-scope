@@ -104,7 +104,10 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
         }
     });
 
-    let button_class = "relative flex flex-row items-center text-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
+    let is_sidebar_hovered = create_signal(cx, false);
+
+    let button_class = "relative flex flex-row items-center text-center max-w-full h-11 border-l-4 border-transparent pr-6";
+    let button_interactivity_class = "focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800";
     let span_icon_class = "inline-flex justify-center items-center ml-4";
     let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-sm tracking-wide truncate";
     let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-xs font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
@@ -119,7 +122,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let notification_button_views = View::new_fragment(
         button_data.iter().map(|&d| view! { cx, li {
-            button(on:click=move |_| handle_click(cx, d.0), class=format!("{} {}", button_class, highlight_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()))) {
+            button(on:click=move |_| handle_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, highlight_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()))) {
                 span(class=format!("{} {}", d.1, span_icon_class, )) {
                     div(class="w-16 h-16")
                 }
@@ -138,12 +141,17 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     );
 
     view! { cx,
-        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none z-10") {
+        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none z-10",
+            on:mouseenter=move |_| is_sidebar_hovered.set(true),
+            on:mouseleave=move |_| is_sidebar_hovered.set(false),
+        ) {
             div(class="flex flex-col") {
                 ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Notifications, class=format!("{} hidden lg:flex", button_class)) {
-                            span(class=format!("overflow-y-hidden overflow-x-hidden ml-2 text-base tracking-wide")) { "Notifications" }
+                        a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
+                            div(style="overflow: hidden; text-overflow: ellipsis;") {
+                                span(class=format!("ml-2 text-base tracking-wide")) { "Notifications" }
+                            }
                         }
                         ul() {
                             (notification_button_views)
@@ -155,7 +163,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             div(class="flex flex-col pb-10") {
                 ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Settings, class=format!("{} {}", button_class, highlight_active_route(&app_state.route.get().as_ref(), &AppRoutes::Settings))) {
+                        a(href=AppRoutes::Settings, class=format!("{} {} {}", button_class, button_interactivity_class, highlight_active_route(&app_state.route.get().as_ref(), &AppRoutes::Settings))) {
                             span(class=format!("{} icon-[streamline--interface-setting-cog-work-loading-cog-gear-settings-machine]", span_icon_class)) {
                                 div(class="w-16 h-16")
                             }
