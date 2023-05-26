@@ -30,6 +30,8 @@ const (
 	FieldImage = "image"
 	// FieldBech32Prefix holds the string denoting the bech32_prefix field in the database.
 	FieldBech32Prefix = "bech32_prefix"
+	// FieldRestEndpoint holds the string denoting the rest_endpoint field in the database.
+	FieldRestEndpoint = "rest_endpoint"
 	// FieldIndexingHeight holds the string denoting the indexing_height field in the database.
 	FieldIndexingHeight = "indexing_height"
 	// FieldHasCustomIndexer holds the string denoting the has_custom_indexer field in the database.
@@ -82,6 +84,7 @@ var Columns = []string{
 	FieldPath,
 	FieldImage,
 	FieldBech32Prefix,
+	FieldRestEndpoint,
 	FieldIndexingHeight,
 	FieldHasCustomIndexer,
 	FieldHandledMessageTypes,
@@ -106,6 +109,8 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultRestEndpoint holds the default value on creation for the "rest_endpoint" field.
+	DefaultRestEndpoint string
 	// DefaultIndexingHeight holds the default value on creation for the "indexing_height" field.
 	DefaultIndexingHeight uint64
 	// DefaultHasCustomIndexer holds the default value on creation for the "has_custom_indexer" field.
@@ -164,6 +169,11 @@ func ByImage(opts ...sql.OrderTermOption) OrderOption {
 // ByBech32Prefix orders the results by the bech32_prefix field.
 func ByBech32Prefix(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBech32Prefix, opts...).ToFunc()
+}
+
+// ByRestEndpoint orders the results by the rest_endpoint field.
+func ByRestEndpoint(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRestEndpoint, opts...).ToFunc()
 }
 
 // ByIndexingHeight orders the results by the indexing_height field.

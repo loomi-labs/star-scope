@@ -33,6 +33,8 @@ type Chain struct {
 	Image string `json:"image,omitempty"`
 	// Bech32Prefix holds the value of the "bech32_prefix" field.
 	Bech32Prefix string `json:"bech32_prefix,omitempty"`
+	// RestEndpoint holds the value of the "rest_endpoint" field.
+	RestEndpoint string `json:"rest_endpoint,omitempty"`
 	// IndexingHeight holds the value of the "indexing_height" field.
 	IndexingHeight uint64 `json:"indexing_height,omitempty"`
 	// HasCustomIndexer holds the value of the "has_custom_indexer" field.
@@ -98,7 +100,7 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case chain.FieldID, chain.FieldIndexingHeight:
 			values[i] = new(sql.NullInt64)
-		case chain.FieldChainID, chain.FieldName, chain.FieldPrettyName, chain.FieldPath, chain.FieldImage, chain.FieldBech32Prefix, chain.FieldHandledMessageTypes, chain.FieldUnhandledMessageTypes:
+		case chain.FieldChainID, chain.FieldName, chain.FieldPrettyName, chain.FieldPath, chain.FieldImage, chain.FieldBech32Prefix, chain.FieldRestEndpoint, chain.FieldHandledMessageTypes, chain.FieldUnhandledMessageTypes:
 			values[i] = new(sql.NullString)
 		case chain.FieldCreateTime, chain.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -170,6 +172,12 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field bech32_prefix", values[i])
 			} else if value.Valid {
 				c.Bech32Prefix = value.String
+			}
+		case chain.FieldRestEndpoint:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field rest_endpoint", values[i])
+			} else if value.Valid {
+				c.RestEndpoint = value.String
 			}
 		case chain.FieldIndexingHeight:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -275,6 +283,9 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("bech32_prefix=")
 	builder.WriteString(c.Bech32Prefix)
+	builder.WriteString(", ")
+	builder.WriteString("rest_endpoint=")
+	builder.WriteString(c.RestEndpoint)
 	builder.WriteString(", ")
 	builder.WriteString("indexing_height=")
 	builder.WriteString(fmt.Sprintf("%v", c.IndexingHeight))

@@ -36,7 +36,7 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 			ChainInfo: indexer.ChainInfo{
 				ChainId:      chain.Id,
 				Path:         chain.Path,
-				RestEndpoint: chain.RpcUrl,
+				RestEndpoint: chain.RestEndpoint,
 				Name:         chain.Name,
 			},
 			KafkaBrokers:   kafkaBrokers,

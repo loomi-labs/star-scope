@@ -95,6 +95,11 @@ func Bech32Prefix(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldBech32Prefix, v))
 }
 
+// RestEndpoint applies equality check predicate on the "rest_endpoint" field. It's identical to RestEndpointEQ.
+func RestEndpoint(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldRestEndpoint, v))
+}
+
 // IndexingHeight applies equality check predicate on the "indexing_height" field. It's identical to IndexingHeightEQ.
 func IndexingHeight(v uint64) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIndexingHeight, v))
@@ -588,6 +593,71 @@ func Bech32PrefixEqualFold(v string) predicate.Chain {
 // Bech32PrefixContainsFold applies the ContainsFold predicate on the "bech32_prefix" field.
 func Bech32PrefixContainsFold(v string) predicate.Chain {
 	return predicate.Chain(sql.FieldContainsFold(FieldBech32Prefix, v))
+}
+
+// RestEndpointEQ applies the EQ predicate on the "rest_endpoint" field.
+func RestEndpointEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldRestEndpoint, v))
+}
+
+// RestEndpointNEQ applies the NEQ predicate on the "rest_endpoint" field.
+func RestEndpointNEQ(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldRestEndpoint, v))
+}
+
+// RestEndpointIn applies the In predicate on the "rest_endpoint" field.
+func RestEndpointIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldRestEndpoint, vs...))
+}
+
+// RestEndpointNotIn applies the NotIn predicate on the "rest_endpoint" field.
+func RestEndpointNotIn(vs ...string) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldRestEndpoint, vs...))
+}
+
+// RestEndpointGT applies the GT predicate on the "rest_endpoint" field.
+func RestEndpointGT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldRestEndpoint, v))
+}
+
+// RestEndpointGTE applies the GTE predicate on the "rest_endpoint" field.
+func RestEndpointGTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldRestEndpoint, v))
+}
+
+// RestEndpointLT applies the LT predicate on the "rest_endpoint" field.
+func RestEndpointLT(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldRestEndpoint, v))
+}
+
+// RestEndpointLTE applies the LTE predicate on the "rest_endpoint" field.
+func RestEndpointLTE(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldRestEndpoint, v))
+}
+
+// RestEndpointContains applies the Contains predicate on the "rest_endpoint" field.
+func RestEndpointContains(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContains(FieldRestEndpoint, v))
+}
+
+// RestEndpointHasPrefix applies the HasPrefix predicate on the "rest_endpoint" field.
+func RestEndpointHasPrefix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasPrefix(FieldRestEndpoint, v))
+}
+
+// RestEndpointHasSuffix applies the HasSuffix predicate on the "rest_endpoint" field.
+func RestEndpointHasSuffix(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldHasSuffix(FieldRestEndpoint, v))
+}
+
+// RestEndpointEqualFold applies the EqualFold predicate on the "rest_endpoint" field.
+func RestEndpointEqualFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldEqualFold(FieldRestEndpoint, v))
+}
+
+// RestEndpointContainsFold applies the ContainsFold predicate on the "rest_endpoint" field.
+func RestEndpointContainsFold(v string) predicate.Chain {
+	return predicate.Chain(sql.FieldContainsFold(FieldRestEndpoint, v))
 }
 
 // IndexingHeightEQ applies the EQ predicate on the "indexing_height" field.

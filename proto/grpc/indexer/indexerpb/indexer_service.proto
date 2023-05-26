@@ -17,7 +17,7 @@ message IndexingChain {
   uint64 id = 1;
   string name = 2;
   string path = 3;
-  string rpc_url = 4;
+  string rest_endpoint = 4;
   uint64 indexing_height = 5;
   repeated string handled_message_types = 6;
   repeated string unhandled_message_types = 7;
@@ -67,7 +67,7 @@ message ChainInfo {
   uint64 id = 1;
   string name = 2;
   string path = 3;
-  string rpc_url = 4;
+  string rest_endpoint = 4;
   repeated GovernanceProposal proposals = 5;
   repeated ContractGovernanceProposal contract_proposals = 6;
 }

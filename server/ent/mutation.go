@@ -51,6 +51,7 @@ type ChainMutation struct {
 	_path                     *string
 	image                     *string
 	bech32_prefix             *string
+	rest_endpoint             *string
 	indexing_height           *uint64
 	addindexing_height        *int64
 	has_custom_indexer        *bool
@@ -458,6 +459,42 @@ func (m *ChainMutation) ResetBech32Prefix() {
 	m.bech32_prefix = nil
 }
 
+// SetRestEndpoint sets the "rest_endpoint" field.
+func (m *ChainMutation) SetRestEndpoint(s string) {
+	m.rest_endpoint = &s
+}
+
+// RestEndpoint returns the value of the "rest_endpoint" field in the mutation.
+func (m *ChainMutation) RestEndpoint() (r string, exists bool) {
+	v := m.rest_endpoint
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRestEndpoint returns the old "rest_endpoint" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldRestEndpoint(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRestEndpoint is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRestEndpoint requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRestEndpoint: %w", err)
+	}
+	return oldValue.RestEndpoint, nil
+}
+
+// ResetRestEndpoint resets all changes to the "rest_endpoint" field.
+func (m *ChainMutation) ResetRestEndpoint() {
+	m.rest_endpoint = nil
+}
+
 // SetIndexingHeight sets the "indexing_height" field.
 func (m *ChainMutation) SetIndexingHeight(u uint64) {
 	m.indexing_height = &u
@@ -854,7 +891,7 @@ func (m *ChainMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChainMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.create_time != nil {
 		fields = append(fields, chain.FieldCreateTime)
 	}
@@ -878,6 +915,9 @@ func (m *ChainMutation) Fields() []string {
 	}
 	if m.bech32_prefix != nil {
 		fields = append(fields, chain.FieldBech32Prefix)
+	}
+	if m.rest_endpoint != nil {
+		fields = append(fields, chain.FieldRestEndpoint)
 	}
 	if m.indexing_height != nil {
 		fields = append(fields, chain.FieldIndexingHeight)
@@ -918,6 +958,8 @@ func (m *ChainMutation) Field(name string) (ent.Value, bool) {
 		return m.Image()
 	case chain.FieldBech32Prefix:
 		return m.Bech32Prefix()
+	case chain.FieldRestEndpoint:
+		return m.RestEndpoint()
 	case chain.FieldIndexingHeight:
 		return m.IndexingHeight()
 	case chain.FieldHasCustomIndexer:
@@ -953,6 +995,8 @@ func (m *ChainMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldImage(ctx)
 	case chain.FieldBech32Prefix:
 		return m.OldBech32Prefix(ctx)
+	case chain.FieldRestEndpoint:
+		return m.OldRestEndpoint(ctx)
 	case chain.FieldIndexingHeight:
 		return m.OldIndexingHeight(ctx)
 	case chain.FieldHasCustomIndexer:
@@ -1027,6 +1071,13 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBech32Prefix(v)
+		return nil
+	case chain.FieldRestEndpoint:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRestEndpoint(v)
 		return nil
 	case chain.FieldIndexingHeight:
 		v, ok := value.(uint64)
@@ -1150,6 +1201,9 @@ func (m *ChainMutation) ResetField(name string) error {
 		return nil
 	case chain.FieldBech32Prefix:
 		m.ResetBech32Prefix()
+		return nil
+	case chain.FieldRestEndpoint:
+		m.ResetRestEndpoint()
 		return nil
 	case chain.FieldIndexingHeight:
 		m.ResetIndexingHeight()

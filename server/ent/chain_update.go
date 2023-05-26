@@ -67,6 +67,20 @@ func (cu *ChainUpdate) SetBech32Prefix(s string) *ChainUpdate {
 	return cu
 }
 
+// SetRestEndpoint sets the "rest_endpoint" field.
+func (cu *ChainUpdate) SetRestEndpoint(s string) *ChainUpdate {
+	cu.mutation.SetRestEndpoint(s)
+	return cu
+}
+
+// SetNillableRestEndpoint sets the "rest_endpoint" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableRestEndpoint(s *string) *ChainUpdate {
+	if s != nil {
+		cu.SetRestEndpoint(*s)
+	}
+	return cu
+}
+
 // SetIndexingHeight sets the "indexing_height" field.
 func (cu *ChainUpdate) SetIndexingHeight(u uint64) *ChainUpdate {
 	cu.mutation.ResetIndexingHeight()
@@ -320,6 +334,9 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.Bech32Prefix(); ok {
 		_spec.SetField(chain.FieldBech32Prefix, field.TypeString, value)
 	}
+	if value, ok := cu.mutation.RestEndpoint(); ok {
+		_spec.SetField(chain.FieldRestEndpoint, field.TypeString, value)
+	}
 	if value, ok := cu.mutation.IndexingHeight(); ok {
 		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)
 	}
@@ -526,6 +543,20 @@ func (cuo *ChainUpdateOne) SetImage(s string) *ChainUpdateOne {
 // SetBech32Prefix sets the "bech32_prefix" field.
 func (cuo *ChainUpdateOne) SetBech32Prefix(s string) *ChainUpdateOne {
 	cuo.mutation.SetBech32Prefix(s)
+	return cuo
+}
+
+// SetRestEndpoint sets the "rest_endpoint" field.
+func (cuo *ChainUpdateOne) SetRestEndpoint(s string) *ChainUpdateOne {
+	cuo.mutation.SetRestEndpoint(s)
+	return cuo
+}
+
+// SetNillableRestEndpoint sets the "rest_endpoint" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableRestEndpoint(s *string) *ChainUpdateOne {
+	if s != nil {
+		cuo.SetRestEndpoint(*s)
+	}
 	return cuo
 }
 
@@ -811,6 +842,9 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	}
 	if value, ok := cuo.mutation.Bech32Prefix(); ok {
 		_spec.SetField(chain.FieldBech32Prefix, field.TypeString, value)
+	}
+	if value, ok := cuo.mutation.RestEndpoint(); ok {
+		_spec.SetField(chain.FieldRestEndpoint, field.TypeString, value)
 	}
 	if value, ok := cuo.mutation.IndexingHeight(); ok {
 		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)

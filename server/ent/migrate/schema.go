@@ -19,6 +19,7 @@ var (
 		{Name: "path", Type: field.TypeString, Unique: true},
 		{Name: "image", Type: field.TypeString},
 		{Name: "bech32_prefix", Type: field.TypeString},
+		{Name: "rest_endpoint", Type: field.TypeString, Default: ""},
 		{Name: "indexing_height", Type: field.TypeUint64, Default: 0},
 		{Name: "has_custom_indexer", Type: field.TypeBool, Default: false},
 		{Name: "handled_message_types", Type: field.TypeString, Default: ""},
@@ -129,7 +130,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.

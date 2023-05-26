@@ -33,24 +33,28 @@ func init() {
 	chain.DefaultUpdateTime = chainDescUpdateTime.Default.(func() time.Time)
 	// chain.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	chain.UpdateDefaultUpdateTime = chainDescUpdateTime.UpdateDefault.(func() time.Time)
+	// chainDescRestEndpoint is the schema descriptor for rest_endpoint field.
+	chainDescRestEndpoint := chainFields[6].Descriptor()
+	// chain.DefaultRestEndpoint holds the default value on creation for the rest_endpoint field.
+	chain.DefaultRestEndpoint = chainDescRestEndpoint.Default.(string)
 	// chainDescIndexingHeight is the schema descriptor for indexing_height field.
-	chainDescIndexingHeight := chainFields[6].Descriptor()
+	chainDescIndexingHeight := chainFields[7].Descriptor()
 	// chain.DefaultIndexingHeight holds the default value on creation for the indexing_height field.
 	chain.DefaultIndexingHeight = chainDescIndexingHeight.Default.(uint64)
 	// chainDescHasCustomIndexer is the schema descriptor for has_custom_indexer field.
-	chainDescHasCustomIndexer := chainFields[7].Descriptor()
+	chainDescHasCustomIndexer := chainFields[8].Descriptor()
 	// chain.DefaultHasCustomIndexer holds the default value on creation for the has_custom_indexer field.
 	chain.DefaultHasCustomIndexer = chainDescHasCustomIndexer.Default.(bool)
 	// chainDescHandledMessageTypes is the schema descriptor for handled_message_types field.
-	chainDescHandledMessageTypes := chainFields[8].Descriptor()
+	chainDescHandledMessageTypes := chainFields[9].Descriptor()
 	// chain.DefaultHandledMessageTypes holds the default value on creation for the handled_message_types field.
 	chain.DefaultHandledMessageTypes = chainDescHandledMessageTypes.Default.(string)
 	// chainDescUnhandledMessageTypes is the schema descriptor for unhandled_message_types field.
-	chainDescUnhandledMessageTypes := chainFields[9].Descriptor()
+	chainDescUnhandledMessageTypes := chainFields[10].Descriptor()
 	// chain.DefaultUnhandledMessageTypes holds the default value on creation for the unhandled_message_types field.
 	chain.DefaultUnhandledMessageTypes = chainDescUnhandledMessageTypes.Default.(string)
 	// chainDescIsEnabled is the schema descriptor for is_enabled field.
-	chainDescIsEnabled := chainFields[10].Descriptor()
+	chainDescIsEnabled := chainFields[11].Descriptor()
 	// chain.DefaultIsEnabled holds the default value on creation for the is_enabled field.
 	chain.DefaultIsEnabled = chainDescIsEnabled.Default.(bool)
 	contractproposalMixin := schema.ContractProposal{}.Mixin()

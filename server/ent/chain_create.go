@@ -87,6 +87,20 @@ func (cc *ChainCreate) SetBech32Prefix(s string) *ChainCreate {
 	return cc
 }
 
+// SetRestEndpoint sets the "rest_endpoint" field.
+func (cc *ChainCreate) SetRestEndpoint(s string) *ChainCreate {
+	cc.mutation.SetRestEndpoint(s)
+	return cc
+}
+
+// SetNillableRestEndpoint sets the "rest_endpoint" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableRestEndpoint(s *string) *ChainCreate {
+	if s != nil {
+		cc.SetRestEndpoint(*s)
+	}
+	return cc
+}
+
 // SetIndexingHeight sets the "indexing_height" field.
 func (cc *ChainCreate) SetIndexingHeight(u uint64) *ChainCreate {
 	cc.mutation.SetIndexingHeight(u)
@@ -245,6 +259,10 @@ func (cc *ChainCreate) defaults() {
 		v := chain.DefaultUpdateTime()
 		cc.mutation.SetUpdateTime(v)
 	}
+	if _, ok := cc.mutation.RestEndpoint(); !ok {
+		v := chain.DefaultRestEndpoint
+		cc.mutation.SetRestEndpoint(v)
+	}
 	if _, ok := cc.mutation.IndexingHeight(); !ok {
 		v := chain.DefaultIndexingHeight
 		cc.mutation.SetIndexingHeight(v)
@@ -292,6 +310,9 @@ func (cc *ChainCreate) check() error {
 	}
 	if _, ok := cc.mutation.Bech32Prefix(); !ok {
 		return &ValidationError{Name: "bech32_prefix", err: errors.New(`ent: missing required field "Chain.bech32_prefix"`)}
+	}
+	if _, ok := cc.mutation.RestEndpoint(); !ok {
+		return &ValidationError{Name: "rest_endpoint", err: errors.New(`ent: missing required field "Chain.rest_endpoint"`)}
 	}
 	if _, ok := cc.mutation.IndexingHeight(); !ok {
 		return &ValidationError{Name: "indexing_height", err: errors.New(`ent: missing required field "Chain.indexing_height"`)}
@@ -365,6 +386,10 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.Bech32Prefix(); ok {
 		_spec.SetField(chain.FieldBech32Prefix, field.TypeString, value)
 		_node.Bech32Prefix = value
+	}
+	if value, ok := cc.mutation.RestEndpoint(); ok {
+		_spec.SetField(chain.FieldRestEndpoint, field.TypeString, value)
+		_node.RestEndpoint = value
 	}
 	if value, ok := cc.mutation.IndexingHeight(); ok {
 		_spec.SetField(chain.FieldIndexingHeight, field.TypeUint64, value)

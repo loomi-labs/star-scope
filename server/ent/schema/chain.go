@@ -33,6 +33,8 @@ func (Chain) Fields() []ent.Field {
 			Immutable(),
 		field.String("image"),
 		field.String("bech32_prefix"),
+		field.String("rest_endpoint").
+			Default(""),
 
 		field.Uint64("indexing_height").
 			Default(0),

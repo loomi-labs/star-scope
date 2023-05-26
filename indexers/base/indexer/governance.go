@@ -71,7 +71,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 			continue
 		}
 
-		url := fmt.Sprintf(urlProposals+"?pagination.reverse=true&limit=100", chain.RpcUrl)
+		url := fmt.Sprintf(urlProposals+"?pagination.reverse=true&limit=100", chain.RestEndpoint)
 
 		var resp types.ProposalsResponse
 		_, err := common.GetJson(url, 5, &resp)

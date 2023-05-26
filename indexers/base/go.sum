@@ -10,6 +10,8 @@ buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230525140314
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230525140314-92141f007235.1/go.mod h1:uooD7ea3ZNyh5yARItA9Ey8w3qNhRmkztlx7cXRRAeE=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230525150638-931663b0b688.1 h1:EghKSo3+eYR/wKx/fkQOY8EuOngSRaOPUhSXPrS4+aQ=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230525150638-931663b0b688.1/go.mod h1:iywnTnI2+pHuiGk+U34dfJmXCmSFbZp/p2XSLcHEgi4=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230526081032-9c1504fd4f82.1 h1:zAa/tKtiGKcsI0hV97Uo1qNy3nvYMwFedkPEAk2dvsw=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230526081032-9c1504fd4f82.1/go.mod h1:GPRhpBNOfdXsdbF9wyodp2zfLPqXNu1rjtehmYK8YcM=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1 h1:3PmoQxUoB2Yf6wWVM3CPj/eGF9AHTE4BlXEP6NqjNbk=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230524160546-15aec52d211e.1 h1:iamQ/TPoVCVJE2UVM5NJocHFq8tlrfEhzgYXnYjxpig=
@@ -22,6 +24,8 @@ buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230525140314
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230525140314-92141f007235.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230525150638-931663b0b688.1 h1:ogftXIW4W7QwCsmv9hsqLNg4VK1tm+fkYbTKoTFG4aU=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230525150638-931663b0b688.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230526081032-9c1504fd4f82.1 h1:J4iKGFr6rQn2OD0umsq/eEpjskJpWMAPq7zLgZZI3A0=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230526081032-9c1504fd4f82.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=

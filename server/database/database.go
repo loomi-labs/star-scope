@@ -227,8 +227,30 @@ func MigrateDb() {
 }
 
 func InitDb() {
-	//client := connect()
-	//ctx := context.Background()
+	client := connect()
+	ctx := context.Background()
+
+	chainManager := NewChainManager(client)
+	for _, chain := range chainManager.QueryAll(ctx) {
+		if chain.RestEndpoint == "" {
+			var restEndpoint = fmt.Sprintf("https://rest.cosmos.directory/%s", chain.Path)
+			if chain.Path == "neutron-pion" {
+				restEndpoint = "https://rest-palvus.pion-1.ntrn.tech"
+			}
+			if chain.Path == "neutron" {
+				restEndpoint = "https://rest-kralum.neutron-1.neutron.org"
+				client.Chain.
+					UpdateOne(chain).
+					SetIndexingHeight(0).
+					ExecX(ctx)
+			}
+			client.Chain.
+				UpdateOne(chain).
+				SetRestEndpoint(restEndpoint).
+				ExecX(ctx)
+		}
+	}
+	log.Sugar.Info("database successfully initialized")
 }
 
 type DbManagers struct {

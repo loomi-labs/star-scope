@@ -107,7 +107,7 @@ func (c *NeutronCrawler) fetchProposals() {
 
 	for _, chain := range stati.Msg.GetChains() {
 		payload := base64.StdEncoding.EncodeToString([]byte(`{"config":{}}`))
-		url := fmt.Sprintf(urlCosmWasm, chain.RpcUrl, c.mainContract, payload)
+		url := fmt.Sprintf(urlCosmWasm, chain.RestEndpoint, c.mainContract, payload)
 		var config types.ConfigResponse
 		_, err := common.GetJson(url, 5, &config)
 		if err != nil {
@@ -115,7 +115,7 @@ func (c *NeutronCrawler) fetchProposals() {
 		}
 
 		payload = base64.StdEncoding.EncodeToString([]byte(`{"proposal_modules":{}}`))
-		url = fmt.Sprintf(urlCosmWasm, chain.RpcUrl, c.mainContract, payload)
+		url = fmt.Sprintf(urlCosmWasm, chain.RestEndpoint, c.mainContract, payload)
 		var proposalModules types.ProposalModulesResponse
 		_, err = common.GetJson(url, 5, &proposalModules)
 		if err != nil {
@@ -125,7 +125,7 @@ func (c *NeutronCrawler) fetchProposals() {
 		var pbEvents [][]byte
 		for _, module := range proposalModules.Data {
 			payload = base64.StdEncoding.EncodeToString([]byte(`{"reverse_proposals":{}}`))
-			url = fmt.Sprintf(urlCosmWasm, chain.RpcUrl, module.Address, payload)
+			url = fmt.Sprintf(urlCosmWasm, chain.RestEndpoint, module.Address, payload)
 			var proposals types.ListProposalsResponse
 			_, err = common.GetJson(url, 5, &proposals)
 			if err != nil {
