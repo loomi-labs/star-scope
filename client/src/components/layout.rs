@@ -105,7 +105,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     });
 
     let button_class = "relative flex flex-row items-center text-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
-    let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
+    let span_icon_class = "inline-flex justify-center items-center ml-4";
     let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-sm tracking-wide truncate";
     let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-xs font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
 
@@ -138,15 +138,12 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     );
 
     view! { cx,
-        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 h-full text-white transition-all duration-300 border-none z-10") {
+        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none z-10") {
             div(class="flex flex-col") {
                 ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Notifications, class=button_class) {
-                            span(class=format!("{} icon-[mdi--bell]", span_icon_class)) {
-                                div(class="w-16 h-16")
-                            }
-                            span(class=format!("{} uppercase", span_text_class)) { "Notifications" }
+                        a(href=AppRoutes::Notifications, class=format!("{} hidden lg:flex", button_class)) {
+                            span(class=format!("overflow-y-hidden overflow-x-hidden ml-2 text-base tracking-wide")) { "Notifications" }
                         }
                         ul() {
                             (notification_button_views)
@@ -155,7 +152,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                 }
             }
             div(class="flex flex-col", style="height: calc(100vh - 460px)")
-            div(class="overflow-y-auto overflow-x-hidden flex flex-col pb-10") {
+            div(class="flex flex-col pb-10") {
                 ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
                         a(href=AppRoutes::Settings, class=format!("{} {}", button_class, highlight_active_route(&app_state.route.get().as_ref(), &AppRoutes::Settings))) {
@@ -180,7 +177,7 @@ pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> V
                 Header{}
                 div(class="flex flex-row h-full w-full") {
                     Sidebar{}
-                    div(class="p-8 w-full max-w-[90vw] md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto") {
+                    div(class="p-8 w-full max-w-[90vw] md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto overflow-x-visible") {
                         (children)
                     }
                 }
