@@ -255,7 +255,7 @@ func (s *SyncStatus) getSleepDuration() time.Duration {
 func (s *SyncStatus) updateSyncStatus(updateChannel chan SyncStatus, encodingConfig EncodingConfig, chainInfo ChainInfo) {
 	updateChannel <- *s
 	s.Height++
-	if s.latestHeightUpdatedAt.Add(5 * time.Minute).Before(time.Now()) {
+	if s.latestHeightUpdatedAt.Add(1 * time.Minute).Before(time.Now()) {
 		var latestHeight, err = getLatestHeight(encodingConfig, chainInfo)
 		if err != nil {
 			log.Sugar.Errorf("Error getting latest height for chain %v: %s", chainInfo.Name, err)
