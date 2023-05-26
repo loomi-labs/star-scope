@@ -213,6 +213,9 @@ impl EventsState {
     }
 
     pub fn add_events(&self, new_events: Vec<Event>) {
+        if new_events.len() == 0 {
+            return;
+        }
         let mut events = self.events.modify();
         let mut event_count_map = self.event_count_map.modify();
         for e in new_events {

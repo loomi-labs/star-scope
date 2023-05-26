@@ -106,12 +106,40 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let button_class = "relative flex flex-row items-center text-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
     let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
-    let span_text_class = "ml-2 text-sm tracking-wide truncate";
-    let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-3 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full dark:border-gray-900 sm:ml-0 sm:mt-2 sm:absolute sm:right-0 sm:top-0";
+    let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-sm tracking-wide truncate";
+    let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-xs font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
+
+    let button_data = vec![
+        (None, "icon-[lucide--copy-check]", "All", cnt_all),
+        (Some(EventType::Funding), "icon-[ep--coin]", "Funding", cnt_funding),
+        (Some(EventType::Staking), "icon-[carbon--equalizer]", "Staking", cnt_staking),
+        (Some(EventType::Dex), "icon-[fluent--money-24-regular]", "Dex", cnt_dex),
+        (Some(EventType::Governance), "icon-[icon-park-outline--palace]", "Governance", cnt_governance),
+    ];
+
+    let notification_button_views = View::new_fragment(
+        button_data.iter().map(|&d| view! { cx, li {
+            button(on:click=move |_| handle_click(cx, d.0), class=format!("{} {}", button_class, highlight_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()))) {
+                span(class=format!("{} {}", d.1, span_icon_class, )) {
+                    div(class="w-16 h-16")
+                }
+                span(class=span_text_class) { (d.2) }
+                (if d.3.get().is_some() {
+                    view! {cx,
+                        div(class="absolute top-0 right-0") {
+                            div(class=badge_class) { (d.3.get().unwrap()) }
+                        }
+                    }
+                    } else {
+                    view! {cx, div()}
+                })
+            }
+        } }).collect()
+    );
 
     view! { cx,
         div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 h-full text-white transition-all duration-300 border-none z-10") {
-            div(class="overflow-y-auto overflow-x-hidden flex flex-col") {
+            div(class="flex flex-col") {
                 ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
                         a(href=AppRoutes::Notifications, class=button_class) {
@@ -121,74 +149,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                             span(class=format!("{} uppercase", span_text_class)) { "Notifications" }
                         }
                         ul() {
-                            li() {
-                                button(on:click=move |_| handle_click(cx, None), class=format!("{} {}", button_class, highlight_active_notification_route(None, notifications_state, app_state.route.get().as_ref()))) {
-                                    span(class=format!("{} icon-[lucide--copy-check]", span_icon_class)) {
-                                        div(class="w-16 h-16")
-                                    }
-                                    span(class=span_text_class) { "All" }
-                                    (if cnt_all.get().is_some() {
-                                        view! {cx, div(class=badge_class) { (cnt_all.get().unwrap()) }}
-                                        } else {
-                                        view! {cx, span()}
-                                    })
-                                }
-                            }
-                            li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Funding)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Funding), notifications_state, app_state.route.get().as_ref()))) {
-                                    span(class=format!("{} icon-[ep--coin]", span_icon_class)) {
-                                        div(class="w-16 h-16")
-                                    }
-                                    span(class=span_text_class) { "Funding" }
-                                    (if cnt_funding.get().is_some() {
-                                        view! {cx, div(class=badge_class) { (cnt_funding.get().unwrap()) }}
-                                    } else {
-                                        view! {cx, span()}
-                                    })
-                                }
-                            }
-                            li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Staking)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Staking), notifications_state, app_state.route.get().as_ref()))) {
-                                    span(class=format!("{} icon-[carbon--equalizer]", span_icon_class)) {
-                                        div(class="w-16 h-16")
-                                    }
-                                    span(class=span_text_class) { "Staking" }
-                                    (if cnt_staking.get().is_some() {
-                                        view! {cx, div(class=badge_class) { (cnt_staking.get().unwrap()) }}
-                                    } else {
-                                        view! {cx, span()}
-                                    })
-                                }
-                            }
-                            li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Dex)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Dex), notifications_state, app_state.route.get().as_ref()))) {
-                                    span(class=format!("{} icon-[fluent--money-24-regular]", span_icon_class)) {
-                                        div(class="w-16 h-16")
-                                    }
-                                    span(class=span_text_class) { "DEX'es" }
-                                    (if cnt_dex.get().is_some() {
-                                        view! {cx, div(class=badge_class) { (cnt_dex.get().unwrap()) }}
-                                    } else {
-                                        view! {cx, span()}
-                                    })
-                                }
-                            }
-                            li() {
-                                button(
-                                    on:click=move |_| handle_click(cx, Some(EventType::Governance)),
-                                    class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Governance), notifications_state, app_state.route.get().as_ref()))
-                                ) {
-                                    span(class=format!("{} icon-[icon-park-outline--palace]", span_icon_class)) {
-                                        div(class="w-16 h-16")
-                                    }
-                                    span(class=span_text_class) { "Governance" }
-                                    (if cnt_governance.get().is_some() {
-                                        view! {cx, div(class=badge_class) { (cnt_governance.get().unwrap()) }}
-                                    } else {
-                                        view! {cx, span()}
-                                    })
-                                }
-                            }
+                            (notification_button_views)
                         }
                     }
                 }
