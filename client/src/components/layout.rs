@@ -110,7 +110,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let button_interactivity_class = "focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800";
     let span_icon_class = "inline-flex justify-center items-center ml-4";
     let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-sm tracking-wide truncate";
-    let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-xs font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
+    let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-[10px] font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
 
     let button_data = vec![
         (None, "icon-[lucide--copy-check]", "All", cnt_all),
@@ -129,7 +129,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                 span(class=span_text_class) { (d.2) }
                 (if d.3.get().is_some() {
                     view! {cx,
-                        div(class="absolute top-0 right-0") {
+                        div(class="absolute top-0 right-1") {
                             div(class=badge_class) { (d.3.get().unwrap()) }
                         }
                     }
