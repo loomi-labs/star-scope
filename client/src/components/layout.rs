@@ -1,6 +1,6 @@
 use sycamore::prelude::*;
 
-use crate::{AppRoutes, AppState};
+use crate::{AppRoutes, AppState, EventsState};
 use crate::pages::notifications::page::NotificationsState;
 use crate::types::types::grpc::EventType;
 use crate::utils::url::safe_navigate;
@@ -72,15 +72,44 @@ fn highlight_active_route(active_route: &AppRoutes, route: &AppRoutes) -> String
 pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
     let app_state = use_context::<AppState>(cx);
+    let events_state = use_context::<EventsState>(cx);
 
     let button_class = "relative flex flex-row items-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
     let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
     let span_text_class = "ml-2 text-sm tracking-wide truncate";
+    let span_notify_text_class = "inline-flex items-center justify-center h-6 w-6 bg-red-500 rounded-full text-white text-xs font-bold ml-2";
 
     let handle_click = |cx: Scope, event_type: Option<EventType>| {
         notifications_state.apply_filter(event_type);
         safe_navigate(cx, AppRoutes::Notifications);
     };
+
+    fn get_event_count(events_state: &EventsState, event_type: EventType) -> Option<i32> {
+        events_state
+            .event_count_map
+            .get()
+            .get(&event_type)
+            .map(|e| e.unread_count.clone())
+            .filter(|e| *e > 0)
+    }
+
+    let cnt_funding = create_memo(cx, move || get_event_count(&events_state, EventType::Funding));
+    let cnt_staking = create_memo(cx, move || get_event_count(&events_state, EventType::Staking));
+    let cnt_dex = create_memo(cx, move || get_event_count(&events_state, EventType::Dex));
+    let cnt_governance = create_memo(cx, move || get_event_count(&events_state, EventType::Governance));
+    let cnt_all = create_memo(cx, || {
+        let all = cnt_funding.get().as_ref().unwrap_or_else(|| 0)
+            + cnt_staking.get().as_ref().unwrap_or_else(|| 0)
+            + cnt_dex.get().as_ref().unwrap_or_else(|| 0)
+            + cnt_governance.get().as_ref().unwrap_or_else(|| 0);
+        if all > 0 {
+            Some(all)
+        } else {
+            None
+        }
+    });
+
+
     view! { cx,
         div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 h-full text-white transition-all duration-300 border-none z-10") {
             div(class="overflow-y-auto overflow-x-hidden flex flex-col") {
@@ -99,6 +128,11 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                         div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "All" }
+                                    (if cnt_all.get().is_some() {
+                                        view! {cx, span(class=span_notify_text_class) { (cnt_all.get().unwrap()) }}
+                                        } else {
+                                        view! {cx, span()}
+                                    })
                                 }
                             }
                             li() {
@@ -107,14 +141,24 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                         div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Funding" }
+                                    (if cnt_funding.get().is_some() {
+                                        view! {cx, span(class=span_notify_text_class) { (cnt_funding.get().unwrap()) }}
+                                    } else {
+                                        view! {cx, span()}
+                                    })
                                 }
                             }
                             li() {
                                 button(on:click=move |_| handle_click(cx, Some(EventType::Staking)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Staking), notifications_state, app_state.route.get().as_ref()))) {
-                                    span(class=format!("{} icon-[arcticons--coinstats]", span_icon_class)) {
+                                    span(class=format!("{} icon-[carbon--equalizer]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Staking" }
+                                    (if cnt_staking.get().is_some() {
+                                        view! {cx, span(class=span_notify_text_class) { (cnt_staking.get().unwrap()) }}
+                                    } else {
+                                        view! {cx, span()}
+                                    })
                                 }
                             }
                             li() {
@@ -123,14 +167,27 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                         div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "DEX'es" }
+                                    (if cnt_dex.get().is_some() {
+                                        view! {cx, span(class=span_notify_text_class) { (cnt_dex.get().unwrap()) }}
+                                    } else {
+                                        view! {cx, span()}
+                                    })
                                 }
                             }
                             li() {
-                                button(on:click=move |_| handle_click(cx, Some(EventType::Governance)), class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Governance), notifications_state, app_state.route.get().as_ref()))) {
+                                button(
+                                    on:click=move |_| handle_click(cx, Some(EventType::Governance)),
+                                    class=format!("{} {}", button_class, highlight_active_notification_route(Some(EventType::Governance), notifications_state, app_state.route.get().as_ref()))
+                                ) {
                                     span(class=format!("{} icon-[icon-park-outline--palace]", span_icon_class)) {
                                         div(class="w-16 h-16")
                                     }
                                     span(class=span_text_class) { "Governance" }
+                                    (if cnt_governance.get().is_some() {
+                                        view! {cx, span(class=span_notify_text_class) { (cnt_governance.get().unwrap()) }}
+                                    } else {
+                                        view! {cx, span()}
+                                    })
                                 }
                             }
                         }

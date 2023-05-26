@@ -65,14 +65,24 @@ func UpdateTime(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldUpdateTime, v))
 }
 
-// TxEvent applies equality check predicate on the "tx_event" field. It's identical to TxEventEQ.
-func TxEvent(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldTxEvent, v))
+// Data applies equality check predicate on the "data" field. It's identical to DataEQ.
+func Data(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldData, v))
+}
+
+// IsTxEvent applies equality check predicate on the "is_tx_event" field. It's identical to IsTxEventEQ.
+func IsTxEvent(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsTxEvent, v))
 }
 
 // NotifyTime applies equality check predicate on the "notify_time" field. It's identical to NotifyTimeEQ.
 func NotifyTime(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldNotifyTime, v))
+}
+
+// IsRead applies equality check predicate on the "is_read" field. It's identical to IsReadEQ.
+func IsRead(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsRead, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -155,64 +165,94 @@ func UpdateTimeLTE(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldUpdateTime, v))
 }
 
-// TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v Type) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldType, v))
+// EventTypeEQ applies the EQ predicate on the "event_type" field.
+func EventTypeEQ(v EventType) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldEventType, v))
 }
 
-// TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v Type) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldType, v))
+// EventTypeNEQ applies the NEQ predicate on the "event_type" field.
+func EventTypeNEQ(v EventType) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldEventType, v))
 }
 
-// TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...Type) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldType, vs...))
+// EventTypeIn applies the In predicate on the "event_type" field.
+func EventTypeIn(vs ...EventType) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldEventType, vs...))
 }
 
-// TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...Type) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldType, vs...))
+// EventTypeNotIn applies the NotIn predicate on the "event_type" field.
+func EventTypeNotIn(vs ...EventType) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldEventType, vs...))
 }
 
-// TxEventEQ applies the EQ predicate on the "tx_event" field.
-func TxEventEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldTxEvent, v))
+// DataEQ applies the EQ predicate on the "data" field.
+func DataEQ(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldData, v))
 }
 
-// TxEventNEQ applies the NEQ predicate on the "tx_event" field.
-func TxEventNEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldTxEvent, v))
+// DataNEQ applies the NEQ predicate on the "data" field.
+func DataNEQ(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldData, v))
 }
 
-// TxEventIn applies the In predicate on the "tx_event" field.
-func TxEventIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldTxEvent, vs...))
+// DataIn applies the In predicate on the "data" field.
+func DataIn(vs ...[]byte) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldData, vs...))
 }
 
-// TxEventNotIn applies the NotIn predicate on the "tx_event" field.
-func TxEventNotIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldTxEvent, vs...))
+// DataNotIn applies the NotIn predicate on the "data" field.
+func DataNotIn(vs ...[]byte) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldData, vs...))
 }
 
-// TxEventGT applies the GT predicate on the "tx_event" field.
-func TxEventGT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGT(FieldTxEvent, v))
+// DataGT applies the GT predicate on the "data" field.
+func DataGT(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldData, v))
 }
 
-// TxEventGTE applies the GTE predicate on the "tx_event" field.
-func TxEventGTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGTE(FieldTxEvent, v))
+// DataGTE applies the GTE predicate on the "data" field.
+func DataGTE(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldData, v))
 }
 
-// TxEventLT applies the LT predicate on the "tx_event" field.
-func TxEventLT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLT(FieldTxEvent, v))
+// DataLT applies the LT predicate on the "data" field.
+func DataLT(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldData, v))
 }
 
-// TxEventLTE applies the LTE predicate on the "tx_event" field.
-func TxEventLTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLTE(FieldTxEvent, v))
+// DataLTE applies the LTE predicate on the "data" field.
+func DataLTE(v []byte) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldData, v))
+}
+
+// DataTypeEQ applies the EQ predicate on the "data_type" field.
+func DataTypeEQ(v DataType) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldDataType, v))
+}
+
+// DataTypeNEQ applies the NEQ predicate on the "data_type" field.
+func DataTypeNEQ(v DataType) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldDataType, v))
+}
+
+// DataTypeIn applies the In predicate on the "data_type" field.
+func DataTypeIn(vs ...DataType) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldDataType, vs...))
+}
+
+// DataTypeNotIn applies the NotIn predicate on the "data_type" field.
+func DataTypeNotIn(vs ...DataType) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldDataType, vs...))
+}
+
+// IsTxEventEQ applies the EQ predicate on the "is_tx_event" field.
+func IsTxEventEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsTxEvent, v))
+}
+
+// IsTxEventNEQ applies the NEQ predicate on the "is_tx_event" field.
+func IsTxEventNEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldIsTxEvent, v))
 }
 
 // NotifyTimeEQ applies the EQ predicate on the "notify_time" field.
@@ -253,6 +293,16 @@ func NotifyTimeLT(v time.Time) predicate.Event {
 // NotifyTimeLTE applies the LTE predicate on the "notify_time" field.
 func NotifyTimeLTE(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldNotifyTime, v))
+}
+
+// IsReadEQ applies the EQ predicate on the "is_read" field.
+func IsReadEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsRead, v))
+}
+
+// IsReadNEQ applies the NEQ predicate on the "is_read" field.
+func IsReadNEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldIsRead, v))
 }
 
 // HasEventListener applies the HasEdge predicate on the "event_listener" edge.

@@ -13,8 +13,8 @@ use web_sys::{Event, HtmlSelectElement};
 
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
-use crate::types::types::grpc::EventType;
 use crate::types::types::grpc;
+use crate::types::types::grpc::EventType;
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 
 fn display_timestamp(option: Option<Timestamp>) -> String {
@@ -25,16 +25,6 @@ fn display_timestamp(option: Option<Timestamp>) -> String {
     }
     "".to_string()
 }
-
-// fn get_type_icon(event_type: grpc::EventType) -> String {
-//     match event_type {
-//         grpc::EventType::Funding => "icon-[ep--coin]".to_string(),
-//         grpc::EventType::Staking => "icon-[arcticons--coinstats]".to_string(),
-//         grpc::EventType::Dex => "icon-[fluent--money-24-regular]".to_string(),
-//         grpc::EventType::Governance => "icon-[icon-park-outline--palace]".to_string(),
-//     }.to_string()
-// }
-
 
 #[component(inline_props)]
 pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
@@ -54,7 +44,7 @@ pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
                     div(class="flex flex-col") {
                         div(class="flex flex-row justify-between") {
                             p(class="text-lg font-bold") { (event.title.clone()) }
-                            p(class="text-sm dark:text-purple-600") { (display_timestamp(event.timestamp.clone())) }
+                            p(class="text-sm dark:text-purple-600") { (display_timestamp(event.created_at.clone())) }
                         }
                         p(class="text-sm font-bold") { (event.subtitle.clone()) }
                         div(class={if *is_collapsed.get() { "text-sm overflow-hidden max-h-16" } else { "text-sm" }}) { (event.description.clone()) }
@@ -90,7 +80,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                     None => true,
                     Some(filter) => {
                         event.event_type() == *filter
-                    },
+                    }
                 }
             })
             .filter(|_event| {
@@ -114,7 +104,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 match time_filter.as_ref().as_time_range() {
                     None => true,
                     Some((start, end)) => {
-                        event.timestamp.clone().unwrap().seconds > start.timestamp() && event.timestamp.clone().unwrap().seconds <= end.timestamp()
+                        event.created_at.clone().unwrap().seconds > start.timestamp() && event.created_at.clone().unwrap().seconds <= end.timestamp()
                     }
                 }
             })
@@ -127,7 +117,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
         div(class="flex flex-col") {
             Keyed(
                 iterable=events,
-                key=|event| event.timestamp.clone(),
+                key=|event| event.id.clone(),
                 view=|cx,event| {
                     view!{cx,
                         EventComponent(event=event)
@@ -505,12 +495,44 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     }
 }
 
+async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
+    let events_state = use_context::<EventsState>(cx);
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(
+        grpc::ListEventsRequest {
+            start_time: None,
+            end_time: None,
+            limit: 0,
+            offset: 0,
+            event_type: event_type.map(|e| e as i32),
+        }
+    );
+    let response = services
+        .grpc_client
+        .get_event_service()
+        .list_events(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(response) = response {
+        events_state.replace_events(response.events, event_type);
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
 
 #[component]
 pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
+    let notifications_state = use_context::<NotificationsState>(cx);
 
     spawn_local_scoped(cx.to_owned(), async move {
         query_chains(cx.to_owned()).await;
+    });
+
+    create_effect(cx, move || {
+        let event_type = notifications_state.event_type_filter.get().as_ref().clone();
+        spawn_local_scoped(cx.to_owned(), async move {
+            query_events(cx.to_owned(), event_type).await;
+        });
     });
 
     view! {cx,

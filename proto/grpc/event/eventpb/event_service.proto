@@ -12,6 +12,8 @@ service EventService {
   rpc EventStream (google.protobuf.Empty) returns (stream EventList) {}
   rpc ListEvents (ListEventsRequest) returns (EventList) {}
   rpc ListChains (google.protobuf.Empty) returns (ChainList) {}
+  rpc ListEventsCount (google.protobuf.Empty) returns (ListEventsCountResponse) {}
+  rpc MarkEventRead (MarkEventReadRequest) returns (google.protobuf.Empty) {}
 }
 
 enum EventType {
@@ -26,9 +28,11 @@ message Event {
   string title = 2;
   string subtitle = 3;
   string description = 4;
-  google.protobuf.Timestamp timestamp = 5;
-  EventType event_type = 6;
-  ChainData chain = 7;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp notify_at = 6;
+  EventType event_type = 7;
+  ChainData chain = 8;
+  bool read = 9;
 }
 
 message EventList {
@@ -41,6 +45,7 @@ message ListEventsRequest {
   google.protobuf.Timestamp end_time = 2;
   int32 limit = 3;
   int64 offset = 4;
+  optional EventType event_type = 5;
 }
 
 message ChainData {
@@ -51,4 +56,18 @@ message ChainData {
 
 message ChainList {
   repeated ChainData chains = 1;
+}
+
+message EventsCount {
+  EventType event_type = 1;
+  int32 count = 2;
+  int32 unread_count = 3;
+}
+
+message ListEventsCountResponse {
+  repeated EventsCount counters = 1;
+}
+
+message MarkEventReadRequest {
+  int64 event_id = 1;
 }

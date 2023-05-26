@@ -23,11 +23,12 @@ var migrateCmd = &cobra.Command{
 	Short: "Migrate the database",
 	Run: func(cmd *cobra.Command, args []string) {
 		database.MigrateDb()
-		database.InitDb()
 
 		dbManagers := database.NewDefaultDbManagers()
 		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
 		chainCrawler.AddOrUpdateChains()
+
+		database.InitDb()
 	},
 }
 

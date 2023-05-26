@@ -34,7 +34,7 @@ func (c *ChainCrawler) isChainValid(chainInfo *types.ChainData) bool {
 }
 
 func (c *ChainCrawler) AddOrUpdateChains() {
-	log.Sugar.Debug("Updating chains")
+	log.Sugar.Info("Updating chains")
 	var chainInfo types.ChainInfo
 	_, err := common.GetJson("https://chains.cosmos.directory/", 5, &chainInfo)
 	if err != nil {

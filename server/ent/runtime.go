@@ -88,9 +88,13 @@ func init() {
 	// event.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	event.UpdateDefaultUpdateTime = eventDescUpdateTime.UpdateDefault.(func() time.Time)
 	// eventDescNotifyTime is the schema descriptor for notify_time field.
-	eventDescNotifyTime := eventFields[2].Descriptor()
+	eventDescNotifyTime := eventFields[4].Descriptor()
 	// event.DefaultNotifyTime holds the default value on creation for the notify_time field.
 	event.DefaultNotifyTime = eventDescNotifyTime.Default.(time.Time)
+	// eventDescIsRead is the schema descriptor for is_read field.
+	eventDescIsRead := eventFields[5].Descriptor()
+	// event.DefaultIsRead holds the default value on creation for the is_read field.
+	event.DefaultIsRead = eventDescIsRead.Default.(bool)
 	eventlistenerMixin := schema.EventListener{}.Mixin()
 	eventlistenerMixinFields0 := eventlistenerMixin[0].Fields()
 	_ = eventlistenerMixinFields0

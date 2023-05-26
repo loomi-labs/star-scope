@@ -959,6 +959,7 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "prost",
+ "prost-build",
  "prost-types",
  "querystring",
  "serde",

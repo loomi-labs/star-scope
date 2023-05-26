@@ -22,12 +22,18 @@ type Event struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// Type holds the value of the "type" field.
-	Type event.Type `json:"type,omitempty"`
-	// TxEvent holds the value of the "tx_event" field.
-	TxEvent []byte `json:"tx_event,omitempty"`
+	// EventType holds the value of the "event_type" field.
+	EventType event.EventType `json:"event_type,omitempty"`
+	// Data holds the value of the "data" field.
+	Data []byte `json:"data,omitempty"`
+	// DataType holds the value of the "data_type" field.
+	DataType event.DataType `json:"data_type,omitempty"`
+	// IsTxEvent holds the value of the "is_tx_event" field.
+	IsTxEvent bool `json:"is_tx_event,omitempty"`
 	// NotifyTime holds the value of the "notify_time" field.
 	NotifyTime time.Time `json:"notify_time,omitempty"`
+	// IsRead holds the value of the "is_read" field.
+	IsRead bool `json:"is_read,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventQuery when eager-loading is set.
 	Edges                 EventEdges `json:"edges"`
@@ -62,11 +68,13 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case event.FieldTxEvent:
+		case event.FieldData:
 			values[i] = new([]byte)
+		case event.FieldIsTxEvent, event.FieldIsRead:
+			values[i] = new(sql.NullBool)
 		case event.FieldID:
 			values[i] = new(sql.NullInt64)
-		case event.FieldType:
+		case event.FieldEventType, event.FieldDataType:
 			values[i] = new(sql.NullString)
 		case event.FieldCreateTime, event.FieldUpdateTime, event.FieldNotifyTime:
 			values[i] = new(sql.NullTime)
@@ -105,23 +113,41 @@ func (e *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				e.UpdateTime = value.Time
 			}
-		case event.FieldType:
+		case event.FieldEventType:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field type", values[i])
+				return fmt.Errorf("unexpected type %T for field event_type", values[i])
 			} else if value.Valid {
-				e.Type = event.Type(value.String)
+				e.EventType = event.EventType(value.String)
 			}
-		case event.FieldTxEvent:
+		case event.FieldData:
 			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field tx_event", values[i])
+				return fmt.Errorf("unexpected type %T for field data", values[i])
 			} else if value != nil {
-				e.TxEvent = *value
+				e.Data = *value
+			}
+		case event.FieldDataType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field data_type", values[i])
+			} else if value.Valid {
+				e.DataType = event.DataType(value.String)
+			}
+		case event.FieldIsTxEvent:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_tx_event", values[i])
+			} else if value.Valid {
+				e.IsTxEvent = value.Bool
 			}
 		case event.FieldNotifyTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field notify_time", values[i])
 			} else if value.Valid {
 				e.NotifyTime = value.Time
+			}
+		case event.FieldIsRead:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_read", values[i])
+			} else if value.Valid {
+				e.IsRead = value.Bool
 			}
 		case event.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -177,14 +203,23 @@ func (e *Event) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(e.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", e.Type))
+	builder.WriteString("event_type=")
+	builder.WriteString(fmt.Sprintf("%v", e.EventType))
 	builder.WriteString(", ")
-	builder.WriteString("tx_event=")
-	builder.WriteString(fmt.Sprintf("%v", e.TxEvent))
+	builder.WriteString("data=")
+	builder.WriteString(fmt.Sprintf("%v", e.Data))
+	builder.WriteString(", ")
+	builder.WriteString("data_type=")
+	builder.WriteString(fmt.Sprintf("%v", e.DataType))
+	builder.WriteString(", ")
+	builder.WriteString("is_tx_event=")
+	builder.WriteString(fmt.Sprintf("%v", e.IsTxEvent))
 	builder.WriteString(", ")
 	builder.WriteString("notify_time=")
 	builder.WriteString(e.NotifyTime.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("is_read=")
+	builder.WriteString(fmt.Sprintf("%v", e.IsRead))
 	builder.WriteByte(')')
 	return builder.String()
 }

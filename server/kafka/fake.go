@@ -122,11 +122,11 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 				}
 				switch msg.GetEvent().(type) {
 				case *indexevent.TxEvent_CoinReceived:
-					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.TypeTxEvent_CoinReceived, msg.NotifyTime.AsTime(), byteMsg)
+					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeFUNDING, event.DataTypeTxEvent_CoinReceived, msg.NotifyTime.AsTime(), byteMsg, true)
 				case *indexevent.TxEvent_OsmosisPoolUnlock:
-					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.TypeTxEvent_OsmosisPoolUnlock, msg.NotifyTime.AsTime(), byteMsg)
+					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeDEX, event.DataTypeTxEvent_OsmosisPoolUnlock, msg.NotifyTime.AsTime(), byteMsg, true)
 				case *indexevent.TxEvent_Unstake:
-					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.TypeTxEvent_Unstake, msg.NotifyTime.AsTime(), byteMsg)
+					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeSTAKING, event.DataTypeTxEvent_Unstake, msg.NotifyTime.AsTime(), byteMsg, true)
 				}
 				if err != nil {
 					log.Sugar.Panicf("failed to update event for %v: %v", msg.WalletAddress, err)

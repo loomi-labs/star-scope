@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use std::collections::HashMap;
 use std::fmt::Display;
 
 use log::debug;
@@ -20,8 +21,7 @@ use crate::pages::settings::page::Settings;
 use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
-use crate::types::types::grpc;
-use crate::types::types::grpc::{Event, User};
+use crate::types::types::grpc::{Event, EventsCount, EventType, User};
 
 mod components;
 mod config;
@@ -190,6 +190,7 @@ impl AppState {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EventsState {
     pub events: RcSignal<Vec<Event>>,
+    pub event_count_map: RcSignal<HashMap<EventType, EventsCount>>,
 }
 
 impl Default for EventsState {
@@ -203,6 +204,7 @@ impl EventsState {
     pub fn new() -> Self {
         Self {
             events: create_rc_signal(vec![]),
+            event_count_map: create_rc_signal(HashMap::new()),
         }
     }
 
@@ -212,12 +214,57 @@ impl EventsState {
 
     pub fn add_events(&self, new_events: Vec<Event>) {
         let mut events = self.events.modify();
+        let mut event_count_map = self.event_count_map.modify();
         for e in new_events {
-            events.insert(0, e);
+            events.insert(0, e.clone());
+            let count = event_count_map.get(&e.clone().event_type());
+            if let Some(count) = count {
+                let mut new_count = count.clone();
+                new_count.count += 1;
+                new_count.unread_count += 1;
+                event_count_map.insert(e.event_type().clone(), new_count);
+                continue;
+            } else {
+                event_count_map.insert(
+                    e.event_type().clone(),
+                    EventsCount {
+                        event_type: e.event_type().clone() as i32,
+                        count: 1,
+                        unread_count: 1,
+                    },
+                );
+            }
         }
-        // sort events by timestamp
-        // events.sort_by(|a, b| b.timestamp.partial_cmp(&a.timestamp).unwrap());
         *self.events.modify() = events.clone();
+        *self.event_count_map.modify() = event_count_map.clone();
+    }
+
+    pub fn replace_events(&self, new_events: Vec<Event>, event_type: Option<EventType>) {
+        let mut events = self.events.modify();
+        let f = new_events
+            .iter()
+            .filter(|e| {
+                if e.id == 0 {
+                    if let Some(event_type) = event_type {
+                        return e.event_type != event_type as i32;
+                    }
+                }
+                true
+            });
+        for e in f {
+            if !events.contains(&e) {
+                events.insert(0, e.clone());
+            }
+        }
+        *self.events.modify() = events.clone();
+    }
+
+    pub fn update_event_count(&self, events_count: Vec<EventsCount>) {
+        let mut event_count_map = self.event_count_map.modify();
+        for e in events_count {
+            event_count_map.insert(e.event_type(), e);
+        }
+        *self.event_count_map.modify() = event_count_map.clone();
     }
 }
 
@@ -314,18 +361,18 @@ fn subscribe_to_events(cx: Scope) {
     });
 }
 
-async fn query_events(cx: Scope<'_>) {
+async fn query_events_count(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(grpc::ListEventsRequest { start_time: None, end_time: None, limit: 0, offset: 0 });
+    let request = services.grpc_client.create_request({});
     let response = services
         .grpc_client
         .get_event_service()
-        .list_events(request)
+        .list_events_count(request)
         .await
         .map(|res| res.into_inner());
     if let Ok(response) = response {
-        events_state.add_events(response.events);
+        events_state.update_event_count(response.counters);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
@@ -336,7 +383,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
-    provide_context(cx, services);
+    provide_context(cx, services.clone());
     provide_context(cx, app_state);
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());
@@ -363,7 +410,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                                 notifications_state.reset();
                                 spawn_local_scoped(cx, async move {
                                     query_user_info(cx).await;
-                                    query_events(cx).await;
+                                    query_events_count(cx).await;
                                     subscribe_to_events(cx);
                                 });
                                 navigate(AppRoutes::Notifications.to_string().as_str())

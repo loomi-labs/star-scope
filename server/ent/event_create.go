@@ -49,15 +49,27 @@ func (ec *EventCreate) SetNillableUpdateTime(t *time.Time) *EventCreate {
 	return ec
 }
 
-// SetType sets the "type" field.
-func (ec *EventCreate) SetType(e event.Type) *EventCreate {
-	ec.mutation.SetType(e)
+// SetEventType sets the "event_type" field.
+func (ec *EventCreate) SetEventType(et event.EventType) *EventCreate {
+	ec.mutation.SetEventType(et)
 	return ec
 }
 
-// SetTxEvent sets the "tx_event" field.
-func (ec *EventCreate) SetTxEvent(b []byte) *EventCreate {
-	ec.mutation.SetTxEvent(b)
+// SetData sets the "data" field.
+func (ec *EventCreate) SetData(b []byte) *EventCreate {
+	ec.mutation.SetData(b)
+	return ec
+}
+
+// SetDataType sets the "data_type" field.
+func (ec *EventCreate) SetDataType(et event.DataType) *EventCreate {
+	ec.mutation.SetDataType(et)
+	return ec
+}
+
+// SetIsTxEvent sets the "is_tx_event" field.
+func (ec *EventCreate) SetIsTxEvent(b bool) *EventCreate {
+	ec.mutation.SetIsTxEvent(b)
 	return ec
 }
 
@@ -71,6 +83,20 @@ func (ec *EventCreate) SetNotifyTime(t time.Time) *EventCreate {
 func (ec *EventCreate) SetNillableNotifyTime(t *time.Time) *EventCreate {
 	if t != nil {
 		ec.SetNotifyTime(*t)
+	}
+	return ec
+}
+
+// SetIsRead sets the "is_read" field.
+func (ec *EventCreate) SetIsRead(b bool) *EventCreate {
+	ec.mutation.SetIsRead(b)
+	return ec
+}
+
+// SetNillableIsRead sets the "is_read" field if the given value is not nil.
+func (ec *EventCreate) SetNillableIsRead(b *bool) *EventCreate {
+	if b != nil {
+		ec.SetIsRead(*b)
 	}
 	return ec
 }
@@ -141,6 +167,10 @@ func (ec *EventCreate) defaults() {
 		v := event.DefaultNotifyTime
 		ec.mutation.SetNotifyTime(v)
 	}
+	if _, ok := ec.mutation.IsRead(); !ok {
+		v := event.DefaultIsRead
+		ec.mutation.SetIsRead(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -151,19 +181,33 @@ func (ec *EventCreate) check() error {
 	if _, ok := ec.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Event.update_time"`)}
 	}
-	if _, ok := ec.mutation.GetType(); !ok {
-		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Event.type"`)}
+	if _, ok := ec.mutation.EventType(); !ok {
+		return &ValidationError{Name: "event_type", err: errors.New(`ent: missing required field "Event.event_type"`)}
 	}
-	if v, ok := ec.mutation.GetType(); ok {
-		if err := event.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Event.type": %w`, err)}
+	if v, ok := ec.mutation.EventType(); ok {
+		if err := event.EventTypeValidator(v); err != nil {
+			return &ValidationError{Name: "event_type", err: fmt.Errorf(`ent: validator failed for field "Event.event_type": %w`, err)}
 		}
 	}
-	if _, ok := ec.mutation.TxEvent(); !ok {
-		return &ValidationError{Name: "tx_event", err: errors.New(`ent: missing required field "Event.tx_event"`)}
+	if _, ok := ec.mutation.Data(); !ok {
+		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "Event.data"`)}
+	}
+	if _, ok := ec.mutation.DataType(); !ok {
+		return &ValidationError{Name: "data_type", err: errors.New(`ent: missing required field "Event.data_type"`)}
+	}
+	if v, ok := ec.mutation.DataType(); ok {
+		if err := event.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "Event.data_type": %w`, err)}
+		}
+	}
+	if _, ok := ec.mutation.IsTxEvent(); !ok {
+		return &ValidationError{Name: "is_tx_event", err: errors.New(`ent: missing required field "Event.is_tx_event"`)}
 	}
 	if _, ok := ec.mutation.NotifyTime(); !ok {
 		return &ValidationError{Name: "notify_time", err: errors.New(`ent: missing required field "Event.notify_time"`)}
+	}
+	if _, ok := ec.mutation.IsRead(); !ok {
+		return &ValidationError{Name: "is_read", err: errors.New(`ent: missing required field "Event.is_read"`)}
 	}
 	return nil
 }
@@ -199,17 +243,29 @@ func (ec *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_spec.SetField(event.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
-	if value, ok := ec.mutation.GetType(); ok {
-		_spec.SetField(event.FieldType, field.TypeEnum, value)
-		_node.Type = value
+	if value, ok := ec.mutation.EventType(); ok {
+		_spec.SetField(event.FieldEventType, field.TypeEnum, value)
+		_node.EventType = value
 	}
-	if value, ok := ec.mutation.TxEvent(); ok {
-		_spec.SetField(event.FieldTxEvent, field.TypeBytes, value)
-		_node.TxEvent = value
+	if value, ok := ec.mutation.Data(); ok {
+		_spec.SetField(event.FieldData, field.TypeBytes, value)
+		_node.Data = value
+	}
+	if value, ok := ec.mutation.DataType(); ok {
+		_spec.SetField(event.FieldDataType, field.TypeEnum, value)
+		_node.DataType = value
+	}
+	if value, ok := ec.mutation.IsTxEvent(); ok {
+		_spec.SetField(event.FieldIsTxEvent, field.TypeBool, value)
+		_node.IsTxEvent = value
 	}
 	if value, ok := ec.mutation.NotifyTime(); ok {
 		_spec.SetField(event.FieldNotifyTime, field.TypeTime, value)
 		_node.NotifyTime = value
+	}
+	if value, ok := ec.mutation.IsRead(); ok {
+		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
+		_node.IsRead = value
 	}
 	if nodes := ec.mutation.EventListenerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

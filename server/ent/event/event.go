@@ -19,12 +19,18 @@ const (
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
-	// FieldType holds the string denoting the type field in the database.
-	FieldType = "type"
-	// FieldTxEvent holds the string denoting the tx_event field in the database.
-	FieldTxEvent = "tx_event"
+	// FieldEventType holds the string denoting the event_type field in the database.
+	FieldEventType = "event_type"
+	// FieldData holds the string denoting the data field in the database.
+	FieldData = "data"
+	// FieldDataType holds the string denoting the data_type field in the database.
+	FieldDataType = "data_type"
+	// FieldIsTxEvent holds the string denoting the is_tx_event field in the database.
+	FieldIsTxEvent = "is_tx_event"
 	// FieldNotifyTime holds the string denoting the notify_time field in the database.
 	FieldNotifyTime = "notify_time"
+	// FieldIsRead holds the string denoting the is_read field in the database.
+	FieldIsRead = "is_read"
 	// EdgeEventListener holds the string denoting the event_listener edge name in mutations.
 	EdgeEventListener = "event_listener"
 	// Table holds the table name of the event in the database.
@@ -43,9 +49,12 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
-	FieldType,
-	FieldTxEvent,
+	FieldEventType,
+	FieldData,
+	FieldDataType,
+	FieldIsTxEvent,
 	FieldNotifyTime,
+	FieldIsRead,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "events"
@@ -78,31 +87,58 @@ var (
 	UpdateDefaultUpdateTime func() time.Time
 	// DefaultNotifyTime holds the default value on creation for the "notify_time" field.
 	DefaultNotifyTime time.Time
+	// DefaultIsRead holds the default value on creation for the "is_read" field.
+	DefaultIsRead bool
 )
 
-// Type defines the type for the "type" enum field.
-type Type string
+// EventType defines the type for the "event_type" enum field.
+type EventType string
 
-// Type values.
+// EventType values.
 const (
-	TypeTxEvent_CoinReceived                   Type = "TxEvent_CoinReceived"
-	TypeTxEvent_OsmosisPoolUnlock              Type = "TxEvent_OsmosisPoolUnlock"
-	TypeTxEvent_Unstake                        Type = "TxEvent_Unstake"
-	TypeQueryEvent_GovernanceProposal_Ongoing  Type = "QueryEvent_GovernanceProposal_Ongoing"
-	TypeQueryEvent_GovernanceProposal_Finished Type = "QueryEvent_GovernanceProposal_Finished"
+	EventTypeSTAKING    EventType = "STAKING"
+	EventTypeDEX        EventType = "DEX"
+	EventTypeGOVERNANCE EventType = "GOVERNANCE"
+	EventTypeFUNDING    EventType = "FUNDING"
 )
 
-func (_type Type) String() string {
-	return string(_type)
+func (et EventType) String() string {
+	return string(et)
 }
 
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type Type) error {
-	switch _type {
-	case TypeTxEvent_CoinReceived, TypeTxEvent_OsmosisPoolUnlock, TypeTxEvent_Unstake, TypeQueryEvent_GovernanceProposal_Ongoing, TypeQueryEvent_GovernanceProposal_Finished:
+// EventTypeValidator is a validator for the "event_type" field enum values. It is called by the builders before save.
+func EventTypeValidator(et EventType) error {
+	switch et {
+	case EventTypeSTAKING, EventTypeDEX, EventTypeGOVERNANCE, EventTypeFUNDING:
 		return nil
 	default:
-		return fmt.Errorf("event: invalid enum value for type field: %q", _type)
+		return fmt.Errorf("event: invalid enum value for event_type field: %q", et)
+	}
+}
+
+// DataType defines the type for the "data_type" enum field.
+type DataType string
+
+// DataType values.
+const (
+	DataTypeTxEvent_CoinReceived                   DataType = "TxEvent_CoinReceived"
+	DataTypeTxEvent_OsmosisPoolUnlock              DataType = "TxEvent_OsmosisPoolUnlock"
+	DataTypeTxEvent_Unstake                        DataType = "TxEvent_Unstake"
+	DataTypeQueryEvent_GovernanceProposal_Ongoing  DataType = "QueryEvent_GovernanceProposal_Ongoing"
+	DataTypeQueryEvent_GovernanceProposal_Finished DataType = "QueryEvent_GovernanceProposal_Finished"
+)
+
+func (dt DataType) String() string {
+	return string(dt)
+}
+
+// DataTypeValidator is a validator for the "data_type" field enum values. It is called by the builders before save.
+func DataTypeValidator(dt DataType) error {
+	switch dt {
+	case DataTypeTxEvent_CoinReceived, DataTypeTxEvent_OsmosisPoolUnlock, DataTypeTxEvent_Unstake, DataTypeQueryEvent_GovernanceProposal_Ongoing, DataTypeQueryEvent_GovernanceProposal_Finished:
+		return nil
+	default:
+		return fmt.Errorf("event: invalid enum value for data_type field: %q", dt)
 	}
 }
 
@@ -124,14 +160,29 @@ func ByUpdateTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdateTime, opts...).ToFunc()
 }
 
-// ByType orders the results by the type field.
-func ByType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldType, opts...).ToFunc()
+// ByEventType orders the results by the event_type field.
+func ByEventType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEventType, opts...).ToFunc()
+}
+
+// ByDataType orders the results by the data_type field.
+func ByDataType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataType, opts...).ToFunc()
+}
+
+// ByIsTxEvent orders the results by the is_tx_event field.
+func ByIsTxEvent(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsTxEvent, opts...).ToFunc()
 }
 
 // ByNotifyTime orders the results by the notify_time field.
 func ByNotifyTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNotifyTime, opts...).ToFunc()
+}
+
+// ByIsRead orders the results by the is_read field.
+func ByIsRead(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsRead, opts...).ToFunc()
 }
 
 // ByEventListenerField orders the results by event_listener field.
