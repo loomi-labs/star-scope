@@ -126,6 +126,9 @@ func (k *Kafka) ProcessIndexedEvents() {
 	r := k.indexedEventsReader()
 	defer k.closeReader(r)
 
+	elMap := k.getEventListenerMapForWallets()
+	elMapUpdatedAt := time.Now()
+
 	for {
 		msg, err := r.ReadMessage(context.Background())
 		if err != nil {
@@ -136,8 +139,10 @@ func (k *Kafka) ProcessIndexedEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			// TODO: find a better way to get event listener map than querying db every time
-			elMap := k.getEventListenerMapForWallets()
+			if time.Since(elMapUpdatedAt) > 5*time.Minute {
+				elMap = k.getEventListenerMapForWallets()
+				elMapUpdatedAt = time.Now()
+			}
 			if el, ok := elMap[txEvent.WalletAddress]; ok {
 				var ctx = context.Background()
 				var err2 error
@@ -198,10 +203,22 @@ func getContractProposalEventType(prop *ent.ContractProposal) event.Type {
 	return event.TypeQueryEvent_GovernanceProposal_Ongoing
 }
 
+func (k *Kafka) getChains() map[uint64]*ent.Chain {
+	var chains = make(map[uint64]*ent.Chain)
+	for _, chain := range k.chainManager.QueryAll(context.Background()) {
+		chains[uint64(chain.ID)] = chain
+	}
+	return chains
+}
+
 func (k *Kafka) ProcessQueryEvents() {
 	log.Sugar.Info("Start consuming query events")
 	r := k.queryEventsReader()
 	defer k.closeReader(r)
+
+	elMap := k.getEventListenerMapForChains()
+	elMapUpdatedAt := time.Now()
+	chains := k.getChains()
 
 	for {
 		msg, err := r.ReadMessage(context.Background())
@@ -213,11 +230,13 @@ func (k *Kafka) ProcessQueryEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			// TODO: find a better way to get event listener map than querying db every time
-			elMap := k.getEventListenerMapForChains()
-			chain, err := k.chainManager.QueryById(context.Background(), int(queryEvent.ChainId))
-			if err != nil {
-				log.Sugar.Panicf("failed to find chain %v: %v", queryEvent.ChainId, err)
+			if time.Now().Sub(elMapUpdatedAt) > 5*time.Minute {
+				elMap = k.getEventListenerMapForChains()
+				elMapUpdatedAt = time.Now()
+			}
+			chain, ok := chains[queryEvent.ChainId]
+			if !ok {
+				log.Sugar.Panicf("failed to find chain %v", queryEvent.ChainId)
 			}
 			log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
 			var ctx = context.Background()
