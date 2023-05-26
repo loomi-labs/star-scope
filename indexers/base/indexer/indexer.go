@@ -152,66 +152,121 @@ type SyncStatus struct {
 	LatestHeight          uint64
 	HandledMessageTypes   map[string]struct{}
 	UnhandledMessageTypes map[string]struct{}
+	recordedAt            time.Time
+	lastBlockTimestamps   []time.Time
+	latestHeightUpdatedAt time.Time
 }
 
-func (i *Indexer) getLatestHeight(syncStatus *SyncStatus) {
-	// get latest height if we don't have it or if we are more than 100 blocks behind
-	if syncStatus.LatestHeight == 0 || syncStatus.LatestHeight < syncStatus.Height-100 {
-		log.Sugar.Debugf("Getting latest height of chain %v", i.chainInfo.Name)
+func getLatestHeight(encodingConfig EncodingConfig, chainInfo ChainInfo) (uint64, error) {
+	log.Sugar.Debugf("Getting latest height of chain %v", chainInfo.Name)
 
-		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/latest", i.chainInfo.RestEndpoint)
-		resp, err := http.Get(url)
-		if err != nil {
-			log.Sugar.Panic(err)
+	var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/latest", chainInfo.RestEndpoint)
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, err
+	}
+	if resp.StatusCode != 200 {
+		return 0, errors.New(fmt.Sprintf("Status code: %v", resp.StatusCode))
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Sugar.Panic(err)
+	}
+	var response cmtservice.GetLatestBlockResponse
+	if err := encodingConfig.Codec.UnmarshalJSON(body, &response); err != nil {
+		log.Sugar.Panic(err)
+	}
+	return uint64(response.GetBlock().GetHeader().Height), nil
+}
+
+func (i *Indexer) newSyncStatus(chain *indexerpb.IndexingChain) SyncStatus {
+	var handledMessageTypes = make(map[string]struct{})
+	for _, msgType := range chain.HandledMessageTypes {
+		handledMessageTypes[msgType] = struct{}{}
+	}
+	var unhandledMessageTypes = make(map[string]struct{})
+	for _, msgType := range chain.UnhandledMessageTypes {
+		unhandledMessageTypes[msgType] = struct{}{}
+	}
+
+	// try to get latest height 5 times and then give up
+	var latestHeight uint64
+	var err error
+	for j := 0; j < 5; j++ {
+		latestHeight, err = getLatestHeight(i.encodingConfig, i.chainInfo)
+		if err == nil {
+			break
 		}
-		if resp.StatusCode != 200 {
-			log.Sugar.Warnf("Failed to get latest block: %v", resp.StatusCode)
-			time.Sleep(5 * time.Second)
-			i.getLatestHeight(syncStatus)
-		}
-		//goland:noinspection GoUnhandledErrorResult
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Sugar.Panic(err)
-		}
-		var response cmtservice.GetLatestBlockResponse
-		if err := i.encodingConfig.Codec.UnmarshalJSON(body, &response); err != nil {
-			log.Sugar.Panic(err)
-		}
-		syncStatus.LatestHeight = uint64(response.GetBlock().GetHeader().Height)
-		if syncStatus.Height == 0 {
-			syncStatus.Height = syncStatus.LatestHeight
-		}
+		time.Sleep(time.Second)
+	}
+	if err != nil {
+		log.Sugar.Panicf("Error getting latest height for chain %v: %s", chain.Name, err)
+	}
+	var height = chain.IndexingHeight
+	if height == 0 {
+		height = latestHeight
+	}
+
+	return SyncStatus{
+		ChainId:               chain.Id,
+		Height:                height,
+		LatestHeight:          latestHeight,
+		HandledMessageTypes:   handledMessageTypes,
+		UnhandledMessageTypes: unhandledMessageTypes,
+		latestHeightUpdatedAt: time.Now(),
 	}
 }
 
-func (i *Indexer) updateSyncStatus(syncStatus *SyncStatus, updateChannel chan SyncStatus) {
-	updateChannel <- *syncStatus
-	syncStatus.Height++
+func (s *SyncStatus) recordBlock(blockResponse cmtservice.GetBlockByHeightResponse) {
+	if blockResponse.GetBlock() == nil {
+		log.Sugar.Panicf("Block response is nil")
+	}
+	s.lastBlockTimestamps = append(s.lastBlockTimestamps, blockResponse.GetBlock().GetHeader().Time)
+	if len(s.lastBlockTimestamps) > 10 {
+		s.lastBlockTimestamps = s.lastBlockTimestamps[1:]
+	}
+	s.recordedAt = time.Now()
 }
 
 const startSleepTime = 5 * time.Second
-const incrementSleepTime = 500 * time.Millisecond
 const minSleepTime = 200 * time.Millisecond
-const maxSleepTime = 10 * time.Second
 
-func setSleepTime(sleepTime time.Duration, attempts int) time.Duration {
-	if attempts == 1 {
-		sleepTime -= incrementSleepTime
-		if sleepTime < minSleepTime {
-			sleepTime = minSleepTime
+func (s *SyncStatus) getSleepDuration() time.Duration {
+	if s.LatestHeight > s.Height {
+		// if we are far behind, don't sleep at all
+		if s.LatestHeight > s.Height+10 {
+			return 0
 		}
-	} else if attempts > 2 {
-		sleepTime += incrementSleepTime
-		if sleepTime > maxSleepTime {
-			sleepTime = maxSleepTime
-		}
+		return minSleepTime
 	}
-	return sleepTime
+	if len(s.lastBlockTimestamps) < 2 {
+		return startSleepTime
+	}
+	var totalDuration time.Duration
+	for i := 1; i < len(s.lastBlockTimestamps); i++ {
+		totalDuration += s.lastBlockTimestamps[i].Sub(s.lastBlockTimestamps[i-1])
+	}
+	var avgDuration = totalDuration / time.Duration(len(s.lastBlockTimestamps)-1)
+	return avgDuration - time.Since(s.recordedAt)
 }
 
-func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncStatus, getBlockRequestDuration time.Duration, handleBlockDuration time.Duration, sleepTime time.Duration, catchUp bool) {
+func (s *SyncStatus) updateSyncStatus(updateChannel chan SyncStatus, encodingConfig EncodingConfig, chainInfo ChainInfo) {
+	updateChannel <- *s
+	s.Height++
+	if s.latestHeightUpdatedAt.Add(5 * time.Minute).Before(time.Now()) {
+		var latestHeight, err = getLatestHeight(encodingConfig, chainInfo)
+		if err != nil {
+			log.Sugar.Errorf("Error getting latest height for chain %v: %s", chainInfo.Name, err)
+		} else {
+			s.LatestHeight = latestHeight
+			s.latestHeightUpdatedAt = time.Now()
+		}
+	}
+}
+
+func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncStatus, getBlockRequestDuration time.Duration, handleBlockDuration time.Duration, sleepDuration time.Duration) {
 	var behindText = ""
 	var height = syncStatus.Height - 1
 	if syncStatus.LatestHeight > height {
@@ -219,21 +274,15 @@ func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncS
 	}
 	if result != nil {
 		var total = result.CountProcessed + result.CountSkipped
-		var sleepTimeText = "0"
-		if !catchUp {
-			sleepTimeText = sleepTime.String()
-		}
-		log.Sugar.Infof("%-15sBlock %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v\tGet block: %v\tHandle block: %v\tSleep: %v",
+		sleepTrunc := sleepDuration.Truncate(time.Millisecond * 100)
+		log.Sugar.Infof("%-15sBlock %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v\tGet block: %v\tHandle block: %v\tSleep: %s",
 			i.chainInfo.Name, height,
-			behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages), getBlockRequestDuration, handleBlockDuration, sleepTimeText)
+			behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages), getBlockRequestDuration, handleBlockDuration, sleepTrunc.String())
 	}
 }
 
-func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncStatus) {
-	i.getLatestHeight(&syncStatus)
-	var sleepTime = startSleepTime
-	var catchUp = syncStatus.Height < syncStatus.LatestHeight
-	var attempts = 1
+func (i *Indexer) StartIndexing(chain *indexerpb.IndexingChain, updateChannel chan SyncStatus) {
+	var syncStatus = i.newSyncStatus(chain)
 	log.Sugar.Infof("%-15sStart indexing at height: %v", i.chainInfo.Name, syncStatus.Height)
 	for true {
 		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.chainInfo.RestEndpoint, syncStatus.Height)
@@ -246,7 +295,6 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 		if err != nil {
 			if status == 400 {
 				log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chainInfo.Name, syncStatus.Height)
-				attempts++
 			} else if status > 400 && status < 500 {
 				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			} else if status >= 500 {
@@ -254,7 +302,9 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 			} else {
 				log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
 			}
+			time.Sleep(200 * time.Millisecond)
 		} else {
+			syncStatus.recordBlock(blockResponse)
 			var startHandleBlock = time.Now()
 			result, err = i.handleBlock(&blockResponse, syncStatus)
 			handleBlockDuration = time.Since(startHandleBlock)
@@ -262,17 +312,11 @@ func (i *Indexer) StartIndexing(syncStatus SyncStatus, updateChannel chan SyncSt
 				log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chainInfo.Name, syncStatus.Height, err)
 				time.Sleep(200 * time.Millisecond)
 			} else {
-				i.updateSyncStatus(&syncStatus, updateChannel)
-				i.getLatestHeight(&syncStatus)
-				attempts = 1
+				syncStatus.updateSyncStatus(updateChannel, i.encodingConfig, i.chainInfo)
 			}
 		}
-		if !catchUp {
-			sleepTime = setSleepTime(sleepTime, attempts)
-			time.Sleep(sleepTime)
-		} else {
-			catchUp = syncStatus.Height < syncStatus.LatestHeight
-		}
-		i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepTime, catchUp)
+		var sleepDuration = syncStatus.getSleepDuration()
+		i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepDuration)
+		time.Sleep(sleepDuration)
 	}
 }

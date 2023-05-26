@@ -56,23 +56,8 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 			).StartCrawling()
 		}
 
-		var handledMessageTypes = make(map[string]struct{})
-		for _, msgType := range chain.HandledMessageTypes {
-			handledMessageTypes[msgType] = struct{}{}
-		}
-		var unhandledMessageTypes = make(map[string]struct{})
-		for _, msgType := range chain.UnhandledMessageTypes {
-			unhandledMessageTypes[msgType] = struct{}{}
-		}
-		var syncStatus = indexer.SyncStatus{
-			ChainId:               chain.Id,
-			Height:                chain.IndexingHeight,
-			LatestHeight:          0,
-			HandledMessageTypes:   handledMessageTypes,
-			UnhandledMessageTypes: unhandledMessageTypes,
-		}
 		var indx = indexer.NewIndexer(config)
-		go indx.StartIndexing(syncStatus, updateChannel)
+		go indx.StartIndexing(chain, updateChannel)
 	}
 	return grpcClient
 }
