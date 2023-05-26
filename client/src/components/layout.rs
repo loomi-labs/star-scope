@@ -74,11 +74,6 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let events_state = use_context::<EventsState>(cx);
 
-    let button_class = "relative flex flex-row items-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
-    let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
-    let span_text_class = "ml-2 text-sm tracking-wide truncate";
-    let span_notify_text_class = "inline-flex items-center justify-center h-6 w-6 bg-red-500 rounded-full text-white text-xs font-bold ml-2";
-
     let handle_click = |cx: Scope, event_type: Option<EventType>| {
         notifications_state.apply_filter(event_type);
         safe_navigate(cx, AppRoutes::Notifications);
@@ -109,6 +104,10 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
         }
     });
 
+    let button_class = "relative flex flex-row items-center text-center max-w-full h-11 focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800 border-l-4 border-transparent pr-6";
+    let span_icon_class = "inline-flex justify-center items-center ml-4 font-size-20";
+    let span_text_class = "ml-2 text-sm tracking-wide truncate";
+    let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-3 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full dark:border-gray-900 sm:ml-0 sm:mt-2 sm:absolute sm:right-0 sm:top-0";
 
     view! { cx,
         div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 h-full text-white transition-all duration-300 border-none z-10") {
@@ -129,7 +128,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                     }
                                     span(class=span_text_class) { "All" }
                                     (if cnt_all.get().is_some() {
-                                        view! {cx, span(class=span_notify_text_class) { (cnt_all.get().unwrap()) }}
+                                        view! {cx, div(class=badge_class) { (cnt_all.get().unwrap()) }}
                                         } else {
                                         view! {cx, span()}
                                     })
@@ -142,7 +141,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                     }
                                     span(class=span_text_class) { "Funding" }
                                     (if cnt_funding.get().is_some() {
-                                        view! {cx, span(class=span_notify_text_class) { (cnt_funding.get().unwrap()) }}
+                                        view! {cx, div(class=badge_class) { (cnt_funding.get().unwrap()) }}
                                     } else {
                                         view! {cx, span()}
                                     })
@@ -155,7 +154,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                     }
                                     span(class=span_text_class) { "Staking" }
                                     (if cnt_staking.get().is_some() {
-                                        view! {cx, span(class=span_notify_text_class) { (cnt_staking.get().unwrap()) }}
+                                        view! {cx, div(class=badge_class) { (cnt_staking.get().unwrap()) }}
                                     } else {
                                         view! {cx, span()}
                                     })
@@ -168,7 +167,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                     }
                                     span(class=span_text_class) { "DEX'es" }
                                     (if cnt_dex.get().is_some() {
-                                        view! {cx, span(class=span_notify_text_class) { (cnt_dex.get().unwrap()) }}
+                                        view! {cx, div(class=badge_class) { (cnt_dex.get().unwrap()) }}
                                     } else {
                                         view! {cx, span()}
                                     })
@@ -184,7 +183,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                                     }
                                     span(class=span_text_class) { "Governance" }
                                     (if cnt_governance.get().is_some() {
-                                        view! {cx, span(class=span_notify_text_class) { (cnt_governance.get().unwrap()) }}
+                                        view! {cx, div(class=badge_class) { (cnt_governance.get().unwrap()) }}
                                     } else {
                                         view! {cx, span()}
                                     })
