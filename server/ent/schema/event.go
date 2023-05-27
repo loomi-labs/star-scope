@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
 	"fmt"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/indexevent"
 	"github.com/loomi-labs/star-scope/queryevent"
 	"reflect"
@@ -25,26 +26,36 @@ func (Event) Mixin() []ent.Mixin {
 
 // Fields of the Event.
 func (Event) Fields() []ent.Field {
-	var types []string
+	var eventTypes []string
+	for _, t := range eventpb.EventType_name {
+		eventTypes = append(eventTypes, t)
+	}
+
+	var dataTypes []string
 	var events = []interface{}{
 		indexevent.TxEvent_CoinReceived{},
 		indexevent.TxEvent_OsmosisPoolUnlock{},
 		indexevent.TxEvent_Unstake{},
 	}
 	for _, t := range events {
-		types = append(types, reflect.TypeOf(t).Name())
+		dataTypes = append(dataTypes, reflect.TypeOf(t).Name())
 	}
 	var govBase = reflect.TypeOf(queryevent.QueryEvent_GovernanceProposal{}).Name()
 	var govEvents = []string{"Ongoing", "Finished"}
 	for _, govEvent := range govEvents {
-		types = append(types, fmt.Sprintf("%s_%s", govBase, govEvent))
+		dataTypes = append(dataTypes, fmt.Sprintf("%s_%s", govBase, govEvent))
 	}
 	return []ent.Field{
-		field.Enum("type").
-			Values(types...),
-		field.Bytes("tx_event"),
+		field.Enum("event_type").
+			Values(eventTypes...),
+		field.Bytes("data"),
+		field.Enum("data_type").
+			Values(dataTypes...),
+		field.Bool("is_tx_event"),
 		field.Time("notify_time").
 			Default(time.Now()),
+		field.Bool("is_read").
+			Default(false),
 	}
 }
 

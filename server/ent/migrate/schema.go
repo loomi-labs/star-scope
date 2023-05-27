@@ -50,7 +50,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN", "REJECTED"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
@@ -72,9 +72,12 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock", "TxEvent_Unstake", "QueryEvent_GovernanceProposal_Ongoing", "QueryEvent_GovernanceProposal_Finished"}},
-		{Name: "tx_event", Type: field.TypeBytes},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"STAKING", "DEX", "GOVERNANCE", "FUNDING"}},
+		{Name: "data", Type: field.TypeBytes},
+		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock", "TxEvent_Unstake", "QueryEvent_GovernanceProposal_Ongoing", "QueryEvent_GovernanceProposal_Finished"}},
+		{Name: "is_tx_event", Type: field.TypeBool},
 		{Name: "notify_time", Type: field.TypeTime},
+		{Name: "is_read", Type: field.TypeBool, Default: false},
 		{Name: "event_listener_events", Type: field.TypeInt, Nullable: true},
 	}
 	// EventsTable holds the schema information for the "events" table.
@@ -85,7 +88,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "events_event_listeners_events",
-				Columns:    []*schema.Column{EventsColumns[6]},
+				Columns:    []*schema.Column{EventsColumns[9]},
 				RefColumns: []*schema.Column{EventListenersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

@@ -83,6 +83,7 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 		events, err := e.eventListenerManager.QueryEvents(
 			ctx,
 			el,
+			request.Msg.GetEventType(),
 			request.Msg.GetStartTime(),
 			request.Msg.GetEndTime(),
 			request.Msg.GetLimit(),
@@ -120,4 +121,51 @@ func (e EventService) ListChains(ctx context.Context, _ *connect.Request[emptypb
 	return connect.NewResponse(&eventpb.ChainList{
 		Chains: pbChains,
 	}), nil
+}
+
+func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[eventpb.ListEventsCountResponse], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	cntRead, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, true)
+	if err != nil {
+		log.Sugar.Error(err)
+		return nil, types.UnknownErr
+	}
+	cntUnread, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, false)
+	if err != nil {
+		log.Sugar.Error(err)
+		return nil, types.UnknownErr
+	}
+	counters := make([]*eventpb.EventsCount, len(eventpb.EventType_name))
+	for i, name := range eventpb.EventType_name {
+		counters[i] = &eventpb.EventsCount{
+			EventType: eventpb.EventType(i),
+			Count:     0,
+		}
+		for _, cnt := range cntRead {
+			if cnt.EventType.String() == name {
+				counters[i].Count = int32(cnt.Count)
+				break
+			}
+		}
+		for _, cnt := range cntUnread {
+			if cnt.EventType.String() == name {
+				counters[i].UnreadCount += int32(cnt.Count)
+				break
+			}
+		}
+	}
+
+	return connect.NewResponse(&eventpb.ListEventsCountResponse{
+		Counters: counters,
+	}), nil
+}
+
+func (e EventService) MarkEventRead(ctx context.Context, c *connect.Request[eventpb.MarkEventReadRequest]) (*connect.Response[emptypb.Empty], error) {
+	//TODO implement me
+	panic("implement me")
 }

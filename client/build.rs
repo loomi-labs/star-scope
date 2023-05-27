@@ -24,8 +24,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(|p| p.extension().unwrap_or_default() == "proto")
         .collect();
 
+    let mut config = prost_build::Config::new();
+    config.protoc_arg("--experimental_allow_proto3_optional");
+
     tonic_build::configure()
         .build_server(false)
-        .compile(&proto_files_refs, &["proto"])?;
+        .compile_with_config(config, &proto_files_refs, &["proto"])?;
     Ok(())
 }

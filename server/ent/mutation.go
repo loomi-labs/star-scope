@@ -2229,9 +2229,12 @@ type EventMutation struct {
 	id                    *int
 	create_time           *time.Time
 	update_time           *time.Time
-	_type                 *event.Type
-	tx_event              *[]byte
+	event_type            *event.EventType
+	data                  *[]byte
+	data_type             *event.DataType
+	is_tx_event           *bool
 	notify_time           *time.Time
+	is_read               *bool
 	clearedFields         map[string]struct{}
 	event_listener        *int
 	clearedevent_listener bool
@@ -2410,76 +2413,148 @@ func (m *EventMutation) ResetUpdateTime() {
 	m.update_time = nil
 }
 
-// SetType sets the "type" field.
-func (m *EventMutation) SetType(e event.Type) {
-	m._type = &e
+// SetEventType sets the "event_type" field.
+func (m *EventMutation) SetEventType(et event.EventType) {
+	m.event_type = &et
 }
 
-// GetType returns the value of the "type" field in the mutation.
-func (m *EventMutation) GetType() (r event.Type, exists bool) {
-	v := m._type
+// EventType returns the value of the "event_type" field in the mutation.
+func (m *EventMutation) EventType() (r event.EventType, exists bool) {
+	v := m.event_type
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldType returns the old "type" field's value of the Event entity.
+// OldEventType returns the old "event_type" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldType(ctx context.Context) (v event.Type, err error) {
+func (m *EventMutation) OldEventType(ctx context.Context) (v event.EventType, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldType is only allowed on UpdateOne operations")
+		return v, errors.New("OldEventType is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldType requires an ID field in the mutation")
+		return v, errors.New("OldEventType requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldType: %w", err)
+		return v, fmt.Errorf("querying old value for OldEventType: %w", err)
 	}
-	return oldValue.Type, nil
+	return oldValue.EventType, nil
 }
 
-// ResetType resets all changes to the "type" field.
-func (m *EventMutation) ResetType() {
-	m._type = nil
+// ResetEventType resets all changes to the "event_type" field.
+func (m *EventMutation) ResetEventType() {
+	m.event_type = nil
 }
 
-// SetTxEvent sets the "tx_event" field.
-func (m *EventMutation) SetTxEvent(b []byte) {
-	m.tx_event = &b
+// SetData sets the "data" field.
+func (m *EventMutation) SetData(b []byte) {
+	m.data = &b
 }
 
-// TxEvent returns the value of the "tx_event" field in the mutation.
-func (m *EventMutation) TxEvent() (r []byte, exists bool) {
-	v := m.tx_event
+// Data returns the value of the "data" field in the mutation.
+func (m *EventMutation) Data() (r []byte, exists bool) {
+	v := m.data
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldTxEvent returns the old "tx_event" field's value of the Event entity.
+// OldData returns the old "data" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldTxEvent(ctx context.Context) (v []byte, err error) {
+func (m *EventMutation) OldData(ctx context.Context) (v []byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTxEvent is only allowed on UpdateOne operations")
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTxEvent requires an ID field in the mutation")
+		return v, errors.New("OldData requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTxEvent: %w", err)
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
 	}
-	return oldValue.TxEvent, nil
+	return oldValue.Data, nil
 }
 
-// ResetTxEvent resets all changes to the "tx_event" field.
-func (m *EventMutation) ResetTxEvent() {
-	m.tx_event = nil
+// ResetData resets all changes to the "data" field.
+func (m *EventMutation) ResetData() {
+	m.data = nil
+}
+
+// SetDataType sets the "data_type" field.
+func (m *EventMutation) SetDataType(et event.DataType) {
+	m.data_type = &et
+}
+
+// DataType returns the value of the "data_type" field in the mutation.
+func (m *EventMutation) DataType() (r event.DataType, exists bool) {
+	v := m.data_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataType returns the old "data_type" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldDataType(ctx context.Context) (v event.DataType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataType: %w", err)
+	}
+	return oldValue.DataType, nil
+}
+
+// ResetDataType resets all changes to the "data_type" field.
+func (m *EventMutation) ResetDataType() {
+	m.data_type = nil
+}
+
+// SetIsTxEvent sets the "is_tx_event" field.
+func (m *EventMutation) SetIsTxEvent(b bool) {
+	m.is_tx_event = &b
+}
+
+// IsTxEvent returns the value of the "is_tx_event" field in the mutation.
+func (m *EventMutation) IsTxEvent() (r bool, exists bool) {
+	v := m.is_tx_event
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsTxEvent returns the old "is_tx_event" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldIsTxEvent(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsTxEvent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsTxEvent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsTxEvent: %w", err)
+	}
+	return oldValue.IsTxEvent, nil
+}
+
+// ResetIsTxEvent resets all changes to the "is_tx_event" field.
+func (m *EventMutation) ResetIsTxEvent() {
+	m.is_tx_event = nil
 }
 
 // SetNotifyTime sets the "notify_time" field.
@@ -2516,6 +2591,42 @@ func (m *EventMutation) OldNotifyTime(ctx context.Context) (v time.Time, err err
 // ResetNotifyTime resets all changes to the "notify_time" field.
 func (m *EventMutation) ResetNotifyTime() {
 	m.notify_time = nil
+}
+
+// SetIsRead sets the "is_read" field.
+func (m *EventMutation) SetIsRead(b bool) {
+	m.is_read = &b
+}
+
+// IsRead returns the value of the "is_read" field in the mutation.
+func (m *EventMutation) IsRead() (r bool, exists bool) {
+	v := m.is_read
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsRead returns the old "is_read" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldIsRead(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsRead is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsRead requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsRead: %w", err)
+	}
+	return oldValue.IsRead, nil
+}
+
+// ResetIsRead resets all changes to the "is_read" field.
+func (m *EventMutation) ResetIsRead() {
+	m.is_read = nil
 }
 
 // SetEventListenerID sets the "event_listener" edge to the EventListener entity by id.
@@ -2591,21 +2702,30 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 8)
 	if m.create_time != nil {
 		fields = append(fields, event.FieldCreateTime)
 	}
 	if m.update_time != nil {
 		fields = append(fields, event.FieldUpdateTime)
 	}
-	if m._type != nil {
-		fields = append(fields, event.FieldType)
+	if m.event_type != nil {
+		fields = append(fields, event.FieldEventType)
 	}
-	if m.tx_event != nil {
-		fields = append(fields, event.FieldTxEvent)
+	if m.data != nil {
+		fields = append(fields, event.FieldData)
+	}
+	if m.data_type != nil {
+		fields = append(fields, event.FieldDataType)
+	}
+	if m.is_tx_event != nil {
+		fields = append(fields, event.FieldIsTxEvent)
 	}
 	if m.notify_time != nil {
 		fields = append(fields, event.FieldNotifyTime)
+	}
+	if m.is_read != nil {
+		fields = append(fields, event.FieldIsRead)
 	}
 	return fields
 }
@@ -2619,12 +2739,18 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.CreateTime()
 	case event.FieldUpdateTime:
 		return m.UpdateTime()
-	case event.FieldType:
-		return m.GetType()
-	case event.FieldTxEvent:
-		return m.TxEvent()
+	case event.FieldEventType:
+		return m.EventType()
+	case event.FieldData:
+		return m.Data()
+	case event.FieldDataType:
+		return m.DataType()
+	case event.FieldIsTxEvent:
+		return m.IsTxEvent()
 	case event.FieldNotifyTime:
 		return m.NotifyTime()
+	case event.FieldIsRead:
+		return m.IsRead()
 	}
 	return nil, false
 }
@@ -2638,12 +2764,18 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldCreateTime(ctx)
 	case event.FieldUpdateTime:
 		return m.OldUpdateTime(ctx)
-	case event.FieldType:
-		return m.OldType(ctx)
-	case event.FieldTxEvent:
-		return m.OldTxEvent(ctx)
+	case event.FieldEventType:
+		return m.OldEventType(ctx)
+	case event.FieldData:
+		return m.OldData(ctx)
+	case event.FieldDataType:
+		return m.OldDataType(ctx)
+	case event.FieldIsTxEvent:
+		return m.OldIsTxEvent(ctx)
 	case event.FieldNotifyTime:
 		return m.OldNotifyTime(ctx)
+	case event.FieldIsRead:
+		return m.OldIsRead(ctx)
 	}
 	return nil, fmt.Errorf("unknown Event field %s", name)
 }
@@ -2667,19 +2799,33 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdateTime(v)
 		return nil
-	case event.FieldType:
-		v, ok := value.(event.Type)
+	case event.FieldEventType:
+		v, ok := value.(event.EventType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetType(v)
+		m.SetEventType(v)
 		return nil
-	case event.FieldTxEvent:
+	case event.FieldData:
 		v, ok := value.([]byte)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetTxEvent(v)
+		m.SetData(v)
+		return nil
+	case event.FieldDataType:
+		v, ok := value.(event.DataType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataType(v)
+		return nil
+	case event.FieldIsTxEvent:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsTxEvent(v)
 		return nil
 	case event.FieldNotifyTime:
 		v, ok := value.(time.Time)
@@ -2687,6 +2833,13 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetNotifyTime(v)
+		return nil
+	case event.FieldIsRead:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsRead(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Event field %s", name)
@@ -2743,14 +2896,23 @@ func (m *EventMutation) ResetField(name string) error {
 	case event.FieldUpdateTime:
 		m.ResetUpdateTime()
 		return nil
-	case event.FieldType:
-		m.ResetType()
+	case event.FieldEventType:
+		m.ResetEventType()
 		return nil
-	case event.FieldTxEvent:
-		m.ResetTxEvent()
+	case event.FieldData:
+		m.ResetData()
+		return nil
+	case event.FieldDataType:
+		m.ResetDataType()
+		return nil
+	case event.FieldIsTxEvent:
+		m.ResetIsTxEvent()
 		return nil
 	case event.FieldNotifyTime:
 		m.ResetNotifyTime()
+		return nil
+	case event.FieldIsRead:
+		m.ResetIsRead()
 		return nil
 	}
 	return fmt.Errorf("unknown Event field %s", name)

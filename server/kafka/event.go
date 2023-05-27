@@ -22,21 +22,24 @@ func txEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Token Received",
 			Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
-			Timestamp:   txEvent.Timestamp,
+			CreatedAt:   txEvent.Timestamp,
+			NotifyAt:    txEvent.NotifyTime,
 			EventType:   eventpb.EventType_FUNDING,
 		}, nil
 	case *indexevent.TxEvent_OsmosisPoolUnlock:
 		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Pool Unlock",
 			Description: fmt.Sprintf("%v will unlock pool at %v", txEvent.WalletAddress, txEvent.GetOsmosisPoolUnlock().UnlockTime),
-			Timestamp:   txEvent.Timestamp,
+			CreatedAt:   txEvent.Timestamp,
+			NotifyAt:    txEvent.NotifyTime,
 			EventType:   eventpb.EventType_DEX,
 		}, nil
 	case *indexevent.TxEvent_Unstake:
 		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Unstake",
 			Description: fmt.Sprintf("%v will unstake %v%v at %v", txEvent.WalletAddress, txEvent.GetUnstake().GetCoin().Amount, txEvent.GetUnstake().GetCoin().Denom, txEvent.GetUnstake().CompletionTime),
-			Timestamp:   txEvent.Timestamp,
+			CreatedAt:   txEvent.Timestamp,
+			NotifyAt:    txEvent.NotifyTime,
 			EventType:   eventpb.EventType_STAKING,
 		}, nil
 	}
@@ -68,7 +71,8 @@ func queryEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 			Title:       fmt.Sprintf(statusText, queryEvent.GetGovernanceProposal().GetProposalId()),
 			Subtitle:    queryEvent.GetGovernanceProposal().GetTitle(),
 			Description: queryEvent.GetGovernanceProposal().GetDescription(),
-			Timestamp:   queryEvent.Timestamp,
+			CreatedAt:   queryEvent.Timestamp,
+			NotifyAt:    queryEvent.NotifyTime,
 			EventType:   eventpb.EventType_GOVERNANCE,
 		}, nil
 	case *queryevent.QueryEvent_ContractGovernanceProposal:
@@ -89,7 +93,8 @@ func queryEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 			Title:       fmt.Sprintf(statusText, queryEvent.GetContractGovernanceProposal().GetProposalId()),
 			Subtitle:    queryEvent.GetContractGovernanceProposal().GetTitle(),
 			Description: queryEvent.GetContractGovernanceProposal().GetDescription(),
-			Timestamp:   queryEvent.Timestamp,
+			CreatedAt:   queryEvent.Timestamp,
+			NotifyAt:    queryEvent.NotifyTime,
 			EventType:   eventpb.EventType_GOVERNANCE,
 		}, nil
 	}
@@ -118,10 +123,15 @@ func kafkaMsgToProto(data []byte, chains []*ent.Chain) (*eventpb.Event, error) {
 }
 
 func EntEventToProto(entEvent *ent.Event, chain *ent.Chain) (*eventpb.Event, error) {
-	var _, pbEvent, err = txEventToProto(entEvent.TxEvent)
-	if err != nil {
-		// TODO: rename txEvent
-		_, pbEvent, err = queryEventToProto(entEvent.TxEvent)
+	var pbEvent *eventpb.Event
+	var err error
+	if entEvent.IsTxEvent {
+		_, pbEvent, err = txEventToProto(entEvent.Data)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, pbEvent, err = queryEventToProto(entEvent.Data)
 		if err != nil {
 			return nil, err
 		}

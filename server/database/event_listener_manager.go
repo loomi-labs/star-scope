@@ -6,6 +6,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 )
@@ -42,7 +43,27 @@ func (m *EventListenerManager) QueryByUser(ctx context.Context, entUser *ent.Use
 		AllX(ctx)
 }
 
-func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
+type EventsCount []struct {
+	EventType event.EventType `json:"event_type,omitempty"`
+	Count     int             `json:"count,omitempty"`
+}
+
+func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUser *ent.User, isRead bool) (EventsCount, error) {
+	var eventsCount = EventsCount{}
+	err := m.client.Event.
+		Query().
+		Where(
+			event.HasEventListenerWith(
+				eventlistener.HasUserWith(
+					user.IDEQ(entUser.ID))),
+		).
+		GroupBy(event.FieldEventType).
+		Aggregate(ent.Count()).
+		Scan(ctx, &eventsCount)
+	return eventsCount, err
+}
+
+func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType eventpb.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
 	if startTime == nil {
 		startTime = timestamppb.Now()
 	}
@@ -55,8 +76,10 @@ func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventLis
 	return el.
 		QueryEvents().
 		Where(
-			event.NotifyTimeGTE(startTime.AsTime()),
-			event.NotifyTimeLTE(endTime.AsTime()),
+			// TODO: fix this
+			event.EventTypeEQ(event.EventType(eventType.String())),
+			//event.NotifyTimeGTE(startTime.AsTime()),
+			//event.NotifyTimeLTE(endTime.AsTime()),
 		).
 		Offset(int(offset)).
 		Limit(int(limit)).
@@ -66,16 +89,20 @@ func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventLis
 func (m *EventListenerManager) UpdateAddEvent(
 	ctx context.Context,
 	el *ent.EventListener,
-	eventType event.Type,
+	eventType event.EventType,
+	dataType event.DataType,
 	notifyTime time.Time,
-	txEvent []byte,
+	data []byte,
+	isTxEvent bool,
 ) (*ent.Event, error) {
 	return m.client.Event.
 		Create().
 		SetEventListener(el).
-		SetType(eventType).
 		SetNotifyTime(notifyTime).
-		SetTxEvent(txEvent).
+		SetEventType(eventType).
+		SetDataType(dataType).
+		SetData(data).
+		SetIsTxEvent(isTxEvent).
 		Save(ctx)
 }
 
