@@ -1,6 +1,7 @@
 use sycamore::prelude::*;
 
 use crate::{AppRoutes, AppState, EventsState};
+use crate::config::keys;
 use crate::pages::notifications::page::NotificationsState;
 use crate::types::types::grpc::EventType;
 use crate::utils::url::safe_navigate;
@@ -8,29 +9,17 @@ use crate::utils::url::safe_navigate;
 #[component]
 pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
-    let logo_color = "#D68940";
     view!(cx,
         div(class="flex items-center justify-between h-14 mr-8 z-10 text-white dark:text-purple-600") {
-            div(class="flex items-center justify-start pl-4 h-14 w-14 lg:w-64 border-none") {
-                svg(xmlns="http://www.w3.org/2000/svg", width="60", height="60", viewBox="0 0 563 547.33") {
-                    path(fill=logo_color, d="M282.22,24c3.39,42.11,5.12,84.23,6.35,126.34s1.69,84.22,1.64,126.33-.6,84.22-1.77,126.33-2.95,84.23-6.22,126.34c-3.26-42.11-5-84.23-6.22-126.34s-1.73-84.22-1.76-126.33.45-84.22,1.64-126.33S278.84,66.07,282.22,24Z")
-                    path(fill=logo_color, d="M538.55,275.5c-42.11,3.35-84.22,5.05-126.33,6.24s-84.23,1.63-126.34,1.54-84.22-.66-126.33-1.87-84.22-3-126.33-6.32c42.12-3.23,84.23-4.9,126.34-6.11s84.22-1.67,126.33-1.67,84.23.53,126.34,1.74S496.45,272.08,538.55,275.5Z")
-                    path(fill=logo_color, d="M338.13,221.33c-7.79,10.41-16.23,20.16-24.87,29.71s-17.58,18.8-26.73,27.84S268,296.76,258.45,305.35,239,322.29,228.6,330.05c7.84-10.37,16.29-20.11,24.92-29.67s17.57-18.81,26.68-27.88,18.44-17.94,28-26.52S327.66,229,338.13,221.33Z")
-                    path(fill=logo_color, d="M338.76,331c-10.41-7.79-20.15-16.24-29.69-24.89s-18.79-17.6-27.82-26.75-17.86-18.51-26.45-28.11-16.92-19.43-24.67-29.86c10.35,7.84,20.09,16.3,29.64,24.94s18.8,17.58,27.86,26.7,17.93,18.45,26.51,28.06S331.06,320.53,338.76,331Z")
-                    path(fill="none", stroke=logo_color, stroke-miterlimit="10", stroke-width="30", d="M138.39,272.21A143.53,143.53,0,0,1,281.91,130.89")
-                    path(fill="none", stroke=logo_color, stroke-miterlimit="10", stroke-width="10", d="M284.89,417.93c-1,0-2,0-3,0A143.53,143.53,0,0,1,138.37,274.43")
-                    path(fill="none", stroke=logo_color, stroke-miterlimit="10", stroke-width="30", d="M425.44,274.43a143.53,143.53,0,0,1-140.55,143.5")
-                    path(fill="none", stroke=logo_color, stroke-miterlimit="10", stroke-width="10", d="M284.89,130.92A143.54,143.54,0,0,1,425.43,272.21")
+            div(class="flex flex-grow items-center justify-start pl-4 h-14 dark:bg-purple-800") {
+                button(on:click=move |_| safe_navigate(cx, AppRoutes::Home)) {
+                    img(class="h-auto w-44", src=keys::LOGO_WITH_TEXT_IMG) {}
                 }
-            }
-            div(class="flex flex-grow justify-between items-center h-14 header-right") {
-                div(class="outline-none focus:outline-none") {}
-                div(class="w-full pl-3 text-sm text-black outline-none focus:outline-none bg-transparent" ) {}
             }
             div(class="flex justify-between items-center h-14 header-right") {
                 ul(class="flex items-center") {
                     li {
-                        button(class="flex items-center mr-4 p-2 rounded hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
+                        button(class="flex items-center mr-4 p-2 rounded dark:bg-purple-800 hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
                             span(class="inline-flex mr-1") {
                                 i(class="fas fa-sign-out-alt text-xl") {}
                             }

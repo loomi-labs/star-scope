@@ -292,7 +292,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
     if has_access_permission(&services.auth_manager, route) {
         app_state.route.set(route.clone());
         match route {
-            AppRoutes::Home => view!(cx, LayoutWrapper{Home {}}),
+            AppRoutes::Home => view!(cx, Home {}),
             AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
             AppRoutes::Settings => view!(cx, LayoutWrapper{Settings {}}),
