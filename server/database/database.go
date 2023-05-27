@@ -216,6 +216,8 @@ func MigrateDb() {
 	if err != nil {
 		log.Sugar.Panicf("failed to migrate database: %v", err)
 	}
+	m.Drop()
+	return
 	err = m.Up()
 	if err != nil {
 		if err == goMigrate.ErrNoChange {
