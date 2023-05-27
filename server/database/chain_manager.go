@@ -42,14 +42,14 @@ func (m *ChainManager) QueryByBech32Prefix(ctx context.Context, bech32Prefix str
 		First(ctx)
 }
 
-func (m *ChainManager) QueryByName(ctx context.Context, name string) []*ent.Chain {
+func (m *ChainManager) QueryByName(ctx context.Context, name string) (*ent.Chain, error) {
 	return m.client.Chain.
 		Query().
 		Where(chain.Or(
 			chain.NameEQ(name),
 			chain.PrettyNameEQ(name),
 		)).
-		AllX(ctx)
+		Only(ctx)
 }
 
 func (m *ChainManager) QueryById(background context.Context, id int) (*ent.Chain, error) {

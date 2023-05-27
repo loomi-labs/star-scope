@@ -58,12 +58,12 @@ func enableChain(args []string, enable bool) {
 		os.Exit(1)
 	}
 	chainManager := database.NewDefaultDbManagers().ChainManager
-	chains := chainManager.QueryByName(context.Background(), args[0])
-	if len(chains) == 0 {
-		fmt.Println("Chain not found")
+	chain, err := chainManager.QueryByName(context.Background(), args[0])
+	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	chain, err := chainManager.UpdateSetEnabled(context.Background(), chains[0], enable)
+	chain, err = chainManager.UpdateSetEnabled(context.Background(), chain, enable)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
