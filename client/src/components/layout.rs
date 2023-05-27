@@ -52,22 +52,6 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
     )
 }
 
-fn highlight_active_notification_route(event_type: Option<EventType>, notifications_state: &NotificationsState, active_route: &AppRoutes) -> String {
-    if active_route == &AppRoutes::Notifications {
-        if notifications_state.has_filter_applied(event_type) {
-            return "text-primary".to_string();
-        }
-    }
-    "".to_string()
-}
-
-fn highlight_active_route(active_route: &AppRoutes, route: &AppRoutes) -> String {
-    if active_route == route {
-        return "text-primary".to_string();
-    }
-    "".to_string()
-}
-
 #[component]
 pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
@@ -106,7 +90,11 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let is_sidebar_hovered = create_signal(cx, false);
 
-    let button_class = "relative flex flex-row items-center text-center max-w-full h-11 border-l-4 border-transparent pr-6";
+    fn is_active_notification_route(event_type: Option<EventType>, notifications_state: &NotificationsState, active_route: &AppRoutes) -> bool {
+        active_route == &AppRoutes::Notifications && notifications_state.has_filter_applied(event_type)
+    }
+
+    let button_class = "relative flex flex-row items-center text-center max-w-full h-11 pr-6";
     let button_interactivity_class = "focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800";
     let span_icon_class = "inline-flex justify-center items-center ml-4";
     let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-sm tracking-wide truncate";
@@ -122,8 +110,9 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let notification_button_views = View::new_fragment(
         button_data.iter().map(|&d| view! { cx, li {
-            button(on:click=move |_| handle_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, highlight_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()))) {
-                span(class=format!("{} {}", d.1, span_icon_class, )) {
+            button(on:click=move |_| handle_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) { "text-primary" } else { "" })) {
+                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) {"bg-primary"} else { "" })) {}
+                span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
                     div(class="w-16 h-16")
                 }
                 span(class=span_text_class) { (d.2) }
@@ -163,7 +152,8 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             div(class="flex flex-col pb-10") {
                 ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Settings, class=format!("{} {} {}", button_class, button_interactivity_class, highlight_active_route(&app_state.route.get().as_ref(), &AppRoutes::Settings))) {
+                        a(href=AppRoutes::Settings, class=format!("{} {} {}", button_class, button_interactivity_class, if *app_state.route.get() == AppRoutes::Settings {"text-primary"} else { "" })) {
+                            span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) {"bg-primary"} else { "" })) {}
                             span(class=format!("{} icon-[streamline--interface-setting-cog-work-loading-cog-gear-settings-machine]", span_icon_class)) {
                                 div(class="w-16 h-16")
                             }
