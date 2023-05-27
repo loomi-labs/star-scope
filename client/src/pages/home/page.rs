@@ -55,11 +55,11 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
                 }
             }
             div(class="flex flex-col grow items-center justify-center text-center") {
-                div(class="flex flex-col items-center") {
-                    h1(class="text-lg font-bold") {
+                div(class="flex flex-col items-center py-16") {
+                    h1(class="text-xl font-bold") {
                         (title)
                     }
-                    p(class="text-sm my-8") {
+                    p(class="text-base my-8") {
                         (description)
                     }
                 }
@@ -76,13 +76,13 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
         div(class="flex flex-col items-center justify-center min-h-screen") {
             div(class="flex flex-col items-center justify-around min-h-screen 2xl:max-w-screen-2xl") {
-                h1(class="text-5xl font-bold text-center pt-16") {
+                h1(class="text-5xl font-bold text-center py-16") {
                     "What is Star Scope?"
                 }
                 div(class="flex flex-col lg:flex-row justify-center items-center w-full pb-16") {
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-56 h-56 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
-                            div(class="w-32 h-32 icon-[mdi--email-fast-outline]") {}
+                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                            div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[mdi--email-fast-outline]") {}
                         }
                         h2(class="text-2xl font-bold my-4") {
                             "Instant Notifications"
@@ -92,8 +92,8 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                         }
                     }
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-56 h-56 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
-                            div(class="w-32 h-32 icon-[octicon--bell-16]")
+                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                            div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[octicon--bell-16]")
                         }
                         h2(class="text-2xl font-bold my-4") {
                             "Customizable Alerts"
@@ -103,8 +103,8 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                         }
                     }
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-56 h-56 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
-                            div(class="w-32 h-32 icon-[ps--world]")
+                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                            div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[ps--world]")
                         }
                         h2(class="text-2xl font-bold my-4") {
                             "Extensive Coverage"
@@ -114,7 +114,7 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                         }
                     }
                 }
-                div() {
+                div(class="mb-8") {
                     LaunchButton {}
                 }
            }
