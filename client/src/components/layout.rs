@@ -150,7 +150,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
     let children = children.call(cx);
     view! { cx,
-        div(class="min-h-screen flex justify-center items-center flex-auto flex-shrink-0 antialiased dark:bg-purple-900") {
+        div(class="min-h-screen flex justify-center items-center flex-auto flex-shrink-0") {
             div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
                 Header{}
                 div(class="flex flex-row h-full w-full") {

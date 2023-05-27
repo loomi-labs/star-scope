@@ -9,6 +9,10 @@ module.exports = {
         transparent: 'transparent',
         current: 'currentColor',
         primary: '#D68940',
+        primary_gradient: {
+          from: '#FA803D',
+            to: '#D14809',
+        },
         black: '#000000',
         white: '#FFFFFF',
         purple: {

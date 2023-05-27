@@ -22,6 +22,7 @@ use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
 use crate::types::types::grpc::{Event, EventsCount, EventType, User};
+use crate::utils::url::safe_navigate;
 
 mod components;
 mod config;
@@ -377,7 +378,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     start_jwt_refresh_timer(cx.to_owned());
 
     view! {cx,
-        div(class="flex min-h-screen bg-white dark:bg-purple-900 text-black dark:text-white") {
+        div(class="bg-white dark:bg-purple-900 text-black dark:text-white antialiased") {
             MessageOverlay {}
             Router(
                 integration=HistoryIntegration::new(),
@@ -388,7 +389,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                         let auth_state = app_state.auth_state.get();
                         debug!("Auth state changed: {}", auth_state);
                         match auth_state.as_ref() {
-                            AuthState::LoggedOut => navigate(AppRoutes::Login.to_string().as_str()),
+                            AuthState::LoggedOut => safe_navigate(cx, AppRoutes::Home),
                             AuthState::LoggedIn => {
                                 let event_state = use_context::<EventsState>(cx);
                                 let notifications_state = use_context::<NotificationsState>(cx);
