@@ -13,6 +13,9 @@ module.exports = {
           from: '#FA803D',
             to: '#D14809',
         },
+        landing_page: {
+          bg: '#111223',
+        },
         black: '#000000',
         white: '#FFFFFF',
         purple: {
