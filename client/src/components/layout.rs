@@ -11,12 +11,12 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     view!(cx,
         div(class="flex items-center justify-between h-14 mr-8 z-10 text-white dark:text-purple-600") {
-            div(class="flex flex-grow items-center justify-start pl-4 h-14 dark:bg-purple-800") {
+            div(class="flex flex-grow items-center justify-start pl-3 h-14 dark:bg-purple-800") {
                 button(on:click=move |_| safe_navigate(cx, AppRoutes::Home)) {
                     img(class="h-auto w-44", src=keys::LOGO_WITH_TEXT_IMG) {}
                 }
             }
-            div(class="flex justify-between items-center h-14 header-right") {
+            div(class="flex justify-between items-center h-14 header-right dark:bg-purple-800") {
                 ul(class="flex items-center") {
                     li {
                         button(class="flex items-center mr-4 p-2 rounded dark:bg-purple-800 hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
@@ -77,7 +77,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let button_class = "relative flex flex-row items-center text-center max-w-full h-11 pr-6";
     let button_interactivity_class = "focus:outline-none hover:bg-blue-800 dark:hover:bg-purple-800 dark:hover:text-primary text-white-600 hover:text-white-800";
     let span_icon_class = "inline-flex justify-center items-center ml-4";
-    let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-sm tracking-wide truncate";
+    let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-base tracking-wide truncate";
     let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-[10px] font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
 
     let button_data = vec![
@@ -119,7 +119,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     li() {
                         a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
                             div(style="overflow: hidden; text-overflow: ellipsis;") {
-                                span(class=format!("ml-3 text-base tracking-wide")) { "Notifications" }
+                                span(class=format!("ml-4 text-base tracking-wide")) { "Notifications" }
                             }
                         }
                         ul() {
