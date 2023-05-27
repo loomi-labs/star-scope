@@ -167,23 +167,6 @@ impl AppState {
         self.user.set(None);
         self.auth_state.set(AuthState::LoggedOut);
     }
-
-    pub fn get_user_name(&self) -> String {
-        match self.user.get().as_ref() {
-            Some(user) => user.name.clone(),
-            None => "Unknown".to_string(),
-        }
-    }
-
-    pub fn get_user_avatar(&self) -> String {
-        // let user = self.user.get().as_ref().clone();
-        // if let Some(user) = user {
-        //     if user.avatar != "" {
-        //         return user.avatar;
-        //     }
-        // }
-        keys::DEFAULT_AVATAR_PATH.to_string()
-    }
 }
 
 

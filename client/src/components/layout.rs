@@ -10,7 +10,7 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let logo_color = "#D68940";
     view!(cx,
-        div(class="flex items-center justify-between h-14 mr-8 text-white z-10 dark:bg-purple-800") {
+        div(class="flex items-center justify-between h-14 mr-8 z-10 text-white dark:text-purple-600") {
             div(class="flex items-center justify-start pl-4 h-14 w-14 lg:w-64 border-none") {
                 svg(xmlns="http://www.w3.org/2000/svg", width="60", height="60", viewBox="0 0 563 547.33") {
                     path(fill=logo_color, d="M282.22,24c3.39,42.11,5.12,84.23,6.35,126.34s1.69,84.22,1.64,126.33-.6,84.22-1.77,126.33-2.95,84.23-6.22,126.34c-3.26-42.11-5-84.23-6.22-126.34s-1.73-84.22-1.76-126.33.45-84.22,1.64-126.33S278.84,66.07,282.22,24Z")
@@ -24,22 +24,13 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
                 }
             }
             div(class="flex flex-grow justify-between items-center h-14 header-right") {
-                // span(class="hidden lg:block") { (app_state.get_user_name()) }
                 div(class="outline-none focus:outline-none") {}
                 div(class="w-full pl-3 text-sm text-black outline-none focus:outline-none bg-transparent" ) {}
             }
             div(class="flex justify-between items-center h-14 header-right") {
                 ul(class="flex items-center") {
                     li {
-                        button(aria-hidde="true", class="group w-9 h-9 transition-colors duration-200 rounded-full shadow-md bg-blue-200 hover:bg-primary dark:bg-purple-700 dark:hover:text-primary focus:outline-none") {
-                            i(class="fas fa-bell text-lg") {}
-                        }
-                    }
-                    li {
-                        div(class="block w-px h-6 mx-3 bg-gray-400 dark:bg-purple-600") {}
-                    }
-                    li {
-                        button(class="flex items-center mr-4 p-2 rounded hover:text-primary dark:hover:bg-purple-700 dark:hover:text-primary", on:click=move |_| app_state.logout()) {
+                        button(class="flex items-center mr-4 p-2 rounded hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
                             span(class="inline-flex mr-1") {
                                 i(class="fas fa-sign-out-alt text-xl") {}
                             }
@@ -139,7 +130,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     li() {
                         a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
                             div(style="overflow: hidden; text-overflow: ellipsis;") {
-                                span(class=format!("ml-2 text-base tracking-wide")) { "Notifications" }
+                                span(class=format!("ml-3 text-base tracking-wide")) { "Notifications" }
                             }
                         }
                         ul() {
@@ -153,7 +144,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                 ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
                         a(href=AppRoutes::Settings, class=format!("{} {} {}", button_class, button_interactivity_class, if *app_state.route.get() == AppRoutes::Settings {"text-primary"} else { "" })) {
-                            span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) {"bg-primary"} else { "" })) {}
+                            span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if *app_state.route.get() == AppRoutes::Settings {"bg-primary"} else { "" })) {}
                             span(class=format!("{} icon-[streamline--interface-setting-cog-work-loading-cog-gear-settings-machine]", span_icon_class)) {
                                 div(class="w-16 h-16")
                             }
