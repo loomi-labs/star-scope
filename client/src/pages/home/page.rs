@@ -20,8 +20,8 @@ pub fn LaunchButton<G: Html>(cx: Scope) -> View<G> {
 
 #[component]
 pub fn Intro<G: Html>(cx: Scope) -> View<G> {
-    let title = "Bringing clarity to your Cosmos experience";
-    let description = "Star Scope is a notification service for Cosmos that helps you stay updated on token transfers, new governance proposals, validator problems and ending of unbonding periods that are important for you.";
+    let title = "Bringing clarity to Cosmos";
+    let description = "Star Scope is a notification service that helps you keep track of your activities across the Cosmos ecosystem.";
 
     view! {cx,
         div(class="hidden lg:flex justify-center min-h-screen") {
@@ -80,36 +80,36 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                 }
                 div(class="flex flex-col lg:flex-row justify-center items-center w-full pb-16") {
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-56 h-56 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                        div(class="flex flex-col items-center justify-center w-56 h-56 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
                             div(class="w-32 h-32 icon-[mdi--email-fast-outline]") {}
                         }
                         h2(class="text-2xl font-bold my-4") {
                             "Instant Notifications"
                         }
-                        p(class="text-center") {
-                            "Star Scope delivers real-time notifications about critical events occurring on Cosmos blockchains."
+                        p(class="text-center p-4") {
+                            "Star Scope delivers real-time notifications about critical events occurring on Cosmos blockchains." br() "Stay informed and never miss important updates."
                         }
                     }
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-56 h-56 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                        div(class="flex flex-col items-center justify-center w-56 h-56 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
                             div(class="w-32 h-32 icon-[octicon--bell-16]")
                         }
                         h2(class="text-2xl font-bold my-4") {
                             "Customizable Alerts"
                         }
-                        p(class="text-center") {
-                            "Tailor your notification preferences within Star Scope to receive alerts specific to your interests. Choose the events and chains you want to monitor, enabling you to focus on what matters most to you."
+                        p(class="text-center p-4") {
+                            "Tailor your notification preferences within Star Scope to receive alerts specific to your interests." br() "Choose the events and chains you want to monitor, enabling you to focus on what matters most to you."
                         }
                     }
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-56 h-56 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                        div(class="flex flex-col items-center justify-center w-56 h-56 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
                             div(class="w-32 h-32 icon-[ps--world]")
                         }
                         h2(class="text-2xl font-bold my-4") {
                             "Extensive Coverage"
                         }
-                        p(class="text-center") {
-                            "We provide comprehensive coverage of over 100 Cosmos blockchains, ensuring you have access to vital information from the most prominent networks in the ecosystem."
+                        p(class="text-center p-4") {
+                            "We provide comprehensive coverage of over 100 Cosmos blockchains, ensuring you have access to vital information from the most prominent networks in the ecosystem." br() "Stay connected to the entire Cosmos community."
                         }
                     }
                 }
