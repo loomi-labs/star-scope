@@ -211,14 +211,6 @@ func (k *Kafka) getChains() map[uint64]*ent.Chain {
 	return chains
 }
 
-func (k *Kafka) getChains() map[uint64]*ent.Chain {
-	var chains = make(map[uint64]*ent.Chain)
-	for _, chain := range k.chainManager.QueryAll(context.Background()) {
-		chains[uint64(chain.ID)] = chain
-	}
-	return chains
-}
-
 func (k *Kafka) ProcessQueryEvents() {
 	log.Sugar.Info("Start consuming query events")
 	r := k.queryEventsReader()
