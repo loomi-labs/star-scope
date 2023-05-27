@@ -15,6 +15,7 @@ module.exports = {
         },
         landing_page: {
           bg: '#111223',
+          bg_footer: '#2C1D2D',
         },
         black: '#000000',
         white: '#FFFFFF',
