@@ -3,22 +3,22 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use log::debug;
+use log::{debug, error};
 use log::Level;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
 use sycamore_router::{HistoryIntegration, navigate, Route, Router};
+use tonic::{Status, Streaming};
 use uuid::Uuid;
 
 use crate::components::layout::LayoutWrapper;
 use crate::components::messages::{create_error_msg_from_status, create_message, MessageOverlay};
-use crate::config::keys;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
-use crate::pages::settings::page::Settings;
 use crate::pages::notifications::page::{Notifications, NotificationsState};
+use crate::pages::settings::page::Settings;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
 use crate::types::types::grpc::{Event, EventsCount, EventType, User};
@@ -334,16 +334,37 @@ fn subscribe_to_events(cx: Scope) {
     spawn_local_scoped(cx, async move {
         let overview_state = use_context::<EventsState>(cx);
         let services = use_context::<Services>(cx);
-        let mut event_stream = services
+        let result = services
             .grpc_client
             .get_event_service()
             .event_stream(services.grpc_client.create_request(()))
             .await
-            .unwrap()
-            .into_inner();
-        while let Some(response) = event_stream.message().await.unwrap() {
-            debug!("Received {:?} events", response.events.len());
-            overview_state.add_events(response.events);
+            .map(|res| res.into_inner());
+        match result {
+            Ok(mut event_stream) => {
+                loop {
+                    match event_stream.message().await {
+                        Ok(Some(response)) => {
+                            debug!("Received {:?} events", response.events.len());
+                            overview_state.add_events(response.events);
+                        }
+                        Ok(None) => {
+                            // No more events, exit the loop
+                            break;
+                        }
+                        Err(err) => {
+                            create_error_msg_from_status(cx, err);
+                            gloo_timers::future::TimeoutFuture::new(1000 * 5).await;
+                            subscribe_to_events(cx.to_owned());
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                error!("Error while subscribing to events: {:?}", err);
+                gloo_timers::future::TimeoutFuture::new(1000 * 5).await;
+                subscribe_to_events(cx.to_owned());
+            }
         }
     });
 }
