@@ -8,7 +8,8 @@ use crate::utils::url::safe_navigate;
 #[component]
 pub fn LaunchButton<G: Html>(cx: Scope) -> View<G> {
     view!(cx,
-        button(class="rounded-full flex items-center justify-center px-4 py-2 h-10 lg:h-12 w-48 lg:w-64 text-black hover:text-white bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to",
+        button(class="rounded-full flex items-center justify-center px-4 py-2 h-10 lg:h-12 w-48 lg:w-64 hover:text-black \
+                transition-all bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to hover:from-primary_gradient-to hover:to-primary_gradient-from",
                 on:click=move |_| safe_navigate(cx, AppRoutes::Login)) {
             span(class="text-xl") {
                 "Launch App"
