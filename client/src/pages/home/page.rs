@@ -124,7 +124,7 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
 #[component]
 pub fn Footer<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
-        div(class="flex flex-col items-center justify-center h-64 bg-landing-page-bg-footer") {
+        div(class="flex flex-col items-center justify-center h-64 bg-d-bg-1") {
             div(class="flex w-full items-center justify-between max-w-screen-2xl") {
                 img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
                 div(class="") {
@@ -146,7 +146,7 @@ pub fn Footer<G: Html>(cx: Scope) -> View<G> {
 #[component]
 pub fn Home<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
-        div(class="bg-landing-page-bg") {
+        div(class="bg-d-bg") {
             Intro {}
             Explanation {}
             Footer {}

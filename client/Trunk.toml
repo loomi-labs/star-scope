@@ -9,4 +9,4 @@ command = "sh"
 command_arguments = ["-c", "if command -v tailwindcss; then tailwindcss -mo tailwind.css; else echo Warning: tailwindcss executable not found; fi"]
 
 [watch]
-watch = ["index.html", "src/", "proto/", "assets/"]
+watch = ["index.html", "tailwind.config.js", "src/", "proto/", "assets/"]

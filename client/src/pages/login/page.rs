@@ -63,7 +63,7 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
     let is_mobile = is_mobile();
 
     view!(cx,
-        div(class="h-screen w-screen bg-gray-100 dark:bg-purple-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8") {
+        div(class="h-screen w-screen bg-gray-100 dark:bg-d-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8") {
             div(class="sm:mx-auto sm:w-full sm:max-w-md flex flex-col justify-center items-center") {
                 svg(xmlns="http://www.w3.org/2000/svg", width="200", height="200", viewBox="0 0 563 547.33") {
                     path(fill=keys::PRIMARY_COLOR, d="M282.22,24c3.39,42.11,5.12,84.23,6.35,126.34s1.69,84.22,1.64,126.33-.6,84.22-1.77,126.33-2.95,84.23-6.22,126.34c-3.26-42.11-5-84.23-6.22-126.34s-1.73-84.22-1.76-126.33.45-84.22,1.64-126.33S278.84,66.07,282.22,24Z")

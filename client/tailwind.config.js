@@ -13,9 +13,9 @@ module.exports = {
           from: '#FA803D',
             to: '#D14809',
         },
-        "landing-page": {
+        d: {
           bg: '#111223',
-          "bg-footer": '#2C1D2D',
+          "bg-1": '#2D1B2E',
         },
         black: '#000000',
         white: '#FFFFFF',
