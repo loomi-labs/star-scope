@@ -59,7 +59,7 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 				"neutron1h6828as2z5av0xqtlh4w9m75wxewapk8z9l2flvzc29zeyzhx6fqgp648z",
 				kafkaBrokers,
 			).StartCrawling()
-		} else if chain.Path == "neutron-testnet" {
+		} else if chain.Path == "neutron-testnet" || chain.Path == "neutron-pion" {
 			go neutron.NewNeutronCrawler(
 				grpcClient,
 				chain.Path,

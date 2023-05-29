@@ -153,5 +153,6 @@ func EntEventToProto(entEvent *ent.Event, chain *ent.Chain) (*eventpb.Event, err
 		Name:     chain.Name,
 		ImageUrl: chain.Image,
 	}
+	pbEvent.Read = entEvent.IsRead
 	return pbEvent, nil
 }
