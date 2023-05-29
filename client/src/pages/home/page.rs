@@ -63,7 +63,7 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
                     }
                 }
                 div() {
-                    img(class="h-full w-full object-contain", src=keys::SCOPE_IMG) {}
+                    img(class="h-full w-full object-contain", src=keys::SCOPE_SMALL_IMG) {}
                 }
             }
         }
