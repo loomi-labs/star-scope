@@ -2,7 +2,6 @@
 pub const LS_KEY_ACCESS_TOKEN: &str = "access_token";
 pub const LS_KEY_REFRESH_TOKEN: &str = "refresh_token";
 
-pub const PRIMARY_COLOR: &str = "#D68940";
 pub const WHITE_COLOR: &str = "#FFFFFF";
 
 pub const LOGO_WITH_TEXT_WHITE_IMG: &str = "assets/images/logo_with_text_white.png";

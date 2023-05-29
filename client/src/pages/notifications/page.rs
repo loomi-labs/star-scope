@@ -125,7 +125,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 let chain_filter = notifications_state.chain_filter.get();
                 match chain_filter.as_ref() {
                     None => true,
-                    Some(chain) => chain.id == chain.id,
+                    Some(chain) => event.chain.clone().unwrap().id == chain.id,
                 }
             })
             .filter(|event| {
