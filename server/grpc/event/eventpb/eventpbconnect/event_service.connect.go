@@ -47,6 +47,9 @@ const (
 	// EventServiceMarkEventReadProcedure is the fully-qualified name of the EventService's
 	// MarkEventRead RPC.
 	EventServiceMarkEventReadProcedure = "/starscope.grpc.EventService/MarkEventRead"
+	// EventServiceGetWelcomeMessageProcedure is the fully-qualified name of the EventService's
+	// GetWelcomeMessage RPC.
+	EventServiceGetWelcomeMessageProcedure = "/starscope.grpc.EventService/GetWelcomeMessage"
 )
 
 // EventServiceClient is a client for the starscope.grpc.EventService service.
@@ -56,6 +59,7 @@ type EventServiceClient interface {
 	ListChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ChainList], error)
 	ListEventsCount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsCountResponse], error)
 	MarkEventRead(context.Context, *connect_go.Request[eventpb.MarkEventReadRequest]) (*connect_go.Response[emptypb.Empty], error)
+	GetWelcomeMessage(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.WelcomeMessageResponse], error)
 }
 
 // NewEventServiceClient constructs a client for the starscope.grpc.EventService service. By
@@ -93,16 +97,22 @@ func NewEventServiceClient(httpClient connect_go.HTTPClient, baseURL string, opt
 			baseURL+EventServiceMarkEventReadProcedure,
 			opts...,
 		),
+		getWelcomeMessage: connect_go.NewClient[emptypb.Empty, eventpb.WelcomeMessageResponse](
+			httpClient,
+			baseURL+EventServiceGetWelcomeMessageProcedure,
+			opts...,
+		),
 	}
 }
 
 // eventServiceClient implements EventServiceClient.
 type eventServiceClient struct {
-	eventStream     *connect_go.Client[emptypb.Empty, eventpb.EventList]
-	listEvents      *connect_go.Client[eventpb.ListEventsRequest, eventpb.EventList]
-	listChains      *connect_go.Client[emptypb.Empty, eventpb.ChainList]
-	listEventsCount *connect_go.Client[emptypb.Empty, eventpb.ListEventsCountResponse]
-	markEventRead   *connect_go.Client[eventpb.MarkEventReadRequest, emptypb.Empty]
+	eventStream       *connect_go.Client[emptypb.Empty, eventpb.EventList]
+	listEvents        *connect_go.Client[eventpb.ListEventsRequest, eventpb.EventList]
+	listChains        *connect_go.Client[emptypb.Empty, eventpb.ChainList]
+	listEventsCount   *connect_go.Client[emptypb.Empty, eventpb.ListEventsCountResponse]
+	markEventRead     *connect_go.Client[eventpb.MarkEventReadRequest, emptypb.Empty]
+	getWelcomeMessage *connect_go.Client[emptypb.Empty, eventpb.WelcomeMessageResponse]
 }
 
 // EventStream calls starscope.grpc.EventService.EventStream.
@@ -130,6 +140,11 @@ func (c *eventServiceClient) MarkEventRead(ctx context.Context, req *connect_go.
 	return c.markEventRead.CallUnary(ctx, req)
 }
 
+// GetWelcomeMessage calls starscope.grpc.EventService.GetWelcomeMessage.
+func (c *eventServiceClient) GetWelcomeMessage(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.WelcomeMessageResponse], error) {
+	return c.getWelcomeMessage.CallUnary(ctx, req)
+}
+
 // EventServiceHandler is an implementation of the starscope.grpc.EventService service.
 type EventServiceHandler interface {
 	EventStream(context.Context, *connect_go.Request[emptypb.Empty], *connect_go.ServerStream[eventpb.EventList]) error
@@ -137,6 +152,7 @@ type EventServiceHandler interface {
 	ListChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ChainList], error)
 	ListEventsCount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.ListEventsCountResponse], error)
 	MarkEventRead(context.Context, *connect_go.Request[eventpb.MarkEventReadRequest]) (*connect_go.Response[emptypb.Empty], error)
+	GetWelcomeMessage(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.WelcomeMessageResponse], error)
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -171,6 +187,11 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect_go.HandlerO
 		svc.MarkEventRead,
 		opts...,
 	))
+	mux.Handle(EventServiceGetWelcomeMessageProcedure, connect_go.NewUnaryHandler(
+		EventServiceGetWelcomeMessageProcedure,
+		svc.GetWelcomeMessage,
+		opts...,
+	))
 	return "/starscope.grpc.EventService/", mux
 }
 
@@ -195,4 +216,8 @@ func (UnimplementedEventServiceHandler) ListEventsCount(context.Context, *connec
 
 func (UnimplementedEventServiceHandler) MarkEventRead(context.Context, *connect_go.Request[eventpb.MarkEventReadRequest]) (*connect_go.Response[emptypb.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.EventService.MarkEventRead is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) GetWelcomeMessage(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[eventpb.WelcomeMessageResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.EventService.GetWelcomeMessage is not implemented"))
 }

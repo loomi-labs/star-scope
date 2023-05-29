@@ -180,3 +180,22 @@ func (e EventService) MarkEventRead(ctx context.Context, request *connect.Reques
 
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
+
+func (e EventService) GetWelcomeMessage(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[eventpb.WelcomeMessageResponse], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	els := e.eventListenerManager.QueryByUser(ctx, user)
+	pbWallets := make([]*eventpb.WalletInfo, 0)
+	for _, el := range els {
+		pbWallets = append(pbWallets, &eventpb.WalletInfo{
+			Address:  el.WalletAddress,
+			Name:     el.Edges.Chain.PrettyName,
+			ImageUrl: el.Edges.Chain.Image,
+		})
+	}
+	return connect.NewResponse(&eventpb.WelcomeMessageResponse{Wallets: pbWallets}), nil
+}

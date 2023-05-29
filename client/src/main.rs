@@ -4,7 +4,6 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use chrono::{TimeZone, Utc};
 use log::{debug, error};
 use log::Level;
 use prost_types::Timestamp;
@@ -23,7 +22,7 @@ use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
-use crate::types::types::grpc::{Event, EventsCount, EventType, User};
+use crate::types::types::grpc::{Event, EventsCount, EventType, User, WalletInfo};
 use crate::utils::url::safe_navigate;
 
 mod components;
@@ -177,6 +176,7 @@ impl AppState {
 pub struct EventsState {
     pub events: RcSignal<Vec<RcSignal<Event>>>,
     pub event_count_map: RcSignal<HashMap<EventType, EventsCount>>,
+    pub welcome_message: RcSignal<Option<Vec<WalletInfo>>>,
 }
 
 impl Default for EventsState {
@@ -201,6 +201,7 @@ impl EventsState {
         Self {
             events: create_rc_signal(vec![]),
             event_count_map: create_rc_signal(HashMap::new()),
+            welcome_message: create_rc_signal(None),
         }
     }
 
@@ -268,7 +269,7 @@ impl EventsState {
     }
 
     pub fn mark_as_read(&self, event_id: i64) {
-        let mut events = self.events.modify();
+        let events = self.events.modify();
         if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
             let mut event = events[index.clone()].get().as_ref().clone();
             event.read = true;
@@ -281,6 +282,14 @@ impl EventsState {
             *self.event_count_map.modify() = event_count_map.clone();
         }
         *self.events.modify() = events.clone();
+    }
+
+    pub fn has_events(&self) -> bool {
+        self.event_count_map.get().iter().any(|(_, v)| v.count > 0)
+    }
+
+    pub fn add_welcome_message(&self, message: Vec<WalletInfo>) {
+        self.welcome_message.set(Some(message));
     }
 }
 
@@ -398,6 +407,23 @@ fn subscribe_to_events(cx: Scope) {
     });
 }
 
+async fn query_welcome_message(cx: Scope<'_>) {
+    let events_state = use_context::<EventsState>(cx);
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request({});
+    let response = services
+        .grpc_client
+        .get_event_service()
+        .get_welcome_message(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(response) = response {
+        events_state.add_welcome_message(response.wallets)
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
+
 async fn query_events_count(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
@@ -410,6 +436,9 @@ async fn query_events_count(cx: Scope<'_>) {
         .map(|res| res.into_inner());
     if let Ok(response) = response {
         events_state.update_event_count(response.counters);
+        if !events_state.has_events() {
+            query_welcome_message(cx.to_owned()).await;
+        }
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }

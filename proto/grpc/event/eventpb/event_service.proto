@@ -14,6 +14,7 @@ service EventService {
   rpc ListChains (google.protobuf.Empty) returns (ChainList) {}
   rpc ListEventsCount (google.protobuf.Empty) returns (ListEventsCountResponse) {}
   rpc MarkEventRead (MarkEventReadRequest) returns (google.protobuf.Empty) {}
+  rpc GetWelcomeMessage (google.protobuf.Empty) returns (WelcomeMessageResponse) {}
 }
 
 enum EventType {
@@ -70,4 +71,14 @@ message ListEventsCountResponse {
 
 message MarkEventReadRequest {
   int64 event_id = 1;
+}
+
+message WalletInfo {
+  string address = 1;
+  string name = 2;
+  string image_url = 3;
+}
+
+message WelcomeMessageResponse {
+  repeated WalletInfo wallets = 1;
 }

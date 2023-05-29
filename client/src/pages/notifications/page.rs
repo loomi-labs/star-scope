@@ -17,7 +17,7 @@ use web_sys::{Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, In
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
 use crate::types::types::grpc;
-use crate::types::types::grpc::EventType;
+use crate::types::types::grpc::{EventType};
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 
 fn display_timestamp(option: Option<Timestamp>, locale: String) -> String {
@@ -108,7 +108,7 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     });
 
     on_cleanup(cx, move || {
-        if let Some(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
+        if let Some(_element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
             // TODO: ("Call observer.unobserve(element) here (or observer.disconnect()");
         }
     });
@@ -163,6 +163,74 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     }
 }
 
+#[component]
+pub fn WelcomeMessage<G: Html>(cx: Scope) -> View<G> {
+    let events_state = use_context::<EventsState>(cx);
+    let welcome_wallets = create_memo(cx, || {
+        if events_state.welcome_message.get().is_none() {
+            return vec![];
+        }
+        let mut wallets = events_state.welcome_message
+            .get()
+            .as_ref()
+            .clone()
+            .unwrap()
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        wallets.sort_by(|a, b| a.name.cmp(&b.name));
+        wallets
+    });
+
+    view!{cx,
+        (if events_state.welcome_message.get().is_some() {
+                view!{cx,
+                    div(class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700") {
+                        div(class="flex flex-col rounded-lg shadow my-2 p-2 pl-16 w-full bg-gray-100 dark:bg-purple-700") {
+                            h1(class="text-2xl font-bold") { "Welcome on Star Scope" }
+                            p(class="text-sm py-1") { "You will receive notifications about:" }
+                            ul(class="list-disc list-inside text-sm") {
+                                li { "Receiving of funds per transaction or IBC" }
+                                li { "End of unstaking perdiod" }
+                                li { "End of unbonding period of Osmosis pools" }
+                                li { "End of vesting period of Neutron Airdrop" }
+                                li { "New governance proposals" }
+                                li { "Passes/rejected governance proposals" }
+                            }
+                            p(class="text-sm font-bold py-1") { "Following wallets are registered" }
+                        }
+                        div(class="flex flex-row flex-wrap justify-center") {
+                            Indexed(
+                                iterable=welcome_wallets,
+                                view=move |cx,wallet_info| {
+                                    view!{cx,
+                                        div(class="flex flex-col items-center justify-center rounded-lg shadow my-2 p-2 w-full bg-gray-100 dark:bg-purple-700") {
+                                            div(class="flex flex-row items-center w-full") {
+                                                div(class="rounded-full h-8 w-8 aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center relative") {
+                                                    img(src=wallet_info.image_url, alt="Event Logo", class="h-6 w-6")
+                                                }
+                                                div(class="flex flex-col w-full") {
+                                                    div(class="flex flex-row text-center items-center") {
+                                                        span(class="text-base font-semibold") { (wallet_info.name.clone()) }
+                                                        div(class="flex-grow") {}
+                                                    }
+                                                    p(class="text-sm py-1") { (wallet_info.address.clone()) }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            } else {
+                view!{cx,
+                    div()
+                }
+            })
+    }
+}
 
 #[component]
 pub fn Events<G: Html>(cx: Scope) -> View<G> {
@@ -213,6 +281,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
 
     view! {cx,
         div(class="flex flex-col") {
+            WelcomeMessage {}
             Keyed(
                 iterable=events,
                 key=|event| event.get().id.clone(),
