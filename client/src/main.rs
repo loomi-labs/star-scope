@@ -1,9 +1,10 @@
 #![allow(non_snake_case)]
 
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
 use log::{debug, error};
 use log::Level;
 use prost_types::Timestamp;
@@ -184,11 +185,15 @@ impl Default for EventsState {
     }
 }
 
-fn to_datetime(timestamp: Timestamp) -> DateTime<Utc> {
-    let seconds = timestamp.seconds;
-    let nanos = timestamp.nanos;
-    let datetime = Utc.timestamp_opt(seconds, nanos as u32);
-    datetime.unwrap()
+fn compare_timestamps(a: &Option<Timestamp>, b: &Option<Timestamp>) -> Ordering {
+    match (a, b) {
+        (Some(a), Some(b)) => {
+            a.seconds.cmp(&b.seconds).then(a.nanos.cmp(&b.nanos))
+        }
+        (Some(_), None) => Ordering::Greater,
+        (None, Some(_)) => Ordering::Less,
+        (None, None) => Ordering::Equal,
+    }
 }
 
 impl EventsState {
@@ -250,7 +255,7 @@ impl EventsState {
                 events.insert(0, e.clone());
             }
         }
-        events.sort_by_key(|e| to_datetime(e.notify_at.clone().unwrap_or(Timestamp::default())));
+        events.sort_by(|a, b| compare_timestamps(&a.notify_at, &b.notify_at));
         events.reverse();
         *self.events.modify() = events.clone();
     }
