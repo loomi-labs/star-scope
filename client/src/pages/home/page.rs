@@ -8,7 +8,7 @@ use crate::utils::url::safe_navigate;
 pub fn LaunchButton<G: Html>(cx: Scope) -> View<G> {
     view!(cx,
         button(class="rounded-full flex items-center justify-center text-sm lg:text-2xl px-4 py-2 h-10 lg:h-12 w-36 lg:w-64 hover:text-black \
-                transition-all bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to hover:from-primary_gradient-to hover:to-primary_gradient-from",
+                transition-all bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to hover:from-primary-gradient-to hover:to-primary-gradient-from",
                 on:click=move |_| safe_navigate(cx, AppRoutes::Login)) {
             span(class="") {
                 "Launch App"
@@ -80,7 +80,7 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                 }
                 div(class="flex flex-col lg:flex-row justify-center items-center w-full pb-16") {
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to") {
                             div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[mdi--email-fast-outline]") {}
                         }
                         h2(class="text-2xl font-bold my-4") {
@@ -91,7 +91,7 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                         }
                     }
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to") {
                             div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[octicon--bell-16]")
                         }
                         h2(class="text-2xl font-bold my-4") {
@@ -102,7 +102,7 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
                         }
                     }
                     div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to") {
+                        div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to") {
                             div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[ps--world]")
                         }
                         h2(class="text-2xl font-bold my-4") {
@@ -124,7 +124,7 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
 #[component]
 pub fn Footer<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
-        div(class="flex flex-col items-center justify-center h-64 bg-landing_page-bg_footer") {
+        div(class="flex flex-col items-center justify-center h-64 bg-landing-page-bg-footer") {
             div(class="flex w-full items-center justify-between max-w-screen-2xl") {
                 img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
                 div(class="") {
@@ -146,7 +146,7 @@ pub fn Footer<G: Html>(cx: Scope) -> View<G> {
 #[component]
 pub fn Home<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
-        div(class="bg-landing_page-bg") {
+        div(class="bg-landing-page-bg") {
             Intro {}
             Explanation {}
             Footer {}

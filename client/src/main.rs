@@ -399,7 +399,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     start_jwt_refresh_timer(cx.to_owned());
 
     view! {cx,
-        div(class="bg-white dark:bg-purple-900 text-black dark:text-white antialiased") {
+        div(class="bg-white dark:bg-landing-page-bg text-black dark:text-white antialiased") {
             MessageOverlay {}
             Router(
                 integration=HistoryIntegration::new(),

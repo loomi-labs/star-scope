@@ -9,13 +9,13 @@ module.exports = {
         transparent: 'transparent',
         current: 'currentColor',
         primary: '#D68940',
-        primary_gradient: {
+        "primary-gradient": {
           from: '#FA803D',
             to: '#D14809',
         },
-        landing_page: {
+        "landing-page": {
           bg: '#111223',
-          bg_footer: '#2C1D2D',
+          "bg-footer": '#2C1D2D',
         },
         black: '#000000',
         white: '#FFFFFF',
