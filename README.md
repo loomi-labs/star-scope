@@ -12,7 +12,7 @@ docker compose -f docker-full-app.yml up
 ```
 Then go to http://localhost:8080.
 
-How to clean up:
+### How to clean up:
 ```bash
 docker compose -f docker-full-app.yml down --volumes
 ```
