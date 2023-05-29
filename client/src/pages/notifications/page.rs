@@ -57,6 +57,45 @@ pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
     // TODO: make this proper
     let is_clamping = event.description.len() > 250;
 
+    let in_viewport = create_signal(cx, false);
+
+    let event_ref = create_node_ref(cx);
+    let is_mounted = create_signal(cx, false);
+
+    on_mount(cx, move || {
+        let callback = Closure::wrap(Box::new(
+            move |entries: Vec<JsValue>, _observer: IntersectionObserver| {
+                // let in_viewport = in_viewport_ref.get();
+                for entry in entries {
+                    let entry: IntersectionObserverEntry = entry.unchecked_into();
+                    if entry.is_intersecting() {
+                        // in_viewport.set(true);
+                        debug!("Event in viewport");
+                    } else {
+                        // in_viewport.set(false);
+                        debug!("Event out of viewport");
+                    }
+                }
+            },
+        ) as Box<dyn FnMut(Vec<JsValue>, IntersectionObserver)>);
+
+        let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref())
+            .expect("Failed to create IntersectionObserver");
+
+        if let Some(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
+            observer.observe(&element);
+        }
+
+        // Prevent the closure from being dropped prematurely
+        callback.forget();
+        is_mounted.set(true);
+    });
+
+    on_cleanup(cx, move || {
+        // is_mounted.set(false);
+        is_mounted.set(false);
+    });
+
     view! {cx,
         div(class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
             div(class="flex flex-row justify-between") {
