@@ -3,13 +3,14 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
+use chrono::{DateTime, TimeZone, Utc};
 use log::{debug, error};
 use log::Level;
+use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
 use sycamore_router::{HistoryIntegration, navigate, Route, Router};
-use tonic::{Status, Streaming};
 use uuid::Uuid;
 
 use crate::components::layout::LayoutWrapper;
@@ -183,6 +184,12 @@ impl Default for EventsState {
     }
 }
 
+fn to_datetime(timestamp: Timestamp) -> DateTime<Utc> {
+    let seconds = timestamp.seconds;
+    let nanos = timestamp.nanos;
+    let datetime = Utc.timestamp_opt(seconds, nanos as u32);
+    datetime.unwrap()
+}
 
 impl EventsState {
     pub fn new() -> Self {
@@ -243,6 +250,8 @@ impl EventsState {
                 events.insert(0, e.clone());
             }
         }
+        events.sort_by_key(|e| to_datetime(e.notify_at.clone().unwrap_or(Timestamp::default())));
+        events.reverse();
         *self.events.modify() = events.clone();
     }
 

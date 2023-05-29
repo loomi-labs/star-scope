@@ -55,7 +55,7 @@ pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
     let locale = notifications_state.locale.get();
 
     // TODO: make this proper
-    let is_clamping = event.description.len() > 500;
+    let is_clamping = event.description.len() > 250;
 
     view! {cx,
         div(class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
