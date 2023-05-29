@@ -12,8 +12,9 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
     view!(cx,
         div(class="flex items-center justify-between h-14 mr-8 z-10 text-white dark:text-purple-600") {
             div(class="flex flex-grow items-center justify-start pl-3 h-14 dark:bg-purple-800") {
-                button(on:click=move |_| safe_navigate(cx, AppRoutes::Home)) {
-                    img(class="h-auto w-44", src=keys::LOGO_WITH_TEXT_IMG) {}
+                button(on:click=move |_| safe_navigate(cx, AppRoutes::Home), class="relative") {
+                        img(src=keys::LOGO_WITH_TEXT_WHITE_IMG, class="h-auto w-44 transition-transform duration-300 transform")
+                        img(src=keys::LOGO_WITH_TEXT_ORANGE_IMG, class="h-auto w-44 absolute top-0 left-0 opacity-0 transition-opacity duration-300 transform hover:opacity-100")
                 }
             }
             div(class="flex justify-between items-center h-14 header-right dark:bg-purple-800") {

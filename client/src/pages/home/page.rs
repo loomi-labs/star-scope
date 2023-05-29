@@ -28,7 +28,7 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
             div(class="flex flex-col justify-between 2xl:max-w-screen-2xl h-full w-full") {
                 div(class="flex") {
                     div(class="flex flex-col justify-between w-1/3 min-h-screen pl-16 pt-16") {
-                        img(class="h-auto w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
+                        img(class="h-auto w-64", src=keys::LOGO_WITH_TEXT_WHITE_IMG) {}
                         div(class="flex flex-col justify-start pb-16") {
                             h1(class="text-5xl font-bold") {
                                 (title)
@@ -49,7 +49,7 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
         div(class="lg:hidden flex flex-col items-center min-h-screen p-8") {
             div(class="w-full") {
                 div(class="flex justify-between items-center") {
-                    img(class="h-auto w-32", src=keys::LOGO_WITH_TEXT_IMG) {}
+                    img(class="h-auto w-32", src=keys::LOGO_WITH_TEXT_WHITE_IMG) {}
                     LaunchButton {}
                 }
             }
@@ -126,7 +126,7 @@ pub fn Footer<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
         div(class="flex flex-col items-center justify-center h-64 bg-d-bg-1") {
             div(class="flex w-full items-center justify-between max-w-screen-2xl") {
-                img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
+                img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_WHITE_IMG) {}
                 div(class="") {
                     a(class="p-4 hover:text-primary", href="https://t.me/rapha_decrypto", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[bxl--telegram]") {}
