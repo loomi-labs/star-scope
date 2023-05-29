@@ -100,7 +100,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                 (if d.3.get().is_some() {
                     view! {cx,
                         div(class="absolute top-0 right-1") {
-                            div(class=badge_class) { (d.3.get().unwrap()) }
+                            div(class=badge_class) { (d.3.get().unwrap_or(0)) }
                         }
                     }
                     } else {

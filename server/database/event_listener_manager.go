@@ -57,6 +57,7 @@ func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUs
 			event.And(
 				event.HasEventListenerWith(eventlistener.HasUserWith(user.IDEQ(entUser.ID))),
 				event.NotifyTimeLTE(time.Now()),
+				event.IsRead(isRead),
 			),
 		).
 		GroupBy(event.FieldEventType).
@@ -121,4 +122,17 @@ func (m *EventListenerManager) Create(
 		SetChain(entChain).
 		SetWalletAddress(walletAddress).
 		Save(ctx)
+}
+
+func (m *EventListenerManager) UpdateMarkEventRead(ctx context.Context, u *ent.User, id int) error {
+	return m.client.Event.
+		Update().
+		Where(
+			event.And(
+				event.HasEventListenerWith(eventlistener.HasUserWith(user.IDEQ(u.ID))),
+				event.IDEQ(id),
+			),
+		).
+		SetIsRead(true).
+		Exec(ctx)
 }

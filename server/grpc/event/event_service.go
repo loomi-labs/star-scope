@@ -165,7 +165,18 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 	}), nil
 }
 
-func (e EventService) MarkEventRead(ctx context.Context, c *connect.Request[eventpb.MarkEventReadRequest]) (*connect.Response[emptypb.Empty], error) {
-	//TODO implement me
-	panic("implement me")
+func (e EventService) MarkEventRead(ctx context.Context, request *connect.Request[eventpb.MarkEventReadRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	err := e.eventListenerManager.UpdateMarkEventRead(ctx, user, int(request.Msg.GetEventId()))
+	if err != nil {
+		log.Sugar.Error(err)
+		return nil, types.UnknownErr
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }

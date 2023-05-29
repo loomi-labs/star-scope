@@ -5,12 +5,14 @@ use chrono::{Duration, NaiveDateTime};
 use enum_iterator::{all, Sequence};
 use inflector::Inflector;
 use js_sys::Date;
+use log::debug;
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
-use web_sys::{Event, HtmlSelectElement};
+use web_sys::{Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, IntersectionObserverEntry};
 
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
@@ -46,8 +48,30 @@ pub fn EventBadge<G: Html>(cx: Scope, event_type: EventType) -> View<G> {
     }
 }
 
+async fn mark_event_as_read(cx: Scope<'_>, event_id: i64) {
+    let events_state = use_context::<EventsState>(cx);
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(
+        grpc::MarkEventReadRequest {
+            event_id: event_id.clone(),
+        }
+    );
+    let response = services
+        .grpc_client
+        .get_event_service()
+        .mark_event_read(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(_) = response {
+        events_state.mark_as_read(event_id);
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
+
 #[component(inline_props)]
-pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
+pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> View<G> {
+    let event = rc_event.get().as_ref().clone();
     let event_type = event.event_type();
 
     let is_collapsed = create_signal(cx, true);
@@ -58,50 +82,56 @@ pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
     let is_clamping = event.description.len() > 250;
 
     let in_viewport = create_signal(cx, false);
-
     let event_ref = create_node_ref(cx);
-    let is_mounted = create_signal(cx, false);
+
+    let boxed = Box::new(
+        move |entries: Vec<JsValue>, _observer: IntersectionObserver| {
+            for entry in entries {
+                let entry: IntersectionObserverEntry = entry.unchecked_into();
+                if entry.is_intersecting() {
+                    in_viewport.set(true);
+                }
+            }
+        },
+    ) as Box<dyn FnMut(Vec<JsValue>, IntersectionObserver)>;
+    let handler: Box<dyn FnMut(Vec<JsValue>, IntersectionObserver) + 'static> = unsafe { std::mem::transmute(boxed) };
+    let callback = Closure::wrap(handler);
+
+    let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref()).expect("Failed to create IntersectionObserver");
+
+    callback.forget();  // Prevent the closure from being dropped prematurely
 
     on_mount(cx, move || {
-        let callback = Closure::wrap(Box::new(
-            move |entries: Vec<JsValue>, _observer: IntersectionObserver| {
-                // let in_viewport = in_viewport_ref.get();
-                for entry in entries {
-                    let entry: IntersectionObserverEntry = entry.unchecked_into();
-                    if entry.is_intersecting() {
-                        // in_viewport.set(true);
-                        debug!("Event in viewport");
-                    } else {
-                        // in_viewport.set(false);
-                        debug!("Event out of viewport");
-                    }
-                }
-            },
-        ) as Box<dyn FnMut(Vec<JsValue>, IntersectionObserver)>);
-
-        let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref())
-            .expect("Failed to create IntersectionObserver");
-
         if let Some(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
             observer.observe(&element);
         }
-
-        // Prevent the closure from being dropped prematurely
-        callback.forget();
-        is_mounted.set(true);
     });
 
     on_cleanup(cx, move || {
-        // is_mounted.set(false);
-        is_mounted.set(false);
+        if let Some(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
+            // TODO: ("Call observer.unobserve(element) here (or observer.disconnect()");
+        }
+    });
+
+    create_effect(cx, move || {
+        if *in_viewport.get() {
+            if !(event.read) {
+                let event_id = event.id.clone();
+                spawn_local_scoped(cx, async move {
+                    debug!("mark_event_as_read: {:?}", event_id.clone());
+                    mark_event_as_read(cx, event_id).await;
+                });
+            }
+        }
     });
 
     view! {cx,
-        div(class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
+        div(ref=event_ref, class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
             div(class="flex flex-row justify-between") {
                 div(class="flex flex-row items-center w-full") {
-                    div(class="rounded-full h-14 w-14 aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center") {
+                    div(class="rounded-full h-14 w-14 aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center relative") {
                         img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="h-12 w-12")
+                        div(class=format!("w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 transition-opacity duration-[3000ms] {}", if rc_event.get().read {"opacity-0"} else {"opacity-100"})) {}
                     }
                     div(class="flex flex-col w-full") {
                         div(class="flex flex-row text-center items-center") {
@@ -148,7 +178,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 match event_type_filter.as_ref() {
                     None => true,
                     Some(filter) => {
-                        event.event_type() == *filter
+                        event.get().event_type() == *filter
                     }
                 }
             })
@@ -156,15 +186,15 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 let read_status_filter = notifications_state.read_status_filter.get();
                 match read_status_filter.as_ref() {
                     ReadStatusFilter::All => true,
-                    ReadStatusFilter::Read => event.read.clone(),
-                    ReadStatusFilter::Unread => !event.read.clone(),
+                    ReadStatusFilter::Read => event.get().read.clone(),
+                    ReadStatusFilter::Unread => !event.get().read.clone(),
                 }
             })
             .filter(|event| {
                 let chain_filter = notifications_state.chain_filter.get();
                 match chain_filter.as_ref() {
                     None => true,
-                    Some(chain) => event.chain.clone().unwrap().id == chain.id,
+                    Some(chain) => event.get().chain.clone().unwrap().id == chain.id,
                 }
             })
             .filter(|event| {
@@ -172,7 +202,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 match time_filter.as_ref().as_time_range() {
                     None => true,
                     Some((start, end)) => {
-                        event.created_at.clone().unwrap().seconds > start.timestamp() && event.created_at.clone().unwrap().seconds <= end.timestamp()
+                        event.get().created_at.clone().unwrap().seconds > start.timestamp() && event.get().created_at.clone().unwrap().seconds <= end.timestamp()
                     }
                 }
             })
@@ -185,10 +215,10 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
         div(class="flex flex-col") {
             Keyed(
                 iterable=events,
-                key=|event| event.id.clone(),
+                key=|event| event.get().id.clone(),
                 view=move |cx,event| {
                     view!{cx,
-                        EventComponent(event=event)
+                        EventComponent(rc_event=event)
                     }
                 }
             )

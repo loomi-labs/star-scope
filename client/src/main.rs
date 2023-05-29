@@ -175,7 +175,7 @@ impl AppState {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EventsState {
-    pub events: RcSignal<Vec<Event>>,
+    pub events: RcSignal<Vec<RcSignal<Event>>>,
     pub event_count_map: RcSignal<HashMap<EventType, EventsCount>>,
 }
 
@@ -215,7 +215,7 @@ impl EventsState {
         let mut events = self.events.modify();
         let mut event_count_map = self.event_count_map.modify();
         for e in new_events {
-            events.insert(0, e.clone());
+            events.insert(0, create_rc_signal(e.clone()));
             let count = event_count_map.get(&e.clone().event_type());
             if let Some(count) = count {
                 let mut new_count = count.clone();
@@ -251,11 +251,10 @@ impl EventsState {
                 true
             });
         for e in f {
-            if !events.contains(&e) {
-                events.insert(0, e.clone());
-            }
+            events.retain(|e2| e2.get().id != e.id);
+            events.insert(0, create_rc_signal(e.clone()));
         }
-        events.sort_by(|a, b| compare_timestamps(&a.notify_at, &b.notify_at));
+        events.sort_by(|a, b| compare_timestamps(&a.get().notify_at, &b.get().notify_at));
         events.reverse();
         *self.events.modify() = events.clone();
     }
@@ -266,6 +265,22 @@ impl EventsState {
             event_count_map.insert(e.event_type(), e);
         }
         *self.event_count_map.modify() = event_count_map.clone();
+    }
+
+    pub fn mark_as_read(&self, event_id: i64) {
+        let mut events = self.events.modify();
+        if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
+            let mut event = events[index.clone()].get().as_ref().clone();
+            event.read = true;
+            *events[index].modify() = event.clone();
+            let event_type = event.event_type();
+            let mut event_count_map = self.event_count_map.modify();
+            if let Some(count) = event_count_map.get_mut(&event_type) {
+                count.unread_count -= 1;
+            }
+            *self.event_count_map.modify() = event_count_map.clone();
+        }
+        *self.events.modify() = events.clone();
     }
 }
 
