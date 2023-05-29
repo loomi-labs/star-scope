@@ -1,5 +1,4 @@
 use sycamore::prelude::*;
-use sycamore_router::navigate;
 
 use crate::AppRoutes;
 use crate::config::keys;
@@ -129,13 +128,13 @@ pub fn Footer<G: Html>(cx: Scope) -> View<G> {
             div(class="flex w-full items-center justify-between max-w-screen-2xl") {
                 img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
                 div(class="") {
-                    button(class="p-4 hover:text-primary", on:click=|_| navigate("https://t.me/rapha_decrypto")) {
+                    a(class="p-4 hover:text-primary", href="https://t.me/rapha_decrypto", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[bxl--telegram]") {}
                     }
-                    button(class="p-4 hover:text-primary", on:click=|_| navigate("https://discord.com/users/228978159440232453")) {
+                    a(class="p-4 hover:text-primary", href="https://discord.com/users/228978159440232453", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[mingcute--discord-fill]") {}
                     }
-                    button(class="p-4 hover:text-primary", on:click=|_| navigate("https://twitter.com/Rapha90")) {
+                    a(class="p-4 hover:text-primary", href="https://twitter.com/Rapha90", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[mdi--twitter]") {}
                     }
                 }
