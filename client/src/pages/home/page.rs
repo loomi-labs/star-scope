@@ -8,13 +8,13 @@ use crate::utils::url::safe_navigate;
 #[component]
 pub fn LaunchButton<G: Html>(cx: Scope) -> View<G> {
     view!(cx,
-        button(class="rounded-full flex items-center justify-center px-4 py-2 h-10 lg:h-12 w-48 lg:w-64 hover:text-black \
+        button(class="rounded-full flex items-center justify-center text-sm lg:text-2xl px-4 py-2 h-10 lg:h-12 w-36 lg:w-64 hover:text-black \
                 transition-all bg-gradient-to-r from-primary_gradient-from to-primary_gradient-to hover:from-primary_gradient-to hover:to-primary_gradient-from",
                 on:click=move |_| safe_navigate(cx, AppRoutes::Login)) {
-            span(class="text-xl") {
+            span(class="") {
                 "Launch App"
             }
-            span(class="text-2xl ml-2 icon-[pepicons-pop--arrow-right]") {}
+            span(class="ml-2 icon-[pepicons-pop--arrow-right]") {}
         }
     )
 }
@@ -50,7 +50,7 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
         div(class="lg:hidden flex flex-col items-center min-h-screen p-8") {
             div(class="w-full") {
                 div(class="flex justify-between items-center") {
-                    img(class="h-auto w-48", src=keys::LOGO_WITH_TEXT_IMG) {}
+                    img(class="h-auto w-32", src=keys::LOGO_WITH_TEXT_IMG) {}
                     LaunchButton {}
                 }
             }
@@ -127,16 +127,16 @@ pub fn Footer<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
         div(class="flex flex-col items-center justify-center h-64 bg-landing_page-bg_footer") {
             div(class="flex w-full items-center justify-between max-w-screen-2xl") {
-                img(class="h-fit w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
+                img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_IMG) {}
                 div(class="") {
                     button(class="p-4 hover:text-primary", on:click=|_| navigate("https://t.me/rapha_decrypto")) {
-                        span(class="w-14 h-14 icon-[bxl--telegram]") {}
+                        span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[bxl--telegram]") {}
                     }
                     button(class="p-4 hover:text-primary", on:click=|_| navigate("https://discord.com/users/228978159440232453")) {
-                        span(class="w-14 h-14 icon-[mingcute--discord-fill]") {}
+                        span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[mingcute--discord-fill]") {}
                     }
                     button(class="p-4 hover:text-primary", on:click=|_| navigate("https://twitter.com/Rapha90")) {
-                        span(class="w-14 h-14 icon-[mdi--twitter]") {}
+                        span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[mdi--twitter]") {}
                     }
                 }
             }
