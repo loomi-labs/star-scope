@@ -30,16 +30,16 @@ fn display_timestamp(option: Option<Timestamp>, locale: String) -> String {
 #[component(inline_props)]
 pub fn EventBadge<G: Html>(cx: Scope, event_type: EventType) -> View<G> {
     let text_color = match event_type {
-        EventType::Funding => "text-green-500",
-        EventType::Staking => "text-blue-500",
-        EventType::Dex => "text-yellow-500",
-        EventType::Governance => "text-fuchsia-500",
+        EventType::Funding => "text-badge-green",
+        EventType::Staking => "text-badge-red",
+        EventType::Dex => "text-badge-orange",
+        EventType::Governance => "text-badge-blue",
     };
     let border_color = match event_type {
-        EventType::Funding => "border-green-500",
-        EventType::Staking => "border-blue-500",
-        EventType::Dex => "border-yellow-500",
-        EventType::Governance => "border-fuchsia-500",
+        EventType::Funding => "border-badge-green",
+        EventType::Staking => "border-badge-red",
+        EventType::Dex => "border-badge-orange",
+        EventType::Governance => "border-badge-blue",
     };
     view! {cx,
         span(class={format!("text-xs rounded-full border flex items-center px-3 mx-8 {} {}", border_color, text_color)}) { (event_type.as_str_name().to_title_case()) }

@@ -17,6 +17,10 @@ module.exports = {
           bg: '#111223',
           "bg-1": '#2D1B2E',
         },
+        'badge-blue': '#40FBFC',
+        'badge-red': '#EF3C65',
+        'badge-orange': '#F07D6C',
+        'badge-green': '#11AA89',
         black: '#000000',
         white: '#FFFFFF',
         purple: {
