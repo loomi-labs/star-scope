@@ -50,7 +50,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN", "REJECTED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN", "REJECTED", "PASSED"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
@@ -72,9 +72,9 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"STAKING", "DEX", "GOVERNANCE", "FUNDING"}},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"FUNDING", "STAKING", "DEX", "GOVERNANCE"}},
 		{Name: "data", Type: field.TypeBytes},
-		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock", "TxEvent_Unstake", "QueryEvent_GovernanceProposal_Ongoing", "QueryEvent_GovernanceProposal_Finished"}},
+		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"TxEvent_CoinReceived", "TxEvent_OsmosisPoolUnlock", "TxEvent_Unstake", "TxEvent_NeutronTokenVesting", "QueryEvent_GovernanceProposal_Ongoing", "QueryEvent_GovernanceProposal_Finished"}},
 		{Name: "is_tx_event", Type: field.TypeBool},
 		{Name: "notify_time", Type: field.TypeTime},
 		{Name: "is_read", Type: field.TypeBool, Default: false},
@@ -90,7 +90,7 @@ var (
 				Symbol:     "events_event_listeners_events",
 				Columns:    []*schema.Column{EventsColumns[9]},
 				RefColumns: []*schema.Column{EventListenersColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -119,7 +119,7 @@ var (
 				Symbol:     "event_listeners_users_event_listeners",
 				Columns:    []*schema.Column{EventListenersColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -133,7 +133,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.

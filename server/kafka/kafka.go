@@ -15,6 +15,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
+	"reflect"
 	"time"
 )
 
@@ -154,6 +155,10 @@ func (k *Kafka) ProcessIndexedEvents() {
 					_, err2 = k.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeDEX, event.DataTypeTxEvent_OsmosisPoolUnlock, txEvent.NotifyTime.AsTime(), msg.Value, true)
 				case *indexevent.TxEvent_Unstake:
 					_, err2 = k.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeSTAKING, event.DataTypeTxEvent_Unstake, txEvent.NotifyTime.AsTime(), msg.Value, true)
+				case *indexevent.TxEvent_NeutronTokenVesting:
+					_, err2 = k.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeFUNDING, event.DataTypeTxEvent_NeutronTokenVesting, txEvent.NotifyTime.AsTime(), msg.Value, true)
+				default:
+					log.Sugar.Errorf("unknown event type %v", reflect.TypeOf(txEvent.GetEvent()))
 				}
 				if err2 != nil {
 					log.Sugar.Errorf("failed to update event for %v: %v", txEvent.WalletAddress, err2)
@@ -289,6 +294,8 @@ func (k *Kafka) ProcessQueryEvents() {
 						}
 					}
 				}
+			default:
+				log.Sugar.Errorf("Unknown event type: %v", reflect.TypeOf(queryEvent.GetEvent()))
 			}
 			if len(pbEvents) > 0 {
 				log.Sugar.Debugf("Produce %v events", len(pbEvents))

@@ -31,7 +31,7 @@ func NewGovernanceCrawler(grpcClient indexerpbconnect.IndexerServiceClient, kafk
 	}
 }
 
-func (c *GovernanceCrawler) createEvent(chain *indexerpb.ChainInfo, prop types.Proposal) ([]byte, error) {
+func (c *GovernanceCrawler) createEvent(chain *indexerpb.GovernanceChainInfo, prop types.Proposal) ([]byte, error) {
 	var now = timestamppb.Now()
 	event := &queryevent.QueryEvent{
 		ChainId:    chain.Id,

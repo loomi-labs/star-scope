@@ -6,12 +6,14 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/queryevent"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
 	"strings"
+	"time"
 )
 
 type ChainManager struct {
@@ -66,6 +68,20 @@ func (m *ChainManager) QueryProposals(ctx context.Context, entChain *ent.Chain) 
 func (m *ChainManager) QueryContractProposals(ctx context.Context, entChain *ent.Chain) []*ent.ContractProposal {
 	return entChain.
 		QueryContractProposals().
+		AllX(ctx)
+}
+
+func (m *ChainManager) QueryNewAccounts(ctx context.Context, entChain *ent.Chain) []*ent.EventListener {
+	oneDayAgo := time.Now().AddDate(0, 0, -1)
+	return entChain.
+		QueryEventListeners().
+		Where(
+			eventlistener.And(
+				eventlistener.WalletAddressNEQ(""),
+				eventlistener.CreateTimeGTE(oneDayAgo),
+			),
+		).
+		Select(eventlistener.FieldWalletAddress).
 		AllX(ctx)
 }
 

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
@@ -34,6 +35,9 @@ func (EventListener) Edges() []ent.Edge {
 		edge.From("chain", Chain.Type).
 			Ref("event_listeners").
 			Unique(),
-		edge.To("events", Event.Type),
+		edge.To("events", Event.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }

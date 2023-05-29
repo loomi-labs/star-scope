@@ -36,6 +36,7 @@ func (Event) Fields() []ent.Field {
 		indexevent.TxEvent_CoinReceived{},
 		indexevent.TxEvent_OsmosisPoolUnlock{},
 		indexevent.TxEvent_Unstake{},
+		indexevent.TxEvent_NeutronTokenVesting{},
 	}
 	for _, t := range events {
 		dataTypes = append(dataTypes, reflect.TypeOf(t).Name())

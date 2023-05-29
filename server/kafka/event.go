@@ -19,9 +19,10 @@ func txEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 	}
 	switch txEvent.GetEvent().(type) {
 	case *indexevent.TxEvent_CoinReceived:
+		var coinReceived = txEvent.GetCoinReceived()
 		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Token Received",
-			Description: fmt.Sprintf("%v received %v%v from %v", txEvent.WalletAddress, txEvent.GetCoinReceived().GetCoin().Amount, txEvent.GetCoinReceived().GetCoin().Denom, txEvent.GetCoinReceived().Sender),
+			Description: fmt.Sprintf("%v received %v%v from %v", txEvent.GetWalletAddress(), coinReceived.GetCoin().Amount, coinReceived.GetCoin().Denom, coinReceived.Sender),
 			CreatedAt:   txEvent.Timestamp,
 			NotifyAt:    txEvent.NotifyTime,
 			EventType:   eventpb.EventType_FUNDING,
@@ -29,18 +30,28 @@ func txEventToProto(data []byte) (uint64, *eventpb.Event, error) {
 	case *indexevent.TxEvent_OsmosisPoolUnlock:
 		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Pool Unlock",
-			Description: fmt.Sprintf("%v will unlock pool at %v", txEvent.WalletAddress, txEvent.GetOsmosisPoolUnlock().UnlockTime),
+			Description: fmt.Sprintf("Unlock period of Osmosis pool for %v is over", txEvent.GetWalletAddress()),
 			CreatedAt:   txEvent.Timestamp,
 			NotifyAt:    txEvent.NotifyTime,
 			EventType:   eventpb.EventType_DEX,
 		}, nil
 	case *indexevent.TxEvent_Unstake:
+		var unstake = txEvent.GetUnstake()
 		return txEvent.ChainId, &eventpb.Event{
 			Title:       "Unstake",
-			Description: fmt.Sprintf("%v will unstake %v%v at %v", txEvent.WalletAddress, txEvent.GetUnstake().GetCoin().Amount, txEvent.GetUnstake().GetCoin().Denom, txEvent.GetUnstake().CompletionTime),
+			Description: fmt.Sprintf("Unbonding period for %v is over. %v %v Available", txEvent.GetWalletAddress(), unstake.GetCoin().Amount, unstake.GetCoin().Denom),
 			CreatedAt:   txEvent.Timestamp,
 			NotifyAt:    txEvent.NotifyTime,
 			EventType:   eventpb.EventType_STAKING,
+		}, nil
+	case *indexevent.TxEvent_NeutronTokenVesting:
+		var neutronTokenVesting = txEvent.GetNeutronTokenVesting()
+		return txEvent.ChainId, &eventpb.Event{
+			Title:       "Vesting Unlock",
+			Description: fmt.Sprintf("Vesting period for %v is over. %v Neutron available.", txEvent.GetWalletAddress(), neutronTokenVesting.GetAmount()/1000000),
+			CreatedAt:   txEvent.Timestamp,
+			NotifyAt:    txEvent.NotifyTime,
+			EventType:   eventpb.EventType_FUNDING,
 		}, nil
 	}
 	return 0, nil, errors.New(fmt.Sprintf("No type defined for event %v", txEvent.GetEvent()))

@@ -110,3 +110,15 @@ type ListProposalsResponse struct {
 		} `json:"proposals"`
 	} `json:"data"`
 }
+
+type CreditsVaultAllocationResponse struct {
+	Data struct {
+		AllocatedAmount string `json:"allocated_amount"`
+		WithdrawnAmount string `json:"withdrawn_amount"`
+		Schedule        struct {
+			StartTime int64 `json:"start_time"`
+			Cliff     int   `json:"cliff"`
+			Duration  int   `json:"duration"`
+		} `json:"schedule"`
+	} `json:"data"`
+}

@@ -66,12 +66,12 @@ func (i IndexerService) shouldSendChain(chainPath string, chainPaths []string) b
 
 func (i IndexerService) GetGovernanceProposalStati(ctx context.Context, request *connect.Request[indexerpb.GetGovernanceProposalStatiRequest]) (*connect.Response[indexerpb.GetGovernanceProposalStatiResponse], error) {
 	chains := i.chainManager.QueryEnabled(ctx)
-	var pbChains []*indexerpb.ChainInfo
+	var pbChains []*indexerpb.GovernanceChainInfo
 	for _, chain := range chains {
 		if !i.shouldSendChain(chain.Path, request.Msg.GetChainPaths()) {
 			continue
 		}
-		pbChains = append(pbChains, &indexerpb.ChainInfo{
+		pbChains = append(pbChains, &indexerpb.GovernanceChainInfo{
 			Id:                uint64(chain.ID),
 			Name:              chain.Name,
 			Path:              chain.Path,
@@ -96,4 +96,26 @@ func (i IndexerService) GetGovernanceProposalStati(ctx context.Context, request 
 		}
 	}
 	return connect.NewResponse(&indexerpb.GetGovernanceProposalStatiResponse{Chains: pbChains}), nil
+}
+
+func (i IndexerService) GetNewAccounts(ctx context.Context, request *connect.Request[indexerpb.GetNewAccountsRequest]) (*connect.Response[indexerpb.GetNewAccountsResponse], error) {
+	chains := i.chainManager.QueryEnabled(ctx)
+	var pbChains []*indexerpb.NewAccountsChainInfo
+	for _, chain := range chains {
+		if !i.shouldSendChain(chain.Path, request.Msg.GetChainPaths()) {
+			continue
+		}
+		pbChains = append(pbChains, &indexerpb.NewAccountsChainInfo{
+			Id:           uint64(chain.ID),
+			Name:         chain.Name,
+			Path:         chain.Path,
+			RestEndpoint: chain.RestEndpoint,
+			NewAccounts:  []string{},
+		})
+		eventListeners := i.chainManager.QueryNewAccounts(ctx, chain)
+		for _, el := range eventListeners {
+			pbChains[len(pbChains)-1].NewAccounts = append(pbChains[len(pbChains)-1].NewAccounts, el.WalletAddress)
+		}
+	}
+	return connect.NewResponse(&indexerpb.GetNewAccountsResponse{Chains: pbChains}), nil
 }

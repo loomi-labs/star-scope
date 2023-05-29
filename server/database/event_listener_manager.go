@@ -53,9 +53,10 @@ func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUs
 	err := m.client.Event.
 		Query().
 		Where(
-			event.HasEventListenerWith(
-				eventlistener.HasUserWith(
-					user.IDEQ(entUser.ID))),
+			event.And(
+				event.HasEventListenerWith(eventlistener.HasUserWith(user.IDEQ(entUser.ID))),
+				event.NotifyTimeLTE(time.Now()),
+			),
 		).
 		GroupBy(event.FieldEventType).
 		Aggregate(ent.Count()).
@@ -79,7 +80,7 @@ func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventLis
 			// TODO: fix this
 			event.EventTypeEQ(event.EventType(eventType.String())),
 			//event.NotifyTimeGTE(startTime.AsTime()),
-			//event.NotifyTimeLTE(endTime.AsTime()),
+			event.NotifyTimeLTE(time.Now()),
 		).
 		Offset(int(offset)).
 		Limit(int(limit)).
