@@ -13,6 +13,7 @@ use sycamore::suspense::Suspense;
 use sycamore_router::{HistoryIntegration, navigate, Route, Router};
 use uuid::Uuid;
 
+
 use crate::components::layout::LayoutWrapper;
 use crate::components::messages::{create_error_msg_from_status, create_message, MessageOverlay};
 use crate::pages::communication::page::Communication;
