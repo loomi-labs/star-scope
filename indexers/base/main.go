@@ -29,7 +29,10 @@ func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.Index
 	}
 
 	governanceCrawler := indexer.NewGovernanceCrawler(grpcClient, kafkaBrokers)
-	go governanceCrawler.StartGovernanceCrawling()
+	go governanceCrawler.StartCrawling()
+
+	setupCrawler := indexer.NewSetupCrawler(grpcClient, kafkaBrokers)
+	go setupCrawler.StartCrawling()
 
 	for _, chain := range response.Msg.GetChains() {
 		var config = indexer.Config{

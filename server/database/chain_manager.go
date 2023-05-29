@@ -72,14 +72,11 @@ func (m *ChainManager) QueryContractProposals(ctx context.Context, entChain *ent
 }
 
 func (m *ChainManager) QueryNewAccounts(ctx context.Context, entChain *ent.Chain) []*ent.EventListener {
-	oneDayAgo := time.Now().AddDate(0, 0, -1)
+	oneHourAgo := time.Now().Add(-1 * time.Hour)
 	return entChain.
 		QueryEventListeners().
 		Where(
-			eventlistener.And(
-				eventlistener.WalletAddressNEQ(""),
-				eventlistener.CreateTimeGTE(oneDayAgo),
-			),
+			eventlistener.CreateTimeGTE(oneHourAgo),
 		).
 		Select(eventlistener.FieldWalletAddress).
 		AllX(ctx)

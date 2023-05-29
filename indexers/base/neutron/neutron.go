@@ -30,6 +30,7 @@ type NeutronCrawler struct {
 	creditsVaultContract string
 	kafkaQueryProducer   *kafka.KafkaProducer
 	kafkaIndexProducer   *kafka.KafkaProducer
+	processedWallets     map[string]bool
 }
 
 func NewNeutronCrawler(grpcClient indexerpbconnect.IndexerServiceClient, chainPath string, mainContract string, creditsVaultContract string, kafkaBrokers []string) *NeutronCrawler {
@@ -40,6 +41,7 @@ func NewNeutronCrawler(grpcClient indexerpbconnect.IndexerServiceClient, chainPa
 		creditsVaultContract: creditsVaultContract,
 		kafkaQueryProducer:   kafka.NewKafkaProducer(kafka.QueryEventsTopic, kafkaBrokers...),
 		kafkaIndexProducer:   kafka.NewKafkaProducer(kafka.IndexEventsTopic, kafkaBrokers...),
+		processedWallets:     make(map[string]bool),
 	}
 }
 
@@ -205,6 +207,10 @@ func (c *NeutronCrawler) processNewAccounts() {
 	var pbEvents [][]byte
 	for _, chain := range response.Msg.GetChains() {
 		for _, account := range chain.GetNewAccounts() {
+			if _, ok := c.processedWallets[account]; ok {
+				continue
+			}
+
 			payload := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(`{"allocation":{"address":"%v"}}`, account)))
 			url := fmt.Sprintf(urlCosmWasm, chain.RestEndpoint, c.creditsVaultContract, payload)
 			var allocation types.CreditsVaultAllocationResponse
@@ -218,6 +224,7 @@ func (c *NeutronCrawler) processNewAccounts() {
 				continue
 			}
 			pbEvents = append(pbEvents, newPbEvent)
+			c.processedWallets[account] = true
 		}
 	}
 

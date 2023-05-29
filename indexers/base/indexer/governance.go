@@ -114,7 +114,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 	}
 }
 
-func (c *GovernanceCrawler) StartGovernanceCrawling() {
+func (c *GovernanceCrawler) StartCrawling() {
 	c.fetchProposals()
 	log.Sugar.Info("Scheduling governance crawl")
 	cr := cron.New()
