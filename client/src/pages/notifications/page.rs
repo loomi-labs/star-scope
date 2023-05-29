@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use chrono::{Duration, NaiveDateTime};
 use enum_iterator::{all, Sequence};
+use inflector::Inflector;
 use js_sys::Date;
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
@@ -17,13 +18,32 @@ use crate::types::types::grpc;
 use crate::types::types::grpc::EventType;
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 
-fn display_timestamp(option: Option<Timestamp>) -> String {
+fn display_timestamp(option: Option<Timestamp>, locale: String) -> String {
     if let Some(timestamp) = option {
         let datetime = Date::new(&JsValue::from_f64(timestamp.seconds as f64 * 1000.0));
-        let asString = datetime.to_locale_string("en-US", &JsValue::from_str("date"));
+        let asString = datetime.to_locale_string(locale.as_ref(), &JsValue::from_str("date"));
         return format!("{}", asString);
     }
     "".to_string()
+}
+
+#[component(inline_props)]
+pub fn EventBadge<G: Html>(cx: Scope, event_type: EventType) -> View<G> {
+    let text_color = match event_type {
+        EventType::Funding => "text-badge-green",
+        EventType::Staking => "text-badge-red",
+        EventType::Dex => "text-badge-orange",
+        EventType::Governance => "text-badge-blue",
+    };
+    let border_color = match event_type {
+        EventType::Funding => "border-badge-green",
+        EventType::Staking => "border-badge-red",
+        EventType::Dex => "border-badge-orange",
+        EventType::Governance => "border-badge-blue",
+    };
+    view! {cx,
+        span(class={format!("text-xs rounded-full border flex items-center px-3 mx-8 {} {}", border_color, text_color)}) { (event_type.as_str_name().to_title_case()) }
+    }
 }
 
 #[component(inline_props)]
@@ -31,32 +51,42 @@ pub fn EventComponent<G: Html>(cx: Scope, event: grpc::Event) -> View<G> {
     let event_type = event.event_type();
 
     let is_collapsed = create_signal(cx, true);
-    let description_length = event.description.len();
-    let max_length = 500;
+    let notifications_state = use_context::<NotificationsState>(cx);
+    let locale = notifications_state.locale.get();
+
+    // TODO: make this proper
+    let is_clamping = event.description.len() > 500;
 
     view! {cx,
-        div(class="flex flex-col my-4 p-4 bg-gray-100 dark:bg-purple-700 rounded-lg shadow") {
+        div(class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
             div(class="flex flex-row justify-between") {
-                div(class="flex flex-row items-center") {
+                div(class="flex flex-row items-center w-full") {
                     div(class="rounded-full h-14 w-14 aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center") {
                         img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="h-12 w-12")
                     }
-                    div(class="flex flex-col") {
-                        div(class="flex flex-row justify-between") {
-                            p(class="text-lg font-bold") { (event.title.clone()) }
-                            p(class="text-sm dark:text-purple-600") { (display_timestamp(event.created_at.clone())) }
+                    div(class="flex flex-col w-full") {
+                        div(class="flex flex-row text-center items-center") {
+                            span(class="text-lg font-bold") { (event.title.clone()) }
+                            EventBadge(event_type=event_type)
+                            div(class="flex-grow") {}
+                            span(class="text-sm justify-self-end dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
                         }
-                        p(class="text-sm font-bold") { (event.subtitle.clone()) }
-                        div(class={if *is_collapsed.get() { "text-sm overflow-hidden max-h-16" } else { "text-sm" }}) { (event.description.clone()) }
-                        (if description_length > max_length {
-                            view!{cx,
-                                div(class="text-sm text-purple-600 font-bold mt-2", on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
-                                    (if *is_collapsed.get() { "Show more" } else { "Show less" })
-                                }
+                        p(class="text-sm font-bold py-1") { (event.subtitle.clone()) }
+                        p(class=format!("text-sm italic {}", if *is_collapsed.get() {"line-clamp-3"} else {""})) { (event.description.clone()) }
+                        div(class="flex items-center justify-center") {
+                            button(class=format!("flex items-center justify-center text-sm font-bold border rounded-lg mt-2 p-2 \
+                                    text-purple-600 border-purple-600 hover:text-primary hover:border-primary {}", if is_clamping {""} else {"hidden"}), on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
+                                (if *is_collapsed.get() {
+                                    view! {cx,
+                                        div(class="icon-[simple-line-icons--arrow-down]") {}
+                                    }
+                                } else {
+                                    view! {cx,
+                                        div(class="icon-[simple-line-icons--arrow-up]") {}
+                                    }
+                                })
                             }
-                        } else {
-                            view!{cx, div()}
-                        })
+                        }
                     }
                 }
             }
@@ -118,7 +148,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
             Keyed(
                 iterable=events,
                 key=|event| event.id.clone(),
-                view=|cx,event| {
+                view=move |cx,event| {
                     view!{cx,
                         EventComponent(event=event)
                     }
@@ -135,16 +165,21 @@ pub struct NotificationsState {
     chain_filter: RcSignal<Option<grpc::ChainData>>,
     time_filter: RcSignal<TimeFilter>,
     chains: RcSignal<Vec<grpc::ChainData>>,
+    locale: RcSignal<String>,
 }
 
 impl NotificationsState {
     pub fn new() -> Self {
+        let window = web_sys::window().expect("Missing Window");
+        let navigator = window.navigator();
+        let locale = navigator.language().unwrap_or_else(|| "en-GB".to_string());
         Self {
             event_type_filter: create_rc_signal(None),
             read_status_filter: create_rc_signal(ReadStatusFilter::default()),
             chain_filter: create_rc_signal(None),
             time_filter: create_rc_signal(TimeFilter::default()),
             chains: create_rc_signal(Vec::new()),
+            locale: create_rc_signal(locale),
         }
     }
 

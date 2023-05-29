@@ -9,14 +9,18 @@ module.exports = {
         transparent: 'transparent',
         current: 'currentColor',
         primary: '#D68940',
-        primary_gradient: {
+        "primary-gradient": {
           from: '#FA803D',
             to: '#D14809',
         },
-        landing_page: {
+        d: {
           bg: '#111223',
-          bg_footer: '#2C1D2D',
+          "bg-1": '#2D1B2E',
         },
+        'badge-blue': '#40FBFC',
+        'badge-red': '#EF3C65',
+        'badge-orange': '#F07D6C',
+        'badge-green': '#11AA89',
         black: '#000000',
         white: '#FFFFFF',
         purple: {
