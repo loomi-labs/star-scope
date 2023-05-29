@@ -1,4 +1,4 @@
-package indexer
+package common
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func parseDuration(input string) (*duration.Duration, error) {
+func ParseDuration(input string) (*duration.Duration, error) {
 	d, err := time.ParseDuration(input)
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ var layouts = []string{
 	"2006-01-02T15:04:05Z",
 }
 
-func parseTime(input string) (*timestamppb.Timestamp, error) {
+func ParseTime(input string) (*timestamppb.Timestamp, error) {
 	for _, layout := range layouts {
 		t, err := time.Parse(layout, input)
 		if err == nil {

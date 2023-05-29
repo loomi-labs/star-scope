@@ -13,6 +13,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcChannel "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
+	"github.com/loomi-labs/star-scope/indexers/base/common"
 	"github.com/shifty11/go-logger/log"
 	"github.com/tendermint/tendermint/abci/types"
 	"golang.org/x/exp/slices"
@@ -224,7 +225,7 @@ func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate
 		Type:       "unbond",
 		Attributes: []string{completionTimeStr, amount},
 	})
-	completionTime, err := parseTime(result[completionTimeStr])
+	completionTime, err := common.ParseTime(result[completionTimeStr])
 	if err != nil {
 		return nil, err
 	}

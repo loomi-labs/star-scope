@@ -11,6 +11,7 @@ service IndexerService {
   rpc GetIndexingChains (google.protobuf.Empty) returns (GetIndexingChainsResponse) {}
   rpc UpdateIndexingChains (UpdateIndexingChainsRequest) returns (google.protobuf.Empty) {}
   rpc GetGovernanceProposalStati (GetGovernanceProposalStatiRequest) returns (GetGovernanceProposalStatiResponse) {}
+  rpc GetNewAccounts (GetNewAccountsRequest) returns (GetNewAccountsResponse) {}
 }
 
 message IndexingChain {
@@ -63,7 +64,7 @@ message ContractGovernanceProposal {
   string contract_address = 3;
 }
 
-message ChainInfo {
+message GovernanceChainInfo {
   uint64 id = 1;
   string name = 2;
   string path = 3;
@@ -73,5 +74,21 @@ message ChainInfo {
 }
 
 message GetGovernanceProposalStatiResponse {
-  repeated ChainInfo chains = 1;
+  repeated GovernanceChainInfo chains = 1;
+}
+
+message GetNewAccountsRequest {
+  repeated string chain_paths = 1;
+}
+
+message NewAccountsChainInfo {
+  uint64 id = 1;
+  string name = 2;
+  string path = 3;
+  string rest_endpoint = 4;
+  repeated string new_accounts = 5;
+}
+
+message GetNewAccountsResponse {
+  repeated NewAccountsChainInfo chains = 1;
 }

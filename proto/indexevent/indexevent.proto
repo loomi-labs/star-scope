@@ -29,6 +29,13 @@ message UnstakeEvent {
   Coin coin = 2;
 }
 
+message NeutronTokenVestingEvent {
+  string wallet_address = 1;
+  uint64 amount = 2;
+  google.protobuf.Duration duration = 3;
+  google.protobuf.Timestamp unlock_time = 4;
+}
+
 message TxEvent {
   uint64 chain_id = 1;
   string wallet_address = 2;
@@ -38,5 +45,6 @@ message TxEvent {
     CoinReceivedEvent coin_received = 5;
     OsmosisPoolUnlockEvent osmosis_pool_unlock = 6;
     UnstakeEvent unstake = 7;
+    NeutronTokenVestingEvent neutron_token_vesting = 8;
   }
 }

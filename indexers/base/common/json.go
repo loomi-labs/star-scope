@@ -12,12 +12,14 @@ func GetJson(url string, retries int, target interface{}) (int, error) {
 	resp, err := httpClient.Get(url)
 	if err != nil {
 		if retries > 0 {
+			time.Sleep(1 * time.Second)
 			return GetJson(url, retries-1, target)
 		}
 		return 0, err
 	}
 	if resp.StatusCode != 200 {
 		if retries > 0 {
+			time.Sleep(1 * time.Second)
 			return GetJson(url, retries-1, target)
 		}
 		return resp.StatusCode, errors.New(resp.Status)

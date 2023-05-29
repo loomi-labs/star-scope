@@ -96,10 +96,10 @@ type EventType string
 
 // EventType values.
 const (
+	EventTypeFUNDING    EventType = "FUNDING"
 	EventTypeSTAKING    EventType = "STAKING"
 	EventTypeDEX        EventType = "DEX"
 	EventTypeGOVERNANCE EventType = "GOVERNANCE"
-	EventTypeFUNDING    EventType = "FUNDING"
 )
 
 func (et EventType) String() string {
@@ -109,7 +109,7 @@ func (et EventType) String() string {
 // EventTypeValidator is a validator for the "event_type" field enum values. It is called by the builders before save.
 func EventTypeValidator(et EventType) error {
 	switch et {
-	case EventTypeSTAKING, EventTypeDEX, EventTypeGOVERNANCE, EventTypeFUNDING:
+	case EventTypeFUNDING, EventTypeSTAKING, EventTypeDEX, EventTypeGOVERNANCE:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for event_type field: %q", et)
@@ -124,6 +124,7 @@ const (
 	DataTypeTxEvent_CoinReceived                   DataType = "TxEvent_CoinReceived"
 	DataTypeTxEvent_OsmosisPoolUnlock              DataType = "TxEvent_OsmosisPoolUnlock"
 	DataTypeTxEvent_Unstake                        DataType = "TxEvent_Unstake"
+	DataTypeTxEvent_NeutronTokenVesting            DataType = "TxEvent_NeutronTokenVesting"
 	DataTypeQueryEvent_GovernanceProposal_Ongoing  DataType = "QueryEvent_GovernanceProposal_Ongoing"
 	DataTypeQueryEvent_GovernanceProposal_Finished DataType = "QueryEvent_GovernanceProposal_Finished"
 )
@@ -135,7 +136,7 @@ func (dt DataType) String() string {
 // DataTypeValidator is a validator for the "data_type" field enum values. It is called by the builders before save.
 func DataTypeValidator(dt DataType) error {
 	switch dt {
-	case DataTypeTxEvent_CoinReceived, DataTypeTxEvent_OsmosisPoolUnlock, DataTypeTxEvent_Unstake, DataTypeQueryEvent_GovernanceProposal_Ongoing, DataTypeQueryEvent_GovernanceProposal_Finished:
+	case DataTypeTxEvent_CoinReceived, DataTypeTxEvent_OsmosisPoolUnlock, DataTypeTxEvent_Unstake, DataTypeTxEvent_NeutronTokenVesting, DataTypeQueryEvent_GovernanceProposal_Ongoing, DataTypeQueryEvent_GovernanceProposal_Finished:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for data_type field: %q", dt)

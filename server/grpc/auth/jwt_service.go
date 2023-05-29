@@ -56,6 +56,7 @@ func AccessibleRoles() map[string][]Role {
 		indexerService + "GetIndexingChains":          {Token},
 		indexerService + "UpdateIndexingChains":       {Token},
 		indexerService + "GetGovernanceProposalStati": {Token},
+		indexerService + "GetNewAccounts":             {Token},
 	}
 	return roles
 }
