@@ -113,7 +113,7 @@ func (e EventService) ListChains(ctx context.Context, _ *connect.Request[emptypb
 	for i, chain := range chains {
 		pbChains[i] = &eventpb.ChainData{
 			Id:       int64(chain.ID),
-			Name:     chain.Name,
+			Name:     chain.PrettyName,
 			ImageUrl: chain.Image,
 		}
 	}
