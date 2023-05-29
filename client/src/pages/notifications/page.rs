@@ -113,20 +113,19 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                     }
                 }
             })
-            .filter(|_event| {
+            .filter(|event| {
                 let read_status_filter = notifications_state.read_status_filter.get();
                 match read_status_filter.as_ref() {
                     ReadStatusFilter::All => true,
-                    ReadStatusFilter::Read => true,
-                    ReadStatusFilter::Unread => true,
+                    ReadStatusFilter::Read => event.read.clone(),
+                    ReadStatusFilter::Unread => !event.read.clone(),
                 }
             })
             .filter(|event| {
                 let chain_filter = notifications_state.chain_filter.get();
-                let chain_id = event.chain.clone().unwrap().id;
                 match chain_filter.as_ref() {
                     None => true,
-                    Some(chain) => chain_id == chain.id,
+                    Some(chain) => chain.id == chain.id,
                 }
             })
             .filter(|event| {
@@ -138,7 +137,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                     }
                 }
             })
-            .take(10)
+            .take(100)
             .cloned()
             .collect::<Vec<_>>()
     });

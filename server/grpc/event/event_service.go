@@ -83,7 +83,7 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 		events, err := e.eventListenerManager.QueryEvents(
 			ctx,
 			el,
-			request.Msg.GetEventType(),
+			request.Msg.EventType,
 			request.Msg.GetStartTime(),
 			request.Msg.GetEndTime(),
 			request.Msg.GetLimit(),

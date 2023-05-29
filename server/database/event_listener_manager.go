@@ -5,6 +5,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -64,24 +65,25 @@ func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUs
 	return eventsCount, err
 }
 
-func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType eventpb.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
+func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType *eventpb.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
 	if startTime == nil {
 		startTime = timestamppb.Now()
 	}
 	if endTime == nil {
-		endTime = timestamppb.New(time.Now().AddDate(-1, 0, 0))
+		endTime = timestamppb.New(time.Now())
 	}
 	if limit == 0 {
 		limit = 100
 	}
+	var filters = []predicate.Event{
+		event.NotifyTimeLTE(endTime.AsTime()),
+	}
+	if eventType != nil {
+		filters = append(filters, event.EventTypeEQ(event.EventType(eventType.String())))
+	}
 	return el.
 		QueryEvents().
-		Where(
-			// TODO: fix this
-			event.EventTypeEQ(event.EventType(eventType.String())),
-			//event.NotifyTimeGTE(startTime.AsTime()),
-			event.NotifyTimeLTE(time.Now()),
-		).
+		Where(filters...).
 		Offset(int(offset)).
 		Limit(int(limit)).
 		All(ctx)
