@@ -104,7 +104,6 @@ impl Display for AuthState {
 pub enum InfoLevel {
     Info = 1,
     Success,
-    Warning,
     Error,
 }
 
@@ -462,11 +461,9 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
             Router(
                 integration=HistoryIntegration::new(),
                 view=|cx, route: &ReadSignal<AppRoutes>| {
-                    debug!("Router: create_effect");
                     create_effect(cx, move || {
                         let app_state = use_context::<AppState>(cx);
                         let auth_state = app_state.auth_state.get();
-                        debug!("Auth state changed: {}", auth_state);
                         match auth_state.as_ref() {
                             AuthState::LoggedOut => safe_navigate(cx, AppRoutes::Home),
                             AuthState::LoggedIn => {

@@ -63,7 +63,7 @@ async fn mark_event_as_read(cx: Scope<'_>, event_id: i64) {
         .await
         .map(|res| res.into_inner());
     if let Ok(_) = response {
-        events_state.mark_as_read(event_id);
+        // events_state.mark_as_read(event_id);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }

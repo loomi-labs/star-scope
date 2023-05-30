@@ -93,7 +93,6 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                                                 Ok(_) => {
                                                     let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
                                                     *auth_state = AuthState::LoggedIn;
-                                                    create_message(cx, "Login success", format!("Logged in successfully"), InfoLevel::Info);
                                                 }
                                                 Err(status) => create_error_msg_from_status(cx, status),
                                             }
