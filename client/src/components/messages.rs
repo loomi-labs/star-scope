@@ -35,12 +35,10 @@ pub fn MessageOverlay<G: Html>(cx: Scope) -> View<G> {
         Indexed(
             iterable = messages,
             view = move |cx, iItem| {
-                debug!("Rendering message: {:?}", iItem.index);
                 let style = format!("margin-bottom: {}rem;", 5 * iItem.index + 2);
                 let color = match iItem.item.get().level {
                     InfoLevel::Info => "bg-blue-100 border-blue-500 text-blue-700",
                     InfoLevel::Success => "bg-green-100 border-green-500 text-green-700",
-                    InfoLevel::Warning => "bg-yellow-100 border-yellow-500 text-yellow-700",
                     InfoLevel::Error => "bg-red-100 border-red-500 text-red-700",
                 };
                 let item = iItem.item.get();
