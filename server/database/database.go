@@ -267,7 +267,7 @@ func InitDb() {
 				SetRestEndpoint(restEndpoint).
 				ExecX(ctx)
 		}
-		if slices.Contains([]string{"neutron", "neutron-pion", "cosmoshub", "osmosis", "juno", "injective"}, chain.Path) {
+		if slices.Contains([]string{"neutron", "neutron-pion", "cosmoshub", "osmosis", "juno"}, chain.Path) {
 			_, err := chainManager.UpdateSetEnabled(ctx, chain, true)
 			if err != nil {
 				log.Sugar.Panicf("failed to enable chain: %v", err)
