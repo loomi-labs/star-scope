@@ -1,16 +1,16 @@
 package types
 
 import (
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/queryevent"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"encoding/json"
 	"strings"
 	"time"
 )
 
-type ProposalStatus queryevent.ProposalStatus
+type ProposalStatus event.ProposalStatus
 
 func (s *ProposalStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(queryevent.ProposalStatus(*s).String())
+	return json.Marshal(event.ProposalStatus(*s).String())
 }
 
 func (s *ProposalStatus) UnmarshalJSON(data []byte) error {
@@ -19,7 +19,7 @@ func (s *ProposalStatus) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*s = ProposalStatus(queryevent.ProposalStatus_value[strings.ToUpper(name)])
+	*s = ProposalStatus(event.ProposalStatus_value[strings.ToUpper(name)])
 	return nil
 }
 

@@ -2,9 +2,8 @@ package neutron
 
 import (
 	"buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/queryevent"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -47,24 +46,24 @@ func NewNeutronCrawler(grpcClient indexerpbconnect.IndexerServiceClient, chainPa
 
 func (c *NeutronCrawler) createGovPropEvent(chain *indexerpb.GovernanceChainInfo, contractAddress string, id int, prop types.ContractProposal) ([]byte, error) {
 	var now = timestamppb.Now()
-	event := &queryevent.QueryEvent{
+	contractEvent := &event.ContractEvent{
 		ChainId:    chain.Id,
 		Timestamp:  now,
 		NotifyTime: now,
-		Event: &queryevent.QueryEvent_ContractGovernanceProposal{
-			ContractGovernanceProposal: &queryevent.ContractGovernanceProposalEvent{
+		Event: &event.ContractEvent_ContractGovernanceProposal{
+			ContractGovernanceProposal: &event.ContractGovernanceProposalEvent{
 				ProposalId:      uint64(id),
 				Title:           prop.Title,
 				Description:     prop.Description,
-				ProposalType:    queryevent.ProposalType_PROPOSAL_TYPE_UNSPECIFIED,
-				ProposalStatus:  queryevent.ContractProposalStatus(prop.Status),
+				ProposalType:    event.ProposalType_PROPOSAL_TYPE_UNSPECIFIED.String(),
+				ProposalStatus:  event.ContractProposalStatus(prop.Status),
 				ContractAddress: contractAddress,
 				FirstSeenTime:   now,
 				VotingEndTime:   timestamppb.New(time.Time(prop.Expiration.AtTime)),
 			},
 		},
 	}
-	pbEvent, err := proto.Marshal(event)
+	pbEvent, err := proto.Marshal(contractEvent)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,7 @@ func (c *NeutronCrawler) createGovPropEvents(chain *indexerpb.GovernanceChainInf
 		var found = false
 		for _, currentProp := range chain.GetContractProposals() {
 			if currentProp.GetProposalId() == uint64(prop.ID) && currentProp.GetContractAddress() == contractAddress {
-				if currentProp.GetStatus() != queryevent.ContractProposalStatus(prop.Proposal.Status) {
+				if currentProp.GetStatus() != event.ContractProposalStatus(prop.Proposal.Status) {
 					pbEvent, err := c.createGovPropEvent(chain, contractAddress, prop.ID, prop.Proposal)
 					if err != nil {
 						log.Sugar.Errorf("while creating event for proposal %v of %v: %v", prop.ID, contractAddress, err)
@@ -158,7 +157,7 @@ func (c *NeutronCrawler) fetchProposals() {
 	}
 }
 
-func (c *NeutronCrawler) createVestingEvent(chain *indexerpb.NewAccountsChainInfo, contractAddress string, propResp types.CreditsVaultAllocationResponse, account string) ([]byte, error) {
+func (c *NeutronCrawler) createVestingEvent(chain *indexerpb.NewAccountsChainInfo, _ string, propResp types.CreditsVaultAllocationResponse, account string) ([]byte, error) {
 	var now = timestamppb.Now()
 	amount, err := strconv.ParseUint(propResp.Data.AllocatedAmount, 10, 64)
 	if err != nil {
@@ -167,13 +166,13 @@ func (c *NeutronCrawler) createVestingEvent(chain *indexerpb.NewAccountsChainInf
 	duration := durationpb.New(time.Duration(propResp.Data.Schedule.Duration))
 	unlockTime := timestamppb.New(time.Unix(propResp.Data.Schedule.StartTime, 0))
 
-	var event = &indexevent.TxEvent{
+	var walletEvent = &event.WalletEvent{
 		ChainId:       chain.Id,
 		WalletAddress: account,
 		Timestamp:     now,
 		NotifyTime:    unlockTime,
-		Event: &indexevent.TxEvent_NeutronTokenVesting{
-			NeutronTokenVesting: &indexevent.NeutronTokenVestingEvent{
+		Event: &event.WalletEvent_NeutronTokenVesting{
+			NeutronTokenVesting: &event.NeutronTokenVestingEvent{
 				WalletAddress: account,
 				Amount:        amount,
 				Duration:      duration,
@@ -181,7 +180,7 @@ func (c *NeutronCrawler) createVestingEvent(chain *indexerpb.NewAccountsChainInf
 			},
 		},
 	}
-	pbEvent, err := proto.Marshal(event)
+	pbEvent, err := proto.Marshal(walletEvent)
 	if err != nil {
 		return nil, err
 	}

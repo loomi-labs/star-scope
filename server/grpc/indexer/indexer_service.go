@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/database"
+	"github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb"
 	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb/indexerpbconnect"
-	"github.com/loomi-labs/star-scope/queryevent"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"strings"
@@ -83,14 +83,14 @@ func (i IndexerService) GetGovernanceProposalStati(ctx context.Context, request 
 		for _, proposal := range proposals {
 			pbChains[len(pbChains)-1].Proposals = append(pbChains[len(pbChains)-1].Proposals, &indexerpb.GovernanceProposal{
 				ProposalId: proposal.ProposalID,
-				Status:     queryevent.ProposalStatus(queryevent.ProposalStatus_value[proposal.Status.String()]),
+				Status:     event.ProposalStatus(event.ProposalStatus_value[proposal.Status.String()]),
 			})
 		}
 		contractProposals := i.chainManager.QueryContractProposals(ctx, chain)
 		for _, proposal := range contractProposals {
 			pbChains[len(pbChains)-1].ContractProposals = append(pbChains[len(pbChains)-1].ContractProposals, &indexerpb.ContractGovernanceProposal{
 				ProposalId:      proposal.ProposalID,
-				Status:          queryevent.ContractProposalStatus(queryevent.ContractProposalStatus_value[proposal.Status.String()]),
+				Status:          event.ContractProposalStatus(event.ContractProposalStatus_value[proposal.Status.String()]),
 				ContractAddress: proposal.ContractAddress,
 			})
 		}

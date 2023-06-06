@@ -2,8 +2,8 @@ package indexer
 
 import (
 	"buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/queryevent"
 	"context"
 	"fmt"
 	"github.com/bufbuild/connect-go"
@@ -33,23 +33,23 @@ func NewGovernanceCrawler(grpcClient indexerpbconnect.IndexerServiceClient, kafk
 
 func (c *GovernanceCrawler) createEvent(chain *indexerpb.GovernanceChainInfo, prop types.Proposal) ([]byte, error) {
 	var now = timestamppb.Now()
-	event := &queryevent.QueryEvent{
+	chainEvent := &event.ChainEvent{
 		ChainId:    chain.Id,
 		Timestamp:  now,
 		NotifyTime: now,
-		Event: &queryevent.QueryEvent_GovernanceProposal{
-			GovernanceProposal: &queryevent.GovernanceProposalEvent{
+		Event: &event.ChainEvent_GovernanceProposal{
+			GovernanceProposal: &event.GovernanceProposalEvent{
 				ProposalId:      uint64(prop.ProposalId),
 				Title:           prop.Content.Title,
 				Description:     prop.Content.Description,
-				ProposalType:    queryevent.ProposalType_PROPOSAL_TYPE_UNSPECIFIED,
-				ProposalStatus:  queryevent.ProposalStatus(prop.Status),
+				ProposalType:    event.ProposalType_PROPOSAL_TYPE_UNSPECIFIED,
+				ProposalStatus:  event.ProposalStatus(prop.Status),
 				VotingStartTime: timestamppb.New(prop.VotingStartTime),
 				VotingEndTime:   timestamppb.New(prop.VotingEndTime),
 			},
 		},
 	}
-	pbEvent, err := proto.Marshal(event)
+	pbEvent, err := proto.Marshal(chainEvent)
 	if err != nil {
 		return nil, err
 	}

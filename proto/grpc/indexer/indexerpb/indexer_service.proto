@@ -1,7 +1,8 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
-import "queryevent/queryevent.proto";
+import "event/chainevent.proto";
+import "event/contractevent.proto";
 
 package starscope.grpc;
 
@@ -55,12 +56,12 @@ message GetGovernanceProposalStatiRequest {
 
 message GovernanceProposal {
   uint64 proposal_id = 1;
-  starscope.queryevent.ProposalStatus status = 2;
+  starscope.event.ProposalStatus status = 2;
 }
 
 message ContractGovernanceProposal {
   uint64 proposal_id = 1;
-  starscope.queryevent.ContractProposalStatus status = 2;
+  starscope.event.ContractProposalStatus status = 2;
   string contract_address = 3;
 }
 

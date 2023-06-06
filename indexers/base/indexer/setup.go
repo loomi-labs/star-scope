@@ -2,8 +2,8 @@ package indexer
 
 import (
 	"buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"context"
 	"fmt"
 	"github.com/bufbuild/connect-go"
@@ -35,14 +35,14 @@ func NewSetupCrawler(grpcClient indexerpbconnect.IndexerServiceClient, kafkaBrok
 
 func (c *SetupCrawler) createEvent(chain *indexerpb.NewAccountsChainInfo, account string, entry types.UnstakingEntry) ([]byte, error) {
 	var now = timestamppb.Now()
-	txEvent := &indexevent.TxEvent{
+	txEvent := &event.WalletEvent{
 		ChainId:       chain.Id,
 		WalletAddress: account,
 		Timestamp:     now,
 		NotifyTime:    timestamppb.New(entry.CompletionTime),
-		Event: &indexevent.TxEvent_Unstake{
-			Unstake: &indexevent.UnstakeEvent{
-				Coin: &indexevent.Coin{
+		Event: &event.WalletEvent_Unstake{
+			Unstake: &event.UnstakeEvent{
+				Coin: &event.Coin{
 					Denom:  "",
 					Amount: entry.Balance,
 				},
@@ -85,12 +85,12 @@ func (c *SetupCrawler) fetchUnstakings() {
 			}
 			for _, delegation := range allocation.UnbondingResponses {
 				for _, entry := range delegation.Entries {
-					event, err := c.createEvent(chain, account, entry)
+					pbEvent, err := c.createEvent(chain, account, entry)
 					if err != nil {
 						log.Sugar.Errorf("while creating event for %v on %v: %v", account, chain.Name, err)
 						continue
 					}
-					pbEvents = append(pbEvents, event)
+					pbEvents = append(pbEvents, pbEvent)
 				}
 			}
 			c.processedWallets[account] = true
