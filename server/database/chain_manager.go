@@ -8,7 +8,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
-	"github.com/loomi-labs/star-scope/queryevent"
+	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
@@ -158,7 +158,7 @@ func (m *ChainManager) UpdateIndexStatus(
 		Exec(ctx)
 }
 
-func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *kafkaevent.GovernanceProposalEvent) (*ent.Proposal, error) {
 	return m.client.Proposal.
 		Create().
 		SetChain(entChain).
@@ -171,7 +171,7 @@ func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, 
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *kafkaevent.GovernanceProposalEvent) (*ent.Proposal, error) {
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}
@@ -190,7 +190,7 @@ func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, 
 		Save(ctx)
 }
 
-func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, prop *kafkaevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
 	return m.client.ContractProposal.
 		Create().
 		SetChain(entChain).
@@ -204,7 +204,7 @@ func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateContractProposal(ctx context.Context, entChain *ent.Chain, govProp *queryevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+func (m *ChainManager) UpdateContractProposal(ctx context.Context, entChain *ent.Chain, govProp *kafkaevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}

@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 const (
@@ -21,12 +22,14 @@ const (
 	FieldUpdateTime = "update_time"
 	// FieldEventType holds the string denoting the event_type field in the database.
 	FieldEventType = "event_type"
-	// FieldData holds the string denoting the data field in the database.
-	FieldData = "data"
+	// FieldChainEvent holds the string denoting the chain_event field in the database.
+	FieldChainEvent = "chain_event"
+	// FieldContractEvent holds the string denoting the contract_event field in the database.
+	FieldContractEvent = "contract_event"
+	// FieldWalletEvent holds the string denoting the wallet_event field in the database.
+	FieldWalletEvent = "wallet_event"
 	// FieldDataType holds the string denoting the data_type field in the database.
 	FieldDataType = "data_type"
-	// FieldIsTxEvent holds the string denoting the is_tx_event field in the database.
-	FieldIsTxEvent = "is_tx_event"
 	// FieldNotifyTime holds the string denoting the notify_time field in the database.
 	FieldNotifyTime = "notify_time"
 	// FieldIsRead holds the string denoting the is_read field in the database.
@@ -50,9 +53,10 @@ var Columns = []string{
 	FieldCreateTime,
 	FieldUpdateTime,
 	FieldEventType,
-	FieldData,
+	FieldChainEvent,
+	FieldContractEvent,
+	FieldWalletEvent,
 	FieldDataType,
-	FieldIsTxEvent,
 	FieldNotifyTime,
 	FieldIsRead,
 }
@@ -89,6 +93,8 @@ var (
 	DefaultNotifyTime time.Time
 	// DefaultIsRead holds the default value on creation for the "is_read" field.
 	DefaultIsRead bool
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
 )
 
 // EventType defines the type for the "event_type" enum field.
@@ -121,12 +127,12 @@ type DataType string
 
 // DataType values.
 const (
-	DataTypeTxEvent_CoinReceived                   DataType = "TxEvent_CoinReceived"
-	DataTypeTxEvent_OsmosisPoolUnlock              DataType = "TxEvent_OsmosisPoolUnlock"
-	DataTypeTxEvent_Unstake                        DataType = "TxEvent_Unstake"
-	DataTypeTxEvent_NeutronTokenVesting            DataType = "TxEvent_NeutronTokenVesting"
-	DataTypeQueryEvent_GovernanceProposal_Ongoing  DataType = "QueryEvent_GovernanceProposal_Ongoing"
-	DataTypeQueryEvent_GovernanceProposal_Finished DataType = "QueryEvent_GovernanceProposal_Finished"
+	DataTypeWalletEvent_CoinReceived               DataType = "WalletEvent_CoinReceived"
+	DataTypeWalletEvent_OsmosisPoolUnlock          DataType = "WalletEvent_OsmosisPoolUnlock"
+	DataTypeWalletEvent_Unstake                    DataType = "WalletEvent_Unstake"
+	DataTypeWalletEvent_NeutronTokenVesting        DataType = "WalletEvent_NeutronTokenVesting"
+	DataTypeChainEvent_GovernanceProposal_Ongoing  DataType = "ChainEvent_GovernanceProposal_Ongoing"
+	DataTypeChainEvent_GovernanceProposal_Finished DataType = "ChainEvent_GovernanceProposal_Finished"
 )
 
 func (dt DataType) String() string {
@@ -136,7 +142,7 @@ func (dt DataType) String() string {
 // DataTypeValidator is a validator for the "data_type" field enum values. It is called by the builders before save.
 func DataTypeValidator(dt DataType) error {
 	switch dt {
-	case DataTypeTxEvent_CoinReceived, DataTypeTxEvent_OsmosisPoolUnlock, DataTypeTxEvent_Unstake, DataTypeTxEvent_NeutronTokenVesting, DataTypeQueryEvent_GovernanceProposal_Ongoing, DataTypeQueryEvent_GovernanceProposal_Finished:
+	case DataTypeWalletEvent_CoinReceived, DataTypeWalletEvent_OsmosisPoolUnlock, DataTypeWalletEvent_Unstake, DataTypeWalletEvent_NeutronTokenVesting, DataTypeChainEvent_GovernanceProposal_Ongoing, DataTypeChainEvent_GovernanceProposal_Finished:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for data_type field: %q", dt)
@@ -169,11 +175,6 @@ func ByEventType(opts ...sql.OrderTermOption) OrderOption {
 // ByDataType orders the results by the data_type field.
 func ByDataType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDataType, opts...).ToFunc()
-}
-
-// ByIsTxEvent orders the results by the is_tx_event field.
-func ByIsTxEvent(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldIsTxEvent, opts...).ToFunc()
 }
 
 // ByNotifyTime orders the results by the notify_time field.

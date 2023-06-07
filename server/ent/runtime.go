@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
@@ -88,13 +89,17 @@ func init() {
 	// event.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	event.UpdateDefaultUpdateTime = eventDescUpdateTime.UpdateDefault.(func() time.Time)
 	// eventDescNotifyTime is the schema descriptor for notify_time field.
-	eventDescNotifyTime := eventFields[4].Descriptor()
+	eventDescNotifyTime := eventFields[6].Descriptor()
 	// event.DefaultNotifyTime holds the default value on creation for the notify_time field.
 	event.DefaultNotifyTime = eventDescNotifyTime.Default.(time.Time)
 	// eventDescIsRead is the schema descriptor for is_read field.
-	eventDescIsRead := eventFields[5].Descriptor()
+	eventDescIsRead := eventFields[7].Descriptor()
 	// event.DefaultIsRead holds the default value on creation for the is_read field.
 	event.DefaultIsRead = eventDescIsRead.Default.(bool)
+	// eventDescID is the schema descriptor for id field.
+	eventDescID := eventFields[0].Descriptor()
+	// event.DefaultID holds the default value on creation for the id field.
+	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
 	eventlistenerMixin := schema.EventListener{}.Mixin()
 	eventlistenerMixinFields0 := eventlistenerMixin[0].Fields()
 	_ = eventlistenerMixinFields0

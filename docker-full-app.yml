@@ -93,7 +93,6 @@ services:
     env_file:
       - indexers/base/.env.template
     command: "/indexer"
-    restart: on-failure
     depends_on:
       kafka:
         condition: service_started
@@ -107,7 +106,6 @@ services:
     env_file:
       - indexers/osmosis/.env.template
     command: "/indexer"
-    restart: on-failure
     depends_on:
       kafka:
         condition: service_started

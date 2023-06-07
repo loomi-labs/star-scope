@@ -8,6 +8,10 @@ DROP TABLE "event_listeners";
 DROP TABLE "users";
 -- reverse: create "contract_proposals" table
 DROP TABLE "contract_proposals";
+-- reverse: create index "ent_types_type_key" to table: "ent_types"
+DROP INDEX "ent_types_type_key";
+-- reverse: create "ent_types" table
+DROP TABLE "ent_types";
 -- reverse: create index "chains_pretty_name_key" to table: "chains"
 DROP INDEX "chains_pretty_name_key";
 -- reverse: create index "chains_path_key" to table: "chains"

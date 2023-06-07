@@ -6,9 +6,10 @@ import (
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/event"
-	"github.com/loomi-labs/star-scope/indexevent"
+	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"math/rand"
 	"time"
@@ -40,10 +41,10 @@ func (d *FakeEventCreator) getEventListenerMap() map[string]*ent.EventListener {
 	return elMap
 }
 
-func createTxEvent(walletAddress string, chains []*ent.Chain) indexevent.TxEvent {
+func createWalletEvent(walletAddress string, chains []*ent.Chain) kafkaevent.WalletEvent {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	chain := chains[r.Intn(len(chains))]
-	return indexevent.TxEvent{
+	return kafkaevent.WalletEvent{
 		ChainId:       uint64(chain.ID),
 		WalletAddress: walletAddress,
 		Timestamp:     timestamppb.New(time.Now()),
@@ -51,44 +52,44 @@ func createTxEvent(walletAddress string, chains []*ent.Chain) indexevent.TxEvent
 	}
 }
 
-func createCoinReceivedEvent(walletAddress string, chains []*ent.Chain) *indexevent.TxEvent {
-	var txEvent = createTxEvent(walletAddress, chains)
-	txEvent.Event = &indexevent.TxEvent_CoinReceived{
-		CoinReceived: &indexevent.CoinReceivedEvent{
+func createCoinReceivedEvent(walletAddress string, chains []*ent.Chain) *kafkaevent.WalletEvent {
+	var walletEvent = createWalletEvent(walletAddress, chains)
+	walletEvent.Event = &kafkaevent.WalletEvent_CoinReceived{
+		CoinReceived: &kafkaevent.CoinReceivedEvent{
 			Sender: "cosmos1h872wxm58laz23rld32hlsqq6067j257txh8j6",
-			Coin:   &indexevent.Coin{Denom: "uatom", Amount: "1000000"},
+			Coin:   &kafkaevent.Coin{Denom: "uatom", Amount: "1000000"},
 		},
 	}
-	return &txEvent
+	return &walletEvent
 }
 
-func createUnstakeEvent(walletAddress string, chains []*ent.Chain) *indexevent.TxEvent {
-	var txEvent = createTxEvent(walletAddress, chains)
-	txEvent.Event = &indexevent.TxEvent_Unstake{
-		Unstake: &indexevent.UnstakeEvent{
+func createUnstakeEvent(walletAddress string, chains []*ent.Chain) *kafkaevent.WalletEvent {
+	var txEvent = createWalletEvent(walletAddress, chains)
+	txEvent.Event = &kafkaevent.WalletEvent_Unstake{
+		Unstake: &kafkaevent.UnstakeEvent{
 			CompletionTime: timestamppb.New(time.Now()),
-			Coin:           &indexevent.Coin{Denom: "uatom", Amount: "1000000"},
+			Coin:           &kafkaevent.Coin{Denom: "uatom", Amount: "1000000"},
 		},
 	}
 	return &txEvent
 }
 
-func createOsmoPoolUnlockEvent(walletAddress string, chains []*ent.Chain) *indexevent.TxEvent {
-	var txEvent = createTxEvent(walletAddress, chains)
-	txEvent.Event = &indexevent.TxEvent_Unstake{
-		Unstake: &indexevent.UnstakeEvent{
-			CompletionTime: timestamppb.New(time.Now()),
-			Coin:           &indexevent.Coin{Denom: "uatom", Amount: "1000000"},
+func createOsmoPoolUnlockEvent(walletAddress string, chains []*ent.Chain) *kafkaevent.WalletEvent {
+	var txEvent = createWalletEvent(walletAddress, chains)
+	txEvent.Event = &kafkaevent.WalletEvent_OsmosisPoolUnlock{
+		OsmosisPoolUnlock: &kafkaevent.OsmosisPoolUnlockEvent{
+			Duration:   durationpb.New(time.Hour * 24 * 7),
+			UnlockTime: timestamppb.New(time.Now()),
 		},
 	}
 	return &txEvent
 }
 
-func (d *FakeEventCreator) createRandomTxEvents(chains []*ent.Chain) []*indexevent.TxEvent {
+func (d *FakeEventCreator) createRandomEvents(chains []*ent.Chain) []*kafkaevent.WalletEvent {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	var txEvents []*indexevent.TxEvent
+	var txEvents []*kafkaevent.WalletEvent
 	for _, walletAddress := range d.walletAddresses {
-		var txEvent indexevent.TxEvent
+		var txEvent kafkaevent.WalletEvent
 		randNbr := r.Intn(3)
 		switch randNbr {
 		case 0:
@@ -111,7 +112,7 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 
 	for {
 		elMap := d.getEventListenerMap()
-		msgs := d.createRandomTxEvents(chains)
+		msgs := d.createRandomEvents(chains)
 		for _, msg := range msgs {
 			if el, ok := elMap[msg.WalletAddress]; ok {
 				var ctx = context.Background()
@@ -121,12 +122,12 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 					log.Sugar.Panicf("failed to byteMsg event: %v", err)
 				}
 				switch msg.GetEvent().(type) {
-				case *indexevent.TxEvent_CoinReceived:
-					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeFUNDING, event.DataTypeTxEvent_CoinReceived, msg.NotifyTime.AsTime(), byteMsg, true)
-				case *indexevent.TxEvent_OsmosisPoolUnlock:
-					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeDEX, event.DataTypeTxEvent_OsmosisPoolUnlock, msg.NotifyTime.AsTime(), byteMsg, true)
-				case *indexevent.TxEvent_Unstake:
-					_, err = d.eventListenerManager.UpdateAddEvent(ctx, el, event.EventTypeSTAKING, event.DataTypeTxEvent_Unstake, msg.NotifyTime.AsTime(), byteMsg, true)
+				case *kafkaevent.WalletEvent_CoinReceived:
+					_, err = d.eventListenerManager.UpdateAddWalletEvent(ctx, el, msg, event.EventTypeFUNDING, event.DataTypeWalletEvent_CoinReceived)
+				case *kafkaevent.WalletEvent_OsmosisPoolUnlock:
+					_, err = d.eventListenerManager.UpdateAddWalletEvent(ctx, el, msg, event.EventTypeDEX, event.DataTypeWalletEvent_OsmosisPoolUnlock)
+				case *kafkaevent.WalletEvent_Unstake:
+					_, err = d.eventListenerManager.UpdateAddWalletEvent(ctx, el, msg, event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake)
 				}
 				if err != nil {
 					log.Sugar.Panicf("failed to update event for %v: %v", msg.WalletAddress, err)

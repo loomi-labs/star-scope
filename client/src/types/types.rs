@@ -1,9 +1,5 @@
-pub mod indexevent {
-    tonic::include_proto!("starscope.indexevent");
-}
-
-pub mod queryevent {
-    tonic::include_proto!("starscope.queryevent");
+pub mod event {
+    tonic::include_proto!("starscope.event");
 }
 
 pub mod grpc {

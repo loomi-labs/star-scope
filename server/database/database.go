@@ -198,6 +198,7 @@ func CreateMigrations(dbCon string) {
 		schema.WithDialect(dialect.Postgres),        // Ent dialect to use
 		schema.WithDropIndex(true),                  // Drop index if exists
 		schema.WithDropColumn(true),                 // Drop column if exists
+		schema.WithGlobalUniqueID(true),             // Use global unique id
 	}
 
 	err = migrate.NamedDiff(ctx, dbCon, "migration", opts...)

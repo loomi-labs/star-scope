@@ -11,12 +11,14 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
 
@@ -2226,13 +2228,14 @@ type EventMutation struct {
 	config
 	op                    Op
 	typ                   string
-	id                    *int
+	id                    *uuid.UUID
 	create_time           *time.Time
 	update_time           *time.Time
 	event_type            *event.EventType
-	data                  *[]byte
+	chain_event           **schema.ChainEventWithScan
+	contract_event        **schema.ContractEventWithScan
+	wallet_event          **schema.WalletEventWithScan
 	data_type             *event.DataType
-	is_tx_event           *bool
 	notify_time           *time.Time
 	is_read               *bool
 	clearedFields         map[string]struct{}
@@ -2263,7 +2266,7 @@ func newEventMutation(c config, op Op, opts ...eventOption) *EventMutation {
 }
 
 // withEventID sets the ID field of the mutation.
-func withEventID(id int) eventOption {
+func withEventID(id uuid.UUID) eventOption {
 	return func(m *EventMutation) {
 		var (
 			err   error
@@ -2313,9 +2316,15 @@ func (m EventMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Event entities.
+func (m *EventMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *EventMutation) ID() (id int, exists bool) {
+func (m *EventMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -2326,12 +2335,12 @@ func (m *EventMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *EventMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *EventMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -2449,40 +2458,151 @@ func (m *EventMutation) ResetEventType() {
 	m.event_type = nil
 }
 
-// SetData sets the "data" field.
-func (m *EventMutation) SetData(b []byte) {
-	m.data = &b
+// SetChainEvent sets the "chain_event" field.
+func (m *EventMutation) SetChainEvent(sews *schema.ChainEventWithScan) {
+	m.chain_event = &sews
 }
 
-// Data returns the value of the "data" field in the mutation.
-func (m *EventMutation) Data() (r []byte, exists bool) {
-	v := m.data
+// ChainEvent returns the value of the "chain_event" field in the mutation.
+func (m *EventMutation) ChainEvent() (r *schema.ChainEventWithScan, exists bool) {
+	v := m.chain_event
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldData returns the old "data" field's value of the Event entity.
+// OldChainEvent returns the old "chain_event" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldData(ctx context.Context) (v []byte, err error) {
+func (m *EventMutation) OldChainEvent(ctx context.Context) (v *schema.ChainEventWithScan, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldData is only allowed on UpdateOne operations")
+		return v, errors.New("OldChainEvent is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldData requires an ID field in the mutation")
+		return v, errors.New("OldChainEvent requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldData: %w", err)
+		return v, fmt.Errorf("querying old value for OldChainEvent: %w", err)
 	}
-	return oldValue.Data, nil
+	return oldValue.ChainEvent, nil
 }
 
-// ResetData resets all changes to the "data" field.
-func (m *EventMutation) ResetData() {
-	m.data = nil
+// ClearChainEvent clears the value of the "chain_event" field.
+func (m *EventMutation) ClearChainEvent() {
+	m.chain_event = nil
+	m.clearedFields[event.FieldChainEvent] = struct{}{}
+}
+
+// ChainEventCleared returns if the "chain_event" field was cleared in this mutation.
+func (m *EventMutation) ChainEventCleared() bool {
+	_, ok := m.clearedFields[event.FieldChainEvent]
+	return ok
+}
+
+// ResetChainEvent resets all changes to the "chain_event" field.
+func (m *EventMutation) ResetChainEvent() {
+	m.chain_event = nil
+	delete(m.clearedFields, event.FieldChainEvent)
+}
+
+// SetContractEvent sets the "contract_event" field.
+func (m *EventMutation) SetContractEvent(sews *schema.ContractEventWithScan) {
+	m.contract_event = &sews
+}
+
+// ContractEvent returns the value of the "contract_event" field in the mutation.
+func (m *EventMutation) ContractEvent() (r *schema.ContractEventWithScan, exists bool) {
+	v := m.contract_event
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContractEvent returns the old "contract_event" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldContractEvent(ctx context.Context) (v *schema.ContractEventWithScan, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContractEvent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContractEvent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContractEvent: %w", err)
+	}
+	return oldValue.ContractEvent, nil
+}
+
+// ClearContractEvent clears the value of the "contract_event" field.
+func (m *EventMutation) ClearContractEvent() {
+	m.contract_event = nil
+	m.clearedFields[event.FieldContractEvent] = struct{}{}
+}
+
+// ContractEventCleared returns if the "contract_event" field was cleared in this mutation.
+func (m *EventMutation) ContractEventCleared() bool {
+	_, ok := m.clearedFields[event.FieldContractEvent]
+	return ok
+}
+
+// ResetContractEvent resets all changes to the "contract_event" field.
+func (m *EventMutation) ResetContractEvent() {
+	m.contract_event = nil
+	delete(m.clearedFields, event.FieldContractEvent)
+}
+
+// SetWalletEvent sets the "wallet_event" field.
+func (m *EventMutation) SetWalletEvent(sews *schema.WalletEventWithScan) {
+	m.wallet_event = &sews
+}
+
+// WalletEvent returns the value of the "wallet_event" field in the mutation.
+func (m *EventMutation) WalletEvent() (r *schema.WalletEventWithScan, exists bool) {
+	v := m.wallet_event
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWalletEvent returns the old "wallet_event" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldWalletEvent(ctx context.Context) (v *schema.WalletEventWithScan, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWalletEvent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWalletEvent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWalletEvent: %w", err)
+	}
+	return oldValue.WalletEvent, nil
+}
+
+// ClearWalletEvent clears the value of the "wallet_event" field.
+func (m *EventMutation) ClearWalletEvent() {
+	m.wallet_event = nil
+	m.clearedFields[event.FieldWalletEvent] = struct{}{}
+}
+
+// WalletEventCleared returns if the "wallet_event" field was cleared in this mutation.
+func (m *EventMutation) WalletEventCleared() bool {
+	_, ok := m.clearedFields[event.FieldWalletEvent]
+	return ok
+}
+
+// ResetWalletEvent resets all changes to the "wallet_event" field.
+func (m *EventMutation) ResetWalletEvent() {
+	m.wallet_event = nil
+	delete(m.clearedFields, event.FieldWalletEvent)
 }
 
 // SetDataType sets the "data_type" field.
@@ -2519,42 +2639,6 @@ func (m *EventMutation) OldDataType(ctx context.Context) (v event.DataType, err 
 // ResetDataType resets all changes to the "data_type" field.
 func (m *EventMutation) ResetDataType() {
 	m.data_type = nil
-}
-
-// SetIsTxEvent sets the "is_tx_event" field.
-func (m *EventMutation) SetIsTxEvent(b bool) {
-	m.is_tx_event = &b
-}
-
-// IsTxEvent returns the value of the "is_tx_event" field in the mutation.
-func (m *EventMutation) IsTxEvent() (r bool, exists bool) {
-	v := m.is_tx_event
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldIsTxEvent returns the old "is_tx_event" field's value of the Event entity.
-// If the Event object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldIsTxEvent(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldIsTxEvent is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldIsTxEvent requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldIsTxEvent: %w", err)
-	}
-	return oldValue.IsTxEvent, nil
-}
-
-// ResetIsTxEvent resets all changes to the "is_tx_event" field.
-func (m *EventMutation) ResetIsTxEvent() {
-	m.is_tx_event = nil
 }
 
 // SetNotifyTime sets the "notify_time" field.
@@ -2702,7 +2786,7 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.create_time != nil {
 		fields = append(fields, event.FieldCreateTime)
 	}
@@ -2712,14 +2796,17 @@ func (m *EventMutation) Fields() []string {
 	if m.event_type != nil {
 		fields = append(fields, event.FieldEventType)
 	}
-	if m.data != nil {
-		fields = append(fields, event.FieldData)
+	if m.chain_event != nil {
+		fields = append(fields, event.FieldChainEvent)
+	}
+	if m.contract_event != nil {
+		fields = append(fields, event.FieldContractEvent)
+	}
+	if m.wallet_event != nil {
+		fields = append(fields, event.FieldWalletEvent)
 	}
 	if m.data_type != nil {
 		fields = append(fields, event.FieldDataType)
-	}
-	if m.is_tx_event != nil {
-		fields = append(fields, event.FieldIsTxEvent)
 	}
 	if m.notify_time != nil {
 		fields = append(fields, event.FieldNotifyTime)
@@ -2741,12 +2828,14 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdateTime()
 	case event.FieldEventType:
 		return m.EventType()
-	case event.FieldData:
-		return m.Data()
+	case event.FieldChainEvent:
+		return m.ChainEvent()
+	case event.FieldContractEvent:
+		return m.ContractEvent()
+	case event.FieldWalletEvent:
+		return m.WalletEvent()
 	case event.FieldDataType:
 		return m.DataType()
-	case event.FieldIsTxEvent:
-		return m.IsTxEvent()
 	case event.FieldNotifyTime:
 		return m.NotifyTime()
 	case event.FieldIsRead:
@@ -2766,12 +2855,14 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldUpdateTime(ctx)
 	case event.FieldEventType:
 		return m.OldEventType(ctx)
-	case event.FieldData:
-		return m.OldData(ctx)
+	case event.FieldChainEvent:
+		return m.OldChainEvent(ctx)
+	case event.FieldContractEvent:
+		return m.OldContractEvent(ctx)
+	case event.FieldWalletEvent:
+		return m.OldWalletEvent(ctx)
 	case event.FieldDataType:
 		return m.OldDataType(ctx)
-	case event.FieldIsTxEvent:
-		return m.OldIsTxEvent(ctx)
 	case event.FieldNotifyTime:
 		return m.OldNotifyTime(ctx)
 	case event.FieldIsRead:
@@ -2806,12 +2897,26 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetEventType(v)
 		return nil
-	case event.FieldData:
-		v, ok := value.([]byte)
+	case event.FieldChainEvent:
+		v, ok := value.(*schema.ChainEventWithScan)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetData(v)
+		m.SetChainEvent(v)
+		return nil
+	case event.FieldContractEvent:
+		v, ok := value.(*schema.ContractEventWithScan)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContractEvent(v)
+		return nil
+	case event.FieldWalletEvent:
+		v, ok := value.(*schema.WalletEventWithScan)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWalletEvent(v)
 		return nil
 	case event.FieldDataType:
 		v, ok := value.(event.DataType)
@@ -2819,13 +2924,6 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDataType(v)
-		return nil
-	case event.FieldIsTxEvent:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetIsTxEvent(v)
 		return nil
 	case event.FieldNotifyTime:
 		v, ok := value.(time.Time)
@@ -2870,7 +2968,17 @@ func (m *EventMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *EventMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(event.FieldChainEvent) {
+		fields = append(fields, event.FieldChainEvent)
+	}
+	if m.FieldCleared(event.FieldContractEvent) {
+		fields = append(fields, event.FieldContractEvent)
+	}
+	if m.FieldCleared(event.FieldWalletEvent) {
+		fields = append(fields, event.FieldWalletEvent)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2883,6 +2991,17 @@ func (m *EventMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *EventMutation) ClearField(name string) error {
+	switch name {
+	case event.FieldChainEvent:
+		m.ClearChainEvent()
+		return nil
+	case event.FieldContractEvent:
+		m.ClearContractEvent()
+		return nil
+	case event.FieldWalletEvent:
+		m.ClearWalletEvent()
+		return nil
+	}
 	return fmt.Errorf("unknown Event nullable field %s", name)
 }
 
@@ -2899,14 +3018,17 @@ func (m *EventMutation) ResetField(name string) error {
 	case event.FieldEventType:
 		m.ResetEventType()
 		return nil
-	case event.FieldData:
-		m.ResetData()
+	case event.FieldChainEvent:
+		m.ResetChainEvent()
+		return nil
+	case event.FieldContractEvent:
+		m.ResetContractEvent()
+		return nil
+	case event.FieldWalletEvent:
+		m.ResetWalletEvent()
 		return nil
 	case event.FieldDataType:
 		m.ResetDataType()
-		return nil
-	case event.FieldIsTxEvent:
-		m.ResetIsTxEvent()
 		return nil
 	case event.FieldNotifyTime:
 		m.ResetNotifyTime()
@@ -3006,8 +3128,8 @@ type EventListenerMutation struct {
 	cleareduser    bool
 	chain          *int
 	clearedchain   bool
-	events         map[int]struct{}
-	removedevents  map[int]struct{}
+	events         map[uuid.UUID]struct{}
+	removedevents  map[uuid.UUID]struct{}
 	clearedevents  bool
 	done           bool
 	oldValue       func(context.Context) (*EventListener, error)
@@ -3299,9 +3421,9 @@ func (m *EventListenerMutation) ResetChain() {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by ids.
-func (m *EventListenerMutation) AddEventIDs(ids ...int) {
+func (m *EventListenerMutation) AddEventIDs(ids ...uuid.UUID) {
 	if m.events == nil {
-		m.events = make(map[int]struct{})
+		m.events = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.events[ids[i]] = struct{}{}
@@ -3319,9 +3441,9 @@ func (m *EventListenerMutation) EventsCleared() bool {
 }
 
 // RemoveEventIDs removes the "events" edge to the Event entity by IDs.
-func (m *EventListenerMutation) RemoveEventIDs(ids ...int) {
+func (m *EventListenerMutation) RemoveEventIDs(ids ...uuid.UUID) {
 	if m.removedevents == nil {
-		m.removedevents = make(map[int]struct{})
+		m.removedevents = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.events, ids[i])
@@ -3330,7 +3452,7 @@ func (m *EventListenerMutation) RemoveEventIDs(ids ...int) {
 }
 
 // RemovedEvents returns the removed IDs of the "events" edge to the Event entity.
-func (m *EventListenerMutation) RemovedEventsIDs() (ids []int) {
+func (m *EventListenerMutation) RemovedEventsIDs() (ids []uuid.UUID) {
 	for id := range m.removedevents {
 		ids = append(ids, id)
 	}
@@ -3338,7 +3460,7 @@ func (m *EventListenerMutation) RemovedEventsIDs() (ids []int) {
 }
 
 // EventsIDs returns the "events" edge IDs in the mutation.
-func (m *EventListenerMutation) EventsIDs() (ids []int) {
+func (m *EventListenerMutation) EventsIDs() (ids []uuid.UUID) {
 	for id := range m.events {
 		ids = append(ids, id)
 	}

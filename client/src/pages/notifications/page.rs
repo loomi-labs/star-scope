@@ -48,7 +48,7 @@ pub fn EventBadge<G: Html>(cx: Scope, event_type: EventType) -> View<G> {
     }
 }
 
-async fn mark_event_as_read(cx: Scope<'_>, event_id: i64) {
+async fn mark_event_as_read(cx: Scope<'_>, event_id: String) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(

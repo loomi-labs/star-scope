@@ -53,9 +53,9 @@ var startGrpcServerCmd = &cobra.Command{
 	},
 }
 
-var startIndexEventConsumerCmd = &cobra.Command{
-	Use:   "index-event-consumer",
-	Short: "Start the index event consumer",
+var startWalletEventConsumerCmd = &cobra.Command{
+	Use:   "wallet-event-consumer",
+	Short: "Start the wallet event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
@@ -66,19 +66,30 @@ var startIndexEventConsumerCmd = &cobra.Command{
 			fakeEventCreator.CreateFakeEvents()
 		} else {
 			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
-			eventConsumer.ProcessIndexedEvents()
+			eventConsumer.ProcessWalletEvents()
 		}
 	},
 }
 
-var startQueryEventConsumerCmd = &cobra.Command{
-	Use:   "query-event-consumer",
-	Short: "Start the query event consumer",
+var startChainEventConsumerCmd = &cobra.Command{
+	Use:   "chain-event-consumer",
+	Short: "Start the chain event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
 		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
-		eventConsumer.ProcessQueryEvents()
+		eventConsumer.ProcessChainEvents()
+	},
+}
+
+var startContractEventConsumerCmd = &cobra.Command{
+	Use:   "contract-event-consumer",
+	Short: "Start the contract event consumer",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
+		eventConsumer.ProcessContractEvents()
 	},
 }
 
@@ -96,9 +107,10 @@ func init() {
 	rootCmd.AddCommand(serviceCmd)
 
 	serviceCmd.AddCommand(startGrpcServerCmd)
-	serviceCmd.AddCommand(startIndexEventConsumerCmd)
-	serviceCmd.AddCommand(startQueryEventConsumerCmd)
+	serviceCmd.AddCommand(startWalletEventConsumerCmd)
+	serviceCmd.AddCommand(startChainEventConsumerCmd)
+	serviceCmd.AddCommand(startContractEventConsumerCmd)
 	serviceCmd.AddCommand(startCrawlerCmd)
 
-	startIndexEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
+	startWalletEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }

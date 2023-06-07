@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -96,14 +97,14 @@ func (elc *EventListenerCreate) SetChain(c *Chain) *EventListenerCreate {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
-func (elc *EventListenerCreate) AddEventIDs(ids ...int) *EventListenerCreate {
+func (elc *EventListenerCreate) AddEventIDs(ids ...uuid.UUID) *EventListenerCreate {
 	elc.mutation.AddEventIDs(ids...)
 	return elc
 }
 
 // AddEvents adds the "events" edges to the Event entity.
 func (elc *EventListenerCreate) AddEvents(e ...*Event) *EventListenerCreate {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -246,7 +247,7 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

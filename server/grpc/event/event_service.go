@@ -3,6 +3,7 @@ package event
 import (
 	"context"
 	"github.com/bufbuild/connect-go"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
@@ -172,7 +173,13 @@ func (e EventService) MarkEventRead(ctx context.Context, request *connect.Reques
 		return nil, types.UserNotFoundErr
 	}
 
-	err := e.eventListenerManager.UpdateMarkEventRead(ctx, user, int(request.Msg.GetEventId()))
+	eventId, err := uuid.Parse(request.Msg.GetEventId())
+	if err != nil {
+		log.Sugar.Error(err)
+		return nil, types.UnknownErr
+	}
+
+	err = e.eventListenerManager.UpdateMarkEventRead(ctx, user, eventId)
 	if err != nil {
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr

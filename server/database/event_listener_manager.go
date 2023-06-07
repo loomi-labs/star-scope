@@ -2,11 +2,14 @@ package database
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
+	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
@@ -90,23 +93,63 @@ func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventLis
 		All(ctx)
 }
 
-func (m *EventListenerManager) UpdateAddEvent(
+func (m *EventListenerManager) UpdateAddChainEvent(
 	ctx context.Context,
 	el *ent.EventListener,
+	chainEvent *kafkaevent.ChainEvent,
 	eventType event.EventType,
 	dataType event.DataType,
-	notifyTime time.Time,
-	data []byte,
-	isTxEvent bool,
 ) (*ent.Event, error) {
+	var withScan = &schema.ChainEventWithScan{
+		ChainEvent: chainEvent,
+	}
 	return m.client.Event.
 		Create().
 		SetEventListener(el).
-		SetNotifyTime(notifyTime).
+		SetChainEvent(withScan).
 		SetEventType(eventType).
 		SetDataType(dataType).
-		SetData(data).
-		SetIsTxEvent(isTxEvent).
+		SetNotifyTime(chainEvent.NotifyTime.AsTime()).
+		Save(ctx)
+}
+
+func (m *EventListenerManager) UpdateAddContractEvent(
+	ctx context.Context,
+	el *ent.EventListener,
+	contractEvent *kafkaevent.ContractEvent,
+	eventType event.EventType,
+	dataType event.DataType,
+) (*ent.Event, error) {
+	var withScan = &schema.ContractEventWithScan{
+		ContractEvent: contractEvent,
+	}
+	return m.client.Event.
+		Create().
+		SetEventListener(el).
+		SetContractEvent(withScan).
+		SetEventType(eventType).
+		SetDataType(dataType).
+		SetNotifyTime(contractEvent.NotifyTime.AsTime()).
+		Save(ctx)
+}
+
+func (m *EventListenerManager) UpdateAddWalletEvent(
+	ctx context.Context,
+	el *ent.EventListener,
+	walletEvent *kafkaevent.WalletEvent,
+	eventType event.EventType,
+	dataType event.DataType,
+) (*ent.Event, error) {
+	var withScan = &schema.WalletEventWithScan{
+		WalletEvent: walletEvent,
+	}
+	return m.client.Event.
+		Create().
+		SetEventListener(el).
+		SetWalletEvent(withScan).
+		SetEventType(eventType).
+		SetDataType(dataType).
+		SetNotifyTime(walletEvent.NotifyTime.AsTime()).
 		Save(ctx)
 }
 
@@ -124,7 +167,7 @@ func (m *EventListenerManager) Create(
 		Save(ctx)
 }
 
-func (m *EventListenerManager) UpdateMarkEventRead(ctx context.Context, u *ent.User, id int) error {
+func (m *EventListenerManager) UpdateMarkEventRead(ctx context.Context, u *ent.User, id uuid.UUID) error {
 	return m.client.Event.
 		Update().
 		Where(

@@ -240,17 +240,7 @@ impl EventsState {
 
     pub fn replace_events(&self, new_events: Vec<Event>, event_type: Option<EventType>) {
         let mut events = self.events.modify();
-        let f = new_events
-            .iter()
-            .filter(|e| {
-                if e.id == 0 {
-                    if let Some(event_type) = event_type {
-                        return e.event_type != event_type as i32;
-                    }
-                }
-                true
-            });
-        for e in f {
+        for e in new_events.iter() {
             events.retain(|e2| e2.get().id != e.id);
             events.insert(0, create_rc_signal(e.clone()));
         }
@@ -267,7 +257,7 @@ impl EventsState {
         *self.event_count_map.modify() = event_count_map.clone();
     }
 
-    pub fn mark_as_read(&self, event_id: i64) {
+    pub fn mark_as_read(&self, event_id: String) {
         let events = self.events.modify();
         if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
             let mut event = events[index.clone()].get().as_ref().clone();

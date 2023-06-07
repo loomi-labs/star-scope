@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"github.com/loomi-labs/star-scope/queryevent"
+	"github.com/loomi-labs/star-scope/event"
 )
 
 // Proposal holds the schema definition for the Proposal entity.
@@ -22,7 +22,7 @@ func (Proposal) Mixin() []ent.Mixin {
 // Fields of the Proposal.
 func (Proposal) Fields() []ent.Field {
 	var statusValues []string
-	for _, status := range queryevent.ProposalStatus_name {
+	for _, status := range event.ProposalStatus_name {
 		statusValues = append(statusValues, status)
 	}
 	return []ent.Field{

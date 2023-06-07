@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -82,14 +83,14 @@ func (elu *EventListenerUpdate) SetChain(c *Chain) *EventListenerUpdate {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
-func (elu *EventListenerUpdate) AddEventIDs(ids ...int) *EventListenerUpdate {
+func (elu *EventListenerUpdate) AddEventIDs(ids ...uuid.UUID) *EventListenerUpdate {
 	elu.mutation.AddEventIDs(ids...)
 	return elu
 }
 
 // AddEvents adds the "events" edges to the Event entity.
 func (elu *EventListenerUpdate) AddEvents(e ...*Event) *EventListenerUpdate {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -120,14 +121,14 @@ func (elu *EventListenerUpdate) ClearEvents() *EventListenerUpdate {
 }
 
 // RemoveEventIDs removes the "events" edge to Event entities by IDs.
-func (elu *EventListenerUpdate) RemoveEventIDs(ids ...int) *EventListenerUpdate {
+func (elu *EventListenerUpdate) RemoveEventIDs(ids ...uuid.UUID) *EventListenerUpdate {
 	elu.mutation.RemoveEventIDs(ids...)
 	return elu
 }
 
 // RemoveEvents removes "events" edges to Event entities.
 func (elu *EventListenerUpdate) RemoveEvents(e ...*Event) *EventListenerUpdate {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -251,7 +252,7 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -264,7 +265,7 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -280,7 +281,7 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -359,14 +360,14 @@ func (eluo *EventListenerUpdateOne) SetChain(c *Chain) *EventListenerUpdateOne {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
-func (eluo *EventListenerUpdateOne) AddEventIDs(ids ...int) *EventListenerUpdateOne {
+func (eluo *EventListenerUpdateOne) AddEventIDs(ids ...uuid.UUID) *EventListenerUpdateOne {
 	eluo.mutation.AddEventIDs(ids...)
 	return eluo
 }
 
 // AddEvents adds the "events" edges to the Event entity.
 func (eluo *EventListenerUpdateOne) AddEvents(e ...*Event) *EventListenerUpdateOne {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -397,14 +398,14 @@ func (eluo *EventListenerUpdateOne) ClearEvents() *EventListenerUpdateOne {
 }
 
 // RemoveEventIDs removes the "events" edge to Event entities by IDs.
-func (eluo *EventListenerUpdateOne) RemoveEventIDs(ids ...int) *EventListenerUpdateOne {
+func (eluo *EventListenerUpdateOne) RemoveEventIDs(ids ...uuid.UUID) *EventListenerUpdateOne {
 	eluo.mutation.RemoveEventIDs(ids...)
 	return eluo
 }
 
 // RemoveEvents removes "events" edges to Event entities.
 func (eluo *EventListenerUpdateOne) RemoveEvents(e ...*Event) *EventListenerUpdateOne {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -558,7 +559,7 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -571,7 +572,7 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -587,7 +588,7 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
