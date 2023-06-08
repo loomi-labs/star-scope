@@ -15,8 +15,10 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/user"
 	"github.com/loomi-labs/star-scope/grpc/user/userpb/userpbconnect"
 	"github.com/loomi-labs/star-scope/kafka"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
+	"strings"
 
 	"golang.org/x/net/http2/h2c"
 	"net/http"
@@ -51,6 +53,7 @@ func (s GRPCServer) Run() {
 	log.Sugar.Infof("Starting GRPC server on port %v", s.config.Port)
 	jwtManager := auth.NewJWTManager([]byte(s.config.JwtSecretKey), s.config.AccessTokenDuration, s.config.RefreshTokenDuration)
 	authInterceptor := auth.NewAuthInterceptor(jwtManager, s.dbManagers.UserManager, auth.AccessibleRoles(), s.config.IndexerAuthToken)
+	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
 
 	interceptors := connect.WithInterceptors(authInterceptor)
 
@@ -61,7 +64,7 @@ func (s GRPCServer) Run() {
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	mux.Handle(authpbconnect.NewAuthServiceHandler(
-		auth.NewAuthServiceHandler(s.dbManagers, jwtManager),
+		auth.NewAuthServiceHandler(s.dbManagers, jwtManager, kafka_internal.NewKafkaInternal(kafkaBrokers)),
 		interceptors,
 	))
 	mux.Handle(indexerpbconnect.NewIndexerServiceHandler(
@@ -73,7 +76,7 @@ func (s GRPCServer) Run() {
 		interceptors,
 	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
-		event.NewEventServiceHandler(s.dbManagers, kafka.NewKafka(s.dbManagers, common.GetEnvX("KAFKA_BROKERS"))),
+		event.NewEventServiceHandler(s.dbManagers, kafka.NewKafka(s.dbManagers, kafkaBrokers)),
 		interceptors,
 	))
 

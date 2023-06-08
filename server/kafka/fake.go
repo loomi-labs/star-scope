@@ -27,7 +27,7 @@ func NewFakeEventCreator(dbManager *database.DbManagers, walletAddresses []strin
 		walletAddresses:      walletAddresses,
 		eventListenerManager: dbManager.EventListenerManager,
 		chainManager:         dbManager.ChainManager,
-		kafka:                NewKafka(dbManager, kafkaBrokers...),
+		kafka:                NewKafka(dbManager, kafkaBrokers),
 	}
 }
 
@@ -133,7 +133,7 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 					log.Sugar.Panicf("failed to update event for %v: %v", msg.WalletAddress, err)
 				} else {
 					if msg.NotifyTime.AsTime().Before(time.Now()) {
-						d.kafka.produce([][]byte{byteMsg})
+						d.kafka.produceProcessedEvents([][]byte{byteMsg})
 					}
 				}
 			}

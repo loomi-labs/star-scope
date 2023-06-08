@@ -11,19 +11,26 @@ import (
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
 	"reflect"
+	"sync"
 	"time"
+)
+
+type GroupTopic string
+
+const (
+	chainEventsTopic    GroupTopic = "chain-events"
+	contractEventsTopic GroupTopic = "contract-events"
+	walletEventsTopic   GroupTopic = "wallet-events"
 )
 
 type Topic string
 
 const (
-	chainEventsTopic     Topic = "chain-events"
-	contractEventsTopic  Topic = "contract-events"
-	walletEventsTopic    Topic = "wallet-events"
 	processedEventsTopic Topic = "processed-events"
 )
 
@@ -33,7 +40,7 @@ type Kafka struct {
 	eventListenerManager *database.EventListenerManager
 }
 
-func NewKafka(dbManager *database.DbManagers, addresses ...string) *Kafka {
+func NewKafka(dbManager *database.DbManagers, addresses []string) *Kafka {
 	return &Kafka{
 		addresses:            addresses,
 		chainManager:         dbManager.ChainManager,
@@ -41,8 +48,8 @@ func NewKafka(dbManager *database.DbManagers, addresses ...string) *Kafka {
 	}
 }
 
-func (k *Kafka) groupReader(topic Topic) *kafka.Reader {
-	log.Sugar.Info("Start consuming %v", topic)
+func (k *Kafka) groupReader(topic GroupTopic) *kafka.Reader {
+	log.Sugar.Infof("Start consuming %v", topic)
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   k.addresses,
 		Topic:     string(topic),
@@ -87,7 +94,7 @@ func (k *Kafka) closeWriter(w *kafka.Writer) {
 	}
 }
 
-func (k *Kafka) produce(msgs [][]byte) {
+func (k *Kafka) produceProcessedEvents(msgs [][]byte) {
 	w := k.writer(processedEventsTopic)
 	defer k.closeWriter(w)
 
@@ -115,7 +122,25 @@ func (k *Kafka) ProcessWalletEvents() {
 	defer k.closeReader(r)
 
 	elMap := k.getEventListenerMapForWallets()
-	elMapUpdatedAt := time.Now()
+	elMapMutex := sync.Mutex{} // Mutex to synchronize access to elMap
+
+	go func() {
+		kafkaInternal := kafka_internal.NewKafkaInternal(k.addresses)
+
+		ch := make(chan kafka_internal.DbChange)
+		defer close(ch)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		kafkaInternal.ReadDbChanges(ctx, ch, []kafka_internal.DbChange{kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted})
+
+		for range ch {
+			elMapMutex.Lock()
+			elMap = k.getEventListenerMapForWallets()
+			elMapMutex.Unlock()
+		}
+	}()
 
 	for {
 		msg, err := r.ReadMessage(context.Background())
@@ -127,10 +152,7 @@ func (k *Kafka) ProcessWalletEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			if time.Since(elMapUpdatedAt) > 5*time.Minute {
-				elMap = k.getEventListenerMapForWallets()
-				elMapUpdatedAt = time.Now()
-			}
+			elMapMutex.Lock()
 			if el, ok := elMap[walletEvent.WalletAddress]; ok {
 				var ctx = context.Background()
 				var err2 error
@@ -151,13 +173,14 @@ func (k *Kafka) ProcessWalletEvents() {
 					log.Sugar.Errorf("failed to update event for %v: %v", walletEvent.WalletAddress, err2)
 				} else {
 					if walletEvent.NotifyTime.AsTime().Before(time.Now()) {
-						k.produce([][]byte{msg.Value})
+						k.produceProcessedEvents([][]byte{msg.Value})
 						log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, walletEvent.WalletAddress, processedEventsTopic)
 					}
 				}
 			} else {
 				log.Sugar.Debugf("Discard event %v with address %v", msg.Offset, walletEvent.WalletAddress)
 			}
+			elMapMutex.Unlock()
 		}
 	}
 }
@@ -208,8 +231,36 @@ func (k *Kafka) ProcessChainEvents() {
 	defer k.closeReader(r)
 
 	elMap := k.getEventListenerMapForChains()
-	elMapUpdatedAt := time.Now()
-	chains := k.getChains()
+	chains := k.getChains()     // TODO: update chains when new chain is added
+	elMapMutex := sync.Mutex{}  // Mutex to synchronize access to elMap
+	chainsMutex := sync.Mutex{} // Mutex to synchronize access to chains
+
+	go func() {
+		kafkaInternal := kafka_internal.NewKafkaInternal(k.addresses)
+
+		ch := make(chan kafka_internal.DbChange)
+		defer close(ch)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var subscribe = []kafka_internal.DbChange{kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted, kafka_internal.ChainEnabled, kafka_internal.ChainDisabled}
+		go kafkaInternal.ReadDbChanges(ctx, ch, subscribe)
+
+		for change := range ch {
+			switch change {
+			case kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted:
+				elMapMutex.Lock()
+				elMap = k.getEventListenerMapForChains()
+				elMapMutex.Unlock()
+			case kafka_internal.ChainEnabled, kafka_internal.ChainDisabled:
+				chainsMutex.Lock()
+				chains = k.getChains()
+				chainsMutex.Unlock()
+			}
+		}
+		log.Sugar.Debugf("Stopped processing chain events")
+	}()
 
 	for {
 		msg, err := r.ReadMessage(context.Background())
@@ -221,10 +272,8 @@ func (k *Kafka) ProcessChainEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			if time.Now().Sub(elMapUpdatedAt) > 5*time.Minute {
-				elMap = k.getEventListenerMapForChains()
-				elMapUpdatedAt = time.Now()
-			}
+			elMapMutex.Lock()
+			chainsMutex.Lock()
 			chain, ok := chains[chainEvent.ChainId]
 			if !ok {
 				log.Sugar.Panicf("failed to find chain %v", chainEvent.ChainId)
@@ -265,8 +314,10 @@ func (k *Kafka) ProcessChainEvents() {
 			}
 			if len(pbEvents) > 0 {
 				log.Sugar.Debugf("Produce %v events", len(pbEvents))
-				k.produce(pbEvents)
+				k.produceProcessedEvents(pbEvents)
 			}
+			elMapMutex.Unlock()
+			chainsMutex.Unlock()
 		}
 	}
 }
@@ -276,8 +327,35 @@ func (k *Kafka) ProcessContractEvents() {
 	defer k.closeReader(r)
 
 	elMap := k.getEventListenerMapForChains()
-	elMapUpdatedAt := time.Now()
 	chains := k.getChains()
+	elMapMutex := sync.Mutex{} // Mutex to synchronize access to elMap
+	chainsMutex := sync.Mutex{}
+
+	go func() {
+		kafkaInternal := kafka_internal.NewKafkaInternal(k.addresses)
+
+		ch := make(chan kafka_internal.DbChange)
+		defer close(ch)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var subscribe = []kafka_internal.DbChange{kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted, kafka_internal.ChainEnabled, kafka_internal.ChainDisabled}
+		kafkaInternal.ReadDbChanges(ctx, ch, subscribe)
+
+		for change := range ch {
+			switch change {
+			case kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted:
+				elMapMutex.Lock()
+				elMap = k.getEventListenerMapForChains()
+				elMapMutex.Unlock()
+			case kafka_internal.ChainEnabled, kafka_internal.ChainDisabled:
+				chainsMutex.Lock()
+				chains = k.getChains()
+				chainsMutex.Unlock()
+			}
+		}
+	}()
 
 	for {
 		msg, err := r.ReadMessage(context.Background())
@@ -289,10 +367,8 @@ func (k *Kafka) ProcessContractEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			if time.Now().Sub(elMapUpdatedAt) > 5*time.Minute {
-				elMap = k.getEventListenerMapForChains()
-				elMapUpdatedAt = time.Now()
-			}
+			elMapMutex.Lock()
+			chainsMutex.Lock()
 			chain, ok := chains[contractEvent.ChainId]
 			if !ok {
 				log.Sugar.Panicf("failed to find chain %v", contractEvent.ChainId)
@@ -326,8 +402,10 @@ func (k *Kafka) ProcessContractEvents() {
 			}
 			if len(pbEvents) > 0 {
 				log.Sugar.Debugf("Produce %v events", len(pbEvents))
-				k.produce(pbEvents)
+				k.produceProcessedEvents(pbEvents)
 			}
+			elMapMutex.Unlock()
+			chainsMutex.Unlock()
 		}
 	}
 }

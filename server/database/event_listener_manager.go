@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -11,16 +12,20 @@ import (
 	"github.com/loomi-labs/star-scope/ent/user"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"strings"
 	"time"
 )
 
 type EventListenerManager struct {
-	client *ent.Client
+	client        *ent.Client
+	kafkaInternal *kafka_internal.KafkaInternal
 }
 
 func NewEventListenerManager(client *ent.Client) *EventListenerManager {
-	return &EventListenerManager{client: client}
+	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+	return &EventListenerManager{client: client, kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers)}
 }
 
 func (m *EventListenerManager) QueryAll(ctx context.Context) []*ent.EventListener {
@@ -93,6 +98,34 @@ func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventLis
 		All(ctx)
 }
 
+func (m *EventListenerManager) CreateBulk(
+	ctx context.Context,
+	entUser *ent.User,
+	entChains []*ent.Chain,
+	mainAddress string,
+) ([]*ent.EventListener, error) {
+	bulk := make([]*ent.EventListenerCreate, len(entChains))
+	for i, entChain := range entChains {
+		walletAddress, err := common.ConvertWithOtherPrefix(mainAddress, entChain.Bech32Prefix)
+		if err != nil {
+			return nil, err
+		}
+		bulk[i] = m.client.EventListener.
+			Create().
+			SetChain(entChain).
+			SetUser(entUser).
+			SetWalletAddress(walletAddress)
+	}
+	el, err := m.client.EventListener.
+		CreateBulk(bulk...).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerCreated)
+	return el, nil
+}
+
 func (m *EventListenerManager) UpdateAddChainEvent(
 	ctx context.Context,
 	el *ent.EventListener,
@@ -150,20 +183,6 @@ func (m *EventListenerManager) UpdateAddWalletEvent(
 		SetEventType(eventType).
 		SetDataType(dataType).
 		SetNotifyTime(walletEvent.NotifyTime.AsTime()).
-		Save(ctx)
-}
-
-func (m *EventListenerManager) Create(
-	ctx context.Context,
-	entUser *ent.User,
-	entChain *ent.Chain,
-	walletAddress string,
-) (*ent.EventListener, error) {
-	return m.client.EventListener.
-		Create().
-		SetUser(entUser).
-		SetChain(entChain).
-		SetWalletAddress(walletAddress).
 		Save(ctx)
 }
 

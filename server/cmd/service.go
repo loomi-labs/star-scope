@@ -65,7 +65,7 @@ var startWalletEventConsumerCmd = &cobra.Command{
 			fakeEventCreator := kafka.NewFakeEventCreator(dbManagers, fakeWalletAddresses, kafkaBrokers...)
 			fakeEventCreator.CreateFakeEvents()
 		} else {
-			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
+			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers)
 			eventConsumer.ProcessWalletEvents()
 		}
 	},
@@ -77,7 +77,7 @@ var startChainEventConsumerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
+		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers)
 		eventConsumer.ProcessChainEvents()
 	},
 }
@@ -88,7 +88,7 @@ var startContractEventConsumerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
+		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers)
 		eventConsumer.ProcessContractEvents()
 	},
 }

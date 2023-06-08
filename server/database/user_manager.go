@@ -2,17 +2,22 @@ package database
 
 import (
 	"context"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
+	"strings"
 )
 
 type UserManager struct {
-	client *ent.Client
+	client        *ent.Client
+	kafkaInternal *kafka_internal.KafkaInternal
 }
 
 func NewUserManager(client *ent.Client) *UserManager {
-	return &UserManager{client: client}
+	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+	return &UserManager{client: client, kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers)}
 }
 
 func (m *UserManager) QueryById(ctx context.Context, id int) (*ent.User, error) {
@@ -79,7 +84,12 @@ func (m *UserManager) CreateOrUpdate(ctx context.Context, userName string, walle
 }
 
 func (m *UserManager) Delete(ctx context.Context, u *ent.User) error {
-	return m.client.User.
+	err := m.client.User.
 		DeleteOne(u).
 		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
+	return nil
 }

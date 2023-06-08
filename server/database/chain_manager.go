@@ -3,12 +3,14 @@ package database
 import (
 	"context"
 	"errors"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
@@ -17,11 +19,13 @@ import (
 )
 
 type ChainManager struct {
-	client *ent.Client
+	client        *ent.Client
+	kafkaInternal *kafka_internal.KafkaInternal
 }
 
 func NewChainManager(client *ent.Client) *ChainManager {
-	return &ChainManager{client: client}
+	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+	return &ChainManager{client: client, kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers)}
 }
 
 func (m *ChainManager) QueryAll(ctx context.Context) []*ent.Chain {
@@ -108,10 +112,19 @@ func (m *ChainManager) UpdateChainInfo(ctx context.Context, entChain *ent.Chain,
 }
 
 func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool) (*ent.Chain, error) {
-	return entChain.
+	updated, err := entChain.
 		Update().
 		SetIsEnabled(isEnabled).
 		Save(ctx)
+	if err != nil {
+		return updated, err
+	}
+	if isEnabled {
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.ChainEnabled)
+	} else {
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.ChainDisabled)
+	}
+	return updated, nil
 }
 
 func getUniqueMessageTypes(messageTypes []string, forbiddenMessageTypes []string) []string {

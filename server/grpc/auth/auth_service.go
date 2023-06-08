@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bufbuild/connect-go"
-	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb/authpbconnect"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,14 +21,16 @@ type AuthService struct {
 	chainManager         *database.ChainManager
 	eventListenerManager *database.EventListenerManager
 	jwtManager           *JWTManager
+	kafkaInternal        *kafka_internal.KafkaInternal
 }
 
-func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager) authpbconnect.AuthServiceHandler {
+func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager, kafkaInternal *kafka_internal.KafkaInternal) authpbconnect.AuthServiceHandler {
 	return &AuthService{
 		userManager:          dbManagers.UserManager,
 		chainManager:         dbManagers.ChainManager,
 		eventListenerManager: dbManagers.EventListenerManager,
 		jwtManager:           jwtManager,
+		kafkaInternal:        kafkaInternal,
 	}
 }
 
@@ -106,27 +108,21 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 		return nil, ErrorLoginFailed
 	}
 
-	address, err := getWalletAddress(request.Msg.GetKeplrResponse())
+	walletAddress, err := getWalletAddress(request.Msg.GetKeplrResponse())
 	if err != nil {
 		log.Sugar.Errorf("error while getting wallet address: %v", err)
 		return nil, ErrorLoginFailed
 	}
 
-	user, err := s.userManager.QueryByWalletAddress(ctx, address)
+	user, err := s.userManager.QueryByWalletAddress(ctx, walletAddress)
 	if err != nil && ent.IsNotFound(err) {
-		user = s.userManager.CreateOrUpdate(ctx, address, address)
-
-		for _, chain := range s.chainManager.QueryEnabled(ctx) {
-			newAddress, err := common.ConvertWithOtherPrefix(address, chain.Bech32Prefix)
-			if err != nil {
-				log.Sugar.Errorf("error while converting address: %v", err)
-				return nil, ErrorLoginFailed
-			}
-			_, err = s.eventListenerManager.Create(ctx, user, chain, newAddress)
-			if err != nil {
-				log.Sugar.Errorf("error while creating event listener: %v", err)
-				return nil, ErrorLoginFailed
-			}
+		// TODO: put this into a transaction
+		user = s.userManager.CreateOrUpdate(ctx, walletAddress, walletAddress)
+		chains := s.chainManager.QueryEnabled(ctx)
+		_, err = s.eventListenerManager.CreateBulk(ctx, user, chains, walletAddress)
+		if err != nil {
+			log.Sugar.Errorf("error while creating event listener: %v", err)
+			return nil, ErrorLoginFailed
 		}
 	} else if err != nil {
 		log.Sugar.Errorf("error while querying user by wallet address: %v", err)
