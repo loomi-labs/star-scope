@@ -209,27 +209,6 @@ impl EventsState {
         self.events.set(vec![]);
     }
 
-    pub fn add_event_count(&self, new_event: NewEvent) {
-        let mut event_count_map = self.event_count_map.modify();
-        let count = event_count_map.get(&new_event.clone().event_type());
-        if let Some(count) = count {
-            let mut new_count = count.clone();
-            new_count.count += 1;
-            new_count.unread_count += 1;
-            event_count_map.insert(new_event.event_type().clone(), new_count);
-        } else {
-            event_count_map.insert(
-                new_event.event_type().clone(),
-                EventsCount {
-                    event_type: new_event.event_type().clone() as i32,
-                    count: 1,
-                    unread_count: 1,
-                },
-            );
-        }
-        *self.event_count_map.modify() = event_count_map.clone();
-    }
-
     pub fn replace_events(&self, new_events: Vec<Event>, event_type: Option<EventType>) {
         let mut events = self.events.modify();
         for e in new_events.iter() {
@@ -246,7 +225,6 @@ impl EventsState {
         for e in events_count {
             event_count_map.insert(e.event_type(), e);
         }
-        *self.event_count_map.modify() = event_count_map.clone();
     }
 
     pub fn mark_as_read(&self, event_id: String) {

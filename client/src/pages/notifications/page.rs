@@ -700,6 +700,14 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
     }
 }
 
+fn cnt_available_events(events_state: &EventsState, notifications_state: &NotificationsState) -> i32 {
+    let event_type = notifications_state.event_type_filter.get().as_ref().clone();
+    match event_type.clone() {
+        None => events_state.event_count_map.get().values().map(|c| c.count).sum::<i32>(),
+        Some(et) => events_state.event_count_map.get().get(&et).cloned().map(|c| c.count).unwrap_or(0),
+    }
+}
+
 #[component]
 pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
@@ -709,22 +717,25 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
         query_chains(cx.to_owned()).await;
     });
 
-    create_memo(cx, move || {
+    create_effect(cx, move || {
         let event_type = notifications_state.event_type_filter.get().as_ref().clone();
-        let cnt_available_events = match event_type.clone() {
-            None => events_state.event_count_map.get().values().map(|c| c.count).sum::<i32>(),
-            Some(et) => events_state.event_count_map.get().get(&et).cloned().map(|c| c.count).unwrap_or(0),
-        };
-        let cnt_stored_events = match event_type {
-            None => events_state.events.get().len() as i32,
-            Some(et) => events_state.events.get().iter().filter(|e| e.get().event_type() == et).count() as i32,
-        };
-        if cnt_available_events > cnt_stored_events {
+        spawn_local_scoped(cx.to_owned(), async move {
+            query_events(cx.to_owned(), event_type).await;
+        });
+    });
+
+    let cnt_available_events_prev = create_memo(cx, move || {
+        cnt_available_events(events_state, notifications_state)
+    });
+
+    create_effect(cx, move || {
+        let available_events_prev = cnt_available_events_prev.get().as_ref().clone();
+        let event_type = notifications_state.event_type_filter.get().as_ref().clone();
+        if available_events_prev != cnt_available_events(events_state, notifications_state) {
             spawn_local_scoped(cx.to_owned(), async move {
                 query_events(cx.to_owned(), event_type).await;
             });
         }
-        cnt_available_events
     });
 
     view! {cx,
