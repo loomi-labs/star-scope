@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/loomi-labs/star-scope/types"
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
@@ -13,7 +14,8 @@ import (
 type Topic string
 
 const (
-	DbEntityChanged Topic = "db-entity-changed"
+	DbEntityChanged  = Topic(types.DbEntityChanged)
+	ChainEventsTopic = Topic(types.ChainEventsTopic)
 )
 
 type DbChange string
@@ -119,5 +121,20 @@ func (k *KafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, sub
 				ch <- dbChange
 			}
 		}
+	}
+}
+
+func (k *KafkaInternal) ProduceEvents(msgs [][]byte) {
+	w := k.writer(ChainEventsTopic)
+	defer k.closeWriter(w)
+
+	kafkaMsgs := make([]kafka.Message, len(msgs))
+	for i, msg := range msgs {
+		kafkaMsgs[i] = kafka.Message{Value: msg}
+	}
+
+	err := w.WriteMessages(context.Background(), kafkaMsgs...)
+	if err != nil {
+		panic(fmt.Sprintf("failed to write messages: %v", err))
 	}
 }

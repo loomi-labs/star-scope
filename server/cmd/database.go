@@ -4,7 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/loomi-labs/star-scope/chain_crawler"
+	"github.com/loomi-labs/star-scope/crawler/chain_crawler"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/spf13/cobra"
 	"strings"

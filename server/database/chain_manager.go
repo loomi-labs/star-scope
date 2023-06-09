@@ -41,6 +41,14 @@ func (m *ChainManager) QueryEnabled(ctx context.Context) []*ent.Chain {
 		AllX(ctx)
 }
 
+func (m *ChainManager) QueryEnabledWithProposals(ctx context.Context) []*ent.Chain {
+	return m.client.Chain.
+		Query().
+		Where(chain.IsEnabledEQ(true)).
+		WithProposals().
+		AllX(ctx)
+}
+
 func (m *ChainManager) QueryByBech32Prefix(ctx context.Context, bech32Prefix string) (*ent.Chain, error) {
 	return m.client.Chain.
 		Query().
@@ -171,26 +179,26 @@ func (m *ChainManager) UpdateIndexStatus(
 		Exec(ctx)
 }
 
-func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *kafkaevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *types.Proposal) (*ent.Proposal, error) {
 	return m.client.Proposal.
 		Create().
 		SetChain(entChain).
-		SetProposalID(prop.ProposalId).
-		SetStatus(proposal.Status(prop.GetProposalStatus().String())).
-		SetTitle(prop.GetTitle()).
-		SetDescription(prop.GetDescription()).
-		SetVotingStartTime(prop.GetVotingStartTime().AsTime()).
-		SetVotingEndTime(prop.GetVotingEndTime().AsTime()).
+		SetProposalID(uint64(prop.ProposalId)).
+		SetStatus(proposal.Status(prop.Status.String())).
+		SetTitle(prop.Content.Title).
+		SetDescription(prop.Content.Description).
+		SetVotingStartTime(prop.VotingStartTime).
+		SetVotingEndTime(prop.VotingEndTime).
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *kafkaevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+func (m *ChainManager) CreateOrUpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *types.Proposal) (*ent.Proposal, error) {
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}
 	prop, err := entChain.
 		QueryProposals().
-		Where(proposal.ProposalIDEQ(govProp.ProposalId)).
+		Where(proposal.ProposalIDEQ(uint64(govProp.ProposalId))).
 		Only(ctx)
 	if ent.IsNotFound(err) {
 		return m.createProposal(ctx, entChain, govProp)
@@ -199,7 +207,7 @@ func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, 
 	}
 	return prop.
 		Update().
-		SetStatus(proposal.Status(govProp.GetProposalStatus().String())).
+		SetStatus(proposal.Status(govProp.Status.String())).
 		Save(ctx)
 }
 

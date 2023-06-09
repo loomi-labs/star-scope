@@ -11,6 +11,7 @@ import (
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/kafka_internal"
+	"github.com/loomi-labs/star-scope/types"
 	"github.com/segmentio/kafka-go"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
@@ -20,18 +21,18 @@ import (
 	"time"
 )
 
-type GroupTopic string
+type GroupTopic types.Topic
 
 const (
-	chainEventsTopic    GroupTopic = "chain-events"
-	contractEventsTopic GroupTopic = "contract-events"
-	walletEventsTopic   GroupTopic = "wallet-events"
+	chainEventsTopic    = GroupTopic(types.ChainEventsTopic)
+	contractEventsTopic = GroupTopic(types.ContractEventsTopic)
+	walletEventsTopic   = GroupTopic(types.WalletEventsTopic)
 )
 
 type Topic string
 
 const (
-	processedEventsTopic Topic = "processed-events"
+	processedEventsTopic = Topic(types.ProcessedEventsTopic)
 )
 
 type Kafka struct {
@@ -204,14 +205,14 @@ func (k *Kafka) getEventListenerMapForChains() map[uint64][]*ent.EventListener {
 	return elMap
 }
 
-func getProposalDataType(prop *ent.Proposal) event.DataType {
-	switch prop.Status {
-	case proposal.StatusPROPOSAL_STATUS_UNSPECIFIED, proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD, proposal.StatusPROPOSAL_STATUS_VOTING_PERIOD:
+func getProposalDataType(status kafkaevent.ProposalStatus) event.DataType {
+	switch status.String() {
+	case proposal.StatusPROPOSAL_STATUS_UNSPECIFIED.String(), proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD.String(), proposal.StatusPROPOSAL_STATUS_VOTING_PERIOD.String():
 		return event.DataTypeChainEvent_GovernanceProposal_Ongoing
-	case proposal.StatusPROPOSAL_STATUS_PASSED, proposal.StatusPROPOSAL_STATUS_REJECTED, proposal.StatusPROPOSAL_STATUS_FAILED:
+	case proposal.StatusPROPOSAL_STATUS_PASSED.String(), proposal.StatusPROPOSAL_STATUS_REJECTED.String(), proposal.StatusPROPOSAL_STATUS_FAILED.String():
 		return event.DataTypeChainEvent_GovernanceProposal_Finished
 	}
-	log.Sugar.Panicf("Unknown proposal status: %v", prop.Status)
+	log.Sugar.Panicf("Unknown proposal status: %v", status.String())
 	return event.DataTypeChainEvent_GovernanceProposal_Ongoing
 }
 
@@ -291,22 +292,19 @@ func (k *Kafka) ProcessChainEvents() {
 			var pbEvents []*kafkaevent.EventProcessedMsg
 			switch chainEvent.GetEvent().(type) {
 			case *kafkaevent.ChainEvent_GovernanceProposal:
-				prop, err := k.chainManager.UpdateProposal(ctx, chain, chainEvent.GetGovernanceProposal())
-				if err != nil {
-					log.Sugar.Panicf("failed to update prop %v: %v", chainEvent.GetGovernanceProposal().ProposalId, err)
+				var ignoredStates = []string{
+					proposal.StatusPROPOSAL_STATUS_UNSPECIFIED.String(),
+					proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD.String(),
 				}
-				var ignoredStates = []proposal.Status{
-					proposal.StatusPROPOSAL_STATUS_UNSPECIFIED,
-					proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD,
-				}
-				if slices.Contains(ignoredStates, prop.Status) {
+				if slices.Contains(ignoredStates, chainEvent.GetGovernanceProposal().GetProposalStatus().String()) {
 					continue
 				}
 				if els, ok := elMap[chainEvent.ChainId]; ok {
 					for _, el := range els {
 						var err2 error
 						log.Sugar.Debugf("Processing event %v with address %v for %v", msg.Offset, chainEvent.ChainId, el.WalletAddress)
-						_, err2 = k.eventListenerManager.UpdateAddChainEvent(ctx, el, &chainEvent, event.EventTypeGOVERNANCE, getProposalDataType(prop))
+						var dataType = getProposalDataType(chainEvent.GetGovernanceProposal().GetProposalStatus())
+						_, err2 = k.eventListenerManager.UpdateAddChainEvent(ctx, el, &chainEvent, event.EventTypeGOVERNANCE, dataType)
 						if err2 != nil {
 							log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err2)
 						} else {
