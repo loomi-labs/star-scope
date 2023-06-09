@@ -22,8 +22,8 @@ use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
-use crate::types::types::grpc::{Event, EventsCount, User, WalletInfo, NewEvent};
-use crate::types::types::event::{EventType};
+use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
+use crate::types::protobuf::event::{EventType};
 use crate::utils::url::safe_navigate;
 
 mod components;
@@ -209,7 +209,7 @@ impl EventsState {
         self.events.set(vec![]);
     }
 
-    pub fn replace_events(&self, new_events: Vec<Event>, event_type: Option<EventType>) {
+    pub fn replace_events(&self, new_events: Vec<Event>, _event_type: Option<EventType>) {
         let mut events = self.events.modify();
         for e in new_events.iter() {
             events.retain(|e2| e2.get().id != e.id);
@@ -230,7 +230,7 @@ impl EventsState {
     pub fn mark_as_read(&self, event_id: String) {
         let events = self.events.modify();
         if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
-            let mut event = events[index.clone()].get().as_ref().clone();
+            let mut event = events[index].get().as_ref().clone();
             event.read = true;
             *events[index].modify() = event.clone();
             let event_type = event.event_type();
@@ -336,7 +336,7 @@ fn subscribe_to_events(cx: Scope) {
             AuthState::LoggingIn => return,
         }
 
-        let overview_state = use_context::<EventsState>(cx);
+        // let overview_state = use_context::<EventsState>(cx);
         let services = use_context::<Services>(cx);
         let result = services
             .grpc_client
@@ -386,7 +386,7 @@ fn subscribe_to_events(cx: Scope) {
 async fn query_welcome_message(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(());
     let response = services
         .grpc_client
         .get_event_service()
@@ -403,7 +403,7 @@ async fn query_welcome_message(cx: Scope<'_>) {
 async fn query_events_count(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(());
     let response = services
         .grpc_client
         .get_event_service()
@@ -425,7 +425,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
-    provide_context(cx, services.clone());
+    provide_context(cx, services);
     provide_context(cx, app_state);
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());

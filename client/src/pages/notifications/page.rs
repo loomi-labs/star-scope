@@ -16,8 +16,8 @@ use web_sys::{Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, In
 
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
-use crate::types::types::grpc;
-use crate::types::types::event::{EventType};
+use crate::types::protobuf::event::EventType;
+use crate::types::protobuf::grpc;
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 
 fn display_timestamp(option: Option<Timestamp>, locale: String) -> String {
@@ -62,7 +62,7 @@ async fn mark_event_as_read(cx: Scope<'_>, event_id: String) {
         .mark_event_read(request)
         .await
         .map(|res| res.into_inner());
-    if let Ok(_) = response {
+    if response.is_ok() {
         events_state.mark_as_read(event_id);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
@@ -102,27 +102,25 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     callback.forget();  // Prevent the closure from being dropped prematurely
 
     on_mount(cx, move || {
-        if let Some(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
+        if let Ok(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>() {
             observer.observe(&element);
         }
     });
 
     on_cleanup(cx, move || {
-        if let Some(_element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>().ok() {
+        if let Ok(_element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>() {
             // TODO: ("Call observer.unobserve(element) here (or observer.disconnect()");
         }
     });
 
     let rc_event_cloned = rc_event.clone();
     create_effect(cx, move || {
-        if *in_viewport.get() {
-            if !rc_event_cloned.get().as_ref().read {
-                let event_id = event.id.clone();
-                spawn_local_scoped(cx, async move {
-                    debug!("mark_event_as_read: {:?}", event_id.clone());
-                    mark_event_as_read(cx, event_id).await;
-                });
-            }
+        if *in_viewport.get() && !rc_event_cloned.get().as_ref().read {
+            let event_id = event.id.clone();
+            spawn_local_scoped(cx, async move {
+                debug!("mark_event_as_read: {:?}", event_id.clone());
+                mark_event_as_read(cx, event_id).await;
+            });
         }
     });
 
@@ -176,9 +174,7 @@ pub fn WelcomeMessage<G: Html>(cx: Scope) -> View<G> {
             .as_ref()
             .clone()
             .unwrap()
-            .iter()
-            .cloned()
-            .collect::<Vec<_>>();
+            .to_vec();
         wallets.sort_by(|a, b| a.name.cmp(&b.name));
         wallets
     });
@@ -189,7 +185,7 @@ pub fn WelcomeMessage<G: Html>(cx: Scope) -> View<G> {
         }
     });
 
-    view!{cx,
+    view! {cx,
         (if events_state.welcome_message.get().is_some() {
                 view!{cx,
                     div(class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700") {
@@ -261,8 +257,8 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 let read_status_filter = notifications_state.read_status_filter.get();
                 match read_status_filter.as_ref() {
                     ReadStatusFilter::All => true,
-                    ReadStatusFilter::Read => event.get().read.clone(),
-                    ReadStatusFilter::Unread => !event.get().read.clone(),
+                    ReadStatusFilter::Read => event.get().read,
+                    ReadStatusFilter::Unread => !event.get().read,
                 }
             })
             .filter(|event| {
@@ -455,7 +451,7 @@ pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
         let filter = ReadStatusFilter::from_str(&target.value()).unwrap();
         notifications_state
             .read_status_filter
-            .set(filter.clone());
+            .set(filter);
         // filter.set_filter_as_query_param();
     };
 
@@ -570,7 +566,7 @@ impl TimeFilter {
         match get_query_param(TimeFilter::QUERY_PARAM) {
             None => TimeFilter::All,
             Some(param) => {
-                TimeFilter::from_str(param.as_str()).unwrap_or_else(|_| TimeFilter::All)
+                TimeFilter::from_str(param.as_str()).unwrap_or(TimeFilter::All)
             }
         }
     }
@@ -701,8 +697,7 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
 }
 
 fn cnt_available_events(events_state: &EventsState, notifications_state: &NotificationsState) -> i32 {
-    let event_type = notifications_state.event_type_filter.get().as_ref().clone();
-    match event_type.clone() {
+    match *notifications_state.event_type_filter.get().as_ref() {
         None => events_state.event_count_map.get().values().map(|c| c.count).sum::<i32>(),
         Some(et) => events_state.event_count_map.get().get(&et).cloned().map(|c| c.count).unwrap_or(0),
     }
@@ -718,7 +713,7 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     });
 
     create_effect(cx, move || {
-        let event_type = notifications_state.event_type_filter.get().as_ref().clone();
+        let event_type = *notifications_state.event_type_filter.get();
         spawn_local_scoped(cx.to_owned(), async move {
             query_events(cx.to_owned(), event_type).await;
         });
@@ -729,8 +724,8 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     });
 
     create_effect(cx, move || {
-        let available_events_prev = cnt_available_events_prev.get().as_ref().clone();
-        let event_type = notifications_state.event_type_filter.get().as_ref().clone();
+        let available_events_prev = *cnt_available_events_prev.get();
+        let event_type = *notifications_state.event_type_filter.get();
         if available_events_prev != cnt_available_events(events_state, notifications_state) {
             spawn_local_scoped(cx.to_owned(), async move {
                 query_events(cx.to_owned(), event_type).await;

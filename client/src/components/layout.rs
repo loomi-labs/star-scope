@@ -3,7 +3,7 @@ use sycamore::prelude::*;
 use crate::{AppRoutes, AppState, EventsState};
 use crate::config::keys;
 use crate::pages::notifications::page::NotificationsState;
-use crate::types::types::event::EventType;
+use crate::types::protobuf::event::EventType;
 use crate::utils::url::safe_navigate;
 
 #[component]
@@ -49,14 +49,14 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             .event_count_map
             .get()
             .get(&event_type)
-            .map(|e| e.unread_count.clone())
+            .map(|e| e.unread_count)
             .filter(|e| *e > 0)
     }
 
-    let cnt_funding = create_memo(cx, move || get_event_count(&events_state, EventType::Funding));
-    let cnt_staking = create_memo(cx, move || get_event_count(&events_state, EventType::Staking));
-    let cnt_dex = create_memo(cx, move || get_event_count(&events_state, EventType::Dex));
-    let cnt_governance = create_memo(cx, move || get_event_count(&events_state, EventType::Governance));
+    let cnt_funding = create_memo(cx, move || get_event_count(events_state, EventType::Funding));
+    let cnt_staking = create_memo(cx, move || get_event_count(events_state, EventType::Staking));
+    let cnt_dex = create_memo(cx, move || get_event_count(events_state, EventType::Dex));
+    let cnt_governance = create_memo(cx, move || get_event_count(events_state, EventType::Governance));
     let cnt_all = create_memo(cx, || {
         let all = cnt_funding.get().as_ref().unwrap_or_else(|| 0)
             + cnt_staking.get().as_ref().unwrap_or_else(|| 0)

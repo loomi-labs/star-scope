@@ -50,8 +50,7 @@ fn wallet_connect_login_wrapper() -> Result<String, String> {
 
 fn is_mobile() -> bool {
     let result = isMobile("https://star-scope.decrypto.online".to_string());
-    let js_result = serde_wasm_bindgen::from_value(result).unwrap_or_else(|_| false);
-    return js_result;
+    serde_wasm_bindgen::from_value(result).unwrap_or(false)
 }
 
 #[component]
