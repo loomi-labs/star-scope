@@ -33,7 +33,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Subtitle:    chainEvent.GetGovernanceProposal().GetTitle(),
 				Description: chainEvent.GetGovernanceProposal().GetDescription(),
 				CreatedAt:   chainEvent.Timestamp,
-				EventType:   eventpb.EventType_GOVERNANCE,
+				EventType:   kafkaevent.EventType_GOVERNANCE,
 			}, nil
 		default:
 			return nil, errors.New(fmt.Sprintf("No type defined for event %v", chainEvent.GetEvent()))
@@ -61,7 +61,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: contractEvent.GetContractGovernanceProposal().GetDescription(),
 				CreatedAt:   contractEvent.Timestamp,
 				NotifyAt:    contractEvent.NotifyTime,
-				EventType:   eventpb.EventType_GOVERNANCE,
+				EventType:   kafkaevent.EventType_GOVERNANCE,
 			}, nil
 		default:
 			return nil, errors.New(fmt.Sprintf("No type defined for event %v", contractEvent.GetEvent()))
@@ -75,14 +75,14 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Title:       "Token Received",
 				Description: fmt.Sprintf("%v received %v%v from %v", walletEvent.GetWalletAddress(), coinReceived.GetCoin().Amount, coinReceived.GetCoin().Denom, coinReceived.Sender),
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   eventpb.EventType_FUNDING,
+				EventType:   kafkaevent.EventType_FUNDING,
 			}, nil
 		case *kafkaevent.WalletEvent_OsmosisPoolUnlock:
 			return &eventpb.Event{
 				Title:       "Pool Unlock",
 				Description: fmt.Sprintf("Unlock period of Osmosis pool for %v is over", walletEvent.GetWalletAddress()),
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   eventpb.EventType_DEX,
+				EventType:   kafkaevent.EventType_DEX,
 			}, nil
 		case *kafkaevent.WalletEvent_Unstake:
 			var unstake = walletEvent.GetUnstake()
@@ -90,7 +90,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Title:       "Unstake",
 				Description: fmt.Sprintf("Unbonding period for %v is over. %v %v Available", walletEvent.GetWalletAddress(), unstake.GetCoin().Amount, unstake.GetCoin().Denom),
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   eventpb.EventType_STAKING,
+				EventType:   kafkaevent.EventType_STAKING,
 			}, nil
 		case *kafkaevent.WalletEvent_NeutronTokenVesting:
 			var neutronTokenVesting = walletEvent.GetNeutronTokenVesting()
@@ -98,32 +98,11 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Title:       "Vesting Unlock",
 				Description: fmt.Sprintf("Vesting period for %v is over. %v Neutron available.", walletEvent.GetWalletAddress(), neutronTokenVesting.GetAmount()/1000000),
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   eventpb.EventType_FUNDING,
+				EventType:   kafkaevent.EventType_FUNDING,
 			}, nil
 		}
 	}
 	return nil, errors.New(fmt.Sprintf("No type defined for event %v", entEvent))
-}
-
-func kafkaMsgToProto(data []byte, chains []*ent.Chain) (*eventpb.Event, error) {
-	var chainId, pbEvent, err = txEventToProto(data)
-	if err != nil {
-		chainId, pbEvent, err = queryEventToProto(data)
-		if err != nil {
-			return nil, err
-		}
-	}
-	for _, chain := range chains {
-		if uint64(chain.ID) == chainId {
-			pbEvent.Chain = &eventpb.ChainData{
-				Id:       int64(chain.ID),
-				Name:     chain.Name,
-				ImageUrl: chain.Image,
-			}
-			break
-		}
-	}
-	return pbEvent, nil
 }
 
 func EntEventToProto(entEvent *ent.Event, chain *ent.Chain) (*eventpb.Event, error) {

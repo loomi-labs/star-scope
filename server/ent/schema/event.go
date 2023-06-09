@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
+	eventpb "github.com/loomi-labs/star-scope/event"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
-	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"reflect"
 	"time"
 )

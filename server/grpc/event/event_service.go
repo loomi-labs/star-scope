@@ -7,6 +7,7 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
+	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
 	"github.com/loomi-labs/star-scope/grpc/types"
@@ -32,37 +33,36 @@ func NewEventServiceHandler(dbManagers *database.DbManagers, kafka *kafka.Kafka)
 	}
 }
 
-func (e EventService) EventStream(ctx context.Context, _ *connect.Request[emptypb.Empty], stream *connect.ServerStream[eventpb.EventList]) error {
+func (e EventService) EventStream(ctx context.Context, _ *connect.Request[emptypb.Empty], stream *connect.ServerStream[eventpb.NewEvent]) error {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
 		return types.UserNotFoundErr
 	}
 
-	processedEvents := make(chan *eventpb.EventList, 100)
+	newEvents := make(chan *eventpb.NewEvent)
 
-	go e.kafka.ConsumeProcessedEvents(ctx, user, processedEvents)
+	go e.kafka.ConsumeProcessedEvents(ctx, user, newEvents)
 
-	// Timer for sending empty message every 30 seconds
+	// Timer for sending empty message every 30 seconds to keep connection alive
 	timer := time.NewTicker(30 * time.Second)
 	defer timer.Stop()
 
 	for {
 		select {
-		case eventList, ok := <-processedEvents:
+		case msg, ok := <-newEvents:
 			if !ok {
 				log.Sugar.Debugf("processed events channel closed")
 				return types.UnknownErr
 			}
-			log.Sugar.Debugf("received processed %v events", len(eventList.GetEvents()))
-			err := stream.Send(eventList)
+			err := stream.Send(msg)
 			if err != nil {
-				log.Sugar.Debugf("error sending processed eventList: %v", err)
+				log.Sugar.Debugf("error sending processed msg: %v", err)
 				return types.UnknownErr
 			}
 		case <-timer.C:
 			log.Sugar.Debugf("sending empty message")
-			err := stream.Send(&eventpb.EventList{})
+			err := stream.Send(&eventpb.NewEvent{})
 			if err != nil {
 				log.Sugar.Debugf("error sending empty message: %v", err)
 				return types.UnknownErr
@@ -141,10 +141,10 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
 	}
-	counters := make([]*eventpb.EventsCount, len(eventpb.EventType_name))
-	for i, name := range eventpb.EventType_name {
+	counters := make([]*eventpb.EventsCount, len(kafkaevent.EventType_name))
+	for i, name := range kafkaevent.EventType_name {
 		counters[i] = &eventpb.EventsCount{
-			EventType: eventpb.EventType(i),
+			EventType: kafkaevent.EventType(i),
 			Count:     0,
 		}
 		for _, cnt := range cntRead {
@@ -159,6 +159,7 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 				break
 			}
 		}
+		counters[i].Count += counters[i].UnreadCount
 	}
 
 	return connect.NewResponse(&eventpb.ListEventsCountResponse{

@@ -22,7 +22,8 @@ use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
-use crate::types::types::grpc::{Event, EventsCount, EventType, User, WalletInfo};
+use crate::types::types::grpc::{Event, EventsCount, User, WalletInfo, NewEvent};
+use crate::types::types::event::{EventType};
 use crate::utils::url::safe_navigate;
 
 mod components;
@@ -208,33 +209,24 @@ impl EventsState {
         self.events.set(vec![]);
     }
 
-    pub fn add_events(&self, new_events: Vec<Event>) {
-        if new_events.len() == 0 {
-            return;
-        }
-        let mut events = self.events.modify();
+    pub fn add_event_count(&self, new_event: NewEvent) {
         let mut event_count_map = self.event_count_map.modify();
-        for e in new_events {
-            events.insert(0, create_rc_signal(e.clone()));
-            let count = event_count_map.get(&e.clone().event_type());
-            if let Some(count) = count {
-                let mut new_count = count.clone();
-                new_count.count += 1;
-                new_count.unread_count += 1;
-                event_count_map.insert(e.event_type().clone(), new_count);
-                continue;
-            } else {
-                event_count_map.insert(
-                    e.event_type().clone(),
-                    EventsCount {
-                        event_type: e.event_type().clone() as i32,
-                        count: 1,
-                        unread_count: 1,
-                    },
-                );
-            }
+        let count = event_count_map.get(&new_event.clone().event_type());
+        if let Some(count) = count {
+            let mut new_count = count.clone();
+            new_count.count += 1;
+            new_count.unread_count += 1;
+            event_count_map.insert(new_event.event_type().clone(), new_count);
+        } else {
+            event_count_map.insert(
+                new_event.event_type().clone(),
+                EventsCount {
+                    event_type: new_event.event_type().clone() as i32,
+                    count: 1,
+                    unread_count: 1,
+                },
+            );
         }
-        *self.events.modify() = events.clone();
         *self.event_count_map.modify() = event_count_map.clone();
     }
 
@@ -372,8 +364,13 @@ fn subscribe_to_events(cx: Scope) {
                 loop {
                     match event_stream.message().await {
                         Ok(Some(response)) => {
-                            debug!("Received {:?} events", response.events.len());
-                            overview_state.add_events(response.events);
+                            if response.event_type.is_some() {
+                                debug!("Received {:?} event", response.clone().event_type());
+                                query_events_count(cx).await;
+                                // overview_state.add_event_count(response);
+                            } else {
+                                debug!("Received keep alive event");
+                            }
                         }
                         Ok(None) => {
                             // No more events, exit the loop

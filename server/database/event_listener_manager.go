@@ -11,7 +11,6 @@ import (
 	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
-	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
@@ -74,7 +73,7 @@ func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUs
 	return eventsCount, err
 }
 
-func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType *eventpb.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
+func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType *kafkaevent.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
 	if startTime == nil {
 		startTime = timestamppb.Now()
 	}

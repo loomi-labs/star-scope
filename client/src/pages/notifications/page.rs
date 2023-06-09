@@ -17,7 +17,7 @@ use web_sys::{Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, In
 use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
 use crate::types::types::grpc;
-use crate::types::types::grpc::{EventType};
+use crate::types::types::event::{EventType};
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 
 fn display_timestamp(option: Option<Timestamp>, locale: String) -> String {
@@ -63,7 +63,7 @@ async fn mark_event_as_read(cx: Scope<'_>, event_id: String) {
         .await
         .map(|res| res.into_inner());
     if let Ok(_) = response {
-        // events_state.mark_as_read(event_id);
+        events_state.mark_as_read(event_id);
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
@@ -180,6 +180,12 @@ pub fn WelcomeMessage<G: Html>(cx: Scope) -> View<G> {
             .collect::<Vec<_>>();
         wallets.sort_by(|a, b| a.name.cmp(&b.name));
         wallets
+    });
+
+    create_effect(cx, move || {
+        if events_state.welcome_message.get().is_some() && !events_state.events.get().is_empty() {
+            *events_state.welcome_message.modify() = None;
+        }
     });
 
     view!{cx,
@@ -668,6 +674,7 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
 }
 
 async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
+    debug!("query_events: {:?}", event_type);
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(
@@ -695,16 +702,28 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
 #[component]
 pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
+    let events_state = use_context::<EventsState>(cx);
 
     spawn_local_scoped(cx.to_owned(), async move {
         query_chains(cx.to_owned()).await;
     });
 
-    create_effect(cx, move || {
+    create_memo(cx, move || {
         let event_type = notifications_state.event_type_filter.get().as_ref().clone();
-        spawn_local_scoped(cx.to_owned(), async move {
-            query_events(cx.to_owned(), event_type).await;
-        });
+        let cnt_available_events = match event_type.clone() {
+            None => events_state.event_count_map.get().values().map(|c| c.count).sum::<i32>(),
+            Some(et) => events_state.event_count_map.get().get(&et).cloned().map(|c| c.count).unwrap_or(0),
+        };
+        let cnt_stored_events = match event_type {
+            None => events_state.events.get().len() as i32,
+            Some(et) => events_state.events.get().iter().filter(|e| e.get().event_type() == et).count() as i32,
+        };
+        if cnt_available_events > cnt_stored_events {
+            spawn_local_scoped(cx.to_owned(), async move {
+                query_events(cx.to_owned(), event_type).await;
+            });
+        }
+        cnt_available_events
     });
 
     view! {cx,

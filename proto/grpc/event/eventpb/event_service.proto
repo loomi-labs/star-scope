@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "event/processed_event.proto";
 
 package starscope.grpc;
 
@@ -9,7 +10,7 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/event/eventpb";
 
 
 service EventService {
-  rpc EventStream (google.protobuf.Empty) returns (stream EventList) {}
+  rpc EventStream (google.protobuf.Empty) returns (stream NewEvent) {}
   rpc ListEvents (ListEventsRequest) returns (EventList) {}
   rpc ListChains (google.protobuf.Empty) returns (ChainList) {}
   rpc ListEventsCount (google.protobuf.Empty) returns (ListEventsCountResponse) {}
@@ -17,11 +18,8 @@ service EventService {
   rpc GetWelcomeMessage (google.protobuf.Empty) returns (WelcomeMessageResponse) {}
 }
 
-enum EventType {
-  FUNDING = 0;
-  STAKING = 1;
-  DEX = 2;
-  GOVERNANCE = 3;
+message NewEvent {
+  optional starscope.event.EventType event_type = 1;
 }
 
 message Event {
@@ -31,14 +29,13 @@ message Event {
   string description = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp notify_at = 6;
-  EventType event_type = 7;
+  starscope.event.EventType event_type = 7;
   ChainData chain = 8;
   bool read = 9;
 }
 
 message EventList {
   repeated Event events = 1;
-  string next_page_token = 2;
 }
 
 message ListEventsRequest {
@@ -46,7 +43,7 @@ message ListEventsRequest {
   google.protobuf.Timestamp end_time = 2;
   int32 limit = 3;
   int64 offset = 4;
-  optional EventType event_type = 5;
+  optional starscope.event.EventType event_type = 5;
 }
 
 message ChainData {
@@ -60,7 +57,7 @@ message ChainList {
 }
 
 message EventsCount {
-  EventType event_type = 1;
+  starscope.event.EventType event_type = 1;
   int32 count = 2;
   int32 unread_count = 3;
 }

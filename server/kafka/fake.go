@@ -2,7 +2,7 @@ package kafka
 
 import (
 	"context"
-	"github.com/golang/protobuf/proto"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/event"
@@ -31,19 +31,35 @@ func NewFakeEventCreator(dbManager *database.DbManagers, walletAddresses []strin
 	}
 }
 
+func (d *FakeEventCreator) convertedAddresses(bech32Prefix string) []string {
+	var convertedAddresses = []string{}
+	for _, address := range d.walletAddresses {
+		convertedAddress, err := common.ConvertWithOtherPrefix(address, bech32Prefix)
+		if err != nil {
+			log.Sugar.Panicf("error converting wallet address: %v", err)
+		}
+		convertedAddresses = append(convertedAddresses, convertedAddress)
+	}
+	return convertedAddresses
+}
+
 func (d *FakeEventCreator) getEventListenerMap() map[string]*ent.EventListener {
 	var elMap = make(map[string]*ent.EventListener)
-	for _, el := range d.eventListenerManager.QueryAll(context.Background()) {
-		if slices.Contains(d.walletAddresses, el.WalletAddress) {
+	for _, el := range d.eventListenerManager.QueryAllWithChain(context.Background()) {
+		if slices.Contains(d.convertedAddresses(el.Edges.Chain.Bech32Prefix), el.WalletAddress) {
 			elMap[el.WalletAddress] = el
 		}
 	}
 	return elMap
 }
 
-func createWalletEvent(walletAddress string, chains []*ent.Chain) kafkaevent.WalletEvent {
+func createWalletEvent(mainAddress string, chains []*ent.Chain) kafkaevent.WalletEvent {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	chain := chains[r.Intn(len(chains))]
+	walletAddress, err := common.ConvertWithOtherPrefix(mainAddress, chain.Bech32Prefix)
+	if err != nil {
+		log.Sugar.Panicf("error converting wallet address: %v", err)
+	}
 	return kafkaevent.WalletEvent{
 		ChainId:       uint64(chain.ID),
 		WalletAddress: walletAddress,
@@ -87,22 +103,22 @@ func createOsmoPoolUnlockEvent(walletAddress string, chains []*ent.Chain) *kafka
 
 func (d *FakeEventCreator) createRandomEvents(chains []*ent.Chain) []*kafkaevent.WalletEvent {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	var txEvents []*kafkaevent.WalletEvent
+	var walletEvents []*kafkaevent.WalletEvent
 	for _, walletAddress := range d.walletAddresses {
-		var txEvent kafkaevent.WalletEvent
+		var walletEvent kafkaevent.WalletEvent
 		randNbr := r.Intn(3)
 		switch randNbr {
 		case 0:
-			txEvent = *createCoinReceivedEvent(walletAddress, chains)
+			walletEvent = *createCoinReceivedEvent(walletAddress, chains)
 		case 1:
-			txEvent = *createUnstakeEvent(walletAddress, chains)
+			walletEvent = *createUnstakeEvent(walletAddress, chains)
 		case 2:
-			txEvent = *createOsmoPoolUnlockEvent(walletAddress, chains)
+			walletEvent = *createOsmoPoolUnlockEvent(walletAddress, chains)
 		}
-		log.Sugar.Debugf("create random event %v", randNbr)
-		txEvents = append(txEvents, &txEvent)
+		log.Sugar.Debugf("create random event %v for %v", randNbr, walletEvent.WalletAddress)
+		walletEvents = append(walletEvents, &walletEvent)
 	}
-	return txEvents
+	return walletEvents
 }
 
 func (d *FakeEventCreator) CreateFakeEvents() {
@@ -115,29 +131,29 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 		msgs := d.createRandomEvents(chains)
 		for _, msg := range msgs {
 			if el, ok := elMap[msg.WalletAddress]; ok {
-				var ctx = context.Background()
-				var err error
-				byteMsg, err := proto.Marshal(msg)
-				if err != nil {
-					log.Sugar.Panicf("failed to byteMsg event: %v", err)
-				}
+				var eventType event.EventType
+				var dataType event.DataType
 				switch msg.GetEvent().(type) {
 				case *kafkaevent.WalletEvent_CoinReceived:
-					_, err = d.eventListenerManager.UpdateAddWalletEvent(ctx, el, msg, event.EventTypeFUNDING, event.DataTypeWalletEvent_CoinReceived)
+					eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_CoinReceived
 				case *kafkaevent.WalletEvent_OsmosisPoolUnlock:
-					_, err = d.eventListenerManager.UpdateAddWalletEvent(ctx, el, msg, event.EventTypeDEX, event.DataTypeWalletEvent_OsmosisPoolUnlock)
+					eventType, dataType = event.EventTypeDEX, event.DataTypeWalletEvent_OsmosisPoolUnlock
 				case *kafkaevent.WalletEvent_Unstake:
-					_, err = d.eventListenerManager.UpdateAddWalletEvent(ctx, el, msg, event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake)
+					eventType, dataType = event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake
 				}
+				_, err := d.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, msg, eventType, dataType)
 				if err != nil {
 					log.Sugar.Panicf("failed to update event for %v: %v", msg.WalletAddress, err)
 				} else {
 					if msg.NotifyTime.AsTime().Before(time.Now()) {
-						d.kafka.produceProcessedEvents([][]byte{byteMsg})
+						d.kafka.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
+							WalletAddress: msg.WalletAddress,
+							EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
+						}})
 					}
 				}
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }

@@ -3,7 +3,7 @@ use sycamore::prelude::*;
 use crate::{AppRoutes, AppState, EventsState};
 use crate::config::keys;
 use crate::pages::notifications::page::NotificationsState;
-use crate::types::types::grpc::EventType;
+use crate::types::types::event::EventType;
 use crate::utils::url::safe_navigate;
 
 #[component]
