@@ -113,9 +113,10 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
         }
     });
 
+    let rc_event_cloned = rc_event.clone();
     create_effect(cx, move || {
         if *in_viewport.get() {
-            if !(event.read) {
+            if !rc_event_cloned.get().as_ref().read {
                 let event_id = event.id.clone();
                 spawn_local_scoped(cx, async move {
                     debug!("mark_event_as_read: {:?}", event_id.clone());
