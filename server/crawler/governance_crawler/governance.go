@@ -63,6 +63,13 @@ func (c *GovernanceCrawler) fetchProposals() {
 	var pbEvents [][]byte
 	for _, chain := range chains {
 		if strings.Contains(chain.Path, "neutron") {
+			if chain.Path == "neutron" {
+				NewNeutronCrawler(c.chainManager, c.kafkaInternal).
+					fetchProposals(chain, "neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff")
+			} else if chain.Path == "neutron-testnet" || chain.Path == "neutron-pion" {
+				NewNeutronCrawler(c.chainManager, c.kafkaInternal).
+					fetchProposals(chain, "neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff")
+			}
 			continue
 		}
 
@@ -115,7 +122,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 	}
 	if len(pbEvents) > 0 {
 		log.Sugar.Debugf("Sending %v governance events", len(pbEvents))
-		c.kafkaInternal.ProduceEvents(pbEvents)
+		c.kafkaInternal.ProduceChainEvents(pbEvents)
 	}
 }
 

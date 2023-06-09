@@ -216,14 +216,14 @@ func getProposalDataType(status kafkaevent.ProposalStatus) event.DataType {
 	return event.DataTypeChainEvent_GovernanceProposal_Ongoing
 }
 
-func getContractProposalDataType(prop *ent.ContractProposal) event.DataType {
-	switch prop.Status {
-	case contractproposal.StatusOPEN:
+func getContractProposalDataType(status kafkaevent.ContractProposalStatus) event.DataType {
+	switch status.String() {
+	case contractproposal.StatusOPEN.String():
 		return event.DataTypeChainEvent_GovernanceProposal_Ongoing
-	case contractproposal.StatusREJECTED, contractproposal.StatusPASSED, contractproposal.StatusEXECUTED, contractproposal.StatusCLOSED, contractproposal.StatusEXECUTION_FAILED:
+	case contractproposal.StatusREJECTED.String(), contractproposal.StatusPASSED.String(), contractproposal.StatusEXECUTED.String(), contractproposal.StatusCLOSED.String(), contractproposal.StatusEXECUTION_FAILED.String():
 		return event.DataTypeChainEvent_GovernanceProposal_Finished
 	}
-	log.Sugar.Panicf("Unknown proposal status: %v", prop.Status)
+	log.Sugar.Panicf("Unknown proposal status: %v", status.String())
 	return event.DataTypeChainEvent_GovernanceProposal_Ongoing
 }
 
@@ -388,15 +388,12 @@ func (k *Kafka) ProcessContractEvents() {
 			var pbEvents []*kafkaevent.EventProcessedMsg
 			switch contractEvent.GetEvent().(type) {
 			case *kafkaevent.ContractEvent_ContractGovernanceProposal:
-				prop, err := k.chainManager.UpdateContractProposal(ctx, chain, contractEvent.GetContractGovernanceProposal())
-				if err != nil {
-					log.Sugar.Panicf("failed to update prop %v: %v", contractEvent.GetContractGovernanceProposal().ProposalId, err)
-				}
 				if els, ok := elMap[contractEvent.ChainId]; ok {
 					for _, el := range els {
 						var err2 error
 						log.Sugar.Debugf("Processing event %v with address %v for %v", msg.Offset, contractEvent.ChainId, el.WalletAddress)
-						_, err2 = k.eventListenerManager.UpdateAddContractEvent(ctx, el, &contractEvent, event.EventTypeGOVERNANCE, getContractProposalDataType(prop))
+						var dataType = getContractProposalDataType(contractEvent.GetContractGovernanceProposal().GetProposalStatus())
+						_, err2 = k.eventListenerManager.UpdateAddContractEvent(ctx, el, &contractEvent, event.EventTypeGOVERNANCE, dataType)
 						if err2 != nil {
 							log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err2)
 						} else {

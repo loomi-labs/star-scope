@@ -9,7 +9,6 @@ import (
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
-	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
@@ -211,38 +210,38 @@ func (m *ChainManager) CreateOrUpdateProposal(ctx context.Context, entChain *ent
 		Save(ctx)
 }
 
-func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, prop *kafkaevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, propId uint64, contractAddress string, govProp *types.ContractProposal) (*ent.ContractProposal, error) {
 	return m.client.ContractProposal.
 		Create().
 		SetChain(entChain).
-		SetProposalID(prop.ProposalId).
-		SetStatus(contractproposal.Status(prop.GetProposalStatus().String())).
-		SetTitle(prop.GetTitle()).
-		SetDescription(prop.GetDescription()).
-		SetContractAddress(prop.GetContractAddress()).
-		SetFirstSeenTime(prop.GetFirstSeenTime().AsTime()).
-		SetVotingEndTime(prop.GetVotingEndTime().AsTime()).
+		SetProposalID(propId).
+		SetStatus(contractproposal.Status(govProp.Status.String())).
+		SetTitle(govProp.Title).
+		SetDescription(govProp.Description).
+		SetContractAddress(contractAddress).
+		SetFirstSeenTime(time.Now()).
+		SetVotingEndTime(time.Time(govProp.Expiration.AtTime)).
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateContractProposal(ctx context.Context, entChain *ent.Chain, govProp *kafkaevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+func (m *ChainManager) CreateOrUpdateContractProposal(ctx context.Context, entChain *ent.Chain, propId uint64, contractAddress string, govProp *types.ContractProposal) (*ent.ContractProposal, error) {
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}
 	prop, err := entChain.
 		QueryContractProposals().
 		Where(contractproposal.And(
-			contractproposal.ProposalIDEQ(govProp.ProposalId),
-			contractproposal.ContractAddressEQ(govProp.GetContractAddress()),
+			contractproposal.ProposalIDEQ(propId),
+			contractproposal.ContractAddressEQ(contractAddress),
 		)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
-		return m.createContractProposal(ctx, entChain, govProp)
+		return m.createContractProposal(ctx, entChain, propId, contractAddress, govProp)
 	} else if err != nil {
 		return nil, err
 	}
 	return prop.
 		Update().
-		SetStatus(contractproposal.Status(govProp.GetProposalStatus().String())).
+		SetStatus(contractproposal.Status(govProp.Status.String())).
 		Save(ctx)
 }

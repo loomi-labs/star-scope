@@ -124,8 +124,8 @@ func (k *KafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, sub
 	}
 }
 
-func (k *KafkaInternal) ProduceEvents(msgs [][]byte) {
-	w := k.writer(ChainEventsTopic)
+func (k *KafkaInternal) produceEvents(topic Topic, msgs [][]byte) {
+	w := k.writer(topic)
 	defer k.closeWriter(w)
 
 	kafkaMsgs := make([]kafka.Message, len(msgs))
@@ -137,4 +137,12 @@ func (k *KafkaInternal) ProduceEvents(msgs [][]byte) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to write messages: %v", err))
 	}
+}
+
+func (k *KafkaInternal) ProduceChainEvents(msgs [][]byte) {
+	k.produceEvents(ChainEventsTopic, msgs)
+}
+
+func (k *KafkaInternal) ProduceContractEvents(msgs [][]byte) {
+	k.produceEvents(ChainEventsTopic, msgs)
 }
