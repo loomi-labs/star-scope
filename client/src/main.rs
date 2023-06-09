@@ -351,6 +351,13 @@ async fn query_user_info(cx: Scope<'_>) {
 
 fn subscribe_to_events(cx: Scope) {
     spawn_local_scoped(cx, async move {
+        let app_state = use_context::<AppState>(cx);
+        match app_state.auth_state.get().as_ref() {
+            AuthState::LoggedOut => return,
+            AuthState::LoggedIn => {},
+            AuthState::LoggingIn => return,
+        }
+
         let overview_state = use_context::<EventsState>(cx);
         let services = use_context::<Services>(cx);
         let result = services
@@ -370,6 +377,11 @@ fn subscribe_to_events(cx: Scope) {
                                 // overview_state.add_event_count(response);
                             } else {
                                 debug!("Received keep alive event");
+                            }
+                            match app_state.auth_state.get().as_ref() {
+                                AuthState::LoggedOut => break,
+                                AuthState::LoggedIn => {},
+                                AuthState::LoggingIn => break,
                             }
                         }
                         Ok(None) => {
