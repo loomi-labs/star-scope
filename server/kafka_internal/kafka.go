@@ -14,8 +14,10 @@ import (
 type Topic string
 
 const (
-	DbEntityChanged  = Topic(types.DbEntityChanged)
-	ChainEventsTopic = Topic(types.ChainEventsTopic)
+	DbEntityChanged     = Topic(types.DbEntityChanged)
+	WalletEventsTopic   = Topic(types.WalletEventsTopic)
+	ChainEventsTopic    = Topic(types.ChainEventsTopic)
+	ContractEventsTopic = Topic(types.ContractEventsTopic)
 )
 
 type DbChange string
@@ -139,10 +141,14 @@ func (k *KafkaInternal) produceEvents(topic Topic, msgs [][]byte) {
 	}
 }
 
+func (k *KafkaInternal) ProduceWalletEvents(msgs [][]byte) {
+	k.produceEvents(WalletEventsTopic, msgs)
+}
+
 func (k *KafkaInternal) ProduceChainEvents(msgs [][]byte) {
 	k.produceEvents(ChainEventsTopic, msgs)
 }
 
 func (k *KafkaInternal) ProduceContractEvents(msgs [][]byte) {
-	k.produceEvents(ChainEventsTopic, msgs)
+	k.produceEvents(ContractEventsTopic, msgs)
 }

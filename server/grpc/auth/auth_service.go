@@ -119,11 +119,12 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 		// TODO: put this into a transaction
 		user = s.userManager.CreateOrUpdate(ctx, walletAddress, walletAddress)
 		chains := s.chainManager.QueryEnabled(ctx)
-		_, err = s.eventListenerManager.CreateBulk(ctx, user, chains, walletAddress)
+		els, err := s.eventListenerManager.CreateBulk(ctx, user, chains, walletAddress)
 		if err != nil {
 			log.Sugar.Errorf("error while creating event listener: %v", err)
 			return nil, ErrorLoginFailed
 		}
+		go NewSetupCrawler(s.kafkaInternal).fetchUnstakingEvents(els)
 	} else if err != nil {
 		log.Sugar.Errorf("error while querying user by wallet address: %v", err)
 		return nil, ErrorLoginFailed
