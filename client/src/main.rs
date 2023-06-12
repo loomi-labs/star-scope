@@ -4,13 +4,13 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use log::{debug, error};
 use log::Level;
+use log::{debug, error};
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
-use sycamore_router::{HistoryIntegration, navigate, Route, Router};
+use sycamore_router::{navigate, HistoryIntegration, Route, Router};
 use uuid::Uuid;
 
 use crate::components::layout::LayoutWrapper;
@@ -22,16 +22,16 @@ use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
+use crate::types::protobuf::event::EventType;
 use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
-use crate::types::protobuf::event::{EventType};
 use crate::utils::url::safe_navigate;
 
 mod components;
 mod config;
 mod pages;
 mod services;
-mod utils;
 mod types;
+mod utils;
 
 #[derive(Route, Debug, Clone, PartialEq)]
 pub enum AppRoutes {
@@ -171,7 +171,6 @@ impl AppState {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct EventsState {
     pub events: RcSignal<Vec<RcSignal<Event>>>,
@@ -187,9 +186,7 @@ impl Default for EventsState {
 
 fn compare_timestamps(a: &Option<Timestamp>, b: &Option<Timestamp>) -> Ordering {
     match (a, b) {
-        (Some(a), Some(b)) => {
-            a.seconds.cmp(&b.seconds).then(a.nanos.cmp(&b.nanos))
-        }
+        (Some(a), Some(b)) => a.seconds.cmp(&b.seconds).then(a.nanos.cmp(&b.nanos)),
         (Some(_), None) => Ordering::Greater,
         (None, Some(_)) => Ordering::Less,
         (None, None) => Ordering::Equal,
@@ -326,13 +323,12 @@ async fn query_user_info(cx: Scope<'_>) {
     }
 }
 
-
 fn subscribe_to_events(cx: Scope) {
     spawn_local_scoped(cx, async move {
         let app_state = use_context::<AppState>(cx);
         match app_state.auth_state.get().as_ref() {
             AuthState::LoggedOut => return,
-            AuthState::LoggedIn => {},
+            AuthState::LoggedIn => {}
             AuthState::LoggingIn => return,
         }
 
@@ -358,7 +354,7 @@ fn subscribe_to_events(cx: Scope) {
                             }
                             match app_state.auth_state.get().as_ref() {
                                 AuthState::LoggedOut => break,
-                                AuthState::LoggedIn => {},
+                                AuthState::LoggedIn => {}
                                 AuthState::LoggingIn => break,
                             }
                         }

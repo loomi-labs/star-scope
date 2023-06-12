@@ -1,15 +1,14 @@
 use std::fmt::Debug;
 
+use crate::config::keys;
 use grpc_web_client::Client;
 use tonic::metadata::MetadataValue;
 use tonic::Request;
-use crate::config::keys;
 
 use crate::services::auth::AuthService;
 use crate::types::protobuf::grpc::auth_service_client::AuthServiceClient;
 use crate::types::protobuf::grpc::event_service_client::EventServiceClient;
 use crate::types::protobuf::grpc::user_service_client::UserServiceClient;
-
 
 #[derive(Debug, Clone)]
 pub struct GrpcClient {
