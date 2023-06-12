@@ -281,42 +281,50 @@ func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncS
 	}
 }
 
-func (i *Indexer) StartIndexing(chain *indexerpb.IndexingChain, updateChannel chan SyncStatus) {
+func (i *Indexer) StartIndexing(chain *indexerpb.IndexingChain, updateChannel chan SyncStatus, stopChannel chan uint64) {
 	var syncStatus = i.newSyncStatus(chain)
 	log.Sugar.Infof("%-15sStart indexing at height: %v", i.chainInfo.Name, syncStatus.Height)
-	for true {
-		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.chainInfo.RestEndpoint, syncStatus.Height)
-		var blockResponse cmtservice.GetBlockByHeightResponse
-		var startGetBlockRequest = time.Now()
-		status, err := GetAndDecode(url, i.encodingConfig, &blockResponse)
-		var getBlockRequestDuration = time.Since(startGetBlockRequest)
-		var handleBlockDuration time.Duration
-		var result *indexerpb.HandleTxsResponse
-		if err != nil {
-			if status == 400 {
-				log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chainInfo.Name, syncStatus.Height)
-			} else if status > 400 && status < 500 {
-				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
-			} else if status >= 500 {
-				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
-			} else {
-				log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
+	for {
+		select {
+		case stop := <-stopChannel:
+			if stop == chain.Id {
+				log.Sugar.Infof("%-15sStop indexing at height: %v", i.chainInfo.Name, syncStatus.Height)
+				return
 			}
-			time.Sleep(200 * time.Millisecond)
-		} else {
-			syncStatus.recordBlock(blockResponse)
-			var startHandleBlock = time.Now()
-			result, err = i.handleBlock(&blockResponse, syncStatus)
-			handleBlockDuration = time.Since(startHandleBlock)
+		default:
+			var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.chainInfo.RestEndpoint, syncStatus.Height)
+			var blockResponse cmtservice.GetBlockByHeightResponse
+			var startGetBlockRequest = time.Now()
+			status, err := GetAndDecode(url, i.encodingConfig, &blockResponse)
+			var getBlockRequestDuration = time.Since(startGetBlockRequest)
+			var handleBlockDuration time.Duration
+			var result *indexerpb.HandleTxsResponse
 			if err != nil {
-				log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chainInfo.Name, syncStatus.Height, err)
+				if status == 400 {
+					log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chainInfo.Name, syncStatus.Height)
+				} else if status > 400 && status < 500 {
+					log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
+				} else if status >= 500 {
+					log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
+				} else {
+					log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
+				}
 				time.Sleep(200 * time.Millisecond)
 			} else {
-				syncStatus.updateSyncStatus(updateChannel, i.encodingConfig, i.chainInfo)
+				syncStatus.recordBlock(blockResponse)
+				var startHandleBlock = time.Now()
+				result, err = i.handleBlock(&blockResponse, syncStatus)
+				handleBlockDuration = time.Since(startHandleBlock)
+				if err != nil {
+					log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chainInfo.Name, syncStatus.Height, err)
+					time.Sleep(200 * time.Millisecond)
+				} else {
+					syncStatus.updateSyncStatus(updateChannel, i.encodingConfig, i.chainInfo)
+				}
 			}
+			var sleepDuration = syncStatus.getSleepDuration()
+			i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepDuration)
+			time.Sleep(sleepDuration)
 		}
-		var sleepDuration = syncStatus.getSleepDuration()
-		i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepDuration)
-		time.Sleep(sleepDuration)
 	}
 }

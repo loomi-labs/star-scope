@@ -3,8 +3,8 @@ module github.com/loomi-labs/star-scope/indexers/base
 go 1.20
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.8.0-20230606150433-b3ce8a2ebb7e.1
-	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230606150433-b3ce8a2ebb7e.1
+	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.8.0-20230612071537-dc261569f1c5.1
+	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230612071537-dc261569f1c5.1
 	github.com/bufbuild/connect-go v1.8.0
 	github.com/cosmos/cosmos-sdk v0.46.7
 	github.com/cosmos/ibc-go/v6 v6.1.0
@@ -17,7 +17,6 @@ require (
 )
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/grpc/go v1.3.0-20230606150433-b3ce8a2ebb7e.1 // indirect
 	cloud.google.com/go v0.107.0 // indirect
 	cloud.google.com/go/compute v1.15.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -108,7 +107,6 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/regen-network/cosmos-proto v0.3.1 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

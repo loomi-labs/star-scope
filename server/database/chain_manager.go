@@ -7,7 +7,6 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
-	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
@@ -82,17 +81,6 @@ func (m *ChainManager) QueryContractProposals(ctx context.Context, entChain *ent
 		AllX(ctx)
 }
 
-func (m *ChainManager) QueryNewAccounts(ctx context.Context, entChain *ent.Chain) []*ent.EventListener {
-	oneHourAgo := time.Now().Add(-1 * time.Hour)
-	return entChain.
-		QueryEventListeners().
-		Where(
-			eventlistener.CreateTimeGTE(oneHourAgo),
-		).
-		Select(eventlistener.FieldWalletAddress).
-		AllX(ctx)
-}
-
 func (m *ChainManager) Create(ctx context.Context, chainData *types.ChainData) (*ent.Chain, error) {
 	log.Sugar.Debugf("Creating chain: %v", chainData.PrettyName)
 	return m.client.Chain.
@@ -154,16 +142,16 @@ func (m *ChainManager) UpdateIndexStatus(
 	indexingHeight uint64,
 	handledMessageTypes []string,
 	unhandledMessageTypes []string,
-) error {
+) (*ent.Chain, error) {
 	if unhandledMessageTypes == nil {
 		return m.client.Chain.
 			UpdateOneID(id).
 			SetIndexingHeight(indexingHeight).
-			Exec(context.Background())
+			Save(context.Background())
 	}
 	c, err := m.client.Chain.Get(ctx, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	handledMessageTypes = append(handledMessageTypes, strings.Split(c.HandledMessageTypes, ",")...)
@@ -175,7 +163,7 @@ func (m *ChainManager) UpdateIndexStatus(
 		SetIndexingHeight(indexingHeight).
 		SetHandledMessageTypes(strings.Join(handledMessageTypes, ",")).
 		SetUnhandledMessageTypes(strings.Join(unhandledMessageTypes, ",")).
-		Exec(ctx)
+		Save(ctx)
 }
 
 func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *types.Proposal) (*ent.Proposal, error) {

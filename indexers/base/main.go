@@ -11,50 +11,77 @@ import (
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"strings"
+	"sync"
 	"time"
 )
 
-func startIndexers(updateChannel chan indexer.SyncStatus) indexerpbconnect.IndexerServiceClient {
+func startIndexer(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus, stopChannels map[uint64]chan uint64, stopChannelsMutex *sync.Mutex) {
 	var kafkaBrokers = strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-
 	var encodingConfig = indexer.MakeEncodingConfig()
+	response, err := grpcClient.GetIndexingChains(context.Background(), connect.NewRequest(&emptypb.Empty{}))
+	if err != nil {
+		log.Sugar.Errorf("Error getting indexing chains: %v", err)
+	} else {
+		for _, chain := range response.Msg.GetChains() {
+			if _, ok := stopChannels[chain.Id]; ok {
+				// Chain is already being indexed
+				continue
+			}
+			var config = indexer.Config{
+				ChainInfo: indexer.ChainInfo{
+					ChainId:      chain.Id,
+					Path:         chain.Path,
+					RestEndpoint: chain.RestEndpoint,
+					Name:         chain.Name,
+				},
+				KafkaBrokers:   kafkaBrokers,
+				EncodingConfig: encodingConfig,
+			}
+			if chain.HasCustomIndexer {
+				config.MessageHandler = indexer.NewCustomMessageHandler(config.ChainInfo, config.EncodingConfig, "http://localhost:50002")
+			} else {
+				config.MessageHandler = indexer.NewBaseMessageHandler(config.ChainInfo, config.EncodingConfig)
+			}
+
+			var indx = indexer.NewIndexer(config)
+			var stopChannel = make(chan uint64)
+			stopChannelsMutex.Lock()
+			stopChannels[chain.Id] = stopChannel
+			stopChannelsMutex.Unlock()
+			go indx.StartIndexing(chain, updateChannel, stopChannel)
+		}
+	}
+}
+
+func startChainFetchInterval(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus, stopChannels map[uint64]chan uint64, stopChannelsMutex *sync.Mutex) {
+	if len(stopChannels) == 0 {
+		startIndexer(grpcClient, updateChannel, stopChannels, stopChannelsMutex)
+	}
+	var timer = time.NewTicker(5 * time.Minute)
+	for {
+		<-timer.C
+		startIndexer(grpcClient, updateChannel, stopChannels, stopChannelsMutex)
+	}
+}
+
+func startIndexers() {
+	var updateChannel = make(chan indexer.SyncStatus)
+	defer close(updateChannel)
+
 	var grpcClient = client.NewIndexerServiceClient(
 		common.GetEnvX("INDEXER_GRPC_ENDPOINT"),
 		common.GetEnvX("INDEXER_AUTH_TOKEN"),
 	)
-	response, err := grpcClient.GetIndexingChains(context.Background(), connect.NewRequest(&emptypb.Empty{}))
-	if err != nil {
-		log.Sugar.Panicf("Error getting indexing chains: %v", err)
-	}
 
-	setupCrawler := indexer.NewSetupCrawler(grpcClient, kafkaBrokers)
-	go setupCrawler.StartCrawling()
+	stopChannels := make(map[uint64]chan uint64)
+	stopChannelsMutex := sync.Mutex{}
 
-	for _, chain := range response.Msg.GetChains() {
-		var config = indexer.Config{
-			ChainInfo: indexer.ChainInfo{
-				ChainId:      chain.Id,
-				Path:         chain.Path,
-				RestEndpoint: chain.RestEndpoint,
-				Name:         chain.Name,
-			},
-			KafkaBrokers:   kafkaBrokers,
-			EncodingConfig: encodingConfig,
-		}
-		if chain.HasCustomIndexer {
-			config.MessageHandler = indexer.NewCustomMessageHandler(config.ChainInfo, config.EncodingConfig, "http://localhost:50002")
-		} else {
-			config.MessageHandler = indexer.NewBaseMessageHandler(config.ChainInfo, config.EncodingConfig)
-		}
-
-		var indx = indexer.NewIndexer(config)
-		go indx.StartIndexing(chain, updateChannel)
-	}
-	return grpcClient
+	go startChainFetchInterval(grpcClient, updateChannel, stopChannels, &stopChannelsMutex)
+	listenForUpdates(grpcClient, updateChannel, stopChannels, &stopChannelsMutex)
 }
 
-func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus) {
-	const updateBatchTimeout = 5 * time.Second // Time duration to wait for more updates
+func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus, stopChannels map[uint64]chan uint64, stopChannelsMutex *sync.Mutex) {
+	const updateBatchTimeout = 30 * time.Second // Time duration to wait for more updates
 
 	var updates = make(map[uint64]*indexerpb.IndexingChain)
 	var timer *time.Timer
@@ -91,15 +118,23 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 				timerExpired = timer.C
 			}
 		case <-timerExpired:
-			sendUpdates(grpcClient, updates) // Send the batch when the timer expires
+			disabledChainIds := sendUpdates(grpcClient, updates) // Send the batch when the timer expires
 			timer.Stop()
 			timer = nil // Reset the timer
 			updates = make(map[uint64]*indexerpb.IndexingChain)
+			for _, chainId := range disabledChainIds {
+				stopChannelsMutex.Lock()
+				if stopChannel, ok := stopChannels[chainId]; ok {
+					stopChannel <- chainId
+					delete(stopChannels, chainId)
+				}
+				stopChannelsMutex.Unlock()
+			}
 		}
 	}
 }
 
-func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[uint64]*indexerpb.IndexingChain) {
+func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[uint64]*indexerpb.IndexingChain) []uint64 {
 	if len(updates) > 0 {
 		log.Sugar.Debugf("Sending %d updates", len(updates))
 		var chains []*indexerpb.IndexingChain
@@ -109,13 +144,15 @@ func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[u
 		var request = connect.NewRequest(&indexerpb.UpdateIndexingChainsRequest{
 			Chains: chains,
 		})
-		_, err := grpcClient.UpdateIndexingChains(context.Background(), request)
+		response, err := grpcClient.UpdateIndexingChains(context.Background(), request)
 		if err != nil {
 			log.Sugar.Errorf("Error updating indexing chains: %v", err)
 			time.Sleep(1)
 			sendUpdates(grpcClient, updates) // Retry sending the batch
 		}
+		return response.Msg.GetDisabledChainIds()
 	}
+	return nil
 }
 
 func main() {
@@ -127,9 +164,5 @@ func main() {
 		}
 	}()
 
-	var updateChannel = make(chan indexer.SyncStatus)
-	defer close(updateChannel)
-
-	grpcClient := startIndexers(updateChannel)
-	listenForUpdates(grpcClient, updateChannel)
+	startIndexers()
 }

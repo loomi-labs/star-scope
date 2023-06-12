@@ -457,9 +457,11 @@ func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, even
 				break
 			}
 			if _, ok := subscriptions[processedEvent.GetWalletAddress()]; ok {
-				eventsChannel <- &eventpb.NewEvent{EventType: processedEvent.GetEventType()}
+				eventType := processedEvent.GetEventType()
+				eventsChannel <- &eventpb.NewEvent{EventType: &eventType}
 			} else if _, ok := subscriptions[strconv.Itoa(int(processedEvent.GetChainId()))]; ok {
-				eventsChannel <- &eventpb.NewEvent{EventType: processedEvent.GetEventType()}
+				eventType := processedEvent.GetEventType()
+				eventsChannel <- &eventpb.NewEvent{EventType: &eventType}
 			}
 		}
 	}
