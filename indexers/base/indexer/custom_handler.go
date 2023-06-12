@@ -15,7 +15,7 @@ type customMessageHandler struct {
 	baseMessageHandler TxHandler
 }
 
-func NewCustomMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig, grpcEndpoint string) TxHandler {
+func NewCustomMessageHandler(chainInfo *indexerpb.IndexingChain, encodingConfig EncodingConfig, grpcEndpoint string) TxHandler {
 	return &customMessageHandler{
 		txHandlerClient:    client.NewTxHandlerServiceClient(grpcEndpoint),
 		baseMessageHandler: NewBaseMessageHandler(chainInfo, encodingConfig),

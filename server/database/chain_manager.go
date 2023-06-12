@@ -106,11 +106,12 @@ func (m *ChainManager) UpdateChainInfo(ctx context.Context, entChain *ent.Chain,
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool) (*ent.Chain, error) {
-	updated, err := entChain.
-		Update().
-		SetIsEnabled(isEnabled).
-		Save(ctx)
+func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool, height *uint64) (*ent.Chain, error) {
+	query := entChain.Update().SetIsEnabled(isEnabled)
+	if height != nil {
+		query = query.SetIndexingHeight(*height)
+	}
+	updated, err := query.Save(ctx)
 	if err != nil {
 		return updated, err
 	}

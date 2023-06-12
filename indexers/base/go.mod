@@ -11,8 +11,10 @@ require (
 	github.com/golang/protobuf v1.5.3
 	github.com/segmentio/kafka-go v0.4.40
 	github.com/shifty11/go-logger v0.0.0-20230427145303-ff4524109957
+	github.com/sirupsen/logrus v1.9.0
 	github.com/tendermint/tendermint v0.34.24
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
+	golang.org/x/sync v0.1.0
 	google.golang.org/protobuf v1.30.0
 )
 

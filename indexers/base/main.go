@@ -9,99 +9,128 @@ import (
 	"github.com/loomi-labs/star-scope/indexers/base/common"
 	"github.com/loomi-labs/star-scope/indexers/base/indexer"
 	"github.com/shifty11/go-logger/log"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
-func startIndexer(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus, stopChannels map[uint64]chan uint64, stopChannelsMutex *sync.Mutex) {
-	var kafkaBrokers = strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-	var encodingConfig = indexer.MakeEncodingConfig()
-	response, err := grpcClient.GetIndexingChains(context.Background(), connect.NewRequest(&emptypb.Empty{}))
-	if err != nil {
-		log.Sugar.Errorf("Error getting indexing chains: %v", err)
-	} else {
-		for _, chain := range response.Msg.GetChains() {
-			if _, ok := stopChannels[chain.Id]; ok {
-				// Chain is already being indexed
-				continue
-			}
-			var config = indexer.Config{
-				ChainInfo: indexer.ChainInfo{
-					ChainId:      chain.Id,
-					Path:         chain.Path,
-					RestEndpoint: chain.RestEndpoint,
-					Name:         chain.Name,
-				},
-				KafkaBrokers:   kafkaBrokers,
-				EncodingConfig: encodingConfig,
-			}
-			if chain.HasCustomIndexer {
-				config.MessageHandler = indexer.NewCustomMessageHandler(config.ChainInfo, config.EncodingConfig, "http://localhost:50002")
-			} else {
-				config.MessageHandler = indexer.NewBaseMessageHandler(config.ChainInfo, config.EncodingConfig)
-			}
-
-			var indx = indexer.NewIndexer(config)
-			var stopChannel = make(chan uint64)
-			stopChannelsMutex.Lock()
-			stopChannels[chain.Id] = stopChannel
-			stopChannelsMutex.Unlock()
-			go indx.StartIndexing(chain, updateChannel, stopChannel)
-		}
-	}
+type Config struct {
+	GRPCClient        indexerpbconnect.IndexerServiceClient
+	UpdateChannel     chan indexer.SyncStatus
+	StopChannels      map[uint64]chan struct{}
+	StopChannelsMutex *sync.Mutex
+	KakfaBrokers      []string
+	EncodingConfig    indexer.EncodingConfig
 }
 
-func startChainFetchInterval(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus, stopChannels map[uint64]chan uint64, stopChannelsMutex *sync.Mutex) {
-	if len(stopChannels) == 0 {
-		startIndexer(grpcClient, updateChannel, stopChannels, stopChannelsMutex)
-	}
-	var timer = time.NewTicker(5 * time.Minute)
-	for {
-		<-timer.C
-		startIndexer(grpcClient, updateChannel, stopChannels, stopChannelsMutex)
-	}
-}
-
-func startIndexers() {
-	var updateChannel = make(chan indexer.SyncStatus)
-	defer close(updateChannel)
-
-	var grpcClient = client.NewIndexerServiceClient(
+func newConfig() *Config {
+	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+	encodingConfig := indexer.MakeEncodingConfig()
+	grpcClient := client.NewIndexerServiceClient(
 		common.GetEnvX("INDEXER_GRPC_ENDPOINT"),
 		common.GetEnvX("INDEXER_AUTH_TOKEN"),
 	)
-
-	stopChannels := make(map[uint64]chan uint64)
-	stopChannelsMutex := sync.Mutex{}
-
-	go startChainFetchInterval(grpcClient, updateChannel, stopChannels, &stopChannelsMutex)
-	listenForUpdates(grpcClient, updateChannel, stopChannels, &stopChannelsMutex)
+	return &Config{
+		GRPCClient:        grpcClient,
+		UpdateChannel:     make(chan indexer.SyncStatus),
+		StopChannels:      make(map[uint64]chan struct{}),
+		StopChannelsMutex: &sync.Mutex{},
+		KakfaBrokers:      kafkaBrokers,
+		EncodingConfig:    encodingConfig,
+	}
 }
 
-func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateChannel chan indexer.SyncStatus, stopChannels map[uint64]chan uint64, stopChannelsMutex *sync.Mutex) {
+func (c *Config) Close() {
+	close(c.UpdateChannel)
+}
+
+func startIndexer(chain *indexerpb.IndexingChain, config *Config, g *errgroup.Group) {
+	config.StopChannelsMutex.Lock()
+	stopChannel, ok := config.StopChannels[chain.Id]
+	config.StopChannelsMutex.Unlock()
+	if ok {
+		// Chain is already being indexed
+		return
+	}
+
+	stopChannel = make(chan struct{})
+	config.StopChannelsMutex.Lock()
+	config.StopChannels[chain.Id] = stopChannel
+	config.StopChannelsMutex.Unlock()
+
+	var messageHandler indexer.TxHandler
+	if chain.HasCustomIndexer {
+		messageHandler = indexer.NewCustomMessageHandler(chain, config.EncodingConfig, "http://localhost:50002")
+	} else {
+		messageHandler = indexer.NewBaseMessageHandler(chain, config.EncodingConfig)
+	}
+
+	indx := indexer.NewIndexer(chain, config.EncodingConfig, config.KakfaBrokers, messageHandler)
+	g.Go(func() error {
+		indx.StartIndexing(config.UpdateChannel, stopChannel)
+		return nil
+	})
+}
+
+func startChainFetchInterval(config *Config, g *errgroup.Group) {
+	g.Go(func() error {
+		startIndexerRequest := func() error {
+			response, err := config.GRPCClient.GetIndexingChains(context.Background(), connect.NewRequest(&emptypb.Empty{}))
+			if err != nil {
+				return err
+			}
+
+			for _, chain := range response.Msg.GetChains() {
+				startIndexer(chain, config, g)
+			}
+
+			return nil
+		}
+
+		// Start indexing immediately
+		if err := startIndexerRequest(); err != nil {
+			return err
+		}
+
+		ticker := time.NewTicker(5 * time.Minute)
+		for {
+			select {
+			case <-ticker.C:
+				if err := startIndexerRequest(); err != nil {
+					log.Sugar.Errorf("Error starting indexer: %v", err)
+				}
+			}
+		}
+	})
+}
+
+func listenForUpdates(config *Config) {
 	const updateBatchTimeout = 30 * time.Second // Time duration to wait for more updates
 
-	var updates = make(map[uint64]*indexerpb.IndexingChain)
-	var timer *time.Timer
-	var timerExpired <-chan time.Time
+	updates := make(map[uint64]*indexerpb.IndexingChain)
+	timer := time.NewTimer(updateBatchTimeout)
+	timerExpired := timer.C
 
 	for {
 		select {
-		case update, ok := <-updateChannel:
+		case update, ok := <-config.UpdateChannel:
 			if !ok {
 				// Channel is closed, call sendUpdates and exit the function
 				log.Sugar.Info("Update channel closed, exiting")
-				sendUpdates(grpcClient, updates)
+				sendUpdates(config, updates)
 				return
 			}
 
-			var handledMessageTypes []string
+			handledMessageTypes := make([]string, 0, len(update.HandledMessageTypes))
 			for msgType := range update.HandledMessageTypes {
 				handledMessageTypes = append(handledMessageTypes, msgType)
 			}
-			var unhandledMessageTypes []string
+			unhandledMessageTypes := make([]string, 0, len(update.UnhandledMessageTypes))
 			for msgType := range update.UnhandledMessageTypes {
 				unhandledMessageTypes = append(unhandledMessageTypes, msgType)
 			}
@@ -111,44 +140,38 @@ func listenForUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updateCh
 				HandledMessageTypes:   handledMessageTypes,
 				UnhandledMessageTypes: unhandledMessageTypes,
 			}
-
-			// Start the timer if it's not running
-			if timer == nil {
-				timer = time.NewTimer(updateBatchTimeout)
-				timerExpired = timer.C
-			}
 		case <-timerExpired:
-			disabledChainIds := sendUpdates(grpcClient, updates) // Send the batch when the timer expires
+			disabledChainIds := sendUpdates(config, updates) // Send the batch when the timer expires
 			timer.Stop()
-			timer = nil // Reset the timer
+			timer = time.NewTimer(updateBatchTimeout)
+			timerExpired = timer.C
 			updates = make(map[uint64]*indexerpb.IndexingChain)
-			for _, chainId := range disabledChainIds {
-				stopChannelsMutex.Lock()
-				if stopChannel, ok := stopChannels[chainId]; ok {
-					stopChannel <- chainId
-					delete(stopChannels, chainId)
+			for _, chainID := range disabledChainIds {
+				if stopChannel, ok := config.StopChannels[chainID]; ok {
+					config.StopChannelsMutex.Lock()
+					close(stopChannel)
+					delete(config.StopChannels, chainID)
+					config.StopChannelsMutex.Unlock()
 				}
-				stopChannelsMutex.Unlock()
 			}
 		}
 	}
 }
 
-func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[uint64]*indexerpb.IndexingChain) []uint64 {
+func sendUpdates(config *Config, updates map[uint64]*indexerpb.IndexingChain) []uint64 {
 	if len(updates) > 0 {
 		log.Sugar.Debugf("Sending %d updates", len(updates))
-		var chains []*indexerpb.IndexingChain
+		chains := make([]*indexerpb.IndexingChain, 0, len(updates))
 		for _, update := range updates {
 			chains = append(chains, update)
 		}
-		var request = connect.NewRequest(&indexerpb.UpdateIndexingChainsRequest{
+		request := connect.NewRequest(&indexerpb.UpdateIndexingChainsRequest{
 			Chains: chains,
 		})
-		response, err := grpcClient.UpdateIndexingChains(context.Background(), request)
+		response, err := config.GRPCClient.UpdateIndexingChains(context.Background(), request)
 		if err != nil {
 			log.Sugar.Errorf("Error updating indexing chains: %v", err)
-			time.Sleep(1)
-			sendUpdates(grpcClient, updates) // Retry sending the batch
+			return nil
 		}
 		return response.Msg.GetDisabledChainIds()
 	}
@@ -157,12 +180,35 @@ func sendUpdates(grpcClient indexerpbconnect.IndexerServiceClient, updates map[u
 
 func main() {
 	defer log.SyncLogger()
-	defer func() {
-		if err := recover(); err != nil {
-			log.Sugar.Panic(err)
-			return
-		}
-	}()
 
-	startIndexers()
+	config := newConfig()
+	defer config.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		startChainFetchInterval(config, g)
+		return nil
+	})
+	g.Go(func() error {
+		listenForUpdates(config)
+		return nil
+	})
+
+	// Wait for interrupt signal to gracefully shutdown
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGINT)
+	select {
+	case <-interrupt:
+		// Received an interrupt signal, initiate graceful shutdown
+		log.Sugar.Info("Received interrupt signal, shutting down")
+		cancel()
+	case <-ctx.Done():
+		// Context canceled, exiting the program
+	}
+
+	// Wait for all goroutines to finish
+	if err := g.Wait(); err != nil {
+		log.Sugar.Fatalf("Error during goroutine execution: %v", err)
+	}
 }

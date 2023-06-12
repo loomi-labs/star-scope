@@ -52,7 +52,7 @@ var listUnhandledMsgTypesCmd = &cobra.Command{
 	},
 }
 
-func enableChain(args []string, enable bool) {
+func enableChain(args []string, enable bool, fromLatestBlock bool) {
 	if len(args) == 0 {
 		fmt.Println("Missing chain name")
 		os.Exit(1)
@@ -63,7 +63,12 @@ func enableChain(args []string, enable bool) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	chain, err = chainManager.UpdateSetEnabled(context.Background(), chain, enable)
+	var indexingHeight *uint64
+	if fromLatestBlock {
+		var value uint64 = 0
+		indexingHeight = &value
+	}
+	chain, err = chainManager.UpdateSetEnabled(context.Background(), chain, enable, indexingHeight)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -86,7 +91,12 @@ var enableChainCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		enableChain(args, enable)
+		latestBlock, err := cmd.Flags().GetBool("latest-block")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		enableChain(args, enable, latestBlock)
 	},
 }
 
@@ -95,5 +105,7 @@ func init() {
 	infoCmd.AddCommand(listHandledMsgTypesCmd)
 	infoCmd.AddCommand(listUnhandledMsgTypesCmd)
 	infoCmd.AddCommand(enableChainCmd)
+
 	enableChainCmd.Flags().BoolP("enable", "e", true, "Enable chain")
+	enableChainCmd.Flags().BoolP("latest-block", "l", false, "Start indexing from the latest block")
 }

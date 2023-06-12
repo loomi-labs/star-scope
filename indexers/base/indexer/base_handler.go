@@ -23,11 +23,11 @@ import (
 
 type baseMessageHandler struct {
 	TxHandler
-	chainInfo ChainInfo
+	chainInfo *indexerpb.IndexingChain
 	txHelper  TxHelper
 }
 
-func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) TxHandler {
+func NewBaseMessageHandler(chainInfo *indexerpb.IndexingChain, encodingConfig EncodingConfig) TxHandler {
 	return &baseMessageHandler{
 		chainInfo: chainInfo,
 		txHelper:  NewTxHelper(chainInfo, encodingConfig),
@@ -147,7 +147,7 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 		return nil, nil
 	}
 	walletEvent := &event.WalletEvent{
-		ChainId:    i.chainInfo.ChainId,
+		ChainId:    i.chainInfo.Id,
 		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
 		Event: &event.WalletEvent_CoinReceived{
@@ -184,7 +184,7 @@ func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([
 	}
 	if wasSuccessful {
 		var txEvent = &event.WalletEvent{
-			ChainId:       i.chainInfo.ChainId,
+			ChainId:       i.chainInfo.Id,
 			WalletAddress: msg.ToAddress,
 			Timestamp:     timestamp,
 			NotifyTime:    timestamppb.Now(),
@@ -230,7 +230,7 @@ func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate
 		return nil, err
 	}
 	txEvent := &event.WalletEvent{
-		ChainId:    i.chainInfo.ChainId,
+		ChainId:    i.chainInfo.Id,
 		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
 		Event: &event.WalletEvent_Unstake{
