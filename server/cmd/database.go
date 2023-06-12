@@ -24,7 +24,7 @@ var migrateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		database.MigrateDb()
 
-		dbManagers := database.NewDefaultDbManagers()
+		dbManagers := database.NewDbManagersWithoutKafka()
 		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
 		chainCrawler.AddOrUpdateChains()
 

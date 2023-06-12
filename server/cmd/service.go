@@ -7,9 +7,11 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/crawler/chain_crawler"
 	"github.com/loomi-labs/star-scope/crawler/governance_crawler"
+	"github.com/loomi-labs/star-scope/crawler/validator_crawler"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/grpc"
 	"github.com/loomi-labs/star-scope/kafka"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"log"
 	"strings"
 	"time"
@@ -110,8 +112,19 @@ var startGovernanceCrawlerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-		chainCrawler := governance_crawler.NewGovernanceCrawler(dbManagers, kafkaBrokers)
+		kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+		chainCrawler := governance_crawler.NewGovernanceCrawler(dbManagers, kafkaInternal)
 		chainCrawler.StartCrawling()
+	},
+}
+
+var startValidatorCrawlerCmd = &cobra.Command{
+	Use:   "validator-crawler",
+	Short: "Start the validator crawler",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		crawler := validator_crawler.NewValidatorCrawler(dbManagers)
+		crawler.StartCrawling()
 	},
 }
 
@@ -125,6 +138,7 @@ func init() {
 
 	serviceCmd.AddCommand(startChainCrawlerCmd)
 	serviceCmd.AddCommand(startGovernanceCrawlerCmd)
+	serviceCmd.AddCommand(startValidatorCrawlerCmd)
 
 	startWalletEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }

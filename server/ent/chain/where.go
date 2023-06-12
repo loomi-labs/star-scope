@@ -919,6 +919,29 @@ func HasContractProposalsWith(preds ...predicate.ContractProposal) predicate.Cha
 	})
 }
 
+// HasValidators applies the HasEdge predicate on the "validators" edge.
+func HasValidators() predicate.Chain {
+	return predicate.Chain(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ValidatorsTable, ValidatorsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasValidatorsWith applies the HasEdge predicate on the "validators" edge with a given conditions (other predicates).
+func HasValidatorsWith(preds ...predicate.Validator) predicate.Chain {
+	return predicate.Chain(func(s *sql.Selector) {
+		step := newValidatorsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Chain) predicate.Chain {
 	return predicate.Chain(func(s *sql.Selector) {

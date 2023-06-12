@@ -13,18 +13,16 @@ import (
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"strings"
 	"time"
 )
 
 type EventListenerManager struct {
 	client        *ent.Client
-	kafkaInternal *kafka_internal.KafkaInternal
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewEventListenerManager(client *ent.Client) *EventListenerManager {
-	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-	return &EventListenerManager{client: client, kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers)}
+func NewEventListenerManager(client *ent.Client, kafkaInternal kafka_internal.KafkaInternal) *EventListenerManager {
+	return &EventListenerManager{client: client, kafkaInternal: kafkaInternal}
 }
 
 func (m *EventListenerManager) QueryAll(ctx context.Context) []*ent.EventListener {

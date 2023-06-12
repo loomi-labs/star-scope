@@ -16,6 +16,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 // ChainUpdate is the builder for updating Chain entities.
@@ -203,6 +204,21 @@ func (cu *ChainUpdate) AddContractProposals(c ...*ContractProposal) *ChainUpdate
 	return cu.AddContractProposalIDs(ids...)
 }
 
+// AddValidatorIDs adds the "validators" edge to the Validator entity by IDs.
+func (cu *ChainUpdate) AddValidatorIDs(ids ...int) *ChainUpdate {
+	cu.mutation.AddValidatorIDs(ids...)
+	return cu
+}
+
+// AddValidators adds the "validators" edges to the Validator entity.
+func (cu *ChainUpdate) AddValidators(v ...*Validator) *ChainUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return cu.AddValidatorIDs(ids...)
+}
+
 // Mutation returns the ChainMutation object of the builder.
 func (cu *ChainUpdate) Mutation() *ChainMutation {
 	return cu.mutation
@@ -269,6 +285,27 @@ func (cu *ChainUpdate) RemoveContractProposals(c ...*ContractProposal) *ChainUpd
 		ids[i] = c[i].ID
 	}
 	return cu.RemoveContractProposalIDs(ids...)
+}
+
+// ClearValidators clears all "validators" edges to the Validator entity.
+func (cu *ChainUpdate) ClearValidators() *ChainUpdate {
+	cu.mutation.ClearValidators()
+	return cu
+}
+
+// RemoveValidatorIDs removes the "validators" edge to Validator entities by IDs.
+func (cu *ChainUpdate) RemoveValidatorIDs(ids ...int) *ChainUpdate {
+	cu.mutation.RemoveValidatorIDs(ids...)
+	return cu
+}
+
+// RemoveValidators removes "validators" edges to Validator entities.
+func (cu *ChainUpdate) RemoveValidators(v ...*Validator) *ChainUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return cu.RemoveValidatorIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -490,6 +527,51 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if cu.mutation.ValidatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedValidatorsIDs(); len(nodes) > 0 && !cu.mutation.ValidatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.ValidatorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chain.Label}
@@ -682,6 +764,21 @@ func (cuo *ChainUpdateOne) AddContractProposals(c ...*ContractProposal) *ChainUp
 	return cuo.AddContractProposalIDs(ids...)
 }
 
+// AddValidatorIDs adds the "validators" edge to the Validator entity by IDs.
+func (cuo *ChainUpdateOne) AddValidatorIDs(ids ...int) *ChainUpdateOne {
+	cuo.mutation.AddValidatorIDs(ids...)
+	return cuo
+}
+
+// AddValidators adds the "validators" edges to the Validator entity.
+func (cuo *ChainUpdateOne) AddValidators(v ...*Validator) *ChainUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return cuo.AddValidatorIDs(ids...)
+}
+
 // Mutation returns the ChainMutation object of the builder.
 func (cuo *ChainUpdateOne) Mutation() *ChainMutation {
 	return cuo.mutation
@@ -748,6 +845,27 @@ func (cuo *ChainUpdateOne) RemoveContractProposals(c ...*ContractProposal) *Chai
 		ids[i] = c[i].ID
 	}
 	return cuo.RemoveContractProposalIDs(ids...)
+}
+
+// ClearValidators clears all "validators" edges to the Validator entity.
+func (cuo *ChainUpdateOne) ClearValidators() *ChainUpdateOne {
+	cuo.mutation.ClearValidators()
+	return cuo
+}
+
+// RemoveValidatorIDs removes the "validators" edge to Validator entities by IDs.
+func (cuo *ChainUpdateOne) RemoveValidatorIDs(ids ...int) *ChainUpdateOne {
+	cuo.mutation.RemoveValidatorIDs(ids...)
+	return cuo
+}
+
+// RemoveValidators removes "validators" edges to Validator entities.
+func (cuo *ChainUpdateOne) RemoveValidators(v ...*Validator) *ChainUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return cuo.RemoveValidatorIDs(ids...)
 }
 
 // Where appends a list predicates to the ChainUpdate builder.
@@ -992,6 +1110,51 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(contractproposal.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.ValidatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedValidatorsIDs(); len(nodes) > 0 && !cuo.mutation.ValidatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.ValidatorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

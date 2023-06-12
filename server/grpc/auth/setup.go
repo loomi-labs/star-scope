@@ -17,10 +17,10 @@ import (
 const urlUnstaking = "%v/cosmos/staking/v1beta1/delegators/%v/unbonding_delegations"
 
 type SetupCrawler struct {
-	kafkaInternal *kafka_internal.KafkaInternal
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewSetupCrawler(kafkaInternal *kafka_internal.KafkaInternal) *SetupCrawler {
+func NewSetupCrawler(kafkaInternal kafka_internal.KafkaInternal) *SetupCrawler {
 	return &SetupCrawler{
 		kafkaInternal: kafkaInternal,
 	}

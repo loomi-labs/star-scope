@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"errors"
-	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
@@ -18,12 +17,11 @@ import (
 
 type ChainManager struct {
 	client        *ent.Client
-	kafkaInternal *kafka_internal.KafkaInternal
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewChainManager(client *ent.Client) *ChainManager {
-	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-	return &ChainManager{client: client, kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers)}
+func NewChainManager(client *ent.Client, kafkaInternal kafka_internal.KafkaInternal) *ChainManager {
+	return &ChainManager{client: client, kafkaInternal: kafkaInternal}
 }
 
 func (m *ChainManager) QueryAll(ctx context.Context) []*ent.Chain {

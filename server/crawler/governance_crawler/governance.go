@@ -20,13 +20,13 @@ const urlProposals = "%v/cosmos/gov/v1beta1/proposals"
 
 type GovernanceCrawler struct {
 	chainManager  *database.ChainManager
-	kafkaInternal *kafka_internal.KafkaInternal
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewGovernanceCrawler(dbManagers *database.DbManagers, kafkaBrokers []string) *GovernanceCrawler {
+func NewGovernanceCrawler(dbManagers *database.DbManagers, kafkaInternal kafka_internal.KafkaInternal) *GovernanceCrawler {
 	return &GovernanceCrawler{
 		chainManager:  dbManagers.ChainManager,
-		kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers),
+		kafkaInternal: kafkaInternal,
 	}
 }
 

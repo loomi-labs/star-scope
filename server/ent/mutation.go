@@ -20,6 +20,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 const (
@@ -37,6 +38,7 @@ const (
 	TypeEventListener    = "EventListener"
 	TypeProposal         = "Proposal"
 	TypeUser             = "User"
+	TypeValidator        = "Validator"
 )
 
 // ChainMutation represents an operation that mutates the Chain nodes in the graph.
@@ -70,6 +72,9 @@ type ChainMutation struct {
 	contract_proposals        map[int]struct{}
 	removedcontract_proposals map[int]struct{}
 	clearedcontract_proposals bool
+	validators                map[int]struct{}
+	removedvalidators         map[int]struct{}
+	clearedvalidators         bool
 	done                      bool
 	oldValue                  func(context.Context) (*Chain, error)
 	predicates                []predicate.Chain
@@ -859,6 +864,60 @@ func (m *ChainMutation) ResetContractProposals() {
 	m.removedcontract_proposals = nil
 }
 
+// AddValidatorIDs adds the "validators" edge to the Validator entity by ids.
+func (m *ChainMutation) AddValidatorIDs(ids ...int) {
+	if m.validators == nil {
+		m.validators = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.validators[ids[i]] = struct{}{}
+	}
+}
+
+// ClearValidators clears the "validators" edge to the Validator entity.
+func (m *ChainMutation) ClearValidators() {
+	m.clearedvalidators = true
+}
+
+// ValidatorsCleared reports if the "validators" edge to the Validator entity was cleared.
+func (m *ChainMutation) ValidatorsCleared() bool {
+	return m.clearedvalidators
+}
+
+// RemoveValidatorIDs removes the "validators" edge to the Validator entity by IDs.
+func (m *ChainMutation) RemoveValidatorIDs(ids ...int) {
+	if m.removedvalidators == nil {
+		m.removedvalidators = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.validators, ids[i])
+		m.removedvalidators[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedValidators returns the removed IDs of the "validators" edge to the Validator entity.
+func (m *ChainMutation) RemovedValidatorsIDs() (ids []int) {
+	for id := range m.removedvalidators {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ValidatorsIDs returns the "validators" edge IDs in the mutation.
+func (m *ChainMutation) ValidatorsIDs() (ids []int) {
+	for id := range m.validators {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetValidators resets all changes to the "validators" edge.
+func (m *ChainMutation) ResetValidators() {
+	m.validators = nil
+	m.clearedvalidators = false
+	m.removedvalidators = nil
+}
+
 // Where appends a list predicates to the ChainMutation builder.
 func (m *ChainMutation) Where(ps ...predicate.Chain) {
 	m.predicates = append(m.predicates, ps...)
@@ -1228,7 +1287,7 @@ func (m *ChainMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ChainMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.event_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1237,6 +1296,9 @@ func (m *ChainMutation) AddedEdges() []string {
 	}
 	if m.contract_proposals != nil {
 		edges = append(edges, chain.EdgeContractProposals)
+	}
+	if m.validators != nil {
+		edges = append(edges, chain.EdgeValidators)
 	}
 	return edges
 }
@@ -1263,13 +1325,19 @@ func (m *ChainMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeValidators:
+		ids := make([]ent.Value, 0, len(m.validators))
+		for id := range m.validators {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ChainMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedevent_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1278,6 +1346,9 @@ func (m *ChainMutation) RemovedEdges() []string {
 	}
 	if m.removedcontract_proposals != nil {
 		edges = append(edges, chain.EdgeContractProposals)
+	}
+	if m.removedvalidators != nil {
+		edges = append(edges, chain.EdgeValidators)
 	}
 	return edges
 }
@@ -1304,13 +1375,19 @@ func (m *ChainMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeValidators:
+		ids := make([]ent.Value, 0, len(m.removedvalidators))
+		for id := range m.removedvalidators {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ChainMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedevent_listeners {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1319,6 +1396,9 @@ func (m *ChainMutation) ClearedEdges() []string {
 	}
 	if m.clearedcontract_proposals {
 		edges = append(edges, chain.EdgeContractProposals)
+	}
+	if m.clearedvalidators {
+		edges = append(edges, chain.EdgeValidators)
 	}
 	return edges
 }
@@ -1333,6 +1413,8 @@ func (m *ChainMutation) EdgeCleared(name string) bool {
 		return m.clearedproposals
 	case chain.EdgeContractProposals:
 		return m.clearedcontract_proposals
+	case chain.EdgeValidators:
+		return m.clearedvalidators
 	}
 	return false
 }
@@ -1357,6 +1439,9 @@ func (m *ChainMutation) ResetEdge(name string) error {
 		return nil
 	case chain.EdgeContractProposals:
 		m.ResetContractProposals()
+		return nil
+	case chain.EdgeValidators:
+		m.ResetValidators()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain edge %s", name)
@@ -5199,4 +5284,689 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// ValidatorMutation represents an operation that mutates the Validator nodes in the graph.
+type ValidatorMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	create_time         *time.Time
+	update_time         *time.Time
+	operator_address    *string
+	address             *string
+	moniker             *string
+	first_inactive_time *time.Time
+	clearedFields       map[string]struct{}
+	chain               *int
+	clearedchain        bool
+	done                bool
+	oldValue            func(context.Context) (*Validator, error)
+	predicates          []predicate.Validator
+}
+
+var _ ent.Mutation = (*ValidatorMutation)(nil)
+
+// validatorOption allows management of the mutation configuration using functional options.
+type validatorOption func(*ValidatorMutation)
+
+// newValidatorMutation creates new mutation for the Validator entity.
+func newValidatorMutation(c config, op Op, opts ...validatorOption) *ValidatorMutation {
+	m := &ValidatorMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeValidator,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withValidatorID sets the ID field of the mutation.
+func withValidatorID(id int) validatorOption {
+	return func(m *ValidatorMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Validator
+		)
+		m.oldValue = func(ctx context.Context) (*Validator, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Validator.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withValidator sets the old Validator of the mutation.
+func withValidator(node *Validator) validatorOption {
+	return func(m *ValidatorMutation) {
+		m.oldValue = func(context.Context) (*Validator, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ValidatorMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ValidatorMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ValidatorMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ValidatorMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Validator.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *ValidatorMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *ValidatorMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *ValidatorMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *ValidatorMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *ValidatorMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *ValidatorMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetOperatorAddress sets the "operator_address" field.
+func (m *ValidatorMutation) SetOperatorAddress(s string) {
+	m.operator_address = &s
+}
+
+// OperatorAddress returns the value of the "operator_address" field in the mutation.
+func (m *ValidatorMutation) OperatorAddress() (r string, exists bool) {
+	v := m.operator_address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOperatorAddress returns the old "operator_address" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldOperatorAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOperatorAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOperatorAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOperatorAddress: %w", err)
+	}
+	return oldValue.OperatorAddress, nil
+}
+
+// ResetOperatorAddress resets all changes to the "operator_address" field.
+func (m *ValidatorMutation) ResetOperatorAddress() {
+	m.operator_address = nil
+}
+
+// SetAddress sets the "address" field.
+func (m *ValidatorMutation) SetAddress(s string) {
+	m.address = &s
+}
+
+// Address returns the value of the "address" field in the mutation.
+func (m *ValidatorMutation) Address() (r string, exists bool) {
+	v := m.address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddress returns the old "address" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddress: %w", err)
+	}
+	return oldValue.Address, nil
+}
+
+// ResetAddress resets all changes to the "address" field.
+func (m *ValidatorMutation) ResetAddress() {
+	m.address = nil
+}
+
+// SetMoniker sets the "moniker" field.
+func (m *ValidatorMutation) SetMoniker(s string) {
+	m.moniker = &s
+}
+
+// Moniker returns the value of the "moniker" field in the mutation.
+func (m *ValidatorMutation) Moniker() (r string, exists bool) {
+	v := m.moniker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMoniker returns the old "moniker" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldMoniker(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMoniker is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMoniker requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMoniker: %w", err)
+	}
+	return oldValue.Moniker, nil
+}
+
+// ResetMoniker resets all changes to the "moniker" field.
+func (m *ValidatorMutation) ResetMoniker() {
+	m.moniker = nil
+}
+
+// SetFirstInactiveTime sets the "first_inactive_time" field.
+func (m *ValidatorMutation) SetFirstInactiveTime(t time.Time) {
+	m.first_inactive_time = &t
+}
+
+// FirstInactiveTime returns the value of the "first_inactive_time" field in the mutation.
+func (m *ValidatorMutation) FirstInactiveTime() (r time.Time, exists bool) {
+	v := m.first_inactive_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstInactiveTime returns the old "first_inactive_time" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldFirstInactiveTime(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstInactiveTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstInactiveTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstInactiveTime: %w", err)
+	}
+	return oldValue.FirstInactiveTime, nil
+}
+
+// ClearFirstInactiveTime clears the value of the "first_inactive_time" field.
+func (m *ValidatorMutation) ClearFirstInactiveTime() {
+	m.first_inactive_time = nil
+	m.clearedFields[validator.FieldFirstInactiveTime] = struct{}{}
+}
+
+// FirstInactiveTimeCleared returns if the "first_inactive_time" field was cleared in this mutation.
+func (m *ValidatorMutation) FirstInactiveTimeCleared() bool {
+	_, ok := m.clearedFields[validator.FieldFirstInactiveTime]
+	return ok
+}
+
+// ResetFirstInactiveTime resets all changes to the "first_inactive_time" field.
+func (m *ValidatorMutation) ResetFirstInactiveTime() {
+	m.first_inactive_time = nil
+	delete(m.clearedFields, validator.FieldFirstInactiveTime)
+}
+
+// SetChainID sets the "chain" edge to the Chain entity by id.
+func (m *ValidatorMutation) SetChainID(id int) {
+	m.chain = &id
+}
+
+// ClearChain clears the "chain" edge to the Chain entity.
+func (m *ValidatorMutation) ClearChain() {
+	m.clearedchain = true
+}
+
+// ChainCleared reports if the "chain" edge to the Chain entity was cleared.
+func (m *ValidatorMutation) ChainCleared() bool {
+	return m.clearedchain
+}
+
+// ChainID returns the "chain" edge ID in the mutation.
+func (m *ValidatorMutation) ChainID() (id int, exists bool) {
+	if m.chain != nil {
+		return *m.chain, true
+	}
+	return
+}
+
+// ChainIDs returns the "chain" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ChainID instead. It exists only for internal usage by the builders.
+func (m *ValidatorMutation) ChainIDs() (ids []int) {
+	if id := m.chain; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetChain resets all changes to the "chain" edge.
+func (m *ValidatorMutation) ResetChain() {
+	m.chain = nil
+	m.clearedchain = false
+}
+
+// Where appends a list predicates to the ValidatorMutation builder.
+func (m *ValidatorMutation) Where(ps ...predicate.Validator) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ValidatorMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ValidatorMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Validator, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ValidatorMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ValidatorMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Validator).
+func (m *ValidatorMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ValidatorMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.create_time != nil {
+		fields = append(fields, validator.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, validator.FieldUpdateTime)
+	}
+	if m.operator_address != nil {
+		fields = append(fields, validator.FieldOperatorAddress)
+	}
+	if m.address != nil {
+		fields = append(fields, validator.FieldAddress)
+	}
+	if m.moniker != nil {
+		fields = append(fields, validator.FieldMoniker)
+	}
+	if m.first_inactive_time != nil {
+		fields = append(fields, validator.FieldFirstInactiveTime)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ValidatorMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case validator.FieldCreateTime:
+		return m.CreateTime()
+	case validator.FieldUpdateTime:
+		return m.UpdateTime()
+	case validator.FieldOperatorAddress:
+		return m.OperatorAddress()
+	case validator.FieldAddress:
+		return m.Address()
+	case validator.FieldMoniker:
+		return m.Moniker()
+	case validator.FieldFirstInactiveTime:
+		return m.FirstInactiveTime()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ValidatorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case validator.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case validator.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case validator.FieldOperatorAddress:
+		return m.OldOperatorAddress(ctx)
+	case validator.FieldAddress:
+		return m.OldAddress(ctx)
+	case validator.FieldMoniker:
+		return m.OldMoniker(ctx)
+	case validator.FieldFirstInactiveTime:
+		return m.OldFirstInactiveTime(ctx)
+	}
+	return nil, fmt.Errorf("unknown Validator field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ValidatorMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case validator.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case validator.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case validator.FieldOperatorAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOperatorAddress(v)
+		return nil
+	case validator.FieldAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddress(v)
+		return nil
+	case validator.FieldMoniker:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMoniker(v)
+		return nil
+	case validator.FieldFirstInactiveTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstInactiveTime(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Validator field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ValidatorMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ValidatorMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ValidatorMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Validator numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ValidatorMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(validator.FieldFirstInactiveTime) {
+		fields = append(fields, validator.FieldFirstInactiveTime)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ValidatorMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ValidatorMutation) ClearField(name string) error {
+	switch name {
+	case validator.FieldFirstInactiveTime:
+		m.ClearFirstInactiveTime()
+		return nil
+	}
+	return fmt.Errorf("unknown Validator nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ValidatorMutation) ResetField(name string) error {
+	switch name {
+	case validator.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case validator.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case validator.FieldOperatorAddress:
+		m.ResetOperatorAddress()
+		return nil
+	case validator.FieldAddress:
+		m.ResetAddress()
+		return nil
+	case validator.FieldMoniker:
+		m.ResetMoniker()
+		return nil
+	case validator.FieldFirstInactiveTime:
+		m.ResetFirstInactiveTime()
+		return nil
+	}
+	return fmt.Errorf("unknown Validator field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ValidatorMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.chain != nil {
+		edges = append(edges, validator.EdgeChain)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ValidatorMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case validator.EdgeChain:
+		if id := m.chain; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ValidatorMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ValidatorMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ValidatorMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedchain {
+		edges = append(edges, validator.EdgeChain)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ValidatorMutation) EdgeCleared(name string) bool {
+	switch name {
+	case validator.EdgeChain:
+		return m.clearedchain
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ValidatorMutation) ClearEdge(name string) error {
+	switch name {
+	case validator.EdgeChain:
+		m.ClearChain()
+		return nil
+	}
+	return fmt.Errorf("unknown Validator unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ValidatorMutation) ResetEdge(name string) error {
+	switch name {
+	case validator.EdgeChain:
+		m.ResetChain()
+		return nil
+	}
+	return fmt.Errorf("unknown Validator edge %s", name)
 }

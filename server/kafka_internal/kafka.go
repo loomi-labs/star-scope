@@ -45,17 +45,25 @@ func toDbChange(data []byte) (DbChange, error) {
 	}
 }
 
-type KafkaInternal struct {
+type KafkaInternal interface {
+	ProduceDbChangeMsg(dbChange DbChange)
+	ReadDbChanges(ctx context.Context, ch chan DbChange, subscribedChanges []DbChange)
+	ProduceWalletEvents(msgs [][]byte)
+	ProduceChainEvents(msgs [][]byte)
+	ProduceContractEvents(msgs [][]byte)
+}
+
+type kafkaInternal struct {
 	addresses []string
 }
 
-func NewKafkaInternal(addresses []string) *KafkaInternal {
-	return &KafkaInternal{
+func NewKafkaInternal(addresses []string) KafkaInternal {
+	return &kafkaInternal{
 		addresses: addresses,
 	}
 }
 
-func (k *KafkaInternal) reader(topic Topic) *kafka.Reader {
+func (k *kafkaInternal) reader(topic Topic) *kafka.Reader {
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   k.addresses,
 		Topic:     string(topic),
@@ -66,14 +74,14 @@ func (k *KafkaInternal) reader(topic Topic) *kafka.Reader {
 	})
 }
 
-func (k *KafkaInternal) closeReader(r *kafka.Reader) {
+func (k *kafkaInternal) closeReader(r *kafka.Reader) {
 	err := r.Close()
 	if err != nil {
 		log.Sugar.Fatal("failed to closeReader writer:", err)
 	}
 }
 
-func (k *KafkaInternal) writer(topic Topic) *kafka.Writer {
+func (k *kafkaInternal) writer(topic Topic) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:     kafka.TCP(k.addresses...),
 		Topic:    string(topic),
@@ -81,14 +89,14 @@ func (k *KafkaInternal) writer(topic Topic) *kafka.Writer {
 	}
 }
 
-func (k *KafkaInternal) closeWriter(w *kafka.Writer) {
+func (k *kafkaInternal) closeWriter(w *kafka.Writer) {
 	err := w.Close()
 	if err != nil {
 		log.Sugar.Fatal("failed to close writer:", err)
 	}
 }
 
-func (k *KafkaInternal) ProduceDbChangeMsg(dbChange DbChange) {
+func (k *kafkaInternal) ProduceDbChangeMsg(dbChange DbChange) {
 	w := k.writer(DbEntityChanged)
 	defer k.closeWriter(w)
 
@@ -98,7 +106,7 @@ func (k *KafkaInternal) ProduceDbChangeMsg(dbChange DbChange) {
 	}
 }
 
-func (k *KafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, subscribedChanges []DbChange) {
+func (k *kafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, subscribedChanges []DbChange) {
 	r := k.reader(DbEntityChanged)
 	defer k.closeReader(r)
 	err := r.SetOffsetAt(context.Background(), time.Now())
@@ -126,7 +134,7 @@ func (k *KafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, sub
 	}
 }
 
-func (k *KafkaInternal) produceEvents(topic Topic, msgs [][]byte) {
+func (k *kafkaInternal) produceEvents(topic Topic, msgs [][]byte) {
 	w := k.writer(topic)
 	defer k.closeWriter(w)
 
@@ -141,14 +149,14 @@ func (k *KafkaInternal) produceEvents(topic Topic, msgs [][]byte) {
 	}
 }
 
-func (k *KafkaInternal) ProduceWalletEvents(msgs [][]byte) {
+func (k *kafkaInternal) ProduceWalletEvents(msgs [][]byte) {
 	k.produceEvents(WalletEventsTopic, msgs)
 }
 
-func (k *KafkaInternal) ProduceChainEvents(msgs [][]byte) {
+func (k *kafkaInternal) ProduceChainEvents(msgs [][]byte) {
 	k.produceEvents(ChainEventsTopic, msgs)
 }
 
-func (k *KafkaInternal) ProduceContractEvents(msgs [][]byte) {
+func (k *kafkaInternal) ProduceContractEvents(msgs [][]byte) {
 	k.produceEvents(ContractEventsTopic, msgs)
 }

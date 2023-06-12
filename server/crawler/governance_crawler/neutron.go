@@ -20,10 +20,10 @@ const urlCosmWasm = "%v/cosmwasm/wasm/v1/contract/%v/smart/%v"
 
 type NeutronCrawler struct {
 	chainManager  *database.ChainManager
-	kafkaInternal *kafka_internal.KafkaInternal
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewNeutronCrawler(chainManager *database.ChainManager, kafkaInternal *kafka_internal.KafkaInternal) *NeutronCrawler {
+func NewNeutronCrawler(chainManager *database.ChainManager, kafkaInternal kafka_internal.KafkaInternal) *NeutronCrawler {
 	return &NeutronCrawler{
 		chainManager:  chainManager,
 		kafkaInternal: kafkaInternal,

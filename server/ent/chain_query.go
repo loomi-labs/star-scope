@@ -16,6 +16,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 // ChainQuery is the builder for querying Chain entities.
@@ -28,6 +29,7 @@ type ChainQuery struct {
 	withEventListeners    *EventListenerQuery
 	withProposals         *ProposalQuery
 	withContractProposals *ContractProposalQuery
+	withValidators        *ValidatorQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -123,6 +125,28 @@ func (cq *ChainQuery) QueryContractProposals() *ContractProposalQuery {
 			sqlgraph.From(chain.Table, chain.FieldID, selector),
 			sqlgraph.To(contractproposal.Table, contractproposal.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chain.ContractProposalsTable, chain.ContractProposalsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryValidators chains the current query on the "validators" edge.
+func (cq *ChainQuery) QueryValidators() *ValidatorQuery {
+	query := (&ValidatorClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, selector),
+			sqlgraph.To(validator.Table, validator.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, chain.ValidatorsTable, chain.ValidatorsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -325,6 +349,7 @@ func (cq *ChainQuery) Clone() *ChainQuery {
 		withEventListeners:    cq.withEventListeners.Clone(),
 		withProposals:         cq.withProposals.Clone(),
 		withContractProposals: cq.withContractProposals.Clone(),
+		withValidators:        cq.withValidators.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -361,6 +386,17 @@ func (cq *ChainQuery) WithContractProposals(opts ...func(*ContractProposalQuery)
 		opt(query)
 	}
 	cq.withContractProposals = query
+	return cq
+}
+
+// WithValidators tells the query-builder to eager-load the nodes that are connected to
+// the "validators" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *ChainQuery) WithValidators(opts ...func(*ValidatorQuery)) *ChainQuery {
+	query := (&ValidatorClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withValidators = query
 	return cq
 }
 
@@ -442,10 +478,11 @@ func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain,
 	var (
 		nodes       = []*Chain{}
 		_spec       = cq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			cq.withEventListeners != nil,
 			cq.withProposals != nil,
 			cq.withContractProposals != nil,
+			cq.withValidators != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -484,6 +521,13 @@ func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain,
 		if err := cq.loadContractProposals(ctx, query, nodes,
 			func(n *Chain) { n.Edges.ContractProposals = []*ContractProposal{} },
 			func(n *Chain, e *ContractProposal) { n.Edges.ContractProposals = append(n.Edges.ContractProposals, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withValidators; query != nil {
+		if err := cq.loadValidators(ctx, query, nodes,
+			func(n *Chain) { n.Edges.Validators = []*Validator{} },
+			func(n *Chain, e *Validator) { n.Edges.Validators = append(n.Edges.Validators, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -578,6 +622,37 @@ func (cq *ChainQuery) loadContractProposals(ctx context.Context, query *Contract
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "chain_contract_proposals" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *ChainQuery) loadValidators(ctx context.Context, query *ValidatorQuery, nodes []*Chain, init func(*Chain), assign func(*Chain, *Validator)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Chain)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Validator(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(chain.ValidatorsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.chain_validators
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "chain_validators" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "chain_validators" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

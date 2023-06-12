@@ -21,10 +21,10 @@ type AuthService struct {
 	chainManager         *database.ChainManager
 	eventListenerManager *database.EventListenerManager
 	jwtManager           *JWTManager
-	kafkaInternal        *kafka_internal.KafkaInternal
+	kafkaInternal        kafka_internal.KafkaInternal
 }
 
-func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager, kafkaInternal *kafka_internal.KafkaInternal) authpbconnect.AuthServiceHandler {
+func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager, kafkaInternal kafka_internal.KafkaInternal) authpbconnect.AuthServiceHandler {
 	return &AuthService{
 		userManager:          dbManagers.UserManager,
 		chainManager:         dbManagers.ChainManager,

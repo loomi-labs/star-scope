@@ -13,6 +13,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -149,4 +150,27 @@ func init() {
 	userDescWalletAddress := userFields[1].Descriptor()
 	// user.WalletAddressValidator is a validator for the "wallet_address" field. It is called by the builders before save.
 	user.WalletAddressValidator = userDescWalletAddress.Validators[0].(func(string) error)
+	validatorMixin := schema.Validator{}.Mixin()
+	validatorMixinFields0 := validatorMixin[0].Fields()
+	_ = validatorMixinFields0
+	validatorFields := schema.Validator{}.Fields()
+	_ = validatorFields
+	// validatorDescCreateTime is the schema descriptor for create_time field.
+	validatorDescCreateTime := validatorMixinFields0[0].Descriptor()
+	// validator.DefaultCreateTime holds the default value on creation for the create_time field.
+	validator.DefaultCreateTime = validatorDescCreateTime.Default.(func() time.Time)
+	// validatorDescUpdateTime is the schema descriptor for update_time field.
+	validatorDescUpdateTime := validatorMixinFields0[1].Descriptor()
+	// validator.DefaultUpdateTime holds the default value on creation for the update_time field.
+	validator.DefaultUpdateTime = validatorDescUpdateTime.Default.(func() time.Time)
+	// validator.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	validator.UpdateDefaultUpdateTime = validatorDescUpdateTime.UpdateDefault.(func() time.Time)
+	// validatorDescOperatorAddress is the schema descriptor for operator_address field.
+	validatorDescOperatorAddress := validatorFields[0].Descriptor()
+	// validator.OperatorAddressValidator is a validator for the "operator_address" field. It is called by the builders before save.
+	validator.OperatorAddressValidator = validatorDescOperatorAddress.Validators[0].(func(string) error)
+	// validatorDescAddress is the schema descriptor for address field.
+	validatorDescAddress := validatorFields[1].Descriptor()
+	// validator.AddressValidator is a validator for the "address" field. It is called by the builders before save.
+	validator.AddressValidator = validatorDescAddress.Validators[0].(func(string) error)
 }

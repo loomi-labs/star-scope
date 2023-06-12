@@ -18,6 +18,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -84,6 +85,7 @@ func checkColumn(table, column string) error {
 			eventlistener.Table:    eventlistener.ValidColumn,
 			proposal.Table:         proposal.ValidColumn,
 			user.Table:             user.ValidColumn,
+			validator.Table:        validator.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

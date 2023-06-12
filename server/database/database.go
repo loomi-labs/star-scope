@@ -13,12 +13,14 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/migrate"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/pkg/errors"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var dbClient *ent.Client
@@ -233,7 +235,7 @@ func InitDb() {
 	client := connect()
 	ctx := context.Background()
 
-	chainManager := NewChainManager(client)
+	chainManager := NewDbManagersWithoutKafka().ChainManager
 	neutron, err := chainManager.QueryByName(ctx, "neutron")
 	if err == nil {
 		_, err := chainManager.QueryByName(ctx, "neutron-pion")
@@ -282,20 +284,30 @@ type DbManagers struct {
 	UserManager          *UserManager
 	ChainManager         *ChainManager
 	EventListenerManager *EventListenerManager
+	ValidatorManager     *ValidatorManager
 }
 
 func NewDefaultDbManagers() *DbManagers {
 	client := connect()
-	return NewCustomDbManagers(client)
+	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+	kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+	return NewCustomDbManagers(client, kafkaInternal)
 }
 
-func NewCustomDbManagers(client *ent.Client) *DbManagers {
-	userManager := NewUserManager(client)
-	chainManager := NewChainManager(client)
-	eventListenerManager := NewEventListenerManager(client)
+func NewDbManagersWithoutKafka() *DbManagers {
+	client := connect()
+	return NewCustomDbManagers(client, kafka_internal.NewKafkaInternalDummy())
+}
+
+func NewCustomDbManagers(client *ent.Client, kafkaInternal kafka_internal.KafkaInternal) *DbManagers {
+	userManager := NewUserManager(client, kafkaInternal)
+	chainManager := NewChainManager(client, kafkaInternal)
+	eventListenerManager := NewEventListenerManager(client, kafkaInternal)
+	validatorManager := NewValidatorManager(client)
 	return &DbManagers{
 		UserManager:          userManager,
 		ChainManager:         chainManager,
 		EventListenerManager: eventListenerManager,
+		ValidatorManager:     validatorManager,
 	}
 }
