@@ -128,6 +128,7 @@ func (k *kafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, sub
 				log.Sugar.Error(err)
 			}
 			if slices.Contains(subscribedChanges, dbChange) {
+				log.Sugar.Debugf("send dbChange to channel: %s", dbChange)
 				ch <- dbChange
 			}
 		}

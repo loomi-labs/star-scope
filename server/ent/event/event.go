@@ -139,6 +139,7 @@ const (
 	DataTypeWalletEvent_Voted                                 DataType = "WalletEvent_Voted"
 	DataTypeWalletEvent_VoteReminder                          DataType = "WalletEvent_VoteReminder"
 	DataTypeChainEvent_ValidatorOutOfActiveSet                DataType = "ChainEvent_ValidatorOutOfActiveSet"
+	DataTypeChainEvent_ValidatorSlash                         DataType = "ChainEvent_ValidatorSlash"
 	DataTypeChainEvent_GovernanceProposal_Ongoing             DataType = "ChainEvent_GovernanceProposal_Ongoing"
 	DataTypeChainEvent_GovernanceProposal_Finished            DataType = "ChainEvent_GovernanceProposal_Finished"
 	DataTypeContractEvent_ContractGovernanceProposal_Ongoing  DataType = "ContractEvent_ContractGovernanceProposal_Ongoing"
@@ -152,7 +153,7 @@ func (dt DataType) String() string {
 // DataTypeValidator is a validator for the "data_type" field enum values. It is called by the builders before save.
 func DataTypeValidator(dt DataType) error {
 	switch dt {
-	case DataTypeWalletEvent_CoinReceived, DataTypeWalletEvent_OsmosisPoolUnlock, DataTypeWalletEvent_Unstake, DataTypeWalletEvent_NeutronTokenVesting, DataTypeWalletEvent_Voted, DataTypeWalletEvent_VoteReminder, DataTypeChainEvent_ValidatorOutOfActiveSet, DataTypeChainEvent_GovernanceProposal_Ongoing, DataTypeChainEvent_GovernanceProposal_Finished, DataTypeContractEvent_ContractGovernanceProposal_Ongoing, DataTypeContractEvent_ContractGovernanceProposal_Finished:
+	case DataTypeWalletEvent_CoinReceived, DataTypeWalletEvent_OsmosisPoolUnlock, DataTypeWalletEvent_Unstake, DataTypeWalletEvent_NeutronTokenVesting, DataTypeWalletEvent_Voted, DataTypeWalletEvent_VoteReminder, DataTypeChainEvent_ValidatorOutOfActiveSet, DataTypeChainEvent_ValidatorSlash, DataTypeChainEvent_GovernanceProposal_Ongoing, DataTypeChainEvent_GovernanceProposal_Finished, DataTypeContractEvent_ContractGovernanceProposal_Ongoing, DataTypeContractEvent_ContractGovernanceProposal_Finished:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for data_type field: %q", dt)

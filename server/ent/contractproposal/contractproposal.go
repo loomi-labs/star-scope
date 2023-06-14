@@ -95,12 +95,12 @@ type Status string
 
 // Status values.
 const (
-	StatusEXECUTION_FAILED Status = "EXECUTION_FAILED"
-	StatusOPEN             Status = "OPEN"
 	StatusREJECTED         Status = "REJECTED"
 	StatusPASSED           Status = "PASSED"
 	StatusEXECUTED         Status = "EXECUTED"
 	StatusCLOSED           Status = "CLOSED"
+	StatusEXECUTION_FAILED Status = "EXECUTION_FAILED"
+	StatusOPEN             Status = "OPEN"
 )
 
 func (s Status) String() string {
@@ -110,7 +110,7 @@ func (s Status) String() string {
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s Status) error {
 	switch s {
-	case StatusEXECUTION_FAILED, StatusOPEN, StatusREJECTED, StatusPASSED, StatusEXECUTED, StatusCLOSED:
+	case StatusREJECTED, StatusPASSED, StatusEXECUTED, StatusCLOSED, StatusEXECUTION_FAILED, StatusOPEN:
 		return nil
 	default:
 		return fmt.Errorf("contractproposal: invalid enum value for status field: %q", s)

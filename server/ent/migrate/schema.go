@@ -50,7 +50,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"EXECUTION_FAILED", "OPEN", "REJECTED", "PASSED", "EXECUTED", "CLOSED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
@@ -76,7 +76,7 @@ var (
 		{Name: "chain_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "contract_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "wallet_event", Type: field.TypeBytes, Nullable: true},
-		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"WalletEvent_CoinReceived", "WalletEvent_OsmosisPoolUnlock", "WalletEvent_Unstake", "WalletEvent_NeutronTokenVesting", "WalletEvent_Voted", "WalletEvent_VoteReminder", "ChainEvent_ValidatorOutOfActiveSet", "ChainEvent_GovernanceProposal_Ongoing", "ChainEvent_GovernanceProposal_Finished", "ContractEvent_ContractGovernanceProposal_Ongoing", "ContractEvent_ContractGovernanceProposal_Finished"}},
+		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"WalletEvent_CoinReceived", "WalletEvent_OsmosisPoolUnlock", "WalletEvent_Unstake", "WalletEvent_NeutronTokenVesting", "WalletEvent_Voted", "WalletEvent_VoteReminder", "ChainEvent_ValidatorOutOfActiveSet", "ChainEvent_ValidatorSlash", "ChainEvent_GovernanceProposal_Ongoing", "ChainEvent_GovernanceProposal_Finished", "ContractEvent_ContractGovernanceProposal_Ongoing", "ContractEvent_ContractGovernanceProposal_Finished"}},
 		{Name: "notify_time", Type: field.TypeTime},
 		{Name: "is_read", Type: field.TypeBool, Default: false},
 		{Name: "is_background", Type: field.TypeBool, Default: false},
@@ -102,7 +102,7 @@ var (
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "wallet_address", Type: field.TypeString, Nullable: true},
-		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"WalletEvent_CoinReceived", "WalletEvent_OsmosisPoolUnlock", "WalletEvent_Unstake", "WalletEvent_NeutronTokenVesting", "WalletEvent_Voted", "WalletEvent_VoteReminder", "ChainEvent_ValidatorOutOfActiveSet", "ChainEvent_GovernanceProposal_Ongoing", "ChainEvent_GovernanceProposal_Finished", "ContractEvent_ContractGovernanceProposal_Ongoing", "ContractEvent_ContractGovernanceProposal_Finished"}},
+		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"WalletEvent_CoinReceived", "WalletEvent_OsmosisPoolUnlock", "WalletEvent_Unstake", "WalletEvent_NeutronTokenVesting", "WalletEvent_Voted", "WalletEvent_VoteReminder", "ChainEvent_ValidatorOutOfActiveSet", "ChainEvent_ValidatorSlash", "ChainEvent_GovernanceProposal_Ongoing", "ChainEvent_GovernanceProposal_Finished", "ContractEvent_ContractGovernanceProposal_Ongoing", "ContractEvent_ContractGovernanceProposal_Finished"}},
 		{Name: "chain_event_listeners", Type: field.TypeInt, Nullable: true},
 		{Name: "user_event_listeners", Type: field.TypeInt, Nullable: true},
 	}
@@ -136,7 +136,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.

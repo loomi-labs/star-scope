@@ -77,6 +77,7 @@ func getDataTypes() []string {
 		kafkaevent.WalletEvent_Voted{},
 		kafkaevent.WalletEvent_VoteReminder{},
 		kafkaevent.ChainEvent_ValidatorOutOfActiveSet{},
+		kafkaevent.ChainEvent_ValidatorSlash{},
 	}
 	for _, t := range events {
 		dataTypes = append(dataTypes, reflect.TypeOf(t).Name())
