@@ -346,6 +346,10 @@ func (k *Kafka) ProcessChainEvents() {
 						}
 					}
 				}
+			case *kafkaevent.ChainEvent_ValidatorOutOfActiveSet:
+				// TODO: implement
+			case *kafkaevent.ChainEvent_ValidatorSlash:
+				// TODO: implement
 			default:
 				log.Sugar.Errorf("Unknown event type: %v", reflect.TypeOf(chainEvent.GetEvent()))
 			}

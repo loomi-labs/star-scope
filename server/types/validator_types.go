@@ -60,3 +60,16 @@ type ValidatorSetResponse struct {
 		Total   string `json:"total"`
 	} `json:"pagination"`
 }
+
+type SlashEvent struct {
+	ValidatorPeriod uint64 `json:"validator_period"`
+	Fraction        string `json:"fraction"`
+}
+
+type ValidatorSlashResponse struct {
+	Slashes    []SlashEvent `json:"slashes"`
+	Pagination struct {
+		NextKey any    `json:"next_key"`
+		Total   string `json:"total"`
+	} `json:"pagination"`
+}

@@ -85,6 +85,11 @@ func FirstInactiveTime(v time.Time) predicate.Validator {
 	return predicate.Validator(sql.FieldEQ(FieldFirstInactiveTime, v))
 }
 
+// LastSlashValidatorPeriod applies equality check predicate on the "last_slash_validator_period" field. It's identical to LastSlashValidatorPeriodEQ.
+func LastSlashValidatorPeriod(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldEQ(FieldLastSlashValidatorPeriod, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Validator {
 	return predicate.Validator(sql.FieldEQ(FieldCreateTime, v))
@@ -408,6 +413,56 @@ func FirstInactiveTimeIsNil() predicate.Validator {
 // FirstInactiveTimeNotNil applies the NotNil predicate on the "first_inactive_time" field.
 func FirstInactiveTimeNotNil() predicate.Validator {
 	return predicate.Validator(sql.FieldNotNull(FieldFirstInactiveTime))
+}
+
+// LastSlashValidatorPeriodEQ applies the EQ predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodEQ(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldEQ(FieldLastSlashValidatorPeriod, v))
+}
+
+// LastSlashValidatorPeriodNEQ applies the NEQ predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodNEQ(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldNEQ(FieldLastSlashValidatorPeriod, v))
+}
+
+// LastSlashValidatorPeriodIn applies the In predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodIn(vs ...uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldIn(FieldLastSlashValidatorPeriod, vs...))
+}
+
+// LastSlashValidatorPeriodNotIn applies the NotIn predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodNotIn(vs ...uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldNotIn(FieldLastSlashValidatorPeriod, vs...))
+}
+
+// LastSlashValidatorPeriodGT applies the GT predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodGT(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldGT(FieldLastSlashValidatorPeriod, v))
+}
+
+// LastSlashValidatorPeriodGTE applies the GTE predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodGTE(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldGTE(FieldLastSlashValidatorPeriod, v))
+}
+
+// LastSlashValidatorPeriodLT applies the LT predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodLT(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldLT(FieldLastSlashValidatorPeriod, v))
+}
+
+// LastSlashValidatorPeriodLTE applies the LTE predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodLTE(v uint64) predicate.Validator {
+	return predicate.Validator(sql.FieldLTE(FieldLastSlashValidatorPeriod, v))
+}
+
+// LastSlashValidatorPeriodIsNil applies the IsNil predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodIsNil() predicate.Validator {
+	return predicate.Validator(sql.FieldIsNull(FieldLastSlashValidatorPeriod))
+}
+
+// LastSlashValidatorPeriodNotNil applies the NotNil predicate on the "last_slash_validator_period" field.
+func LastSlashValidatorPeriodNotNil() predicate.Validator {
+	return predicate.Validator(sql.FieldNotNull(FieldLastSlashValidatorPeriod))
 }
 
 // HasChain applies the HasEdge predicate on the "chain" edge.

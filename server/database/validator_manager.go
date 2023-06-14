@@ -5,11 +5,12 @@ import (
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/validator"
 	"github.com/shifty11/go-logger/log"
 	"time"
 )
 
-const timeUntilConsideredInactive = 24 * time.Hour // TODO: set this to 1 month or so
+const timeUntilConsideredInactive = time.Hour * 24 * 7
 
 type ValidatorManager struct {
 	client *ent.Client
@@ -17,10 +18,6 @@ type ValidatorManager struct {
 
 func NewValidatorManager(client *ent.Client) *ValidatorManager {
 	return &ValidatorManager{client: client}
-}
-
-func (manager *ValidatorManager) StartTx(ctx context.Context) (context.Context, error) {
-	return startTx(ctx, manager.client)
 }
 
 func (manager *ValidatorManager) getAccountAddress(operatorAddress string, chainEnt *ent.Chain) (string, error) {
@@ -71,5 +68,23 @@ func (manager *ValidatorManager) Update(ctx context.Context, validatorEnt *ent.V
 	}
 	return updateQuery.
 		SetMoniker(moniker).
+		Exec(ctx)
+}
+
+func (manager *ValidatorManager) QueryActive(ctx context.Context) []*ent.Validator {
+	return manager.client.Validator.
+		Query().
+		Where(validator.Or(
+			validator.FirstInactiveTimeIsNil(),
+			validator.FirstInactiveTimeGT(time.Now().Add(-timeUntilConsideredInactive)),
+		)).
+		WithChain().
+		Order(ent.Asc(validator.FieldMoniker)). // order by moniker so that the chain is random -> avoid spamming the same chain
+		AllX(ctx)
+}
+
+func (manager *ValidatorManager) UpdateSetSlashed(ctx context.Context, val *ent.Validator, period uint64) error {
+	return val.Update().
+		SetLastSlashValidatorPeriod(period).
 		Exec(ctx)
 }

@@ -61,6 +61,33 @@ func (vu *ValidatorUpdate) ClearFirstInactiveTime() *ValidatorUpdate {
 	return vu
 }
 
+// SetLastSlashValidatorPeriod sets the "last_slash_validator_period" field.
+func (vu *ValidatorUpdate) SetLastSlashValidatorPeriod(u uint64) *ValidatorUpdate {
+	vu.mutation.ResetLastSlashValidatorPeriod()
+	vu.mutation.SetLastSlashValidatorPeriod(u)
+	return vu
+}
+
+// SetNillableLastSlashValidatorPeriod sets the "last_slash_validator_period" field if the given value is not nil.
+func (vu *ValidatorUpdate) SetNillableLastSlashValidatorPeriod(u *uint64) *ValidatorUpdate {
+	if u != nil {
+		vu.SetLastSlashValidatorPeriod(*u)
+	}
+	return vu
+}
+
+// AddLastSlashValidatorPeriod adds u to the "last_slash_validator_period" field.
+func (vu *ValidatorUpdate) AddLastSlashValidatorPeriod(u int64) *ValidatorUpdate {
+	vu.mutation.AddLastSlashValidatorPeriod(u)
+	return vu
+}
+
+// ClearLastSlashValidatorPeriod clears the value of the "last_slash_validator_period" field.
+func (vu *ValidatorUpdate) ClearLastSlashValidatorPeriod() *ValidatorUpdate {
+	vu.mutation.ClearLastSlashValidatorPeriod()
+	return vu
+}
+
 // SetChainID sets the "chain" edge to the Chain entity by ID.
 func (vu *ValidatorUpdate) SetChainID(id int) *ValidatorUpdate {
 	vu.mutation.SetChainID(id)
@@ -151,6 +178,15 @@ func (vu *ValidatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if vu.mutation.FirstInactiveTimeCleared() {
 		_spec.ClearField(validator.FieldFirstInactiveTime, field.TypeTime)
 	}
+	if value, ok := vu.mutation.LastSlashValidatorPeriod(); ok {
+		_spec.SetField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64, value)
+	}
+	if value, ok := vu.mutation.AddedLastSlashValidatorPeriod(); ok {
+		_spec.AddField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64, value)
+	}
+	if vu.mutation.LastSlashValidatorPeriodCleared() {
+		_spec.ClearField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64)
+	}
 	if vu.mutation.ChainCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -229,6 +265,33 @@ func (vuo *ValidatorUpdateOne) SetNillableFirstInactiveTime(t *time.Time) *Valid
 // ClearFirstInactiveTime clears the value of the "first_inactive_time" field.
 func (vuo *ValidatorUpdateOne) ClearFirstInactiveTime() *ValidatorUpdateOne {
 	vuo.mutation.ClearFirstInactiveTime()
+	return vuo
+}
+
+// SetLastSlashValidatorPeriod sets the "last_slash_validator_period" field.
+func (vuo *ValidatorUpdateOne) SetLastSlashValidatorPeriod(u uint64) *ValidatorUpdateOne {
+	vuo.mutation.ResetLastSlashValidatorPeriod()
+	vuo.mutation.SetLastSlashValidatorPeriod(u)
+	return vuo
+}
+
+// SetNillableLastSlashValidatorPeriod sets the "last_slash_validator_period" field if the given value is not nil.
+func (vuo *ValidatorUpdateOne) SetNillableLastSlashValidatorPeriod(u *uint64) *ValidatorUpdateOne {
+	if u != nil {
+		vuo.SetLastSlashValidatorPeriod(*u)
+	}
+	return vuo
+}
+
+// AddLastSlashValidatorPeriod adds u to the "last_slash_validator_period" field.
+func (vuo *ValidatorUpdateOne) AddLastSlashValidatorPeriod(u int64) *ValidatorUpdateOne {
+	vuo.mutation.AddLastSlashValidatorPeriod(u)
+	return vuo
+}
+
+// ClearLastSlashValidatorPeriod clears the value of the "last_slash_validator_period" field.
+func (vuo *ValidatorUpdateOne) ClearLastSlashValidatorPeriod() *ValidatorUpdateOne {
+	vuo.mutation.ClearLastSlashValidatorPeriod()
 	return vuo
 }
 
@@ -351,6 +414,15 @@ func (vuo *ValidatorUpdateOne) sqlSave(ctx context.Context) (_node *Validator, e
 	}
 	if vuo.mutation.FirstInactiveTimeCleared() {
 		_spec.ClearField(validator.FieldFirstInactiveTime, field.TypeTime)
+	}
+	if value, ok := vuo.mutation.LastSlashValidatorPeriod(); ok {
+		_spec.SetField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64, value)
+	}
+	if value, ok := vuo.mutation.AddedLastSlashValidatorPeriod(); ok {
+		_spec.AddField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64, value)
+	}
+	if vuo.mutation.LastSlashValidatorPeriodCleared() {
+		_spec.ClearField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64)
 	}
 	if vuo.mutation.ChainCleared() {
 		edge := &sqlgraph.EdgeSpec{

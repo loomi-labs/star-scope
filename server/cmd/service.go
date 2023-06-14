@@ -123,7 +123,9 @@ var startValidatorCrawlerCmd = &cobra.Command{
 	Short: "Start the validator crawler",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
-		crawler := validator_crawler.NewValidatorCrawler(dbManagers)
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+		crawler := validator_crawler.NewValidatorCrawler(dbManagers, kafkaInternal)
 		crawler.StartCrawling()
 	},
 }

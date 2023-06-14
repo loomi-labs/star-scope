@@ -26,6 +26,8 @@ const (
 	FieldMoniker = "moniker"
 	// FieldFirstInactiveTime holds the string denoting the first_inactive_time field in the database.
 	FieldFirstInactiveTime = "first_inactive_time"
+	// FieldLastSlashValidatorPeriod holds the string denoting the last_slash_validator_period field in the database.
+	FieldLastSlashValidatorPeriod = "last_slash_validator_period"
 	// EdgeChain holds the string denoting the chain edge name in mutations.
 	EdgeChain = "chain"
 	// Table holds the table name of the validator in the database.
@@ -48,6 +50,7 @@ var Columns = []string{
 	FieldAddress,
 	FieldMoniker,
 	FieldFirstInactiveTime,
+	FieldLastSlashValidatorPeriod,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "validators"
@@ -120,6 +123,11 @@ func ByMoniker(opts ...sql.OrderTermOption) OrderOption {
 // ByFirstInactiveTime orders the results by the first_inactive_time field.
 func ByFirstInactiveTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFirstInactiveTime, opts...).ToFunc()
+}
+
+// ByLastSlashValidatorPeriod orders the results by the last_slash_validator_period field.
+func ByLastSlashValidatorPeriod(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastSlashValidatorPeriod, opts...).ToFunc()
 }
 
 // ByChainField orders the results by chain field.

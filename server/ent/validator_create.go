@@ -81,6 +81,20 @@ func (vc *ValidatorCreate) SetNillableFirstInactiveTime(t *time.Time) *Validator
 	return vc
 }
 
+// SetLastSlashValidatorPeriod sets the "last_slash_validator_period" field.
+func (vc *ValidatorCreate) SetLastSlashValidatorPeriod(u uint64) *ValidatorCreate {
+	vc.mutation.SetLastSlashValidatorPeriod(u)
+	return vc
+}
+
+// SetNillableLastSlashValidatorPeriod sets the "last_slash_validator_period" field if the given value is not nil.
+func (vc *ValidatorCreate) SetNillableLastSlashValidatorPeriod(u *uint64) *ValidatorCreate {
+	if u != nil {
+		vc.SetLastSlashValidatorPeriod(*u)
+	}
+	return vc
+}
+
 // SetChainID sets the "chain" edge to the Chain entity by ID.
 func (vc *ValidatorCreate) SetChainID(id int) *ValidatorCreate {
 	vc.mutation.SetChainID(id)
@@ -216,6 +230,10 @@ func (vc *ValidatorCreate) createSpec() (*Validator, *sqlgraph.CreateSpec) {
 	if value, ok := vc.mutation.FirstInactiveTime(); ok {
 		_spec.SetField(validator.FieldFirstInactiveTime, field.TypeTime, value)
 		_node.FirstInactiveTime = &value
+	}
+	if value, ok := vc.mutation.LastSlashValidatorPeriod(); ok {
+		_spec.SetField(validator.FieldLastSlashValidatorPeriod, field.TypeUint64, value)
+		_node.LastSlashValidatorPeriod = &value
 	}
 	if nodes := vc.mutation.ChainIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -5419,21 +5419,23 @@ func (m *UserMutation) ResetEdge(name string) error {
 // ValidatorMutation represents an operation that mutates the Validator nodes in the graph.
 type ValidatorMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *int
-	create_time         *time.Time
-	update_time         *time.Time
-	operator_address    *string
-	address             *string
-	moniker             *string
-	first_inactive_time *time.Time
-	clearedFields       map[string]struct{}
-	chain               *int
-	clearedchain        bool
-	done                bool
-	oldValue            func(context.Context) (*Validator, error)
-	predicates          []predicate.Validator
+	op                             Op
+	typ                            string
+	id                             *int
+	create_time                    *time.Time
+	update_time                    *time.Time
+	operator_address               *string
+	address                        *string
+	moniker                        *string
+	first_inactive_time            *time.Time
+	last_slash_validator_period    *uint64
+	addlast_slash_validator_period *int64
+	clearedFields                  map[string]struct{}
+	chain                          *int
+	clearedchain                   bool
+	done                           bool
+	oldValue                       func(context.Context) (*Validator, error)
+	predicates                     []predicate.Validator
 }
 
 var _ ent.Mutation = (*ValidatorMutation)(nil)
@@ -5763,6 +5765,76 @@ func (m *ValidatorMutation) ResetFirstInactiveTime() {
 	delete(m.clearedFields, validator.FieldFirstInactiveTime)
 }
 
+// SetLastSlashValidatorPeriod sets the "last_slash_validator_period" field.
+func (m *ValidatorMutation) SetLastSlashValidatorPeriod(u uint64) {
+	m.last_slash_validator_period = &u
+	m.addlast_slash_validator_period = nil
+}
+
+// LastSlashValidatorPeriod returns the value of the "last_slash_validator_period" field in the mutation.
+func (m *ValidatorMutation) LastSlashValidatorPeriod() (r uint64, exists bool) {
+	v := m.last_slash_validator_period
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSlashValidatorPeriod returns the old "last_slash_validator_period" field's value of the Validator entity.
+// If the Validator object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ValidatorMutation) OldLastSlashValidatorPeriod(ctx context.Context) (v *uint64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSlashValidatorPeriod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSlashValidatorPeriod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSlashValidatorPeriod: %w", err)
+	}
+	return oldValue.LastSlashValidatorPeriod, nil
+}
+
+// AddLastSlashValidatorPeriod adds u to the "last_slash_validator_period" field.
+func (m *ValidatorMutation) AddLastSlashValidatorPeriod(u int64) {
+	if m.addlast_slash_validator_period != nil {
+		*m.addlast_slash_validator_period += u
+	} else {
+		m.addlast_slash_validator_period = &u
+	}
+}
+
+// AddedLastSlashValidatorPeriod returns the value that was added to the "last_slash_validator_period" field in this mutation.
+func (m *ValidatorMutation) AddedLastSlashValidatorPeriod() (r int64, exists bool) {
+	v := m.addlast_slash_validator_period
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLastSlashValidatorPeriod clears the value of the "last_slash_validator_period" field.
+func (m *ValidatorMutation) ClearLastSlashValidatorPeriod() {
+	m.last_slash_validator_period = nil
+	m.addlast_slash_validator_period = nil
+	m.clearedFields[validator.FieldLastSlashValidatorPeriod] = struct{}{}
+}
+
+// LastSlashValidatorPeriodCleared returns if the "last_slash_validator_period" field was cleared in this mutation.
+func (m *ValidatorMutation) LastSlashValidatorPeriodCleared() bool {
+	_, ok := m.clearedFields[validator.FieldLastSlashValidatorPeriod]
+	return ok
+}
+
+// ResetLastSlashValidatorPeriod resets all changes to the "last_slash_validator_period" field.
+func (m *ValidatorMutation) ResetLastSlashValidatorPeriod() {
+	m.last_slash_validator_period = nil
+	m.addlast_slash_validator_period = nil
+	delete(m.clearedFields, validator.FieldLastSlashValidatorPeriod)
+}
+
 // SetChainID sets the "chain" edge to the Chain entity by id.
 func (m *ValidatorMutation) SetChainID(id int) {
 	m.chain = &id
@@ -5836,7 +5908,7 @@ func (m *ValidatorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ValidatorMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.create_time != nil {
 		fields = append(fields, validator.FieldCreateTime)
 	}
@@ -5854,6 +5926,9 @@ func (m *ValidatorMutation) Fields() []string {
 	}
 	if m.first_inactive_time != nil {
 		fields = append(fields, validator.FieldFirstInactiveTime)
+	}
+	if m.last_slash_validator_period != nil {
+		fields = append(fields, validator.FieldLastSlashValidatorPeriod)
 	}
 	return fields
 }
@@ -5875,6 +5950,8 @@ func (m *ValidatorMutation) Field(name string) (ent.Value, bool) {
 		return m.Moniker()
 	case validator.FieldFirstInactiveTime:
 		return m.FirstInactiveTime()
+	case validator.FieldLastSlashValidatorPeriod:
+		return m.LastSlashValidatorPeriod()
 	}
 	return nil, false
 }
@@ -5896,6 +5973,8 @@ func (m *ValidatorMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldMoniker(ctx)
 	case validator.FieldFirstInactiveTime:
 		return m.OldFirstInactiveTime(ctx)
+	case validator.FieldLastSlashValidatorPeriod:
+		return m.OldLastSlashValidatorPeriod(ctx)
 	}
 	return nil, fmt.Errorf("unknown Validator field %s", name)
 }
@@ -5947,6 +6026,13 @@ func (m *ValidatorMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFirstInactiveTime(v)
 		return nil
+	case validator.FieldLastSlashValidatorPeriod:
+		v, ok := value.(uint64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSlashValidatorPeriod(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Validator field %s", name)
 }
@@ -5954,13 +6040,21 @@ func (m *ValidatorMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ValidatorMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addlast_slash_validator_period != nil {
+		fields = append(fields, validator.FieldLastSlashValidatorPeriod)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ValidatorMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case validator.FieldLastSlashValidatorPeriod:
+		return m.AddedLastSlashValidatorPeriod()
+	}
 	return nil, false
 }
 
@@ -5969,6 +6063,13 @@ func (m *ValidatorMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ValidatorMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case validator.FieldLastSlashValidatorPeriod:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLastSlashValidatorPeriod(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Validator numeric field %s", name)
 }
@@ -5979,6 +6080,9 @@ func (m *ValidatorMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(validator.FieldFirstInactiveTime) {
 		fields = append(fields, validator.FieldFirstInactiveTime)
+	}
+	if m.FieldCleared(validator.FieldLastSlashValidatorPeriod) {
+		fields = append(fields, validator.FieldLastSlashValidatorPeriod)
 	}
 	return fields
 }
@@ -5996,6 +6100,9 @@ func (m *ValidatorMutation) ClearField(name string) error {
 	switch name {
 	case validator.FieldFirstInactiveTime:
 		m.ClearFirstInactiveTime()
+		return nil
+	case validator.FieldLastSlashValidatorPeriod:
+		m.ClearLastSlashValidatorPeriod()
 		return nil
 	}
 	return fmt.Errorf("unknown Validator nullable field %s", name)
@@ -6022,6 +6129,9 @@ func (m *ValidatorMutation) ResetField(name string) error {
 		return nil
 	case validator.FieldFirstInactiveTime:
 		m.ResetFirstInactiveTime()
+		return nil
+	case validator.FieldLastSlashValidatorPeriod:
+		m.ResetLastSlashValidatorPeriod()
 		return nil
 	}
 	return fmt.Errorf("unknown Validator field %s", name)

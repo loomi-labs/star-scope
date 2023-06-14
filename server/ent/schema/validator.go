@@ -37,6 +37,9 @@ func (Validator) Fields() []ent.Field {
 		field.Time("first_inactive_time").
 			Nillable().
 			Optional(),
+		field.Uint64("last_slash_validator_period").
+			Nillable().
+			Optional(),
 	}
 }
 

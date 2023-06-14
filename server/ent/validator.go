@@ -30,6 +30,8 @@ type Validator struct {
 	Moniker string `json:"moniker,omitempty"`
 	// FirstInactiveTime holds the value of the "first_inactive_time" field.
 	FirstInactiveTime *time.Time `json:"first_inactive_time,omitempty"`
+	// LastSlashValidatorPeriod holds the value of the "last_slash_validator_period" field.
+	LastSlashValidatorPeriod *uint64 `json:"last_slash_validator_period,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ValidatorQuery when eager-loading is set.
 	Edges            ValidatorEdges `json:"edges"`
@@ -64,7 +66,7 @@ func (*Validator) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case validator.FieldID:
+		case validator.FieldID, validator.FieldLastSlashValidatorPeriod:
 			values[i] = new(sql.NullInt64)
 		case validator.FieldOperatorAddress, validator.FieldAddress, validator.FieldMoniker:
 			values[i] = new(sql.NullString)
@@ -129,6 +131,13 @@ func (v *Validator) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				v.FirstInactiveTime = new(time.Time)
 				*v.FirstInactiveTime = value.Time
+			}
+		case validator.FieldLastSlashValidatorPeriod:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field last_slash_validator_period", values[i])
+			} else if value.Valid {
+				v.LastSlashValidatorPeriod = new(uint64)
+				*v.LastSlashValidatorPeriod = uint64(value.Int64)
 			}
 		case validator.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -196,6 +205,11 @@ func (v *Validator) String() string {
 	if v := v.FirstInactiveTime; v != nil {
 		builder.WriteString("first_inactive_time=")
 		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := v.LastSlashValidatorPeriod; v != nil {
+		builder.WriteString("last_slash_validator_period=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')
 	return builder.String()

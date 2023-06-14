@@ -50,7 +50,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN", "REJECTED", "PASSED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"EXECUTION_FAILED", "OPEN", "REJECTED", "PASSED", "EXECUTED", "CLOSED"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
@@ -136,7 +136,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -177,6 +177,7 @@ var (
 		{Name: "address", Type: field.TypeString},
 		{Name: "moniker", Type: field.TypeString},
 		{Name: "first_inactive_time", Type: field.TypeTime, Nullable: true},
+		{Name: "last_slash_validator_period", Type: field.TypeUint64, Nullable: true},
 		{Name: "chain_validators", Type: field.TypeInt},
 	}
 	// ValidatorsTable holds the schema information for the "validators" table.
@@ -187,7 +188,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "validators_chains_validators",
-				Columns:    []*schema.Column{ValidatorsColumns[7]},
+				Columns:    []*schema.Column{ValidatorsColumns[8]},
 				RefColumns: []*schema.Column{ChainsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -211,22 +212,22 @@ var (
 			{
 				Name:    "validator_moniker_operator_address_chain_validators",
 				Unique:  true,
-				Columns: []*schema.Column{ValidatorsColumns[5], ValidatorsColumns[3], ValidatorsColumns[7]},
+				Columns: []*schema.Column{ValidatorsColumns[5], ValidatorsColumns[3], ValidatorsColumns[8]},
 			},
 			{
 				Name:    "validator_moniker_address_chain_validators",
 				Unique:  true,
-				Columns: []*schema.Column{ValidatorsColumns[5], ValidatorsColumns[4], ValidatorsColumns[7]},
+				Columns: []*schema.Column{ValidatorsColumns[5], ValidatorsColumns[4], ValidatorsColumns[8]},
 			},
 			{
 				Name:    "validator_address_chain_validators",
 				Unique:  true,
-				Columns: []*schema.Column{ValidatorsColumns[4], ValidatorsColumns[7]},
+				Columns: []*schema.Column{ValidatorsColumns[4], ValidatorsColumns[8]},
 			},
 			{
 				Name:    "validator_operator_address_chain_validators",
 				Unique:  true,
-				Columns: []*schema.Column{ValidatorsColumns[3], ValidatorsColumns[7]},
+				Columns: []*schema.Column{ValidatorsColumns[3], ValidatorsColumns[8]},
 			},
 		},
 	}

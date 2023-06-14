@@ -3,32 +3,35 @@ package validator_crawler
 import (
 	"context"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
+	kafkaevent "github.com/loomi-labs/star-scope/event"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/robfig/cron/v3"
 	"github.com/shifty11/go-logger/log"
-	"net/http"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
 	"time"
 )
 
-const urlValidators = "https://rest.cosmos.directory/%v/cosmos/staking/v1beta1/validators?pagination.limit=1000"
-const urlValidatorSet = "https://rest.cosmos.directory/%v/cosmos/base/tendermint/v1beta1/validatorsets/latest"
+const urlValidators = "%v/cosmos/staking/v1beta1/validators?pagination.limit=1000"
+const urlValidatorSet = "%v/cosmos/base/tendermint/v1beta1/validatorsets/latest"
+const urlValidatorSlashes = "%v/cosmos/distribution/v1beta1/validators/%v/slashes"
 
 type ValidatorCrawler struct {
-	httpClient       *http.Client
 	chainManager     *database.ChainManager
 	validatorManager *database.ValidatorManager
+	kafkaInternal    kafka_internal.KafkaInternal
 }
 
-func NewValidatorCrawler(dbManagers *database.DbManagers) *ValidatorCrawler {
-	var client = &http.Client{Timeout: 10 * time.Second}
+func NewValidatorCrawler(dbManagers *database.DbManagers, kafkaInternal kafka_internal.KafkaInternal) *ValidatorCrawler {
 	return &ValidatorCrawler{
-		httpClient:       client,
 		chainManager:     dbManagers.ChainManager,
 		validatorManager: dbManagers.ValidatorManager,
+		kafkaInternal:    kafkaInternal,
 	}
 }
 
@@ -70,7 +73,7 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 		}
 
 		log.Sugar.Infof("Getting validators for chain %v", chainEnt.PrettyName)
-		url := fmt.Sprintf(urlValidators, chainEnt.Path)
+		url := fmt.Sprintf(urlValidators, chainEnt.RestEndpoint)
 		var validatorsResponse types.ValidatorsResponse
 		_, err := common.GetJson(url, 5, &validatorsResponse)
 		if err != nil {
@@ -82,7 +85,7 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 		}
 
 		var validatorSetResponse types.ValidatorSetResponse
-		url = fmt.Sprintf(urlValidatorSet, chainEnt.Path)
+		url = fmt.Sprintf(urlValidatorSet, chainEnt.RestEndpoint)
 		_, err = common.GetJson(url, 5, &validatorSetResponse)
 		if err != nil {
 			log.Sugar.Errorf("error calling %v: %v", url, err)
@@ -122,13 +125,85 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 	}
 }
 
+func (c *ValidatorCrawler) createSlashEvent(chain *ent.Chain, validator *ent.Validator, slashEvent types.SlashEvent) ([]byte, error) {
+	var now = timestamppb.Now()
+	chainEvent := &kafkaevent.ChainEvent{
+		ChainId:    uint64(chain.ID),
+		Timestamp:  now,
+		NotifyTime: now,
+		Event: &kafkaevent.ChainEvent_ValidatorSlash{
+			ValidatorSlash: &kafkaevent.ValidatorSlashEvent{
+				ValidatorAddress:         validator.Address,
+				ValidatorOperatorAddress: validator.OperatorAddress,
+				ValidatorMoniker:         validator.Moniker,
+				ValidatorPeriod:          slashEvent.ValidatorPeriod,
+				Fraction:                 slashEvent.Fraction,
+			},
+		},
+	}
+	pbEvent, err := proto.Marshal(chainEvent)
+	if err != nil {
+		return nil, err
+	}
+	return pbEvent, nil
+}
+
+func (c *ValidatorCrawler) fetchSlashEvents() {
+	log.Sugar.Info("Fetching slash events")
+	var pbEvents [][]byte
+	var validators = c.validatorManager.QueryActive(context.Background())
+	for _, validator := range validators {
+		if strings.Contains(validator.Edges.Chain.Path, "neutron") {
+			continue
+		}
+
+		log.Sugar.Debugf("Fetching slash events for validator %v", validator.Address)
+
+		var validatorSetResponse types.ValidatorSlashResponse
+		url := fmt.Sprintf(urlValidatorSlashes, validator.Edges.Chain.RestEndpoint, validator.OperatorAddress)
+		_, err := common.GetJson(url, 5, &validatorSetResponse)
+		if err != nil {
+			log.Sugar.Errorf("error calling %v: %v", url, err)
+			continue
+		}
+
+		for _, slashEvent := range validatorSetResponse.Slashes {
+			if validator.LastSlashValidatorPeriod != nil && *validator.LastSlashValidatorPeriod == slashEvent.ValidatorPeriod {
+				continue
+			}
+			err := c.validatorManager.UpdateSetSlashed(context.Background(), validator, slashEvent.ValidatorPeriod)
+			if err != nil {
+				log.Sugar.Errorf("error updating validator %v: %v", validator.Address, err)
+				continue
+			}
+
+			pbEvent, err := c.createSlashEvent(validator.Edges.Chain, validator, slashEvent)
+			if err != nil {
+				log.Sugar.Errorf("error creating slash event for validator %v: %v", validator.Address, err)
+				continue
+			}
+			pbEvents = append(pbEvents, pbEvent)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if len(pbEvents) > 0 {
+		log.Sugar.Debugf("Send %v slashing events", len(pbEvents))
+		c.kafkaInternal.ProduceChainEvents(pbEvents)
+	}
+}
+
 func (c *ValidatorCrawler) StartCrawling() {
 	c.addOrUpdateValidators()
+	c.fetchSlashEvents()
 	log.Sugar.Info("Scheduling validator crawl")
 	cr := cron.New()
 	_, err := cr.AddFunc("0 10 * * *", func() { c.addOrUpdateValidators() }) // every day at 10:00
 	if err != nil {
 		log.Sugar.Errorf("while executing 'addOrUpdateValidators' via cron: %v", err)
+	}
+	_, err = cr.AddFunc("0 11 * * *", func() { c.fetchSlashEvents() }) // every day at 11:00
+	if err != nil {
+		log.Sugar.Errorf("while executing 'fetchSlashEvents' via cron: %v", err)
 	}
 	cr.Start()
 }
