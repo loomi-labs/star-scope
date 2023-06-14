@@ -19,6 +19,7 @@ import (
 
 const urlProposals = "%v/cosmos/gov/v1beta1/proposals"
 const urlVote = urlProposals + "/%v/votes/%v"
+const urlAuthz = "%v/cosmos/authz/v1beta1/grants/granter/%v"
 
 type GovernanceCrawler struct {
 	chainManager         *database.ChainManager
@@ -172,6 +173,22 @@ func (c *GovernanceCrawler) createVotedEvent(chain *ent.Chain, proposalId uint64
 	return pbEvent, nil
 }
 
+func (c *GovernanceCrawler) fetchAuthzVotes(chain *ent.Chain, walletAddress string, proposal *ent.Proposal) {
+	// TODO: query authz grants and check if we have a vote for this proposal from another wallet via the authz grant
+	//url := fmt.Sprintf(urlAuthz, chain.RestEndpoint, walletAddress)
+	//var authzGrantsResponse types.AuthzGrantsResponse
+	//_, err := common.GetJson(url, 5, &authzGrantsResponse)
+	//if err != nil {
+	//	log.Sugar.Errorf("while fetching authz grants for wallet %v: %v", walletAddress, err)
+	//	return
+	//}
+	//for _, authzGrant := range authzGrantsResponse.Grants {
+	//	if authzGrant.Authorization.AuthorizationType == "/cosmos.gov.v1beta1.MsgVote" {
+	//		log.Sugar.Debugf("Vote for proposal %v on %v for wallet %v", proposal.ProposalID, chain.PrettyName, walletAddress)
+	//	}
+	//}
+}
+
 func (c *GovernanceCrawler) fetchVotingReminders() {
 	log.Sugar.Info("Checking for voting reminders")
 	voteReminders, err := c.eventListenerManager.QueryForVoteReminderAddresses(context.Background())
@@ -189,6 +206,7 @@ func (c *GovernanceCrawler) fetchVotingReminders() {
 		var voteResponse types.ChainProposalVoteResponse
 		statusCode, err := common.GetJson(url, 5, &voteResponse)
 		if err != nil && statusCode == 400 {
+			c.fetchAuthzVotes(chain, walletAddress, vr.Proposal)
 			pbEvent, err := c.createVoteReminderEvent(chain, vr.Proposal, walletAddress)
 			if err != nil {
 				log.Sugar.Errorf("while creating vote reminder event for proposal %v: %v", proposalId, err)
