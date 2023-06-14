@@ -4,7 +4,10 @@ import (
 	"context"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/validator"
 	"github.com/shifty11/go-logger/log"
 	"time"
@@ -20,7 +23,7 @@ func NewValidatorManager(client *ent.Client) *ValidatorManager {
 	return &ValidatorManager{client: client}
 }
 
-func (manager *ValidatorManager) getAccountAddress(operatorAddress string, chainEnt *ent.Chain) (string, error) {
+func (m *ValidatorManager) getAccountAddress(operatorAddress string, chainEnt *ent.Chain) (string, error) {
 	_, valAddr, err := bech32.DecodeAndConvert(operatorAddress)
 	if err != nil {
 		return "", err
@@ -32,14 +35,14 @@ func (manager *ValidatorManager) getAccountAddress(operatorAddress string, chain
 	return accAddr, nil
 }
 
-func (manager *ValidatorManager) Create(
+func (m *ValidatorManager) Create(
 	ctx context.Context,
 	chainEnt *ent.Chain,
 	operatorAddress string,
 	moniker string,
 	isActive bool,
 ) (*ent.Validator, error) {
-	accountAddress, err := manager.getAccountAddress(operatorAddress, chainEnt)
+	accountAddress, err := m.getAccountAddress(operatorAddress, chainEnt)
 	if err != nil {
 		log.Sugar.Errorf("Error while getting account address for validator %v: %v", operatorAddress, err)
 		return nil, err
@@ -49,7 +52,7 @@ func (manager *ValidatorManager) Create(
 		var now = time.Now()
 		firstInactiveTime = &now
 	}
-	return manager.client.Validator.
+	return m.client.Validator.
 		Create().
 		SetChain(chainEnt).
 		SetOperatorAddress(operatorAddress).
@@ -59,7 +62,7 @@ func (manager *ValidatorManager) Create(
 		Save(ctx)
 }
 
-func (manager *ValidatorManager) Update(ctx context.Context, validatorEnt *ent.Validator, moniker string, isActive bool) error {
+func (m *ValidatorManager) Update(ctx context.Context, validatorEnt *ent.Validator, moniker string, isActive bool) error {
 	updateQuery := validatorEnt.Update()
 	if isActive {
 		updateQuery.ClearFirstInactiveTime()
@@ -71,8 +74,8 @@ func (manager *ValidatorManager) Update(ctx context.Context, validatorEnt *ent.V
 		Exec(ctx)
 }
 
-func (manager *ValidatorManager) QueryActive(ctx context.Context) []*ent.Validator {
-	return manager.client.Validator.
+func (m *ValidatorManager) QueryActive(ctx context.Context) []*ent.Validator {
+	return m.client.Validator.
 		Query().
 		Where(validator.Or(
 			validator.FirstInactiveTimeIsNil(),
@@ -83,8 +86,30 @@ func (manager *ValidatorManager) QueryActive(ctx context.Context) []*ent.Validat
 		AllX(ctx)
 }
 
-func (manager *ValidatorManager) UpdateSetSlashed(ctx context.Context, val *ent.Validator, period uint64) error {
+func (m *ValidatorManager) UpdateSetSlashed(ctx context.Context, val *ent.Validator, period uint64) error {
 	return val.Update().
 		SetLastSlashValidatorPeriod(period).
 		Exec(ctx)
+}
+
+func (m *ValidatorManager) DeleteOutOfActiveSetEvents(ctx context.Context, val *ent.Validator) (int, error) {
+	events := val.
+		QueryChain().
+		QueryEventListeners().
+		Where(eventlistener.DataTypeEQ(eventlistener.DataTypeChainEvent_ValidatorOutOfActiveSet)).
+		QueryEvents().
+		Where(event.NotifyTimeGT(time.Now())). // only cancel events that haven't been notified yet
+		AllX(ctx)
+	var toBeDeletedEvents []uuid.UUID
+	for _, e := range events {
+		if e.ChainEvent.GetValidatorOutOfActiveSet().GetValidatorAddress() == val.Address {
+			toBeDeletedEvents = append(toBeDeletedEvents, e.ID)
+		}
+	}
+	if len(toBeDeletedEvents) > 0 {
+		return m.client.Event.Delete().
+			Where(event.IDIn(toBeDeletedEvents...)).
+			Exec(ctx)
+	}
+	return 0, nil
 }

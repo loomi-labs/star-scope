@@ -65,8 +65,31 @@ func isValidatorInActiveSet(pubKey string, activeValidatorSet []types.ValidatorS
 	return false
 }
 
+func (c *ValidatorCrawler) createOutOfActiveSetEvent(chain *ent.Chain, validator *ent.Validator) ([]byte, error) {
+	var now = timestamppb.Now()
+	chainEvent := &kafkaevent.ChainEvent{
+		ChainId:    uint64(chain.ID),
+		Timestamp:  now,
+		NotifyTime: timestamppb.New(time.Now().Add(time.Hour * 24)), // notify if validator is still out of active set after 24 hours
+		Event: &kafkaevent.ChainEvent_ValidatorOutOfActiveSet{
+			ValidatorOutOfActiveSet: &kafkaevent.ValidatorOutOfActiveSetEvent{
+				ValidatorAddress:         validator.Address,
+				ValidatorOperatorAddress: validator.OperatorAddress,
+				ValidatorMoniker:         validator.Moniker,
+				FirstInactiveTime:        now,
+			},
+		},
+	}
+	pbEvent, err := proto.Marshal(chainEvent)
+	if err != nil {
+		return nil, err
+	}
+	return pbEvent, nil
+}
+
 func (c *ValidatorCrawler) addOrUpdateValidators() {
 	log.Sugar.Info("Getting all validators")
+	var pbEvents [][]byte
 	for _, chainEnt := range c.chainManager.QueryEnabled(context.Background()) {
 		if strings.Contains(chainEnt.Path, "neutron") {
 			continue
@@ -109,6 +132,23 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 							log.Sugar.Errorf("error updating validator %v: %v", existingValidator.Address, err)
 							continue
 						}
+						if !isInActiveSet {
+							log.Sugar.Infof("Validator %v %v is out of active set", validator.OperatorAddress, validator.Description.Moniker)
+							event, err := c.createOutOfActiveSetEvent(chainEnt, existingValidator)
+							if err != nil {
+								log.Sugar.Errorf("error creating out of active set event for validator %v: %v", existingValidator.Address, err)
+								continue
+							}
+							pbEvents = append(pbEvents, event)
+						} else {
+							log.Sugar.Debugf("Validator %v %v is back in active set", validator.OperatorAddress, validator.Description.Moniker)
+							cnt, err := c.validatorManager.DeleteOutOfActiveSetEvents(context.Background(), existingValidator)
+							if err != nil {
+								log.Sugar.Errorf("error deleting out of active set events for validator %v: %v", existingValidator.Address, err)
+								continue
+							}
+							log.Sugar.Debugf("Deleted %v out-of-active-set events for validator %v", cnt, existingValidator.Address)
+						}
 					}
 				} else {
 					log.Sugar.Infof("Creating validator %v %v", validator.OperatorAddress, validator.Description.Moniker)
@@ -122,6 +162,10 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 				log.Sugar.Debugf("Validator %v %v is invalid", validator.OperatorAddress, validator.Description.Moniker)
 			}
 		}
+	}
+	if len(pbEvents) > 0 {
+		log.Sugar.Debugf("Send %v out-of-active-set events", len(pbEvents))
+		c.kafkaInternal.ProduceChainEvents(pbEvents)
 	}
 }
 
