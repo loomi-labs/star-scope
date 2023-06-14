@@ -9,7 +9,6 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcChannel "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
@@ -62,9 +61,6 @@ func (m *baseMessageHandler) handleMsg(tx []byte, anyMsg sdktypes.Msg, result *i
 			return err
 		}
 		addToResultIfNoError(result, msg, protoMsg)
-	case *govtypes.MsgDeposit:
-		//TODO: Remove this
-		log.Sugar.Panicf("govtypes.MsgDeposit")
 	case *authz.MsgExec:
 		for _, authzEncMsg := range msg.Msgs {
 			authzMsg, err := sdktypes.GetMsgFromTypeURL(m.txHelper.encodingConfig.Codec, authzEncMsg.GetTypeUrl())
