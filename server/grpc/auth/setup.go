@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
@@ -54,6 +55,9 @@ func (c *SetupCrawler) fetchUnstakingEvents(els []*ent.EventListener) {
 	log.Sugar.Debug("Fetch unstake events")
 	var pbEvents [][]byte
 	for _, el := range els {
+		if el.DataType != eventlistener.DataTypeWalletEvent_Unstake {
+			continue
+		}
 		if el.WalletAddress == "" {
 			continue
 		}

@@ -51,7 +51,7 @@ func getExistingValidator(validators []*ent.Validator, validator *types.Validato
 	return nil
 }
 
-// AddOrUpdateValidators compares a pubkey of a validator with the pubkeys of the validators in the active set.
+// isValidatorInActiveSet compares a pubkey of a validator with the pubkeys of the validators in the active set.
 // We can not use the address from the active set because it is a `valcons` address which we would have to convert first.
 func isValidatorInActiveSet(pubKey string, activeValidatorSet []types.ValidatorSetValidator) bool {
 	for _, validator := range activeValidatorSet {
@@ -62,7 +62,7 @@ func isValidatorInActiveSet(pubKey string, activeValidatorSet []types.ValidatorS
 	return false
 }
 
-func (c *ValidatorCrawler) AddOrUpdateValidators() {
+func (c *ValidatorCrawler) addOrUpdateValidators() {
 	log.Sugar.Info("Getting all validators")
 	for _, chainEnt := range c.chainManager.QueryEnabled(context.Background()) {
 		if strings.Contains(chainEnt.Path, "neutron") {
@@ -123,12 +123,12 @@ func (c *ValidatorCrawler) AddOrUpdateValidators() {
 }
 
 func (c *ValidatorCrawler) StartCrawling() {
-	c.AddOrUpdateValidators()
+	c.addOrUpdateValidators()
 	log.Sugar.Info("Scheduling validator crawl")
 	cr := cron.New()
-	_, err := cr.AddFunc("0 10 * * *", func() { c.AddOrUpdateValidators() }) // every day at 10:00
+	_, err := cr.AddFunc("0 10 * * *", func() { c.addOrUpdateValidators() }) // every day at 10:00
 	if err != nil {
-		log.Sugar.Errorf("while executing 'AddOrUpdateValidators' via cron: %v", err)
+		log.Sugar.Errorf("while executing 'addOrUpdateValidators' via cron: %v", err)
 	}
 	cr.Start()
 }

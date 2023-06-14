@@ -100,6 +100,14 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				CreatedAt:   walletEvent.Timestamp,
 				EventType:   kafkaevent.EventType_FUNDING,
 			}, nil
+		case *kafkaevent.WalletEvent_VoteReminder:
+			var voteReminder = walletEvent.GetVoteReminder()
+			return &eventpb.Event{
+				Title:       fmt.Sprintf("Vote Reminder for Proposal %v", voteReminder.GetProposalId()),
+				Description: fmt.Sprintf("%v did not vote yet", walletEvent.GetWalletAddress()),
+				CreatedAt:   walletEvent.Timestamp,
+				EventType:   kafkaevent.EventType_GOVERNANCE,
+			}, nil
 		}
 	}
 	return nil, errors.New(fmt.Sprintf("No type defined for event %v", entEvent))

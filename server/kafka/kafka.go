@@ -7,6 +7,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
@@ -114,10 +115,21 @@ func (k *Kafka) produceProcessedEvents(msgs []*kafkaevent.EventProcessedMsg) {
 	}
 }
 
-func (k *Kafka) getEventListenerMapForWallets() map[string]*ent.EventListener {
-	var elMap = make(map[string]*ent.EventListener)
-	for _, el := range k.eventListenerManager.QueryAll(context.Background()) {
-		elMap[el.WalletAddress] = el
+func (k *Kafka) getEventListenerMapForWallets() map[string]map[event.DataType]*ent.EventListener {
+	var elMap = make(map[string]map[event.DataType]*ent.EventListener)
+	var dt = []eventlistener.DataType{
+		eventlistener.DataTypeWalletEvent_Unstake,
+		eventlistener.DataTypeWalletEvent_CoinReceived,
+		eventlistener.DataTypeWalletEvent_OsmosisPoolUnlock,
+		eventlistener.DataTypeWalletEvent_NeutronTokenVesting,
+		eventlistener.DataTypeWalletEvent_Voted,
+		eventlistener.DataTypeWalletEvent_VoteReminder,
+	}
+	for _, el := range k.eventListenerManager.Query(context.Background(), dt...) {
+		if _, ok := elMap[el.WalletAddress]; !ok {
+			elMap[el.WalletAddress] = make(map[event.DataType]*ent.EventListener)
+		}
+		elMap[el.WalletAddress][event.DataType(el.DataType)] = el
 	}
 	return elMap
 }
@@ -158,10 +170,11 @@ func (k *Kafka) ProcessWalletEvents() {
 			log.Sugar.Error(err)
 		} else {
 			elMapMutex.Lock()
-			if el, ok := elMap[walletEvent.WalletAddress]; ok {
+			if els, ok := elMap[walletEvent.WalletAddress]; ok {
 				log.Sugar.Debugf("Processing event %v with address %v", msg.Offset, walletEvent.WalletAddress)
 				var eventType event.EventType
 				var dataType event.DataType
+				var isBackground = false
 				switch walletEvent.GetEvent().(type) {
 				case *kafkaevent.WalletEvent_CoinReceived:
 					eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_CoinReceived
@@ -171,20 +184,28 @@ func (k *Kafka) ProcessWalletEvents() {
 					eventType, dataType = event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake
 				case *kafkaevent.WalletEvent_NeutronTokenVesting:
 					eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_NeutronTokenVesting
+				case *kafkaevent.WalletEvent_Voted:
+					eventType, dataType, isBackground = event.EventTypeGOVERNANCE, event.DataTypeWalletEvent_Voted, true
+				case *kafkaevent.WalletEvent_VoteReminder:
+					eventType, dataType = event.EventTypeGOVERNANCE, event.DataTypeWalletEvent_VoteReminder
 				default:
 					log.Sugar.Errorf("unknown event type %v", reflect.TypeOf(walletEvent.GetEvent()))
 				}
-				_, err := k.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, &walletEvent, eventType, dataType)
-				if err != nil {
-					log.Sugar.Errorf("failed to update event for %v: %v", walletEvent.WalletAddress, err)
-				} else {
-					if walletEvent.NotifyTime.AsTime().Before(time.Now()) {
-						k.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
-							WalletAddress: walletEvent.WalletAddress,
-							EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
-						}})
-						log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, walletEvent.WalletAddress, processedEventsTopic)
+				if el, ok := els[dataType]; ok {
+					_, err := k.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, &walletEvent, eventType, dataType, isBackground)
+					if err != nil {
+						log.Sugar.Errorf("failed to update event for %v: %v", walletEvent.WalletAddress, err)
+					} else {
+						if walletEvent.NotifyTime.AsTime().Before(time.Now()) {
+							k.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
+								WalletAddress: walletEvent.WalletAddress,
+								EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
+							}})
+							log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, walletEvent.WalletAddress, processedEventsTopic)
+						}
 					}
+				} else {
+					log.Sugar.Debugf("No event listener for %v and %v", walletEvent.WalletAddress, dataType)
 				}
 			} else {
 				log.Sugar.Debugf("Discard event %v with address %v", msg.Offset, walletEvent.WalletAddress)
@@ -194,9 +215,15 @@ func (k *Kafka) ProcessWalletEvents() {
 	}
 }
 
-func (k *Kafka) getEventListenerMapForChains() map[uint64][]*ent.EventListener {
+func (k *Kafka) getEventListenerMapForChains(forChainEvents bool) map[uint64][]*ent.EventListener {
 	var elMap = make(map[uint64][]*ent.EventListener)
-	for _, el := range k.eventListenerManager.QueryAllWithChain(context.Background()) {
+	var dt []eventlistener.DataType
+	if forChainEvents {
+		dt = append(dt, eventlistener.DataTypeChainEvent_GovernanceProposal_Ongoing, eventlistener.DataTypeChainEvent_GovernanceProposal_Finished)
+	} else {
+		dt = append(dt, eventlistener.DataTypeContractEvent_ContractGovernanceProposal_Ongoing, eventlistener.DataTypeContractEvent_ContractGovernanceProposal_Finished)
+	}
+	for _, el := range k.eventListenerManager.QueryWithChain(context.Background(), dt...) {
 		if _, ok := elMap[uint64(el.Edges.Chain.ID)]; !ok {
 			elMap[uint64(el.Edges.Chain.ID)] = make([]*ent.EventListener, 0)
 		}
@@ -239,7 +266,7 @@ func (k *Kafka) ProcessChainEvents() {
 	r := k.groupReader(chainEventsTopic)
 	defer k.closeReader(r)
 
-	elMap := k.getEventListenerMapForChains()
+	elMap := k.getEventListenerMapForChains(true)
 	chains := k.getChains()     // TODO: update chains when new chain is added
 	elMapMutex := sync.Mutex{}  // Mutex to synchronize access to elMap
 	chainsMutex := sync.Mutex{} // Mutex to synchronize access to chains
@@ -260,7 +287,7 @@ func (k *Kafka) ProcessChainEvents() {
 			switch change {
 			case kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted:
 				elMapMutex.Lock()
-				elMap = k.getEventListenerMapForChains()
+				elMap = k.getEventListenerMapForChains(true)
 				elMapMutex.Unlock()
 			case kafka_internal.ChainEnabled, kafka_internal.ChainDisabled:
 				chainsMutex.Lock()
@@ -336,7 +363,7 @@ func (k *Kafka) ProcessContractEvents() {
 	r := k.groupReader(contractEventsTopic)
 	defer k.closeReader(r)
 
-	elMap := k.getEventListenerMapForChains()
+	elMap := k.getEventListenerMapForChains(false)
 	chains := k.getChains()
 	elMapMutex := sync.Mutex{} // Mutex to synchronize access to elMap
 	chainsMutex := sync.Mutex{}
@@ -357,7 +384,7 @@ func (k *Kafka) ProcessContractEvents() {
 			switch change {
 			case kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted:
 				elMapMutex.Lock()
-				elMap = k.getEventListenerMapForChains()
+				elMap = k.getEventListenerMapForChains(false)
 				elMapMutex.Unlock()
 			case kafka_internal.ChainEnabled, kafka_internal.ChainDisabled:
 				chainsMutex.Lock()

@@ -7,6 +7,7 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
@@ -81,6 +82,10 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 	els := e.eventListenerManager.QueryByUser(ctx, user)
 	pbEvents := make([]*eventpb.Event, 0)
 	for _, el := range els {
+		if el.DataType == eventlistener.DataTypeWalletEvent_Voted { // can be ignored because they are background events
+			continue
+		}
+
 		events, err := e.eventListenerManager.QueryEvents(
 			ctx,
 			el,
@@ -131,12 +136,12 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 		return nil, types.UserNotFoundErr
 	}
 
-	cntRead, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, true)
+	cntRead, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, true, false)
 	if err != nil {
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
 	}
-	cntUnread, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, false)
+	cntUnread, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, false, false)
 	if err != nil {
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
@@ -147,13 +152,13 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 			EventType: kafkaevent.EventType(i),
 			Count:     0,
 		}
-		for _, cnt := range cntRead {
+		for _, cnt := range *cntRead {
 			if cnt.EventType.String() == name {
 				counters[i].Count = int32(cnt.Count)
 				break
 			}
 		}
-		for _, cnt := range cntUnread {
+		for _, cnt := range *cntUnread {
 			if cnt.EventType.String() == name {
 				counters[i].UnreadCount += int32(cnt.Count)
 				break
@@ -198,12 +203,19 @@ func (e EventService) GetWelcomeMessage(ctx context.Context, _ *connect.Request[
 
 	els := e.eventListenerManager.QueryByUser(ctx, user)
 	pbWallets := make([]*eventpb.WalletInfo, 0)
+	chains := make(map[int]*ent.Chain)
 	for _, el := range els {
-		pbWallets = append(pbWallets, &eventpb.WalletInfo{
-			Address:  el.WalletAddress,
-			Name:     el.Edges.Chain.PrettyName,
-			ImageUrl: el.Edges.Chain.Image,
-		})
+		if el.WalletAddress == "" {
+			continue
+		}
+		if _, ok := chains[el.Edges.Chain.ID]; !ok {
+			pbWallets = append(pbWallets, &eventpb.WalletInfo{
+				Address:  el.WalletAddress,
+				Name:     el.Edges.Chain.PrettyName,
+				ImageUrl: el.Edges.Chain.Image,
+			})
+			chains[el.Edges.Chain.ID] = el.Edges.Chain
+		}
 	}
 	return connect.NewResponse(&eventpb.WelcomeMessageResponse{Wallets: pbWallets}), nil
 }

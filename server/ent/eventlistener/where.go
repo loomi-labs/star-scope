@@ -205,6 +205,16 @@ func WalletAddressHasSuffix(v string) predicate.EventListener {
 	return predicate.EventListener(sql.FieldHasSuffix(FieldWalletAddress, v))
 }
 
+// WalletAddressIsNil applies the IsNil predicate on the "wallet_address" field.
+func WalletAddressIsNil() predicate.EventListener {
+	return predicate.EventListener(sql.FieldIsNull(FieldWalletAddress))
+}
+
+// WalletAddressNotNil applies the NotNil predicate on the "wallet_address" field.
+func WalletAddressNotNil() predicate.EventListener {
+	return predicate.EventListener(sql.FieldNotNull(FieldWalletAddress))
+}
+
 // WalletAddressEqualFold applies the EqualFold predicate on the "wallet_address" field.
 func WalletAddressEqualFold(v string) predicate.EventListener {
 	return predicate.EventListener(sql.FieldEqualFold(FieldWalletAddress, v))
@@ -213,6 +223,26 @@ func WalletAddressEqualFold(v string) predicate.EventListener {
 // WalletAddressContainsFold applies the ContainsFold predicate on the "wallet_address" field.
 func WalletAddressContainsFold(v string) predicate.EventListener {
 	return predicate.EventListener(sql.FieldContainsFold(FieldWalletAddress, v))
+}
+
+// DataTypeEQ applies the EQ predicate on the "data_type" field.
+func DataTypeEQ(v DataType) predicate.EventListener {
+	return predicate.EventListener(sql.FieldEQ(FieldDataType, v))
+}
+
+// DataTypeNEQ applies the NEQ predicate on the "data_type" field.
+func DataTypeNEQ(v DataType) predicate.EventListener {
+	return predicate.EventListener(sql.FieldNEQ(FieldDataType, v))
+}
+
+// DataTypeIn applies the In predicate on the "data_type" field.
+func DataTypeIn(vs ...DataType) predicate.EventListener {
+	return predicate.EventListener(sql.FieldIn(FieldDataType, vs...))
+}
+
+// DataTypeNotIn applies the NotIn predicate on the "data_type" field.
+func DataTypeNotIn(vs ...DataType) predicate.EventListener {
+	return predicate.EventListener(sql.FieldNotIn(FieldDataType, vs...))
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.

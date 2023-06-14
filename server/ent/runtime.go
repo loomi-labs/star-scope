@@ -97,6 +97,10 @@ func init() {
 	eventDescIsRead := eventFields[7].Descriptor()
 	// event.DefaultIsRead holds the default value on creation for the is_read field.
 	event.DefaultIsRead = eventDescIsRead.Default.(bool)
+	// eventDescIsBackground is the schema descriptor for is_background field.
+	eventDescIsBackground := eventFields[8].Descriptor()
+	// event.DefaultIsBackground holds the default value on creation for the is_background field.
+	event.DefaultIsBackground = eventDescIsBackground.Default.(bool)
 	// eventDescID is the schema descriptor for id field.
 	eventDescID := eventFields[0].Descriptor()
 	// event.DefaultID holds the default value on creation for the id field.

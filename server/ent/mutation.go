@@ -2323,6 +2323,7 @@ type EventMutation struct {
 	data_type             *event.DataType
 	notify_time           *time.Time
 	is_read               *bool
+	is_background         *bool
 	clearedFields         map[string]struct{}
 	event_listener        *int
 	clearedevent_listener bool
@@ -2798,6 +2799,42 @@ func (m *EventMutation) ResetIsRead() {
 	m.is_read = nil
 }
 
+// SetIsBackground sets the "is_background" field.
+func (m *EventMutation) SetIsBackground(b bool) {
+	m.is_background = &b
+}
+
+// IsBackground returns the value of the "is_background" field in the mutation.
+func (m *EventMutation) IsBackground() (r bool, exists bool) {
+	v := m.is_background
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsBackground returns the old "is_background" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldIsBackground(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsBackground is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsBackground requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsBackground: %w", err)
+	}
+	return oldValue.IsBackground, nil
+}
+
+// ResetIsBackground resets all changes to the "is_background" field.
+func (m *EventMutation) ResetIsBackground() {
+	m.is_background = nil
+}
+
 // SetEventListenerID sets the "event_listener" edge to the EventListener entity by id.
 func (m *EventMutation) SetEventListenerID(id int) {
 	m.event_listener = &id
@@ -2871,7 +2908,7 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.create_time != nil {
 		fields = append(fields, event.FieldCreateTime)
 	}
@@ -2899,6 +2936,9 @@ func (m *EventMutation) Fields() []string {
 	if m.is_read != nil {
 		fields = append(fields, event.FieldIsRead)
 	}
+	if m.is_background != nil {
+		fields = append(fields, event.FieldIsBackground)
+	}
 	return fields
 }
 
@@ -2925,6 +2965,8 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.NotifyTime()
 	case event.FieldIsRead:
 		return m.IsRead()
+	case event.FieldIsBackground:
+		return m.IsBackground()
 	}
 	return nil, false
 }
@@ -2952,6 +2994,8 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldNotifyTime(ctx)
 	case event.FieldIsRead:
 		return m.OldIsRead(ctx)
+	case event.FieldIsBackground:
+		return m.OldIsBackground(ctx)
 	}
 	return nil, fmt.Errorf("unknown Event field %s", name)
 }
@@ -3023,6 +3067,13 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIsRead(v)
+		return nil
+	case event.FieldIsBackground:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsBackground(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Event field %s", name)
@@ -3121,6 +3172,9 @@ func (m *EventMutation) ResetField(name string) error {
 	case event.FieldIsRead:
 		m.ResetIsRead()
 		return nil
+	case event.FieldIsBackground:
+		m.ResetIsBackground()
+		return nil
 	}
 	return fmt.Errorf("unknown Event field %s", name)
 }
@@ -3208,6 +3262,7 @@ type EventListenerMutation struct {
 	create_time    *time.Time
 	update_time    *time.Time
 	wallet_address *string
+	data_type      *eventlistener.DataType
 	clearedFields  map[string]struct{}
 	user           *int
 	cleareduser    bool
@@ -3422,9 +3477,58 @@ func (m *EventListenerMutation) OldWalletAddress(ctx context.Context) (v string,
 	return oldValue.WalletAddress, nil
 }
 
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (m *EventListenerMutation) ClearWalletAddress() {
+	m.wallet_address = nil
+	m.clearedFields[eventlistener.FieldWalletAddress] = struct{}{}
+}
+
+// WalletAddressCleared returns if the "wallet_address" field was cleared in this mutation.
+func (m *EventListenerMutation) WalletAddressCleared() bool {
+	_, ok := m.clearedFields[eventlistener.FieldWalletAddress]
+	return ok
+}
+
 // ResetWalletAddress resets all changes to the "wallet_address" field.
 func (m *EventListenerMutation) ResetWalletAddress() {
 	m.wallet_address = nil
+	delete(m.clearedFields, eventlistener.FieldWalletAddress)
+}
+
+// SetDataType sets the "data_type" field.
+func (m *EventListenerMutation) SetDataType(et eventlistener.DataType) {
+	m.data_type = &et
+}
+
+// DataType returns the value of the "data_type" field in the mutation.
+func (m *EventListenerMutation) DataType() (r eventlistener.DataType, exists bool) {
+	v := m.data_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDataType returns the old "data_type" field's value of the EventListener entity.
+// If the EventListener object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventListenerMutation) OldDataType(ctx context.Context) (v eventlistener.DataType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDataType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDataType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDataType: %w", err)
+	}
+	return oldValue.DataType, nil
+}
+
+// ResetDataType resets all changes to the "data_type" field.
+func (m *EventListenerMutation) ResetDataType() {
+	m.data_type = nil
 }
 
 // SetUserID sets the "user" edge to the User entity by id.
@@ -3593,7 +3697,7 @@ func (m *EventListenerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventListenerMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.create_time != nil {
 		fields = append(fields, eventlistener.FieldCreateTime)
 	}
@@ -3602,6 +3706,9 @@ func (m *EventListenerMutation) Fields() []string {
 	}
 	if m.wallet_address != nil {
 		fields = append(fields, eventlistener.FieldWalletAddress)
+	}
+	if m.data_type != nil {
+		fields = append(fields, eventlistener.FieldDataType)
 	}
 	return fields
 }
@@ -3617,6 +3724,8 @@ func (m *EventListenerMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdateTime()
 	case eventlistener.FieldWalletAddress:
 		return m.WalletAddress()
+	case eventlistener.FieldDataType:
+		return m.DataType()
 	}
 	return nil, false
 }
@@ -3632,6 +3741,8 @@ func (m *EventListenerMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldUpdateTime(ctx)
 	case eventlistener.FieldWalletAddress:
 		return m.OldWalletAddress(ctx)
+	case eventlistener.FieldDataType:
+		return m.OldDataType(ctx)
 	}
 	return nil, fmt.Errorf("unknown EventListener field %s", name)
 }
@@ -3662,6 +3773,13 @@ func (m *EventListenerMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetWalletAddress(v)
 		return nil
+	case eventlistener.FieldDataType:
+		v, ok := value.(eventlistener.DataType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDataType(v)
+		return nil
 	}
 	return fmt.Errorf("unknown EventListener field %s", name)
 }
@@ -3691,7 +3809,11 @@ func (m *EventListenerMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *EventListenerMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(eventlistener.FieldWalletAddress) {
+		fields = append(fields, eventlistener.FieldWalletAddress)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3704,6 +3826,11 @@ func (m *EventListenerMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *EventListenerMutation) ClearField(name string) error {
+	switch name {
+	case eventlistener.FieldWalletAddress:
+		m.ClearWalletAddress()
+		return nil
+	}
 	return fmt.Errorf("unknown EventListener nullable field %s", name)
 }
 
@@ -3719,6 +3846,9 @@ func (m *EventListenerMutation) ResetField(name string) error {
 		return nil
 	case eventlistener.FieldWalletAddress:
 		m.ResetWalletAddress()
+		return nil
+	case eventlistener.FieldDataType:
+		m.ResetDataType()
 		return nil
 	}
 	return fmt.Errorf("unknown EventListener field %s", name)

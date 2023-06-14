@@ -33,8 +33,8 @@ func (c *ChainCrawler) isChainValid(chainInfo *types.ChainData) bool {
 	return chainInfo.NetworkType == "mainnet" && chainInfo.ChainId != "" && chainInfo.Path != "" && chainInfo.Bech32Prefix != ""
 }
 
-func (c *ChainCrawler) AddOrUpdateChains() {
-	log.Sugar.Info("Updating chains")
+func (c *ChainCrawler) addOrUpdateChains() {
+	log.Sugar.Info("addOrUpdateChains chains")
 	var chainInfo types.ChainInfo
 	_, err := common.GetJson("https://chains.cosmos.directory/", 5, &chainInfo)
 	if err != nil {
@@ -69,12 +69,13 @@ func (c *ChainCrawler) AddOrUpdateChains() {
 	}
 }
 
-func (c *ChainCrawler) ScheduleCrawl() {
+func (c *ChainCrawler) StartCrawling() {
+	c.addOrUpdateChains()
 	log.Sugar.Info("Scheduling chain crawl")
 	cr := cron.New()
-	_, err := cr.AddFunc("0 9 * * *", func() { c.AddOrUpdateChains() }) // every day at 9:00
+	_, err := cr.AddFunc("0 9 * * *", func() { c.addOrUpdateChains() }) // every day at 9:00
 	if err != nil {
-		log.Sugar.Errorf("while executing 'AddOrUpdateChains' via cron: %v", err)
+		log.Sugar.Errorf("while executing 'addOrUpdateChains' via cron: %v", err)
 	}
 	cr.Start()
 }

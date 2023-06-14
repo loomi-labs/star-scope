@@ -102,7 +102,7 @@ var startChainCrawlerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
-		chainCrawler.AddOrUpdateChains()
+		chainCrawler.StartCrawling()
 	},
 }
 

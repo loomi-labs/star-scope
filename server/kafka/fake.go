@@ -45,7 +45,7 @@ func (d *FakeEventCreator) convertedAddresses(bech32Prefix string) []string {
 
 func (d *FakeEventCreator) getEventListenerMap() map[string]*ent.EventListener {
 	var elMap = make(map[string]*ent.EventListener)
-	for _, el := range d.eventListenerManager.QueryAllWithChain(context.Background()) {
+	for _, el := range d.eventListenerManager.QueryWithChain(context.Background()) {
 		if slices.Contains(d.convertedAddresses(el.Edges.Chain.Bech32Prefix), el.WalletAddress) {
 			elMap[el.WalletAddress] = el
 		}
@@ -141,7 +141,7 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 				case *kafkaevent.WalletEvent_Unstake:
 					eventType, dataType = event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake
 				}
-				_, err := d.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, msg, eventType, dataType)
+				_, err := d.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, msg, eventType, dataType, false)
 				if err != nil {
 					log.Sugar.Panicf("failed to update event for %v: %v", msg.WalletAddress, err)
 				} else {

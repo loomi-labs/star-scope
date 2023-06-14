@@ -58,6 +58,20 @@ func (elc *EventListenerCreate) SetWalletAddress(s string) *EventListenerCreate 
 	return elc
 }
 
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (elc *EventListenerCreate) SetNillableWalletAddress(s *string) *EventListenerCreate {
+	if s != nil {
+		elc.SetWalletAddress(*s)
+	}
+	return elc
+}
+
+// SetDataType sets the "data_type" field.
+func (elc *EventListenerCreate) SetDataType(et eventlistener.DataType) *EventListenerCreate {
+	elc.mutation.SetDataType(et)
+	return elc
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (elc *EventListenerCreate) SetUserID(id int) *EventListenerCreate {
 	elc.mutation.SetUserID(id)
@@ -164,8 +178,13 @@ func (elc *EventListenerCreate) check() error {
 	if _, ok := elc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "EventListener.update_time"`)}
 	}
-	if _, ok := elc.mutation.WalletAddress(); !ok {
-		return &ValidationError{Name: "wallet_address", err: errors.New(`ent: missing required field "EventListener.wallet_address"`)}
+	if _, ok := elc.mutation.DataType(); !ok {
+		return &ValidationError{Name: "data_type", err: errors.New(`ent: missing required field "EventListener.data_type"`)}
+	}
+	if v, ok := elc.mutation.DataType(); ok {
+		if err := eventlistener.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "EventListener.data_type": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -204,6 +223,10 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 	if value, ok := elc.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
 		_node.WalletAddress = value
+	}
+	if value, ok := elc.mutation.DataType(); ok {
+		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
+		_node.DataType = value
 	}
 	if nodes := elc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

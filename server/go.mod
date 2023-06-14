@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	ariga.io/entviz v0.0.0-20230419175438-29569ec22220 // indirect
 	cosmossdk.io/api v0.3.1 // indirect
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect

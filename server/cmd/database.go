@@ -4,7 +4,6 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/loomi-labs/star-scope/crawler/chain_crawler"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/spf13/cobra"
 	"strings"
@@ -23,11 +22,6 @@ var migrateCmd = &cobra.Command{
 	Short: "Migrate the database",
 	Run: func(cmd *cobra.Command, args []string) {
 		database.MigrateDb()
-
-		dbManagers := database.NewDbManagersWithoutKafka()
-		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
-		chainCrawler.AddOrUpdateChains()
-
 		database.InitDb()
 	},
 }

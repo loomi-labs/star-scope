@@ -34,6 +34,8 @@ const (
 	FieldNotifyTime = "notify_time"
 	// FieldIsRead holds the string denoting the is_read field in the database.
 	FieldIsRead = "is_read"
+	// FieldIsBackground holds the string denoting the is_background field in the database.
+	FieldIsBackground = "is_background"
 	// EdgeEventListener holds the string denoting the event_listener edge name in mutations.
 	EdgeEventListener = "event_listener"
 	// Table holds the table name of the event in the database.
@@ -59,6 +61,7 @@ var Columns = []string{
 	FieldDataType,
 	FieldNotifyTime,
 	FieldIsRead,
+	FieldIsBackground,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "events"
@@ -93,6 +96,8 @@ var (
 	DefaultNotifyTime time.Time
 	// DefaultIsRead holds the default value on creation for the "is_read" field.
 	DefaultIsRead bool
+	// DefaultIsBackground holds the default value on creation for the "is_background" field.
+	DefaultIsBackground bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -102,10 +107,10 @@ type EventType string
 
 // EventType values.
 const (
+	EventTypeFUNDING    EventType = "FUNDING"
 	EventTypeSTAKING    EventType = "STAKING"
 	EventTypeDEX        EventType = "DEX"
 	EventTypeGOVERNANCE EventType = "GOVERNANCE"
-	EventTypeFUNDING    EventType = "FUNDING"
 )
 
 func (et EventType) String() string {
@@ -115,7 +120,7 @@ func (et EventType) String() string {
 // EventTypeValidator is a validator for the "event_type" field enum values. It is called by the builders before save.
 func EventTypeValidator(et EventType) error {
 	switch et {
-	case EventTypeSTAKING, EventTypeDEX, EventTypeGOVERNANCE, EventTypeFUNDING:
+	case EventTypeFUNDING, EventTypeSTAKING, EventTypeDEX, EventTypeGOVERNANCE:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for event_type field: %q", et)
@@ -127,12 +132,17 @@ type DataType string
 
 // DataType values.
 const (
-	DataTypeWalletEvent_CoinReceived               DataType = "WalletEvent_CoinReceived"
-	DataTypeWalletEvent_OsmosisPoolUnlock          DataType = "WalletEvent_OsmosisPoolUnlock"
-	DataTypeWalletEvent_Unstake                    DataType = "WalletEvent_Unstake"
-	DataTypeWalletEvent_NeutronTokenVesting        DataType = "WalletEvent_NeutronTokenVesting"
-	DataTypeChainEvent_GovernanceProposal_Ongoing  DataType = "ChainEvent_GovernanceProposal_Ongoing"
-	DataTypeChainEvent_GovernanceProposal_Finished DataType = "ChainEvent_GovernanceProposal_Finished"
+	DataTypeWalletEvent_CoinReceived                          DataType = "WalletEvent_CoinReceived"
+	DataTypeWalletEvent_OsmosisPoolUnlock                     DataType = "WalletEvent_OsmosisPoolUnlock"
+	DataTypeWalletEvent_Unstake                               DataType = "WalletEvent_Unstake"
+	DataTypeWalletEvent_NeutronTokenVesting                   DataType = "WalletEvent_NeutronTokenVesting"
+	DataTypeWalletEvent_Voted                                 DataType = "WalletEvent_Voted"
+	DataTypeWalletEvent_VoteReminder                          DataType = "WalletEvent_VoteReminder"
+	DataTypeChainEvent_ValidatorOutOfActiveSet                DataType = "ChainEvent_ValidatorOutOfActiveSet"
+	DataTypeChainEvent_GovernanceProposal_Ongoing             DataType = "ChainEvent_GovernanceProposal_Ongoing"
+	DataTypeChainEvent_GovernanceProposal_Finished            DataType = "ChainEvent_GovernanceProposal_Finished"
+	DataTypeContractEvent_ContractGovernanceProposal_Ongoing  DataType = "ContractEvent_ContractGovernanceProposal_Ongoing"
+	DataTypeContractEvent_ContractGovernanceProposal_Finished DataType = "ContractEvent_ContractGovernanceProposal_Finished"
 )
 
 func (dt DataType) String() string {
@@ -142,7 +152,7 @@ func (dt DataType) String() string {
 // DataTypeValidator is a validator for the "data_type" field enum values. It is called by the builders before save.
 func DataTypeValidator(dt DataType) error {
 	switch dt {
-	case DataTypeWalletEvent_CoinReceived, DataTypeWalletEvent_OsmosisPoolUnlock, DataTypeWalletEvent_Unstake, DataTypeWalletEvent_NeutronTokenVesting, DataTypeChainEvent_GovernanceProposal_Ongoing, DataTypeChainEvent_GovernanceProposal_Finished:
+	case DataTypeWalletEvent_CoinReceived, DataTypeWalletEvent_OsmosisPoolUnlock, DataTypeWalletEvent_Unstake, DataTypeWalletEvent_NeutronTokenVesting, DataTypeWalletEvent_Voted, DataTypeWalletEvent_VoteReminder, DataTypeChainEvent_ValidatorOutOfActiveSet, DataTypeChainEvent_GovernanceProposal_Ongoing, DataTypeChainEvent_GovernanceProposal_Finished, DataTypeContractEvent_ContractGovernanceProposal_Ongoing, DataTypeContractEvent_ContractGovernanceProposal_Finished:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for data_type field: %q", dt)
@@ -185,6 +195,11 @@ func ByNotifyTime(opts ...sql.OrderTermOption) OrderOption {
 // ByIsRead orders the results by the is_read field.
 func ByIsRead(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsRead, opts...).ToFunc()
+}
+
+// ByIsBackground orders the results by the is_background field.
+func ByIsBackground(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsBackground, opts...).ToFunc()
 }
 
 // ByEventListenerField orders the results by event_listener field.
