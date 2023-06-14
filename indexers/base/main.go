@@ -109,20 +109,33 @@ func startChainFetchInterval(config *Config, g *errgroup.Group) {
 	})
 }
 
-func listenForUpdates(config *Config) {
+func listenForUpdates(ctx context.Context, config *Config) {
 	const updateBatchTimeout = 30 * time.Second // Time duration to wait for more updates
 
 	updates := make(map[uint64]*indexerpb.IndexingChain)
 	timer := time.NewTimer(updateBatchTimeout)
 	timerExpired := timer.C
 
+	closeFn := func() {
+		config.StopChannelsMutex.Lock()
+		for _, stopChannel := range config.StopChannels {
+			close(stopChannel)
+		}
+		config.StopChannelsMutex.Unlock()
+		sendUpdates(config, updates)
+	}
+
 	for {
 		select {
+		case <-ctx.Done():
+			log.Sugar.Info("Context done, exiting")
+			closeFn()
+			return
 		case update, ok := <-config.UpdateChannel:
 			if !ok {
 				// Channel is closed, call sendUpdates and exit the function
 				log.Sugar.Info("Update channel closed, exiting")
-				sendUpdates(config, updates)
+				closeFn()
 				return
 			}
 
@@ -191,7 +204,7 @@ func main() {
 		return nil
 	})
 	g.Go(func() error {
-		listenForUpdates(config)
+		listenForUpdates(ctx, config)
 		return nil
 	})
 
