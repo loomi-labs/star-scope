@@ -106,25 +106,73 @@ services:
         constraints:
           - node.role != manager
 
-  index-event-consumer:
+  wallet-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_event_consumer
+    container_name: starscope_wallet_event_consumer
     working_dir: /app
     secrets:
       - starscope-env
-    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service index-event-consumer"
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service wallet-event-consumer"
     deploy:
       placement:
         constraints:
           - node.role != manager
 
-  query-event-consumer:
+  chain-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_event_consumer
+    container_name: starscope_chain_event_consumer
     working_dir: /app
     secrets:
       - starscope-env
-    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service query-event-consumer"
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-event-consumer"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  contract-event-consumer:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_contract_event_consumer
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service contract-event-consumer"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  chain-crawler:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_chain_crawler
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-crawler"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  validator-crawler:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_validator_crawler
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service validator-crawler"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  gov-crawler:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_gov_crawler
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service gov-crawler"
     deploy:
       placement:
         constraints:

@@ -78,4 +78,5 @@ func (c *ChainCrawler) StartCrawling() {
 		log.Sugar.Errorf("while executing 'addOrUpdateChains' via cron: %v", err)
 	}
 	cr.Start()
+	select {}
 }

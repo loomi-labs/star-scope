@@ -112,26 +112,78 @@ services:
       grpc:
         condition: service_started
 
-  index-event-consumer:
+  wallet-event-consumer:
     build: server
-    container_name: starscope_index_event_consumer
+    container_name: starscope_wallet_event_consumer
     working_dir: /app
     env_file:
       - server/.env.template
-    command: "/starscope service index-event-consumer"
+    command: "/starscope service wallet-event-consumer"
     depends_on:
       db:
         condition: service_healthy
       db-migration:
         condition: service_completed_successfully
 
-  query-event-consumer:
-    image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_query_event_consumer
+  chain-event-consumer:
+    build: server
+    container_name: starscope_chain_event_consumer
     working_dir: /app
     env_file:
       - server/.env.template
-    command: "/starscope service query-event-consumer"
+    command: "/starscope service chain-event-consumer"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+  contract-event-consumer:
+    build: server
+    container_name: starscope_contract_event_consumer
+    working_dir: /app
+    env_file:
+      - server/.env.template
+    command: "/starscope service contract-event-consumer"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+  chain-crawler:
+    build: server
+    container_name: starscope_chain_crawler
+    working_dir: /app
+    env_file:
+      - server/.env.template
+    command: "/starscope service chain-crawler"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+  validator-crawler:
+    build: server
+    container_name: starscope_validator_crawler
+    working_dir: /app
+    env_file:
+      - server/.env.template
+    command: "/starscope service validator-crawler"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+  gov-crawler:
+    build: server
+    container_name: starscope_gov_crawler
+    working_dir: /app
+    env_file:
+      - server/.env.template
+    command: "/starscope service gov-crawler"
     depends_on:
       db:
         condition: service_healthy

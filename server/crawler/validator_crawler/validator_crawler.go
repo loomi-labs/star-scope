@@ -238,7 +238,6 @@ func (c *ValidatorCrawler) fetchSlashEvents() {
 
 func (c *ValidatorCrawler) StartCrawling() {
 	c.addOrUpdateValidators()
-	c.fetchSlashEvents()
 	log.Sugar.Info("Scheduling validator crawl")
 	cr := cron.New()
 	_, err := cr.AddFunc("0 10 * * *", func() { c.addOrUpdateValidators() }) // every day at 10:00
@@ -250,4 +249,5 @@ func (c *ValidatorCrawler) StartCrawling() {
 		log.Sugar.Errorf("while executing 'fetchSlashEvents' via cron: %v", err)
 	}
 	cr.Start()
+	select {}
 }
