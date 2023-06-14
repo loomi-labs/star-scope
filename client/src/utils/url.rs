@@ -1,8 +1,8 @@
+use crate::{AppRoutes, AppState};
 use log::debug;
-use sycamore::prelude::{Scope, use_context};
+use sycamore::prelude::{use_context, Scope};
 use sycamore_router::navigate;
 use wasm_bindgen::JsValue;
-use crate::{AppRoutes, AppState};
 
 #[allow(dead_code)]
 pub fn add_or_update_query_params(key: &str, value: &str) {
@@ -24,9 +24,13 @@ pub fn add_or_update_query_params(key: &str, value: &str) {
     if !value.is_empty() {
         query_params.push((key, value));
     }
-    let new_query_params = querystring::stringify(vec![(key, value)]).trim_end_matches('&').to_string();
+    let new_query_params = querystring::stringify(vec![(key, value)])
+        .trim_end_matches('&')
+        .to_string();
     let new_url_string = format!("{}?{}", stripped_url, new_query_params);
-    history.replace_state_with_url(&JsValue::null(), "", Some(&new_url_string)).unwrap();
+    history
+        .replace_state_with_url(&JsValue::null(), "", Some(&new_url_string))
+        .unwrap();
 }
 
 pub fn get_query_param(key: &str) -> Option<String> {

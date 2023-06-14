@@ -112,6 +112,20 @@ func (eu *EventUpdate) SetNillableIsRead(b *bool) *EventUpdate {
 	return eu
 }
 
+// SetIsBackground sets the "is_background" field.
+func (eu *EventUpdate) SetIsBackground(b bool) *EventUpdate {
+	eu.mutation.SetIsBackground(b)
+	return eu
+}
+
+// SetNillableIsBackground sets the "is_background" field if the given value is not nil.
+func (eu *EventUpdate) SetNillableIsBackground(b *bool) *EventUpdate {
+	if b != nil {
+		eu.SetIsBackground(*b)
+	}
+	return eu
+}
+
 // SetEventListenerID sets the "event_listener" edge to the EventListener entity by ID.
 func (eu *EventUpdate) SetEventListenerID(id int) *EventUpdate {
 	eu.mutation.SetEventListenerID(id)
@@ -237,6 +251,9 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := eu.mutation.IsRead(); ok {
 		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
+	}
+	if value, ok := eu.mutation.IsBackground(); ok {
+		_spec.SetField(event.FieldIsBackground, field.TypeBool, value)
 	}
 	if eu.mutation.EventListenerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -365,6 +382,20 @@ func (euo *EventUpdateOne) SetIsRead(b bool) *EventUpdateOne {
 func (euo *EventUpdateOne) SetNillableIsRead(b *bool) *EventUpdateOne {
 	if b != nil {
 		euo.SetIsRead(*b)
+	}
+	return euo
+}
+
+// SetIsBackground sets the "is_background" field.
+func (euo *EventUpdateOne) SetIsBackground(b bool) *EventUpdateOne {
+	euo.mutation.SetIsBackground(b)
+	return euo
+}
+
+// SetNillableIsBackground sets the "is_background" field if the given value is not nil.
+func (euo *EventUpdateOne) SetNillableIsBackground(b *bool) *EventUpdateOne {
+	if b != nil {
+		euo.SetIsBackground(*b)
 	}
 	return euo
 }
@@ -524,6 +555,9 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error
 	}
 	if value, ok := euo.mutation.IsRead(); ok {
 		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
+	}
+	if value, ok := euo.mutation.IsBackground(); ok {
+		_spec.SetField(event.FieldIsBackground, field.TypeBool, value)
 	}
 	if euo.mutation.EventListenerCleared() {
 		edge := &sqlgraph.EdgeSpec{

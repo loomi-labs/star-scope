@@ -44,6 +44,26 @@ func (elu *EventListenerUpdate) SetWalletAddress(s string) *EventListenerUpdate 
 	return elu
 }
 
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (elu *EventListenerUpdate) SetNillableWalletAddress(s *string) *EventListenerUpdate {
+	if s != nil {
+		elu.SetWalletAddress(*s)
+	}
+	return elu
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (elu *EventListenerUpdate) ClearWalletAddress() *EventListenerUpdate {
+	elu.mutation.ClearWalletAddress()
+	return elu
+}
+
+// SetDataType sets the "data_type" field.
+func (elu *EventListenerUpdate) SetDataType(et eventlistener.DataType) *EventListenerUpdate {
+	elu.mutation.SetDataType(et)
+	return elu
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (elu *EventListenerUpdate) SetUserID(id int) *EventListenerUpdate {
 	elu.mutation.SetUserID(id)
@@ -171,7 +191,20 @@ func (elu *EventListenerUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (elu *EventListenerUpdate) check() error {
+	if v, ok := elu.mutation.DataType(); ok {
+		if err := eventlistener.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "EventListener.data_type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := elu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(eventlistener.Table, eventlistener.Columns, sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt))
 	if ps := elu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -185,6 +218,12 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := elu.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
+	}
+	if elu.mutation.WalletAddressCleared() {
+		_spec.ClearField(eventlistener.FieldWalletAddress, field.TypeString)
+	}
+	if value, ok := elu.mutation.DataType(); ok {
+		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
 	}
 	if elu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -318,6 +357,26 @@ func (eluo *EventListenerUpdateOne) SetUpdateTime(t time.Time) *EventListenerUpd
 // SetWalletAddress sets the "wallet_address" field.
 func (eluo *EventListenerUpdateOne) SetWalletAddress(s string) *EventListenerUpdateOne {
 	eluo.mutation.SetWalletAddress(s)
+	return eluo
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (eluo *EventListenerUpdateOne) SetNillableWalletAddress(s *string) *EventListenerUpdateOne {
+	if s != nil {
+		eluo.SetWalletAddress(*s)
+	}
+	return eluo
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (eluo *EventListenerUpdateOne) ClearWalletAddress() *EventListenerUpdateOne {
+	eluo.mutation.ClearWalletAddress()
+	return eluo
+}
+
+// SetDataType sets the "data_type" field.
+func (eluo *EventListenerUpdateOne) SetDataType(et eventlistener.DataType) *EventListenerUpdateOne {
+	eluo.mutation.SetDataType(et)
 	return eluo
 }
 
@@ -461,7 +520,20 @@ func (eluo *EventListenerUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (eluo *EventListenerUpdateOne) check() error {
+	if v, ok := eluo.mutation.DataType(); ok {
+		if err := eventlistener.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "EventListener.data_type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventListener, err error) {
+	if err := eluo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(eventlistener.Table, eventlistener.Columns, sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt))
 	id, ok := eluo.mutation.ID()
 	if !ok {
@@ -492,6 +564,12 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 	}
 	if value, ok := eluo.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
+	}
+	if eluo.mutation.WalletAddressCleared() {
+		_spec.ClearField(eventlistener.FieldWalletAddress, field.TypeString)
+	}
+	if value, ok := eluo.mutation.DataType(); ok {
+		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
 	}
 	if eluo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

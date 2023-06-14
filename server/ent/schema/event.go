@@ -33,21 +33,6 @@ func (Event) Fields() []ent.Field {
 		eventTypes = append(eventTypes, t)
 	}
 
-	var dataTypes []string
-	var events = []interface{}{
-		kafkaevent.WalletEvent_CoinReceived{},
-		kafkaevent.WalletEvent_OsmosisPoolUnlock{},
-		kafkaevent.WalletEvent_Unstake{},
-		kafkaevent.WalletEvent_NeutronTokenVesting{},
-	}
-	for _, t := range events {
-		dataTypes = append(dataTypes, reflect.TypeOf(t).Name())
-	}
-	var govBase = reflect.TypeOf(kafkaevent.ChainEvent_GovernanceProposal{}).Name()
-	var govEvents = []string{"Ongoing", "Finished"}
-	for _, govEvent := range govEvents {
-		dataTypes = append(dataTypes, fmt.Sprintf("%s_%s", govBase, govEvent))
-	}
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
@@ -63,10 +48,12 @@ func (Event) Fields() []ent.Field {
 			Optional().
 			GoType(&WalletEventWithScan{}),
 		field.Enum("data_type").
-			Values(dataTypes...),
+			Values(getDataTypes()...),
 		field.Time("notify_time").
 			Default(time.Now()),
 		field.Bool("is_read").
+			Default(false),
+		field.Bool("is_background").
 			Default(false),
 	}
 }
@@ -78,6 +65,35 @@ func (Event) Edges() []ent.Edge {
 			Ref("events").
 			Unique(),
 	}
+}
+
+func getDataTypes() []string {
+	var dataTypes []string
+	var events = []interface{}{
+		kafkaevent.WalletEvent_CoinReceived{},
+		kafkaevent.WalletEvent_OsmosisPoolUnlock{},
+		kafkaevent.WalletEvent_Unstake{},
+		kafkaevent.WalletEvent_NeutronTokenVesting{},
+		kafkaevent.WalletEvent_Voted{},
+		kafkaevent.WalletEvent_VoteReminder{},
+		kafkaevent.ChainEvent_ValidatorOutOfActiveSet{},
+		kafkaevent.ChainEvent_ValidatorSlash{},
+	}
+	for _, t := range events {
+		dataTypes = append(dataTypes, reflect.TypeOf(t).Name())
+	}
+	var govBaseEvents = []interface{}{
+		kafkaevent.ChainEvent_GovernanceProposal{},
+		kafkaevent.ContractEvent_ContractGovernanceProposal{},
+	}
+	var govEvents = []string{"Ongoing", "Finished"}
+	for _, baseEvent := range govBaseEvents {
+		var govBase = reflect.TypeOf(baseEvent).Name()
+		for _, govEvent := range govEvents {
+			dataTypes = append(dataTypes, fmt.Sprintf("%s_%s", govBase, govEvent))
+		}
+	}
+	return dataTypes
 }
 
 type ChainEventWithScan struct {

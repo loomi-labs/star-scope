@@ -21,10 +21,10 @@ type AuthService struct {
 	chainManager         *database.ChainManager
 	eventListenerManager *database.EventListenerManager
 	jwtManager           *JWTManager
-	kafkaInternal        *kafka_internal.KafkaInternal
+	kafkaInternal        kafka_internal.KafkaInternal
 }
 
-func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager, kafkaInternal *kafka_internal.KafkaInternal) authpbconnect.AuthServiceHandler {
+func NewAuthServiceHandler(dbManagers *database.DbManagers, jwtManager *JWTManager, kafkaInternal kafka_internal.KafkaInternal) authpbconnect.AuthServiceHandler {
 	return &AuthService{
 		userManager:          dbManagers.UserManager,
 		chainManager:         dbManagers.ChainManager,
@@ -119,11 +119,12 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 		// TODO: put this into a transaction
 		user = s.userManager.CreateOrUpdate(ctx, walletAddress, walletAddress)
 		chains := s.chainManager.QueryEnabled(ctx)
-		_, err = s.eventListenerManager.CreateBulk(ctx, user, chains, walletAddress)
+		els, err := s.eventListenerManager.CreateBulk(ctx, user, chains, walletAddress)
 		if err != nil {
 			log.Sugar.Errorf("error while creating event listener: %v", err)
 			return nil, ErrorLoginFailed
 		}
+		go NewSetupCrawler(s.kafkaInternal).fetchUnstakingEvents(els)
 	} else if err != nil {
 		log.Sugar.Errorf("error while querying user by wallet address: %v", err)
 		return nil, ErrorLoginFailed

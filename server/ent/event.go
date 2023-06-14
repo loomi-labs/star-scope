@@ -38,6 +38,8 @@ type Event struct {
 	NotifyTime time.Time `json:"notify_time,omitempty"`
 	// IsRead holds the value of the "is_read" field.
 	IsRead bool `json:"is_read,omitempty"`
+	// IsBackground holds the value of the "is_background" field.
+	IsBackground bool `json:"is_background,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventQuery when eager-loading is set.
 	Edges                 EventEdges `json:"edges"`
@@ -78,7 +80,7 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 			values[i] = new(schema.ContractEventWithScan)
 		case event.FieldWalletEvent:
 			values[i] = new(schema.WalletEventWithScan)
-		case event.FieldIsRead:
+		case event.FieldIsRead, event.FieldIsBackground:
 			values[i] = new(sql.NullBool)
 		case event.FieldEventType, event.FieldDataType:
 			values[i] = new(sql.NullString)
@@ -163,6 +165,12 @@ func (e *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				e.IsRead = value.Bool
 			}
+		case event.FieldIsBackground:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_background", values[i])
+			} else if value.Valid {
+				e.IsBackground = value.Bool
+			}
 		case event.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field event_listener_events", value)
@@ -237,6 +245,9 @@ func (e *Event) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_read=")
 	builder.WriteString(fmt.Sprintf("%v", e.IsRead))
+	builder.WriteString(", ")
+	builder.WriteString("is_background=")
+	builder.WriteString(fmt.Sprintf("%v", e.IsBackground))
 	builder.WriteByte(')')
 	return builder.String()
 }

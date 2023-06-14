@@ -4,11 +4,14 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/loomi-labs/star-scope/chain_crawler"
 	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/crawler/chain_crawler"
+	"github.com/loomi-labs/star-scope/crawler/governance_crawler"
+	"github.com/loomi-labs/star-scope/crawler/validator_crawler"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/grpc"
 	"github.com/loomi-labs/star-scope/kafka"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"log"
 	"strings"
 	"time"
@@ -93,13 +96,37 @@ var startContractEventConsumerCmd = &cobra.Command{
 	},
 }
 
-var startCrawlerCmd = &cobra.Command{
-	Use:   "crawler",
-	Short: "Start the chain crwaler",
+var startChainCrawlerCmd = &cobra.Command{
+	Use:   "chain-crawler",
+	Short: "Start the chain crawler",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
-		chainCrawler.AddOrUpdateChains()
+		chainCrawler.StartCrawling()
+	},
+}
+
+var startGovernanceCrawlerCmd = &cobra.Command{
+	Use:   "gov-crawler",
+	Short: "Start the governance crawler",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+		chainCrawler := governance_crawler.NewGovernanceCrawler(dbManagers, kafkaInternal)
+		chainCrawler.StartCrawling()
+	},
+}
+
+var startValidatorCrawlerCmd = &cobra.Command{
+	Use:   "validator-crawler",
+	Short: "Start the validator crawler",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+		crawler := validator_crawler.NewValidatorCrawler(dbManagers, kafkaInternal)
+		crawler.StartCrawling()
 	},
 }
 
@@ -110,7 +137,10 @@ func init() {
 	serviceCmd.AddCommand(startWalletEventConsumerCmd)
 	serviceCmd.AddCommand(startChainEventConsumerCmd)
 	serviceCmd.AddCommand(startContractEventConsumerCmd)
-	serviceCmd.AddCommand(startCrawlerCmd)
+
+	serviceCmd.AddCommand(startChainCrawlerCmd)
+	serviceCmd.AddCommand(startGovernanceCrawlerCmd)
+	serviceCmd.AddCommand(startValidatorCrawlerCmd)
 
 	startWalletEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }

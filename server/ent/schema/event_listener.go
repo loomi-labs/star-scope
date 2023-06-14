@@ -22,7 +22,10 @@ func (EventListener) Mixin() []ent.Mixin {
 // Fields of the EventListener.
 func (EventListener) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("wallet_address"),
+		field.String("wallet_address").
+			Optional(),
+		field.Enum("data_type").
+			Values(getDataTypes()...),
 	}
 }
 

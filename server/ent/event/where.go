@@ -92,6 +92,11 @@ func IsRead(v bool) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldIsRead, v))
 }
 
+// IsBackground applies equality check predicate on the "is_background" field. It's identical to IsBackgroundEQ.
+func IsBackground(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsBackground, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldCreateTime, v))
@@ -410,6 +415,16 @@ func IsReadEQ(v bool) predicate.Event {
 // IsReadNEQ applies the NEQ predicate on the "is_read" field.
 func IsReadNEQ(v bool) predicate.Event {
 	return predicate.Event(sql.FieldNEQ(FieldIsRead, v))
+}
+
+// IsBackgroundEQ applies the EQ predicate on the "is_background" field.
+func IsBackgroundEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsBackground, v))
+}
+
+// IsBackgroundNEQ applies the NEQ predicate on the "is_background" field.
+func IsBackgroundNEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldIsBackground, v))
 }
 
 // HasEventListener applies the HasEdge predicate on the "event_listener" edge.

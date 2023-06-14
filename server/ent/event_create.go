@@ -109,6 +109,20 @@ func (ec *EventCreate) SetNillableIsRead(b *bool) *EventCreate {
 	return ec
 }
 
+// SetIsBackground sets the "is_background" field.
+func (ec *EventCreate) SetIsBackground(b bool) *EventCreate {
+	ec.mutation.SetIsBackground(b)
+	return ec
+}
+
+// SetNillableIsBackground sets the "is_background" field if the given value is not nil.
+func (ec *EventCreate) SetNillableIsBackground(b *bool) *EventCreate {
+	if b != nil {
+		ec.SetIsBackground(*b)
+	}
+	return ec
+}
+
 // SetID sets the "id" field.
 func (ec *EventCreate) SetID(u uuid.UUID) *EventCreate {
 	ec.mutation.SetID(u)
@@ -193,6 +207,10 @@ func (ec *EventCreate) defaults() {
 		v := event.DefaultIsRead
 		ec.mutation.SetIsRead(v)
 	}
+	if _, ok := ec.mutation.IsBackground(); !ok {
+		v := event.DefaultIsBackground
+		ec.mutation.SetIsBackground(v)
+	}
 	if _, ok := ec.mutation.ID(); !ok {
 		v := event.DefaultID()
 		ec.mutation.SetID(v)
@@ -228,6 +246,9 @@ func (ec *EventCreate) check() error {
 	}
 	if _, ok := ec.mutation.IsRead(); !ok {
 		return &ValidationError{Name: "is_read", err: errors.New(`ent: missing required field "Event.is_read"`)}
+	}
+	if _, ok := ec.mutation.IsBackground(); !ok {
+		return &ValidationError{Name: "is_background", err: errors.New(`ent: missing required field "Event.is_background"`)}
 	}
 	return nil
 }
@@ -299,6 +320,10 @@ func (ec *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.IsRead(); ok {
 		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
 		_node.IsRead = value
+	}
+	if value, ok := ec.mutation.IsBackground(); ok {
+		_spec.SetField(event.FieldIsBackground, field.TypeBool, value)
+		_node.IsBackground = value
 	}
 	if nodes := ec.mutation.EventListenerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

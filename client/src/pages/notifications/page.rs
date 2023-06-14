@@ -12,13 +12,15 @@ use sycamore::prelude::*;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
-use web_sys::{Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, IntersectionObserverEntry};
+use web_sys::{
+    Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, IntersectionObserverEntry,
+};
 
-use crate::{EventsState, Services};
 use crate::components::messages::create_error_msg_from_status;
 use crate::types::protobuf::event::EventType;
 use crate::types::protobuf::grpc;
 use crate::utils::url::{add_or_update_query_params, get_query_param};
+use crate::{EventsState, Services};
 
 fn display_timestamp(option: Option<Timestamp>, locale: String) -> String {
     if let Some(timestamp) = option {
@@ -51,11 +53,11 @@ pub fn EventBadge<G: Html>(cx: Scope, event_type: EventType) -> View<G> {
 async fn mark_event_as_read(cx: Scope<'_>, event_id: String) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(
-        grpc::MarkEventReadRequest {
+    let request = services
+        .grpc_client
+        .create_request(grpc::MarkEventReadRequest {
             event_id: event_id.clone(),
-        }
-    );
+        });
     let response = services
         .grpc_client
         .get_event_service()
@@ -94,21 +96,31 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
             }
         },
     ) as Box<dyn FnMut(Vec<JsValue>, IntersectionObserver)>;
-    let handler: Box<dyn FnMut(Vec<JsValue>, IntersectionObserver) + 'static> = unsafe { std::mem::transmute(boxed) };
+    let handler: Box<dyn FnMut(Vec<JsValue>, IntersectionObserver) + 'static> =
+        unsafe { std::mem::transmute(boxed) };
     let callback = Closure::wrap(handler);
 
-    let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref()).expect("Failed to create IntersectionObserver");
+    let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref())
+        .expect("Failed to create IntersectionObserver");
 
-    callback.forget();  // Prevent the closure from being dropped prematurely
+    callback.forget(); // Prevent the closure from being dropped prematurely
 
     on_mount(cx, move || {
-        if let Ok(element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>() {
+        if let Ok(element) = event_ref
+            .get::<DomNode>()
+            .unchecked_into::<HtmlDivElement>()
+            .dyn_into::<web_sys::Element>()
+        {
             observer.observe(&element);
         }
     });
 
     on_cleanup(cx, move || {
-        if let Ok(_element) = event_ref.get::<DomNode>().unchecked_into::<HtmlDivElement>().dyn_into::<web_sys::Element>() {
+        if let Ok(_element) = event_ref
+            .get::<DomNode>()
+            .unchecked_into::<HtmlDivElement>()
+            .dyn_into::<web_sys::Element>()
+        {
             // TODO: ("Call observer.unobserve(element) here (or observer.disconnect()");
         }
     });
@@ -169,7 +181,8 @@ pub fn WelcomeMessage<G: Html>(cx: Scope) -> View<G> {
         if events_state.welcome_message.get().is_none() {
             return vec![];
         }
-        let mut wallets = events_state.welcome_message
+        let mut wallets = events_state
+            .welcome_message
             .get()
             .as_ref()
             .clone()
@@ -248,9 +261,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 let event_type_filter = notifications_state.event_type_filter.get();
                 match event_type_filter.as_ref() {
                     None => true,
-                    Some(filter) => {
-                        event.get().event_type() == *filter
-                    }
+                    Some(filter) => event.get().event_type() == *filter,
                 }
             })
             .filter(|event| {
@@ -273,7 +284,8 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 match time_filter.as_ref().as_time_range() {
                     None => true,
                     Some((start, end)) => {
-                        event.get().created_at.clone().unwrap().seconds > start.timestamp() && event.get().created_at.clone().unwrap().seconds <= end.timestamp()
+                        event.get().created_at.clone().unwrap().seconds > start.timestamp()
+                            && event.get().created_at.clone().unwrap().seconds <= end.timestamp()
                     }
                 }
             })
@@ -341,12 +353,10 @@ impl NotificationsState {
     pub fn has_filter_applied(&self, filter: Option<EventType>) -> bool {
         match filter {
             None => self.event_type_filter.get().is_none(),
-            Some(et) => {
-                match self.event_type_filter.get().as_ref() {
-                    None => false,
-                    Some(f) => *f == et,
-                }
-            }
+            Some(et) => match self.event_type_filter.get().as_ref() {
+                None => false,
+                Some(f) => *f == et,
+            },
         }
     }
 }
@@ -384,13 +394,11 @@ impl ReadStatusFilter {
     fn get_filter_from_hash() -> Self {
         match get_query_param(ReadStatusFilter::QUERY_PARAM) {
             None => ReadStatusFilter::All,
-            Some(param) => {
-                match param.as_str() {
-                    "read" => ReadStatusFilter::Read,
-                    "unread" => ReadStatusFilter::Unread,
-                    _ => ReadStatusFilter::All,
-                }
-            }
+            Some(param) => match param.as_str() {
+                "read" => ReadStatusFilter::Read,
+                "unread" => ReadStatusFilter::Unread,
+                _ => ReadStatusFilter::All,
+            },
         }
     }
 
@@ -440,7 +448,6 @@ const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center";
 const DROPDOWN_ICON_CLASS: &str = "absolute left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
 const DROPDOWN_SELECT_CLASS: &str = "block capitalize pl-8 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
 
-
 #[component]
 pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
@@ -449,9 +456,7 @@ pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     let handle_change = |event: Event| {
         let target: HtmlSelectElement = event.target().unwrap().unchecked_into();
         let filter = ReadStatusFilter::from_str(&target.value()).unwrap();
-        notifications_state
-            .read_status_filter
-            .set(filter);
+        notifications_state.read_status_filter.set(filter);
         // filter.set_filter_as_query_param();
     };
 
@@ -489,7 +494,12 @@ pub fn ChainFilterDropdown<G: Html>(cx: Scope) -> View<G> {
             notifications_state.chain_filter.set(None);
         } else {
             let chain_id = target.value().parse::<i64>().unwrap();
-            if let Some(chain) = notifications_state.chains.get().iter().find(|c| c.id == chain_id) {
+            if let Some(chain) = notifications_state
+                .chains
+                .get()
+                .iter()
+                .find(|c| c.id == chain_id)
+            {
                 notifications_state.chain_filter.set(Some(chain.clone()));
             } else {
                 notifications_state.chain_filter.set(None);
@@ -545,7 +555,6 @@ pub fn ChainFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq, Sequence)]
 pub enum TimeFilter {
     All,
@@ -565,9 +574,7 @@ impl TimeFilter {
     fn get_filter_from_hash() -> Self {
         match get_query_param(TimeFilter::QUERY_PARAM) {
             None => TimeFilter::All,
-            Some(param) => {
-                TimeFilter::from_str(param.as_str()).unwrap_or(TimeFilter::All)
-            }
+            Some(param) => TimeFilter::from_str(param.as_str()).unwrap_or(TimeFilter::All),
         }
     }
 
@@ -593,7 +600,11 @@ impl TimeFilter {
         let js_date = Date::new_0();
         let milliseconds = js_date.get_time();
         let seconds = (milliseconds / 1000.0) as i64;
-        let today = NaiveDateTime::from_timestamp_opt(seconds, 0).unwrap().date().and_hms_opt(0, 0, 0).unwrap();
+        let today = NaiveDateTime::from_timestamp_opt(seconds, 0)
+            .unwrap()
+            .date()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
         match self {
             TimeFilter::All => None,
             TimeFilter::Today => Some((today, today + Duration::days(1))),
@@ -642,9 +653,7 @@ pub fn TimeFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     let handle_change = |event: Event| {
         let target: HtmlSelectElement = event.target().unwrap().unchecked_into();
         let filter = TimeFilter::from_str(&target.value()).unwrap();
-        notifications_state
-            .time_filter
-            .set(filter);
+        notifications_state.time_filter.set(filter);
         // filter.set_filter_as_query_param();
     };
 
@@ -674,15 +683,15 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
     debug!("query_events: {:?}", event_type);
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(
-        grpc::ListEventsRequest {
+    let request = services
+        .grpc_client
+        .create_request(grpc::ListEventsRequest {
             start_time: None,
             end_time: None,
             limit: 0,
             offset: 0,
             event_type: event_type.map(|e| e as i32),
-        }
-    );
+        });
     let response = services
         .grpc_client
         .get_event_service()
@@ -696,10 +705,24 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
     }
 }
 
-fn cnt_available_events(events_state: &EventsState, notifications_state: &NotificationsState) -> i32 {
+fn cnt_available_events(
+    events_state: &EventsState,
+    notifications_state: &NotificationsState,
+) -> i32 {
     match *notifications_state.event_type_filter.get().as_ref() {
-        None => events_state.event_count_map.get().values().map(|c| c.count).sum::<i32>(),
-        Some(et) => events_state.event_count_map.get().get(&et).cloned().map(|c| c.count).unwrap_or(0),
+        None => events_state
+            .event_count_map
+            .get()
+            .values()
+            .map(|c| c.count)
+            .sum::<i32>(),
+        Some(et) => events_state
+            .event_count_map
+            .get()
+            .get(&et)
+            .cloned()
+            .map(|c| c.count)
+            .unwrap_or(0),
     }
 }
 

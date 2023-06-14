@@ -9,7 +9,6 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcChannel "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
@@ -23,11 +22,11 @@ import (
 
 type baseMessageHandler struct {
 	TxHandler
-	chainInfo ChainInfo
+	chainInfo *indexerpb.IndexingChain
 	txHelper  TxHelper
 }
 
-func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) TxHandler {
+func NewBaseMessageHandler(chainInfo *indexerpb.IndexingChain, encodingConfig EncodingConfig) TxHandler {
 	return &baseMessageHandler{
 		chainInfo: chainInfo,
 		txHelper:  NewTxHelper(chainInfo, encodingConfig),
@@ -62,9 +61,6 @@ func (m *baseMessageHandler) handleMsg(tx []byte, anyMsg sdktypes.Msg, result *i
 			return err
 		}
 		addToResultIfNoError(result, msg, protoMsg)
-	case *govtypes.MsgDeposit:
-		//TODO: Remove this
-		log.Sugar.Panicf("govtypes.MsgDeposit")
 	case *authz.MsgExec:
 		for _, authzEncMsg := range msg.Msgs {
 			authzMsg, err := sdktypes.GetMsgFromTypeURL(m.txHelper.encodingConfig.Codec, authzEncMsg.GetTypeUrl())
@@ -147,7 +143,7 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 		return nil, nil
 	}
 	walletEvent := &event.WalletEvent{
-		ChainId:    i.chainInfo.ChainId,
+		ChainId:    i.chainInfo.Id,
 		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
 		Event: &event.WalletEvent_CoinReceived{
@@ -184,7 +180,7 @@ func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([
 	}
 	if wasSuccessful {
 		var txEvent = &event.WalletEvent{
-			ChainId:       i.chainInfo.ChainId,
+			ChainId:       i.chainInfo.Id,
 			WalletAddress: msg.ToAddress,
 			Timestamp:     timestamp,
 			NotifyTime:    timestamppb.Now(),
@@ -230,7 +226,7 @@ func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate
 		return nil, err
 	}
 	txEvent := &event.WalletEvent{
-		ChainId:    i.chainInfo.ChainId,
+		ChainId:    i.chainInfo.Id,
 		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
 		Event: &event.WalletEvent_Unstake{

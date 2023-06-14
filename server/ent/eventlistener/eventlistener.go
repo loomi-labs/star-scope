@@ -3,6 +3,7 @@
 package eventlistener
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -20,6 +21,8 @@ const (
 	FieldUpdateTime = "update_time"
 	// FieldWalletAddress holds the string denoting the wallet_address field in the database.
 	FieldWalletAddress = "wallet_address"
+	// FieldDataType holds the string denoting the data_type field in the database.
+	FieldDataType = "data_type"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// EdgeChain holds the string denoting the chain edge name in mutations.
@@ -57,6 +60,7 @@ var Columns = []string{
 	FieldCreateTime,
 	FieldUpdateTime,
 	FieldWalletAddress,
+	FieldDataType,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "event_listeners"
@@ -90,6 +94,39 @@ var (
 	UpdateDefaultUpdateTime func() time.Time
 )
 
+// DataType defines the type for the "data_type" enum field.
+type DataType string
+
+// DataType values.
+const (
+	DataTypeWalletEvent_CoinReceived                          DataType = "WalletEvent_CoinReceived"
+	DataTypeWalletEvent_OsmosisPoolUnlock                     DataType = "WalletEvent_OsmosisPoolUnlock"
+	DataTypeWalletEvent_Unstake                               DataType = "WalletEvent_Unstake"
+	DataTypeWalletEvent_NeutronTokenVesting                   DataType = "WalletEvent_NeutronTokenVesting"
+	DataTypeWalletEvent_Voted                                 DataType = "WalletEvent_Voted"
+	DataTypeWalletEvent_VoteReminder                          DataType = "WalletEvent_VoteReminder"
+	DataTypeChainEvent_ValidatorOutOfActiveSet                DataType = "ChainEvent_ValidatorOutOfActiveSet"
+	DataTypeChainEvent_ValidatorSlash                         DataType = "ChainEvent_ValidatorSlash"
+	DataTypeChainEvent_GovernanceProposal_Ongoing             DataType = "ChainEvent_GovernanceProposal_Ongoing"
+	DataTypeChainEvent_GovernanceProposal_Finished            DataType = "ChainEvent_GovernanceProposal_Finished"
+	DataTypeContractEvent_ContractGovernanceProposal_Ongoing  DataType = "ContractEvent_ContractGovernanceProposal_Ongoing"
+	DataTypeContractEvent_ContractGovernanceProposal_Finished DataType = "ContractEvent_ContractGovernanceProposal_Finished"
+)
+
+func (dt DataType) String() string {
+	return string(dt)
+}
+
+// DataTypeValidator is a validator for the "data_type" field enum values. It is called by the builders before save.
+func DataTypeValidator(dt DataType) error {
+	switch dt {
+	case DataTypeWalletEvent_CoinReceived, DataTypeWalletEvent_OsmosisPoolUnlock, DataTypeWalletEvent_Unstake, DataTypeWalletEvent_NeutronTokenVesting, DataTypeWalletEvent_Voted, DataTypeWalletEvent_VoteReminder, DataTypeChainEvent_ValidatorOutOfActiveSet, DataTypeChainEvent_ValidatorSlash, DataTypeChainEvent_GovernanceProposal_Ongoing, DataTypeChainEvent_GovernanceProposal_Finished, DataTypeContractEvent_ContractGovernanceProposal_Ongoing, DataTypeContractEvent_ContractGovernanceProposal_Finished:
+		return nil
+	default:
+		return fmt.Errorf("eventlistener: invalid enum value for data_type field: %q", dt)
+	}
+}
+
 // OrderOption defines the ordering options for the EventListener queries.
 type OrderOption func(*sql.Selector)
 
@@ -111,6 +148,11 @@ func ByUpdateTime(opts ...sql.OrderTermOption) OrderOption {
 // ByWalletAddress orders the results by the wallet_address field.
 func ByWalletAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWalletAddress, opts...).ToFunc()
+}
+
+// ByDataType orders the results by the data_type field.
+func ByDataType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDataType, opts...).ToFunc()
 }
 
 // ByUserField orders the results by user field.

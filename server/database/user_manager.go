@@ -2,22 +2,19 @@ package database
 
 import (
 	"context"
-	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
-	"strings"
 )
 
 type UserManager struct {
 	client        *ent.Client
-	kafkaInternal *kafka_internal.KafkaInternal
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewUserManager(client *ent.Client) *UserManager {
-	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-	return &UserManager{client: client, kafkaInternal: kafka_internal.NewKafkaInternal(kafkaBrokers)}
+func NewUserManager(client *ent.Client, kafkaInternal kafka_internal.KafkaInternal) *UserManager {
+	return &UserManager{client: client, kafkaInternal: kafkaInternal}
 }
 
 func (m *UserManager) QueryById(ctx context.Context, id int) (*ent.User, error) {

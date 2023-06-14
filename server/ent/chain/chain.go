@@ -48,6 +48,8 @@ const (
 	EdgeProposals = "proposals"
 	// EdgeContractProposals holds the string denoting the contract_proposals edge name in mutations.
 	EdgeContractProposals = "contract_proposals"
+	// EdgeValidators holds the string denoting the validators edge name in mutations.
+	EdgeValidators = "validators"
 	// Table holds the table name of the chain in the database.
 	Table = "chains"
 	// EventListenersTable is the table that holds the event_listeners relation/edge.
@@ -71,6 +73,13 @@ const (
 	ContractProposalsInverseTable = "contract_proposals"
 	// ContractProposalsColumn is the table column denoting the contract_proposals relation/edge.
 	ContractProposalsColumn = "chain_contract_proposals"
+	// ValidatorsTable is the table that holds the validators relation/edge.
+	ValidatorsTable = "validators"
+	// ValidatorsInverseTable is the table name for the Validator entity.
+	// It exists in this package in order to avoid circular dependency with the "validator" package.
+	ValidatorsInverseTable = "validators"
+	// ValidatorsColumn is the table column denoting the validators relation/edge.
+	ValidatorsColumn = "chain_validators"
 )
 
 // Columns holds all SQL columns for chain fields.
@@ -242,6 +251,20 @@ func ByContractProposals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newContractProposalsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByValidatorsCount orders the results by validators count.
+func ByValidatorsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newValidatorsStep(), opts...)
+	}
+}
+
+// ByValidators orders the results by validators terms.
+func ByValidators(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newValidatorsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEventListenersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -261,5 +284,12 @@ func newContractProposalsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ContractProposalsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ContractProposalsTable, ContractProposalsColumn),
+	)
+}
+func newValidatorsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ValidatorsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ValidatorsTable, ValidatorsColumn),
 	)
 }
