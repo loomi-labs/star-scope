@@ -25,6 +25,8 @@ type EventListener struct {
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// WalletAddress holds the value of the "wallet_address" field.
 	WalletAddress string `json:"wallet_address,omitempty"`
+	// DataType holds the value of the "data_type" field.
+	DataType eventlistener.DataType `json:"data_type,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventListenerQuery when eager-loading is set.
 	Edges                 EventListenerEdges `json:"edges"`
@@ -88,7 +90,7 @@ func (*EventListener) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case eventlistener.FieldID:
 			values[i] = new(sql.NullInt64)
-		case eventlistener.FieldWalletAddress:
+		case eventlistener.FieldWalletAddress, eventlistener.FieldDataType:
 			values[i] = new(sql.NullString)
 		case eventlistener.FieldCreateTime, eventlistener.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -134,6 +136,12 @@ func (el *EventListener) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field wallet_address", values[i])
 			} else if value.Valid {
 				el.WalletAddress = value.String
+			}
+		case eventlistener.FieldDataType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field data_type", values[i])
+			} else if value.Valid {
+				el.DataType = eventlistener.DataType(value.String)
 			}
 		case eventlistener.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -208,6 +216,9 @@ func (el *EventListener) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("wallet_address=")
 	builder.WriteString(el.WalletAddress)
+	builder.WriteString(", ")
+	builder.WriteString("data_type=")
+	builder.WriteString(fmt.Sprintf("%v", el.DataType))
 	builder.WriteByte(')')
 	return builder.String()
 }

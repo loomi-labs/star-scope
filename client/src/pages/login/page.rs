@@ -3,9 +3,9 @@ use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
 
-use crate::{AppState, AuthState, InfoLevel, Services};
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::config::keys;
+use crate::{AppState, AuthState, InfoLevel, Services};
 
 #[derive(Serialize, Deserialize)]
 pub struct JsResult {
@@ -39,7 +39,10 @@ extern "C" {
 #[allow(dead_code)]
 fn wallet_connect_login_wrapper() -> Result<String, String> {
     let login_result = wallet_connect_login("https://star-scope.decrypto.online".to_string());
-    let js_result = serde_wasm_bindgen::from_value(login_result).unwrap_or_else(|_| JsResult { result: "".to_string(), error: "Wallet connect login failed".to_string() });
+    let js_result = serde_wasm_bindgen::from_value(login_result).unwrap_or_else(|_| JsResult {
+        result: "".to_string(),
+        error: "Wallet connect login failed".to_string(),
+    });
     if !js_result.error.is_empty() {
         return Err(js_result.error);
     } else if js_result.result.is_empty() {
@@ -50,8 +53,7 @@ fn wallet_connect_login_wrapper() -> Result<String, String> {
 
 fn is_mobile() -> bool {
     let result = isMobile("https://star-scope.decrypto.online".to_string());
-    let js_result = serde_wasm_bindgen::from_value(result).unwrap_or_else(|_| false);
-    return js_result;
+    serde_wasm_bindgen::from_value(result).unwrap_or(false)
 }
 
 #[component]

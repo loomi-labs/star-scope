@@ -59,9 +59,11 @@ type ChainEdges struct {
 	Proposals []*Proposal `json:"proposals,omitempty"`
 	// ContractProposals holds the value of the contract_proposals edge.
 	ContractProposals []*ContractProposal `json:"contract_proposals,omitempty"`
+	// Validators holds the value of the validators edge.
+	Validators []*Validator `json:"validators,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // EventListenersOrErr returns the EventListeners value or an error if the edge
@@ -89,6 +91,15 @@ func (e ChainEdges) ContractProposalsOrErr() ([]*ContractProposal, error) {
 		return e.ContractProposals, nil
 	}
 	return nil, &NotLoadedError{edge: "contract_proposals"}
+}
+
+// ValidatorsOrErr returns the Validators value or an error if the edge
+// was not loaded in eager-loading.
+func (e ChainEdges) ValidatorsOrErr() ([]*Validator, error) {
+	if e.loadedTypes[3] {
+		return e.Validators, nil
+	}
+	return nil, &NotLoadedError{edge: "validators"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -235,6 +246,11 @@ func (c *Chain) QueryProposals() *ProposalQuery {
 // QueryContractProposals queries the "contract_proposals" edge of the Chain entity.
 func (c *Chain) QueryContractProposals() *ContractProposalQuery {
 	return NewChainClient(c.config).QueryContractProposals(c)
+}
+
+// QueryValidators queries the "validators" edge of the Chain entity.
+func (c *Chain) QueryValidators() *ValidatorQuery {
+	return NewChainClient(c.config).QueryValidators(c)
 }
 
 // Update returns a builder for updating this Chain.

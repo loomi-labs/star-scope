@@ -1,17 +1,17 @@
 package types
 
 import (
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/queryevent"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type ContractProposalStatus queryevent.ContractProposalStatus
+type ContractProposalStatus event.ContractProposalStatus
 
 func (s *ContractProposalStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(queryevent.ProposalStatus(*s).String())
+	return json.Marshal(event.ProposalStatus(*s).String())
 }
 
 func (s *ContractProposalStatus) UnmarshalJSON(data []byte) error {
@@ -20,7 +20,7 @@ func (s *ContractProposalStatus) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*s = ContractProposalStatus(queryevent.ContractProposalStatus_value[strings.ToUpper(name)])
+	*s = ContractProposalStatus(event.ContractProposalStatus_value[strings.ToUpper(name)])
 	return nil
 }
 

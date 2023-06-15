@@ -4,13 +4,13 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use log::{debug, error};
 use log::Level;
+use log::{debug, error};
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
-use sycamore_router::{HistoryIntegration, navigate, Route, Router};
+use sycamore_router::{navigate, HistoryIntegration, Route, Router};
 use uuid::Uuid;
 
 use crate::components::layout::LayoutWrapper;
@@ -22,15 +22,16 @@ use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
-use crate::types::types::grpc::{Event, EventsCount, EventType, User, WalletInfo};
+use crate::types::protobuf::event::EventType;
+use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
 use crate::utils::url::safe_navigate;
 
 mod components;
 mod config;
 mod pages;
 mod services;
-mod utils;
 mod types;
+mod utils;
 
 #[derive(Route, Debug, Clone, PartialEq)]
 pub enum AppRoutes {
@@ -170,7 +171,6 @@ impl AppState {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct EventsState {
     pub events: RcSignal<Vec<RcSignal<Event>>>,
@@ -186,9 +186,7 @@ impl Default for EventsState {
 
 fn compare_timestamps(a: &Option<Timestamp>, b: &Option<Timestamp>) -> Ordering {
     match (a, b) {
-        (Some(a), Some(b)) => {
-            a.seconds.cmp(&b.seconds).then(a.nanos.cmp(&b.nanos))
-        }
+        (Some(a), Some(b)) => a.seconds.cmp(&b.seconds).then(a.nanos.cmp(&b.nanos)),
         (Some(_), None) => Ordering::Greater,
         (None, Some(_)) => Ordering::Less,
         (None, None) => Ordering::Equal,
@@ -208,49 +206,9 @@ impl EventsState {
         self.events.set(vec![]);
     }
 
-    pub fn add_events(&self, new_events: Vec<Event>) {
-        if new_events.len() == 0 {
-            return;
-        }
+    pub fn replace_events(&self, new_events: Vec<Event>, _event_type: Option<EventType>) {
         let mut events = self.events.modify();
-        let mut event_count_map = self.event_count_map.modify();
-        for e in new_events {
-            events.insert(0, create_rc_signal(e.clone()));
-            let count = event_count_map.get(&e.clone().event_type());
-            if let Some(count) = count {
-                let mut new_count = count.clone();
-                new_count.count += 1;
-                new_count.unread_count += 1;
-                event_count_map.insert(e.event_type().clone(), new_count);
-                continue;
-            } else {
-                event_count_map.insert(
-                    e.event_type().clone(),
-                    EventsCount {
-                        event_type: e.event_type().clone() as i32,
-                        count: 1,
-                        unread_count: 1,
-                    },
-                );
-            }
-        }
-        *self.events.modify() = events.clone();
-        *self.event_count_map.modify() = event_count_map.clone();
-    }
-
-    pub fn replace_events(&self, new_events: Vec<Event>, event_type: Option<EventType>) {
-        let mut events = self.events.modify();
-        let f = new_events
-            .iter()
-            .filter(|e| {
-                if e.id == 0 {
-                    if let Some(event_type) = event_type {
-                        return e.event_type != event_type as i32;
-                    }
-                }
-                true
-            });
-        for e in f {
+        for e in new_events.iter() {
             events.retain(|e2| e2.get().id != e.id);
             events.insert(0, create_rc_signal(e.clone()));
         }
@@ -264,13 +222,12 @@ impl EventsState {
         for e in events_count {
             event_count_map.insert(e.event_type(), e);
         }
-        *self.event_count_map.modify() = event_count_map.clone();
     }
 
-    pub fn mark_as_read(&self, event_id: i64) {
+    pub fn mark_as_read(&self, event_id: String) {
         let events = self.events.modify();
         if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
-            let mut event = events[index.clone()].get().as_ref().clone();
+            let mut event = events[index].get().as_ref().clone();
             event.read = true;
             *events[index].modify() = event.clone();
             let event_type = event.event_type();
@@ -366,10 +323,16 @@ async fn query_user_info(cx: Scope<'_>) {
     }
 }
 
-
 fn subscribe_to_events(cx: Scope) {
     spawn_local_scoped(cx, async move {
-        let overview_state = use_context::<EventsState>(cx);
+        let app_state = use_context::<AppState>(cx);
+        match app_state.auth_state.get().as_ref() {
+            AuthState::LoggedOut => return,
+            AuthState::LoggedIn => {}
+            AuthState::LoggingIn => return,
+        }
+
+        // let overview_state = use_context::<EventsState>(cx);
         let services = use_context::<Services>(cx);
         let result = services
             .grpc_client
@@ -382,8 +345,18 @@ fn subscribe_to_events(cx: Scope) {
                 loop {
                     match event_stream.message().await {
                         Ok(Some(response)) => {
-                            debug!("Received {:?} events", response.events.len());
-                            overview_state.add_events(response.events);
+                            if response.event_type.is_some() {
+                                debug!("Received {:?} event", response.clone().event_type());
+                                query_events_count(cx).await;
+                                // overview_state.add_event_count(response);
+                            } else {
+                                debug!("Received keep alive event");
+                            }
+                            match app_state.auth_state.get().as_ref() {
+                                AuthState::LoggedOut => break,
+                                AuthState::LoggedIn => {}
+                                AuthState::LoggingIn => break,
+                            }
                         }
                         Ok(None) => {
                             // No more events, exit the loop
@@ -409,7 +382,7 @@ fn subscribe_to_events(cx: Scope) {
 async fn query_welcome_message(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(());
     let response = services
         .grpc_client
         .get_event_service()
@@ -426,7 +399,7 @@ async fn query_welcome_message(cx: Scope<'_>) {
 async fn query_events_count(cx: Scope<'_>) {
     let events_state = use_context::<EventsState>(cx);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request({});
+    let request = services.grpc_client.create_request(());
     let response = services
         .grpc_client
         .get_event_service()
@@ -448,7 +421,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
-    provide_context(cx, services.clone());
+    provide_context(cx, services);
     provide_context(cx, app_state);
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());

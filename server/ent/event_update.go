@@ -14,6 +14,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/schema"
 )
 
 // EventUpdate is the builder for updating Event entities.
@@ -41,21 +42,45 @@ func (eu *EventUpdate) SetEventType(et event.EventType) *EventUpdate {
 	return eu
 }
 
-// SetData sets the "data" field.
-func (eu *EventUpdate) SetData(b []byte) *EventUpdate {
-	eu.mutation.SetData(b)
+// SetChainEvent sets the "chain_event" field.
+func (eu *EventUpdate) SetChainEvent(sews *schema.ChainEventWithScan) *EventUpdate {
+	eu.mutation.SetChainEvent(sews)
+	return eu
+}
+
+// ClearChainEvent clears the value of the "chain_event" field.
+func (eu *EventUpdate) ClearChainEvent() *EventUpdate {
+	eu.mutation.ClearChainEvent()
+	return eu
+}
+
+// SetContractEvent sets the "contract_event" field.
+func (eu *EventUpdate) SetContractEvent(sews *schema.ContractEventWithScan) *EventUpdate {
+	eu.mutation.SetContractEvent(sews)
+	return eu
+}
+
+// ClearContractEvent clears the value of the "contract_event" field.
+func (eu *EventUpdate) ClearContractEvent() *EventUpdate {
+	eu.mutation.ClearContractEvent()
+	return eu
+}
+
+// SetWalletEvent sets the "wallet_event" field.
+func (eu *EventUpdate) SetWalletEvent(sews *schema.WalletEventWithScan) *EventUpdate {
+	eu.mutation.SetWalletEvent(sews)
+	return eu
+}
+
+// ClearWalletEvent clears the value of the "wallet_event" field.
+func (eu *EventUpdate) ClearWalletEvent() *EventUpdate {
+	eu.mutation.ClearWalletEvent()
 	return eu
 }
 
 // SetDataType sets the "data_type" field.
 func (eu *EventUpdate) SetDataType(et event.DataType) *EventUpdate {
 	eu.mutation.SetDataType(et)
-	return eu
-}
-
-// SetIsTxEvent sets the "is_tx_event" field.
-func (eu *EventUpdate) SetIsTxEvent(b bool) *EventUpdate {
-	eu.mutation.SetIsTxEvent(b)
 	return eu
 }
 
@@ -83,6 +108,20 @@ func (eu *EventUpdate) SetIsRead(b bool) *EventUpdate {
 func (eu *EventUpdate) SetNillableIsRead(b *bool) *EventUpdate {
 	if b != nil {
 		eu.SetIsRead(*b)
+	}
+	return eu
+}
+
+// SetIsBackground sets the "is_background" field.
+func (eu *EventUpdate) SetIsBackground(b bool) *EventUpdate {
+	eu.mutation.SetIsBackground(b)
+	return eu
+}
+
+// SetNillableIsBackground sets the "is_background" field if the given value is not nil.
+func (eu *EventUpdate) SetNillableIsBackground(b *bool) *EventUpdate {
+	if b != nil {
+		eu.SetIsBackground(*b)
 	}
 	return eu
 }
@@ -172,7 +211,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := eu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID))
 	if ps := eu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -186,20 +225,35 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := eu.mutation.EventType(); ok {
 		_spec.SetField(event.FieldEventType, field.TypeEnum, value)
 	}
-	if value, ok := eu.mutation.Data(); ok {
-		_spec.SetField(event.FieldData, field.TypeBytes, value)
+	if value, ok := eu.mutation.ChainEvent(); ok {
+		_spec.SetField(event.FieldChainEvent, field.TypeBytes, value)
+	}
+	if eu.mutation.ChainEventCleared() {
+		_spec.ClearField(event.FieldChainEvent, field.TypeBytes)
+	}
+	if value, ok := eu.mutation.ContractEvent(); ok {
+		_spec.SetField(event.FieldContractEvent, field.TypeBytes, value)
+	}
+	if eu.mutation.ContractEventCleared() {
+		_spec.ClearField(event.FieldContractEvent, field.TypeBytes)
+	}
+	if value, ok := eu.mutation.WalletEvent(); ok {
+		_spec.SetField(event.FieldWalletEvent, field.TypeBytes, value)
+	}
+	if eu.mutation.WalletEventCleared() {
+		_spec.ClearField(event.FieldWalletEvent, field.TypeBytes)
 	}
 	if value, ok := eu.mutation.DataType(); ok {
 		_spec.SetField(event.FieldDataType, field.TypeEnum, value)
-	}
-	if value, ok := eu.mutation.IsTxEvent(); ok {
-		_spec.SetField(event.FieldIsTxEvent, field.TypeBool, value)
 	}
 	if value, ok := eu.mutation.NotifyTime(); ok {
 		_spec.SetField(event.FieldNotifyTime, field.TypeTime, value)
 	}
 	if value, ok := eu.mutation.IsRead(); ok {
 		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
+	}
+	if value, ok := eu.mutation.IsBackground(); ok {
+		_spec.SetField(event.FieldIsBackground, field.TypeBool, value)
 	}
 	if eu.mutation.EventListenerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -262,21 +316,45 @@ func (euo *EventUpdateOne) SetEventType(et event.EventType) *EventUpdateOne {
 	return euo
 }
 
-// SetData sets the "data" field.
-func (euo *EventUpdateOne) SetData(b []byte) *EventUpdateOne {
-	euo.mutation.SetData(b)
+// SetChainEvent sets the "chain_event" field.
+func (euo *EventUpdateOne) SetChainEvent(sews *schema.ChainEventWithScan) *EventUpdateOne {
+	euo.mutation.SetChainEvent(sews)
+	return euo
+}
+
+// ClearChainEvent clears the value of the "chain_event" field.
+func (euo *EventUpdateOne) ClearChainEvent() *EventUpdateOne {
+	euo.mutation.ClearChainEvent()
+	return euo
+}
+
+// SetContractEvent sets the "contract_event" field.
+func (euo *EventUpdateOne) SetContractEvent(sews *schema.ContractEventWithScan) *EventUpdateOne {
+	euo.mutation.SetContractEvent(sews)
+	return euo
+}
+
+// ClearContractEvent clears the value of the "contract_event" field.
+func (euo *EventUpdateOne) ClearContractEvent() *EventUpdateOne {
+	euo.mutation.ClearContractEvent()
+	return euo
+}
+
+// SetWalletEvent sets the "wallet_event" field.
+func (euo *EventUpdateOne) SetWalletEvent(sews *schema.WalletEventWithScan) *EventUpdateOne {
+	euo.mutation.SetWalletEvent(sews)
+	return euo
+}
+
+// ClearWalletEvent clears the value of the "wallet_event" field.
+func (euo *EventUpdateOne) ClearWalletEvent() *EventUpdateOne {
+	euo.mutation.ClearWalletEvent()
 	return euo
 }
 
 // SetDataType sets the "data_type" field.
 func (euo *EventUpdateOne) SetDataType(et event.DataType) *EventUpdateOne {
 	euo.mutation.SetDataType(et)
-	return euo
-}
-
-// SetIsTxEvent sets the "is_tx_event" field.
-func (euo *EventUpdateOne) SetIsTxEvent(b bool) *EventUpdateOne {
-	euo.mutation.SetIsTxEvent(b)
 	return euo
 }
 
@@ -304,6 +382,20 @@ func (euo *EventUpdateOne) SetIsRead(b bool) *EventUpdateOne {
 func (euo *EventUpdateOne) SetNillableIsRead(b *bool) *EventUpdateOne {
 	if b != nil {
 		euo.SetIsRead(*b)
+	}
+	return euo
+}
+
+// SetIsBackground sets the "is_background" field.
+func (euo *EventUpdateOne) SetIsBackground(b bool) *EventUpdateOne {
+	euo.mutation.SetIsBackground(b)
+	return euo
+}
+
+// SetNillableIsBackground sets the "is_background" field if the given value is not nil.
+func (euo *EventUpdateOne) SetNillableIsBackground(b *bool) *EventUpdateOne {
+	if b != nil {
+		euo.SetIsBackground(*b)
 	}
 	return euo
 }
@@ -406,7 +498,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error
 	if err := euo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID))
 	id, ok := euo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Event.id" for update`)}
@@ -437,20 +529,35 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error
 	if value, ok := euo.mutation.EventType(); ok {
 		_spec.SetField(event.FieldEventType, field.TypeEnum, value)
 	}
-	if value, ok := euo.mutation.Data(); ok {
-		_spec.SetField(event.FieldData, field.TypeBytes, value)
+	if value, ok := euo.mutation.ChainEvent(); ok {
+		_spec.SetField(event.FieldChainEvent, field.TypeBytes, value)
+	}
+	if euo.mutation.ChainEventCleared() {
+		_spec.ClearField(event.FieldChainEvent, field.TypeBytes)
+	}
+	if value, ok := euo.mutation.ContractEvent(); ok {
+		_spec.SetField(event.FieldContractEvent, field.TypeBytes, value)
+	}
+	if euo.mutation.ContractEventCleared() {
+		_spec.ClearField(event.FieldContractEvent, field.TypeBytes)
+	}
+	if value, ok := euo.mutation.WalletEvent(); ok {
+		_spec.SetField(event.FieldWalletEvent, field.TypeBytes, value)
+	}
+	if euo.mutation.WalletEventCleared() {
+		_spec.ClearField(event.FieldWalletEvent, field.TypeBytes)
 	}
 	if value, ok := euo.mutation.DataType(); ok {
 		_spec.SetField(event.FieldDataType, field.TypeEnum, value)
-	}
-	if value, ok := euo.mutation.IsTxEvent(); ok {
-		_spec.SetField(event.FieldIsTxEvent, field.TypeBool, value)
 	}
 	if value, ok := euo.mutation.NotifyTime(); ok {
 		_spec.SetField(event.FieldNotifyTime, field.TypeTime, value)
 	}
 	if value, ok := euo.mutation.IsRead(); ok {
 		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
+	}
+	if value, ok := euo.mutation.IsBackground(); ok {
+		_spec.SetField(event.FieldIsBackground, field.TypeBool, value)
 	}
 	if euo.mutation.EventListenerCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -1,7 +1,7 @@
+use crate::components::messages::create_error_msg_from_status;
+use crate::Services;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
-use crate::{Services};
-use crate::components::messages::create_error_msg_from_status;
 
 #[component]
 pub async fn Settings<G: Html>(cx: Scope<'_>) -> View<G> {
@@ -9,14 +9,16 @@ pub async fn Settings<G: Html>(cx: Scope<'_>) -> View<G> {
         spawn_local_scoped(cx, async move {
             let services = use_context::<Services>(cx);
             let request = services.grpc_client.create_request(());
-            let response = services.grpc_client.
-                get_user_service().
-                delete_account(request).await;
+            let response = services
+                .grpc_client
+                .get_user_service()
+                .delete_account(request)
+                .await;
             match response {
                 Ok(_) => {
                     let app_state = use_context::<crate::AppState>(cx);
                     app_state.logout();
-                },
+                }
                 Err(status) => create_error_msg_from_status(cx, status),
             }
         });

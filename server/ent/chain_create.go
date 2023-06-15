@@ -14,6 +14,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 // ChainCreate is the builder for creating a Chain entity.
@@ -214,6 +215,21 @@ func (cc *ChainCreate) AddContractProposals(c ...*ContractProposal) *ChainCreate
 		ids[i] = c[i].ID
 	}
 	return cc.AddContractProposalIDs(ids...)
+}
+
+// AddValidatorIDs adds the "validators" edge to the Validator entity by IDs.
+func (cc *ChainCreate) AddValidatorIDs(ids ...int) *ChainCreate {
+	cc.mutation.AddValidatorIDs(ids...)
+	return cc
+}
+
+// AddValidators adds the "validators" edges to the Validator entity.
+func (cc *ChainCreate) AddValidators(v ...*Validator) *ChainCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return cc.AddValidatorIDs(ids...)
 }
 
 // Mutation returns the ChainMutation object of the builder.
@@ -452,6 +468,22 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(contractproposal.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.ValidatorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   chain.ValidatorsTable,
+			Columns: []string{chain.ValidatorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

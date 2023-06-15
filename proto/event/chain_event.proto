@@ -3,10 +3,9 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 
-package starscope.queryevent;
+package starscope.event;
 
-option go_package = "github.com/loomi-labs/star-scope/queryevent/queryevent";
-
+option go_package = "github.com/loomi-labs/star-scope/event/chaineventpb";
 
 enum ProposalType {
   PROPOSAL_TYPE_UNSPECIFIED = 0;
@@ -36,32 +35,28 @@ message GovernanceProposalEvent {
   google.protobuf.Timestamp voting_end_time = 7;
 }
 
-enum ContractProposalStatus {
-  OPEN = 0;
-  REJECTED = 1;
-  PASSED = 2;
-  EXECUTED = 3;
-  CLOSED = 4;
-  EXECUTION_FAILED = 5;
+message ValidatorOutOfActiveSetEvent {
+  string validator_address = 1;
+  string validator_operator_address = 2;
+  string validator_moniker = 3;
+  google.protobuf.Timestamp first_inactive_time = 4;
 }
 
-message ContractGovernanceProposalEvent {
-  uint64 proposal_id = 1;
-  string title = 2;
-  string description = 3;
-  ProposalType proposal_type = 4;
-  ContractProposalStatus proposal_status = 5;
-  google.protobuf.Timestamp first_seen_time = 6;
-  google.protobuf.Timestamp voting_end_time = 7;
-  string contract_address = 8;
+message ValidatorSlashEvent {
+  string validator_address = 1;
+  string validator_operator_address = 2;
+  string validator_moniker = 3;
+  uint64 validator_period = 4;
+  string fraction = 5;
 }
 
-message QueryEvent {
+message ChainEvent {
   uint64 chain_id = 1;
   google.protobuf.Timestamp timestamp = 2;
   google.protobuf.Timestamp notify_time = 3;
   oneof event {
     GovernanceProposalEvent governance_proposal = 4;
-    ContractGovernanceProposalEvent contract_governance_proposal = 5;
+    ValidatorOutOfActiveSetEvent validator_out_of_active_set = 5;
+    ValidatorSlashEvent validator_slash = 6;
   }
 }

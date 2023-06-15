@@ -6,9 +6,8 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
-	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
-	"github.com/loomi-labs/star-scope/queryevent"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
@@ -17,11 +16,12 @@ import (
 )
 
 type ChainManager struct {
-	client *ent.Client
+	client        *ent.Client
+	kafkaInternal kafka_internal.KafkaInternal
 }
 
-func NewChainManager(client *ent.Client) *ChainManager {
-	return &ChainManager{client: client}
+func NewChainManager(client *ent.Client, kafkaInternal kafka_internal.KafkaInternal) *ChainManager {
+	return &ChainManager{client: client, kafkaInternal: kafkaInternal}
 }
 
 func (m *ChainManager) QueryAll(ctx context.Context) []*ent.Chain {
@@ -34,6 +34,14 @@ func (m *ChainManager) QueryEnabled(ctx context.Context) []*ent.Chain {
 	return m.client.Chain.
 		Query().
 		Where(chain.IsEnabledEQ(true)).
+		AllX(ctx)
+}
+
+func (m *ChainManager) QueryEnabledWithProposals(ctx context.Context) []*ent.Chain {
+	return m.client.Chain.
+		Query().
+		Where(chain.IsEnabledEQ(true)).
+		WithProposals().
 		AllX(ctx)
 }
 
@@ -71,17 +79,6 @@ func (m *ChainManager) QueryContractProposals(ctx context.Context, entChain *ent
 		AllX(ctx)
 }
 
-func (m *ChainManager) QueryNewAccounts(ctx context.Context, entChain *ent.Chain) []*ent.EventListener {
-	oneHourAgo := time.Now().Add(-1 * time.Hour)
-	return entChain.
-		QueryEventListeners().
-		Where(
-			eventlistener.CreateTimeGTE(oneHourAgo),
-		).
-		Select(eventlistener.FieldWalletAddress).
-		AllX(ctx)
-}
-
 func (m *ChainManager) Create(ctx context.Context, chainData *types.ChainData) (*ent.Chain, error) {
 	log.Sugar.Debugf("Creating chain: %v", chainData.PrettyName)
 	return m.client.Chain.
@@ -107,11 +104,21 @@ func (m *ChainManager) UpdateChainInfo(ctx context.Context, entChain *ent.Chain,
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool) (*ent.Chain, error) {
-	return entChain.
-		Update().
-		SetIsEnabled(isEnabled).
-		Save(ctx)
+func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool, height *uint64) (*ent.Chain, error) {
+	query := entChain.Update().SetIsEnabled(isEnabled)
+	if height != nil {
+		query = query.SetIndexingHeight(*height)
+	}
+	updated, err := query.Save(ctx)
+	if err != nil {
+		return updated, err
+	}
+	if isEnabled {
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.ChainEnabled)
+	} else {
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.ChainDisabled)
+	}
+	return updated, nil
 }
 
 func getUniqueMessageTypes(messageTypes []string, forbiddenMessageTypes []string) []string {
@@ -134,16 +141,16 @@ func (m *ChainManager) UpdateIndexStatus(
 	indexingHeight uint64,
 	handledMessageTypes []string,
 	unhandledMessageTypes []string,
-) error {
+) (*ent.Chain, error) {
 	if unhandledMessageTypes == nil {
 		return m.client.Chain.
 			UpdateOneID(id).
 			SetIndexingHeight(indexingHeight).
-			Exec(context.Background())
+			Save(context.Background())
 	}
 	c, err := m.client.Chain.Get(ctx, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	handledMessageTypes = append(handledMessageTypes, strings.Split(c.HandledMessageTypes, ",")...)
@@ -155,29 +162,29 @@ func (m *ChainManager) UpdateIndexStatus(
 		SetIndexingHeight(indexingHeight).
 		SetHandledMessageTypes(strings.Join(handledMessageTypes, ",")).
 		SetUnhandledMessageTypes(strings.Join(unhandledMessageTypes, ",")).
-		Exec(ctx)
-}
-
-func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
-	return m.client.Proposal.
-		Create().
-		SetChain(entChain).
-		SetProposalID(prop.ProposalId).
-		SetStatus(proposal.Status(prop.GetProposalStatus().String())).
-		SetTitle(prop.GetTitle()).
-		SetDescription(prop.GetDescription()).
-		SetVotingStartTime(prop.GetVotingStartTime().AsTime()).
-		SetVotingEndTime(prop.GetVotingEndTime().AsTime()).
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *queryevent.GovernanceProposalEvent) (*ent.Proposal, error) {
+func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *types.Proposal) (*ent.Proposal, error) {
+	return m.client.Proposal.
+		Create().
+		SetChain(entChain).
+		SetProposalID(uint64(prop.ProposalId)).
+		SetStatus(proposal.Status(prop.Status.String())).
+		SetTitle(prop.Content.Title).
+		SetDescription(prop.Content.Description).
+		SetVotingStartTime(prop.VotingStartTime).
+		SetVotingEndTime(prop.VotingEndTime).
+		Save(ctx)
+}
+
+func (m *ChainManager) CreateOrUpdateProposal(ctx context.Context, entChain *ent.Chain, govProp *types.Proposal) (*ent.Proposal, error) {
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}
 	prop, err := entChain.
 		QueryProposals().
-		Where(proposal.ProposalIDEQ(govProp.ProposalId)).
+		Where(proposal.ProposalIDEQ(uint64(govProp.ProposalId))).
 		Only(ctx)
 	if ent.IsNotFound(err) {
 		return m.createProposal(ctx, entChain, govProp)
@@ -186,42 +193,42 @@ func (m *ChainManager) UpdateProposal(ctx context.Context, entChain *ent.Chain, 
 	}
 	return prop.
 		Update().
-		SetStatus(proposal.Status(govProp.GetProposalStatus().String())).
+		SetStatus(proposal.Status(govProp.Status.String())).
 		Save(ctx)
 }
 
-func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, prop *queryevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+func (m *ChainManager) createContractProposal(ctx context.Context, entChain *ent.Chain, propId uint64, contractAddress string, govProp *types.ContractProposal) (*ent.ContractProposal, error) {
 	return m.client.ContractProposal.
 		Create().
 		SetChain(entChain).
-		SetProposalID(prop.ProposalId).
-		SetStatus(contractproposal.Status(prop.GetProposalStatus().String())).
-		SetTitle(prop.GetTitle()).
-		SetDescription(prop.GetDescription()).
-		SetContractAddress(prop.GetContractAddress()).
-		SetFirstSeenTime(prop.GetFirstSeenTime().AsTime()).
-		SetVotingEndTime(prop.GetVotingEndTime().AsTime()).
+		SetProposalID(propId).
+		SetStatus(contractproposal.Status(govProp.Status.String())).
+		SetTitle(govProp.Title).
+		SetDescription(govProp.Description).
+		SetContractAddress(contractAddress).
+		SetFirstSeenTime(time.Now()).
+		SetVotingEndTime(time.Time(govProp.Expiration.AtTime)).
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateContractProposal(ctx context.Context, entChain *ent.Chain, govProp *queryevent.ContractGovernanceProposalEvent) (*ent.ContractProposal, error) {
+func (m *ChainManager) CreateOrUpdateContractProposal(ctx context.Context, entChain *ent.Chain, propId uint64, contractAddress string, govProp *types.ContractProposal) (*ent.ContractProposal, error) {
 	if govProp == nil {
 		return nil, errors.New("governance prop is nil")
 	}
 	prop, err := entChain.
 		QueryContractProposals().
 		Where(contractproposal.And(
-			contractproposal.ProposalIDEQ(govProp.ProposalId),
-			contractproposal.ContractAddressEQ(govProp.GetContractAddress()),
+			contractproposal.ProposalIDEQ(propId),
+			contractproposal.ContractAddressEQ(contractAddress),
 		)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
-		return m.createContractProposal(ctx, entChain, govProp)
+		return m.createContractProposal(ctx, entChain, propId, contractAddress, govProp)
 	} else if err != nil {
 		return nil, err
 	}
 	return prop.
 		Update().
-		SetStatus(contractproposal.Status(govProp.GetProposalStatus().String())).
+		SetStatus(contractproposal.Status(govProp.Status.String())).
 		Save(ctx)
 }

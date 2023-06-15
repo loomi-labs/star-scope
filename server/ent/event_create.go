@@ -10,8 +10,10 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/schema"
 )
 
 // EventCreate is the builder for creating a Event entity.
@@ -55,21 +57,27 @@ func (ec *EventCreate) SetEventType(et event.EventType) *EventCreate {
 	return ec
 }
 
-// SetData sets the "data" field.
-func (ec *EventCreate) SetData(b []byte) *EventCreate {
-	ec.mutation.SetData(b)
+// SetChainEvent sets the "chain_event" field.
+func (ec *EventCreate) SetChainEvent(sews *schema.ChainEventWithScan) *EventCreate {
+	ec.mutation.SetChainEvent(sews)
+	return ec
+}
+
+// SetContractEvent sets the "contract_event" field.
+func (ec *EventCreate) SetContractEvent(sews *schema.ContractEventWithScan) *EventCreate {
+	ec.mutation.SetContractEvent(sews)
+	return ec
+}
+
+// SetWalletEvent sets the "wallet_event" field.
+func (ec *EventCreate) SetWalletEvent(sews *schema.WalletEventWithScan) *EventCreate {
+	ec.mutation.SetWalletEvent(sews)
 	return ec
 }
 
 // SetDataType sets the "data_type" field.
 func (ec *EventCreate) SetDataType(et event.DataType) *EventCreate {
 	ec.mutation.SetDataType(et)
-	return ec
-}
-
-// SetIsTxEvent sets the "is_tx_event" field.
-func (ec *EventCreate) SetIsTxEvent(b bool) *EventCreate {
-	ec.mutation.SetIsTxEvent(b)
 	return ec
 }
 
@@ -97,6 +105,34 @@ func (ec *EventCreate) SetIsRead(b bool) *EventCreate {
 func (ec *EventCreate) SetNillableIsRead(b *bool) *EventCreate {
 	if b != nil {
 		ec.SetIsRead(*b)
+	}
+	return ec
+}
+
+// SetIsBackground sets the "is_background" field.
+func (ec *EventCreate) SetIsBackground(b bool) *EventCreate {
+	ec.mutation.SetIsBackground(b)
+	return ec
+}
+
+// SetNillableIsBackground sets the "is_background" field if the given value is not nil.
+func (ec *EventCreate) SetNillableIsBackground(b *bool) *EventCreate {
+	if b != nil {
+		ec.SetIsBackground(*b)
+	}
+	return ec
+}
+
+// SetID sets the "id" field.
+func (ec *EventCreate) SetID(u uuid.UUID) *EventCreate {
+	ec.mutation.SetID(u)
+	return ec
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (ec *EventCreate) SetNillableID(u *uuid.UUID) *EventCreate {
+	if u != nil {
+		ec.SetID(*u)
 	}
 	return ec
 }
@@ -171,6 +207,14 @@ func (ec *EventCreate) defaults() {
 		v := event.DefaultIsRead
 		ec.mutation.SetIsRead(v)
 	}
+	if _, ok := ec.mutation.IsBackground(); !ok {
+		v := event.DefaultIsBackground
+		ec.mutation.SetIsBackground(v)
+	}
+	if _, ok := ec.mutation.ID(); !ok {
+		v := event.DefaultID()
+		ec.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -189,9 +233,6 @@ func (ec *EventCreate) check() error {
 			return &ValidationError{Name: "event_type", err: fmt.Errorf(`ent: validator failed for field "Event.event_type": %w`, err)}
 		}
 	}
-	if _, ok := ec.mutation.Data(); !ok {
-		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "Event.data"`)}
-	}
 	if _, ok := ec.mutation.DataType(); !ok {
 		return &ValidationError{Name: "data_type", err: errors.New(`ent: missing required field "Event.data_type"`)}
 	}
@@ -200,14 +241,14 @@ func (ec *EventCreate) check() error {
 			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "Event.data_type": %w`, err)}
 		}
 	}
-	if _, ok := ec.mutation.IsTxEvent(); !ok {
-		return &ValidationError{Name: "is_tx_event", err: errors.New(`ent: missing required field "Event.is_tx_event"`)}
-	}
 	if _, ok := ec.mutation.NotifyTime(); !ok {
 		return &ValidationError{Name: "notify_time", err: errors.New(`ent: missing required field "Event.notify_time"`)}
 	}
 	if _, ok := ec.mutation.IsRead(); !ok {
 		return &ValidationError{Name: "is_read", err: errors.New(`ent: missing required field "Event.is_read"`)}
+	}
+	if _, ok := ec.mutation.IsBackground(); !ok {
+		return &ValidationError{Name: "is_background", err: errors.New(`ent: missing required field "Event.is_background"`)}
 	}
 	return nil
 }
@@ -223,8 +264,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	ec.mutation.id = &_node.ID
 	ec.mutation.done = true
 	return _node, nil
@@ -233,8 +279,12 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 func (ec *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Event{config: ec.config}
-		_spec = sqlgraph.NewCreateSpec(event.Table, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(event.Table, sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID))
 	)
+	if id, ok := ec.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := ec.mutation.CreateTime(); ok {
 		_spec.SetField(event.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
@@ -247,17 +297,21 @@ func (ec *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_spec.SetField(event.FieldEventType, field.TypeEnum, value)
 		_node.EventType = value
 	}
-	if value, ok := ec.mutation.Data(); ok {
-		_spec.SetField(event.FieldData, field.TypeBytes, value)
-		_node.Data = value
+	if value, ok := ec.mutation.ChainEvent(); ok {
+		_spec.SetField(event.FieldChainEvent, field.TypeBytes, value)
+		_node.ChainEvent = value
+	}
+	if value, ok := ec.mutation.ContractEvent(); ok {
+		_spec.SetField(event.FieldContractEvent, field.TypeBytes, value)
+		_node.ContractEvent = value
+	}
+	if value, ok := ec.mutation.WalletEvent(); ok {
+		_spec.SetField(event.FieldWalletEvent, field.TypeBytes, value)
+		_node.WalletEvent = value
 	}
 	if value, ok := ec.mutation.DataType(); ok {
 		_spec.SetField(event.FieldDataType, field.TypeEnum, value)
 		_node.DataType = value
-	}
-	if value, ok := ec.mutation.IsTxEvent(); ok {
-		_spec.SetField(event.FieldIsTxEvent, field.TypeBool, value)
-		_node.IsTxEvent = value
 	}
 	if value, ok := ec.mutation.NotifyTime(); ok {
 		_spec.SetField(event.FieldNotifyTime, field.TypeTime, value)
@@ -266,6 +320,10 @@ func (ec *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.IsRead(); ok {
 		_spec.SetField(event.FieldIsRead, field.TypeBool, value)
 		_node.IsRead = value
+	}
+	if value, ok := ec.mutation.IsBackground(); ok {
+		_spec.SetField(event.FieldIsBackground, field.TypeBool, value)
+		_node.IsBackground = value
 	}
 	if nodes := ec.mutation.EventListenerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -328,10 +386,6 @@ func (ecb *EventCreateBulk) Save(ctx context.Context) ([]*Event, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

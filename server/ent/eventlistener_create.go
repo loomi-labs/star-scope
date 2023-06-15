@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -57,6 +58,20 @@ func (elc *EventListenerCreate) SetWalletAddress(s string) *EventListenerCreate 
 	return elc
 }
 
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (elc *EventListenerCreate) SetNillableWalletAddress(s *string) *EventListenerCreate {
+	if s != nil {
+		elc.SetWalletAddress(*s)
+	}
+	return elc
+}
+
+// SetDataType sets the "data_type" field.
+func (elc *EventListenerCreate) SetDataType(et eventlistener.DataType) *EventListenerCreate {
+	elc.mutation.SetDataType(et)
+	return elc
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (elc *EventListenerCreate) SetUserID(id int) *EventListenerCreate {
 	elc.mutation.SetUserID(id)
@@ -96,14 +111,14 @@ func (elc *EventListenerCreate) SetChain(c *Chain) *EventListenerCreate {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
-func (elc *EventListenerCreate) AddEventIDs(ids ...int) *EventListenerCreate {
+func (elc *EventListenerCreate) AddEventIDs(ids ...uuid.UUID) *EventListenerCreate {
 	elc.mutation.AddEventIDs(ids...)
 	return elc
 }
 
 // AddEvents adds the "events" edges to the Event entity.
 func (elc *EventListenerCreate) AddEvents(e ...*Event) *EventListenerCreate {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -163,8 +178,13 @@ func (elc *EventListenerCreate) check() error {
 	if _, ok := elc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "EventListener.update_time"`)}
 	}
-	if _, ok := elc.mutation.WalletAddress(); !ok {
-		return &ValidationError{Name: "wallet_address", err: errors.New(`ent: missing required field "EventListener.wallet_address"`)}
+	if _, ok := elc.mutation.DataType(); !ok {
+		return &ValidationError{Name: "data_type", err: errors.New(`ent: missing required field "EventListener.data_type"`)}
+	}
+	if v, ok := elc.mutation.DataType(); ok {
+		if err := eventlistener.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "EventListener.data_type": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -203,6 +223,10 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 	if value, ok := elc.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
 		_node.WalletAddress = value
+	}
+	if value, ok := elc.mutation.DataType(); ok {
+		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
+		_node.DataType = value
 	}
 	if nodes := elc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -246,7 +270,7 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -9,31 +9,37 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	"github.com/loomi-labs/star-scope/ent/schema"
 )
 
 // Event is the model entity for the Event schema.
 type Event struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// EventType holds the value of the "event_type" field.
 	EventType event.EventType `json:"event_type,omitempty"`
-	// Data holds the value of the "data" field.
-	Data []byte `json:"data,omitempty"`
+	// ChainEvent holds the value of the "chain_event" field.
+	ChainEvent *schema.ChainEventWithScan `json:"chain_event,omitempty"`
+	// ContractEvent holds the value of the "contract_event" field.
+	ContractEvent *schema.ContractEventWithScan `json:"contract_event,omitempty"`
+	// WalletEvent holds the value of the "wallet_event" field.
+	WalletEvent *schema.WalletEventWithScan `json:"wallet_event,omitempty"`
 	// DataType holds the value of the "data_type" field.
 	DataType event.DataType `json:"data_type,omitempty"`
-	// IsTxEvent holds the value of the "is_tx_event" field.
-	IsTxEvent bool `json:"is_tx_event,omitempty"`
 	// NotifyTime holds the value of the "notify_time" field.
 	NotifyTime time.Time `json:"notify_time,omitempty"`
 	// IsRead holds the value of the "is_read" field.
 	IsRead bool `json:"is_read,omitempty"`
+	// IsBackground holds the value of the "is_background" field.
+	IsBackground bool `json:"is_background,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventQuery when eager-loading is set.
 	Edges                 EventEdges `json:"edges"`
@@ -68,16 +74,20 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case event.FieldData:
-			values[i] = new([]byte)
-		case event.FieldIsTxEvent, event.FieldIsRead:
+		case event.FieldChainEvent:
+			values[i] = new(schema.ChainEventWithScan)
+		case event.FieldContractEvent:
+			values[i] = new(schema.ContractEventWithScan)
+		case event.FieldWalletEvent:
+			values[i] = new(schema.WalletEventWithScan)
+		case event.FieldIsRead, event.FieldIsBackground:
 			values[i] = new(sql.NullBool)
-		case event.FieldID:
-			values[i] = new(sql.NullInt64)
 		case event.FieldEventType, event.FieldDataType:
 			values[i] = new(sql.NullString)
 		case event.FieldCreateTime, event.FieldUpdateTime, event.FieldNotifyTime:
 			values[i] = new(sql.NullTime)
+		case event.FieldID:
+			values[i] = new(uuid.UUID)
 		case event.ForeignKeys[0]: // event_listener_events
 			values[i] = new(sql.NullInt64)
 		default:
@@ -96,11 +106,11 @@ func (e *Event) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case event.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				e.ID = *value
 			}
-			e.ID = int(value.Int64)
 		case event.FieldCreateTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field create_time", values[i])
@@ -119,23 +129,29 @@ func (e *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				e.EventType = event.EventType(value.String)
 			}
-		case event.FieldData:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field data", values[i])
+		case event.FieldChainEvent:
+			if value, ok := values[i].(*schema.ChainEventWithScan); !ok {
+				return fmt.Errorf("unexpected type %T for field chain_event", values[i])
 			} else if value != nil {
-				e.Data = *value
+				e.ChainEvent = value
+			}
+		case event.FieldContractEvent:
+			if value, ok := values[i].(*schema.ContractEventWithScan); !ok {
+				return fmt.Errorf("unexpected type %T for field contract_event", values[i])
+			} else if value != nil {
+				e.ContractEvent = value
+			}
+		case event.FieldWalletEvent:
+			if value, ok := values[i].(*schema.WalletEventWithScan); !ok {
+				return fmt.Errorf("unexpected type %T for field wallet_event", values[i])
+			} else if value != nil {
+				e.WalletEvent = value
 			}
 		case event.FieldDataType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field data_type", values[i])
 			} else if value.Valid {
 				e.DataType = event.DataType(value.String)
-			}
-		case event.FieldIsTxEvent:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_tx_event", values[i])
-			} else if value.Valid {
-				e.IsTxEvent = value.Bool
 			}
 		case event.FieldNotifyTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -148,6 +164,12 @@ func (e *Event) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field is_read", values[i])
 			} else if value.Valid {
 				e.IsRead = value.Bool
+			}
+		case event.FieldIsBackground:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_background", values[i])
+			} else if value.Valid {
+				e.IsBackground = value.Bool
 			}
 		case event.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -206,20 +228,26 @@ func (e *Event) String() string {
 	builder.WriteString("event_type=")
 	builder.WriteString(fmt.Sprintf("%v", e.EventType))
 	builder.WriteString(", ")
-	builder.WriteString("data=")
-	builder.WriteString(fmt.Sprintf("%v", e.Data))
+	builder.WriteString("chain_event=")
+	builder.WriteString(fmt.Sprintf("%v", e.ChainEvent))
+	builder.WriteString(", ")
+	builder.WriteString("contract_event=")
+	builder.WriteString(fmt.Sprintf("%v", e.ContractEvent))
+	builder.WriteString(", ")
+	builder.WriteString("wallet_event=")
+	builder.WriteString(fmt.Sprintf("%v", e.WalletEvent))
 	builder.WriteString(", ")
 	builder.WriteString("data_type=")
 	builder.WriteString(fmt.Sprintf("%v", e.DataType))
-	builder.WriteString(", ")
-	builder.WriteString("is_tx_event=")
-	builder.WriteString(fmt.Sprintf("%v", e.IsTxEvent))
 	builder.WriteString(", ")
 	builder.WriteString("notify_time=")
 	builder.WriteString(e.NotifyTime.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("is_read=")
 	builder.WriteString(fmt.Sprintf("%v", e.IsRead))
+	builder.WriteString(", ")
+	builder.WriteString("is_background=")
+	builder.WriteString(fmt.Sprintf("%v", e.IsBackground))
 	builder.WriteByte(')')
 	return builder.String()
 }

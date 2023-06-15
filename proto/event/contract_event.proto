@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+package starscope.event;
+
+option go_package = "github.com/loomi-labs/star-scope/event/contracteventpb";
+
+enum ContractProposalStatus {
+  OPEN = 0;
+  REJECTED = 1;
+  PASSED = 2;
+  EXECUTED = 3;
+  CLOSED = 4;
+  EXECUTION_FAILED = 5;
+}
+
+message ContractGovernanceProposalEvent {
+  uint64 proposal_id = 1;
+  string title = 2;
+  string description = 3;
+  string proposal_type = 4;
+  ContractProposalStatus proposal_status = 5;
+  google.protobuf.Timestamp first_seen_time = 6;
+  google.protobuf.Timestamp voting_end_time = 7;
+  string contract_address = 8;
+}
+
+message ContractEvent {
+  uint64 chain_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  google.protobuf.Timestamp notify_time = 3;
+  string contract_address = 6;
+  oneof event {
+    ContractGovernanceProposalEvent contract_governance_proposal = 5;
+  }
+}

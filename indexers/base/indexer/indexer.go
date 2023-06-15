@@ -17,15 +17,8 @@ import (
 	"time"
 )
 
-type ChainInfo struct {
-	ChainId      uint64
-	Path         string
-	RestEndpoint string
-	Name         string
-}
-
 type Indexer struct {
-	chainInfo      ChainInfo
+	chain          *indexerpb.IndexingChain
 	encodingConfig EncodingConfig
 	kafkaProducer  *kafka.KafkaProducer
 	txHandler      TxHandler
@@ -35,28 +28,21 @@ type TxHandler interface {
 	HandleTxs(txs [][]byte) (*indexerpb.HandleTxsResponse, error)
 }
 
-type Config struct {
-	ChainInfo      ChainInfo
-	KafkaBrokers   []string
-	EncodingConfig EncodingConfig
-	MessageHandler TxHandler
-}
-
-func NewIndexer(config Config) Indexer {
+func NewIndexer(chain *indexerpb.IndexingChain, encodingConfig EncodingConfig, kafkaBrokers []string, txHandler TxHandler) Indexer {
 	return Indexer{
-		chainInfo:      config.ChainInfo,
-		encodingConfig: config.EncodingConfig,
-		kafkaProducer:  kafka.NewKafkaProducer(kafka.IndexEventsTopic, config.KafkaBrokers...),
-		txHandler:      config.MessageHandler,
+		chain:          chain,
+		encodingConfig: encodingConfig,
+		kafkaProducer:  kafka.NewKafkaProducer(kafka.IndexEventsTopic, kafkaBrokers...),
+		txHandler:      txHandler,
 	}
 }
 
 type TxHelper struct {
-	chainInfo      ChainInfo
+	chainInfo      *indexerpb.IndexingChain
 	encodingConfig EncodingConfig
 }
 
-func NewTxHelper(chainInfo ChainInfo, encodingConfig EncodingConfig) TxHelper {
+func NewTxHelper(chainInfo *indexerpb.IndexingChain, encodingConfig EncodingConfig) TxHelper {
 	return TxHelper{
 		chainInfo:      chainInfo,
 		encodingConfig: encodingConfig,
@@ -157,7 +143,7 @@ type SyncStatus struct {
 	latestHeightUpdatedAt time.Time
 }
 
-func getLatestHeight(encodingConfig EncodingConfig, chainInfo ChainInfo) (uint64, error) {
+func getLatestHeight(encodingConfig EncodingConfig, chainInfo *indexerpb.IndexingChain) (uint64, error) {
 	log.Sugar.Debugf("Getting latest height of chain %v", chainInfo.Name)
 
 	var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/latest", chainInfo.RestEndpoint)
@@ -195,7 +181,7 @@ func (i *Indexer) newSyncStatus(chain *indexerpb.IndexingChain) SyncStatus {
 	var latestHeight uint64
 	var err error
 	for j := 0; j < 5; j++ {
-		latestHeight, err = getLatestHeight(i.encodingConfig, i.chainInfo)
+		latestHeight, err = getLatestHeight(i.encodingConfig, i.chain)
 		if err == nil {
 			break
 		}
@@ -252,7 +238,7 @@ func (s *SyncStatus) getSleepDuration() time.Duration {
 	return avgDuration - time.Since(s.recordedAt)
 }
 
-func (s *SyncStatus) updateSyncStatus(updateChannel chan SyncStatus, encodingConfig EncodingConfig, chainInfo ChainInfo) {
+func (s *SyncStatus) updateSyncStatus(updateChannel chan SyncStatus, encodingConfig EncodingConfig, chainInfo *indexerpb.IndexingChain) {
 	updateChannel <- *s
 	s.Height++
 	if s.latestHeightUpdatedAt.Add(1 * time.Minute).Before(time.Now()) {
@@ -276,47 +262,53 @@ func (i *Indexer) logStats(result *indexerpb.HandleTxsResponse, syncStatus SyncS
 		var total = result.CountProcessed + result.CountSkipped
 		sleepTrunc := sleepDuration.Truncate(time.Millisecond * 100)
 		log.Sugar.Infof("%-15sBlock %v%v\tTotal: %v\tSkipped: %v\tProcessed: %v\tKafka msgs: %v\tGet block: %v\tHandle block: %v\tSleep: %s",
-			i.chainInfo.Name, height,
+			i.chain.Name, height,
 			behindText, total, result.CountSkipped, result.CountProcessed, len(result.ProtoMessages), getBlockRequestDuration, handleBlockDuration, sleepTrunc.String())
 	}
 }
 
-func (i *Indexer) StartIndexing(chain *indexerpb.IndexingChain, updateChannel chan SyncStatus) {
-	var syncStatus = i.newSyncStatus(chain)
-	log.Sugar.Infof("%-15sStart indexing at height: %v", i.chainInfo.Name, syncStatus.Height)
-	for true {
-		var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.chainInfo.RestEndpoint, syncStatus.Height)
-		var blockResponse cmtservice.GetBlockByHeightResponse
-		var startGetBlockRequest = time.Now()
-		status, err := GetAndDecode(url, i.encodingConfig, &blockResponse)
-		var getBlockRequestDuration = time.Since(startGetBlockRequest)
-		var handleBlockDuration time.Duration
-		var result *indexerpb.HandleTxsResponse
-		if err != nil {
-			if status == 400 {
-				log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chainInfo.Name, syncStatus.Height)
-			} else if status > 400 && status < 500 {
-				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
-			} else if status >= 500 {
-				log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
-			} else {
-				log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chainInfo.Name, status, err)
-			}
-			time.Sleep(200 * time.Millisecond)
-		} else {
-			syncStatus.recordBlock(blockResponse)
-			var startHandleBlock = time.Now()
-			result, err = i.handleBlock(&blockResponse, syncStatus)
-			handleBlockDuration = time.Since(startHandleBlock)
+func (i *Indexer) StartIndexing(updateChannel chan SyncStatus, stopChannel chan struct{}) {
+	var syncStatus = i.newSyncStatus(i.chain)
+	log.Sugar.Infof("%-15sStart indexing at height: %v", i.chain.Name, syncStatus.Height)
+	for {
+		select {
+		case <-stopChannel:
+			log.Sugar.Infof("%-15sStop indexing at height: %v", i.chain.Name, syncStatus.Height)
+			return
+		default:
+			var url = fmt.Sprintf("%v/cosmos/base/tendermint/v1beta1/blocks/%v", i.chain.RestEndpoint, syncStatus.Height)
+			var blockResponse cmtservice.GetBlockByHeightResponse
+			var startGetBlockRequest = time.Now()
+			status, err := GetAndDecode(url, i.encodingConfig, &blockResponse)
+			var getBlockRequestDuration = time.Since(startGetBlockRequest)
+			var handleBlockDuration time.Duration
+			var result *indexerpb.HandleTxsResponse
 			if err != nil {
-				log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chainInfo.Name, syncStatus.Height, err)
+				if status == 400 {
+					log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chain.Name, syncStatus.Height)
+				} else if status > 400 && status < 500 {
+					log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chain.Name, status, err)
+				} else if status >= 500 {
+					log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chain.Name, status, err)
+				} else {
+					log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chain.Name, status, err)
+				}
 				time.Sleep(200 * time.Millisecond)
 			} else {
-				syncStatus.updateSyncStatus(updateChannel, i.encodingConfig, i.chainInfo)
+				syncStatus.recordBlock(blockResponse)
+				var startHandleBlock = time.Now()
+				result, err = i.handleBlock(&blockResponse, syncStatus)
+				handleBlockDuration = time.Since(startHandleBlock)
+				if err != nil {
+					log.Sugar.Errorf("%-15sFailed to handle block %v (try again): %v", i.chain.Name, syncStatus.Height, err)
+					time.Sleep(200 * time.Millisecond)
+				} else {
+					syncStatus.updateSyncStatus(updateChannel, i.encodingConfig, i.chain)
+				}
 			}
+			var sleepDuration = syncStatus.getSleepDuration()
+			i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepDuration)
+			time.Sleep(sleepDuration)
 		}
-		var sleepDuration = syncStatus.getSleepDuration()
-		i.logStats(result, syncStatus, getBlockRequestDuration, handleBlockDuration, sleepDuration)
-		time.Sleep(sleepDuration)
 	}
 }

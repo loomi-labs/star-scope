@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -40,6 +41,26 @@ func (elu *EventListenerUpdate) SetUpdateTime(t time.Time) *EventListenerUpdate 
 // SetWalletAddress sets the "wallet_address" field.
 func (elu *EventListenerUpdate) SetWalletAddress(s string) *EventListenerUpdate {
 	elu.mutation.SetWalletAddress(s)
+	return elu
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (elu *EventListenerUpdate) SetNillableWalletAddress(s *string) *EventListenerUpdate {
+	if s != nil {
+		elu.SetWalletAddress(*s)
+	}
+	return elu
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (elu *EventListenerUpdate) ClearWalletAddress() *EventListenerUpdate {
+	elu.mutation.ClearWalletAddress()
+	return elu
+}
+
+// SetDataType sets the "data_type" field.
+func (elu *EventListenerUpdate) SetDataType(et eventlistener.DataType) *EventListenerUpdate {
+	elu.mutation.SetDataType(et)
 	return elu
 }
 
@@ -82,14 +103,14 @@ func (elu *EventListenerUpdate) SetChain(c *Chain) *EventListenerUpdate {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
-func (elu *EventListenerUpdate) AddEventIDs(ids ...int) *EventListenerUpdate {
+func (elu *EventListenerUpdate) AddEventIDs(ids ...uuid.UUID) *EventListenerUpdate {
 	elu.mutation.AddEventIDs(ids...)
 	return elu
 }
 
 // AddEvents adds the "events" edges to the Event entity.
 func (elu *EventListenerUpdate) AddEvents(e ...*Event) *EventListenerUpdate {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -120,14 +141,14 @@ func (elu *EventListenerUpdate) ClearEvents() *EventListenerUpdate {
 }
 
 // RemoveEventIDs removes the "events" edge to Event entities by IDs.
-func (elu *EventListenerUpdate) RemoveEventIDs(ids ...int) *EventListenerUpdate {
+func (elu *EventListenerUpdate) RemoveEventIDs(ids ...uuid.UUID) *EventListenerUpdate {
 	elu.mutation.RemoveEventIDs(ids...)
 	return elu
 }
 
 // RemoveEvents removes "events" edges to Event entities.
 func (elu *EventListenerUpdate) RemoveEvents(e ...*Event) *EventListenerUpdate {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -170,7 +191,20 @@ func (elu *EventListenerUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (elu *EventListenerUpdate) check() error {
+	if v, ok := elu.mutation.DataType(); ok {
+		if err := eventlistener.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "EventListener.data_type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := elu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(eventlistener.Table, eventlistener.Columns, sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt))
 	if ps := elu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -184,6 +218,12 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := elu.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
+	}
+	if elu.mutation.WalletAddressCleared() {
+		_spec.ClearField(eventlistener.FieldWalletAddress, field.TypeString)
+	}
+	if value, ok := elu.mutation.DataType(); ok {
+		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
 	}
 	if elu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -251,7 +291,7 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -264,7 +304,7 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -280,7 +320,7 @@ func (elu *EventListenerUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -317,6 +357,26 @@ func (eluo *EventListenerUpdateOne) SetUpdateTime(t time.Time) *EventListenerUpd
 // SetWalletAddress sets the "wallet_address" field.
 func (eluo *EventListenerUpdateOne) SetWalletAddress(s string) *EventListenerUpdateOne {
 	eluo.mutation.SetWalletAddress(s)
+	return eluo
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (eluo *EventListenerUpdateOne) SetNillableWalletAddress(s *string) *EventListenerUpdateOne {
+	if s != nil {
+		eluo.SetWalletAddress(*s)
+	}
+	return eluo
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (eluo *EventListenerUpdateOne) ClearWalletAddress() *EventListenerUpdateOne {
+	eluo.mutation.ClearWalletAddress()
+	return eluo
+}
+
+// SetDataType sets the "data_type" field.
+func (eluo *EventListenerUpdateOne) SetDataType(et eventlistener.DataType) *EventListenerUpdateOne {
+	eluo.mutation.SetDataType(et)
 	return eluo
 }
 
@@ -359,14 +419,14 @@ func (eluo *EventListenerUpdateOne) SetChain(c *Chain) *EventListenerUpdateOne {
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
-func (eluo *EventListenerUpdateOne) AddEventIDs(ids ...int) *EventListenerUpdateOne {
+func (eluo *EventListenerUpdateOne) AddEventIDs(ids ...uuid.UUID) *EventListenerUpdateOne {
 	eluo.mutation.AddEventIDs(ids...)
 	return eluo
 }
 
 // AddEvents adds the "events" edges to the Event entity.
 func (eluo *EventListenerUpdateOne) AddEvents(e ...*Event) *EventListenerUpdateOne {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -397,14 +457,14 @@ func (eluo *EventListenerUpdateOne) ClearEvents() *EventListenerUpdateOne {
 }
 
 // RemoveEventIDs removes the "events" edge to Event entities by IDs.
-func (eluo *EventListenerUpdateOne) RemoveEventIDs(ids ...int) *EventListenerUpdateOne {
+func (eluo *EventListenerUpdateOne) RemoveEventIDs(ids ...uuid.UUID) *EventListenerUpdateOne {
 	eluo.mutation.RemoveEventIDs(ids...)
 	return eluo
 }
 
 // RemoveEvents removes "events" edges to Event entities.
 func (eluo *EventListenerUpdateOne) RemoveEvents(e ...*Event) *EventListenerUpdateOne {
-	ids := make([]int, len(e))
+	ids := make([]uuid.UUID, len(e))
 	for i := range e {
 		ids[i] = e[i].ID
 	}
@@ -460,7 +520,20 @@ func (eluo *EventListenerUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (eluo *EventListenerUpdateOne) check() error {
+	if v, ok := eluo.mutation.DataType(); ok {
+		if err := eventlistener.DataTypeValidator(v); err != nil {
+			return &ValidationError{Name: "data_type", err: fmt.Errorf(`ent: validator failed for field "EventListener.data_type": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventListener, err error) {
+	if err := eluo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(eventlistener.Table, eventlistener.Columns, sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt))
 	id, ok := eluo.mutation.ID()
 	if !ok {
@@ -491,6 +564,12 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 	}
 	if value, ok := eluo.mutation.WalletAddress(); ok {
 		_spec.SetField(eventlistener.FieldWalletAddress, field.TypeString, value)
+	}
+	if eluo.mutation.WalletAddressCleared() {
+		_spec.ClearField(eventlistener.FieldWalletAddress, field.TypeString)
+	}
+	if value, ok := eluo.mutation.DataType(); ok {
+		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
 	}
 	if eluo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -558,7 +637,7 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -571,7 +650,7 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -587,7 +666,7 @@ func (eluo *EventListenerUpdateOne) sqlSave(ctx context.Context) (_node *EventLi
 			Columns: []string{eventlistener.EventsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

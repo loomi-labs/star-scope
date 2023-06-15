@@ -7,51 +7,53 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/schema"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Event {
+func ID(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Event {
+func IDEQ(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Event {
+func IDNEQ(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Event {
+func IDIn(ids ...uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Event {
+func IDNotIn(ids ...uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Event {
+func IDGT(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Event {
+func IDGTE(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Event {
+func IDLT(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Event {
+func IDLTE(id uuid.UUID) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldID, id))
 }
 
@@ -65,14 +67,19 @@ func UpdateTime(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldUpdateTime, v))
 }
 
-// Data applies equality check predicate on the "data" field. It's identical to DataEQ.
-func Data(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldData, v))
+// ChainEvent applies equality check predicate on the "chain_event" field. It's identical to ChainEventEQ.
+func ChainEvent(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldChainEvent, v))
 }
 
-// IsTxEvent applies equality check predicate on the "is_tx_event" field. It's identical to IsTxEventEQ.
-func IsTxEvent(v bool) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldIsTxEvent, v))
+// ContractEvent applies equality check predicate on the "contract_event" field. It's identical to ContractEventEQ.
+func ContractEvent(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldContractEvent, v))
+}
+
+// WalletEvent applies equality check predicate on the "wallet_event" field. It's identical to WalletEventEQ.
+func WalletEvent(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldWalletEvent, v))
 }
 
 // NotifyTime applies equality check predicate on the "notify_time" field. It's identical to NotifyTimeEQ.
@@ -83,6 +90,11 @@ func NotifyTime(v time.Time) predicate.Event {
 // IsRead applies equality check predicate on the "is_read" field. It's identical to IsReadEQ.
 func IsRead(v bool) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldIsRead, v))
+}
+
+// IsBackground applies equality check predicate on the "is_background" field. It's identical to IsBackgroundEQ.
+func IsBackground(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsBackground, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -185,44 +197,154 @@ func EventTypeNotIn(vs ...EventType) predicate.Event {
 	return predicate.Event(sql.FieldNotIn(FieldEventType, vs...))
 }
 
-// DataEQ applies the EQ predicate on the "data" field.
-func DataEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldData, v))
+// ChainEventEQ applies the EQ predicate on the "chain_event" field.
+func ChainEventEQ(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldChainEvent, v))
 }
 
-// DataNEQ applies the NEQ predicate on the "data" field.
-func DataNEQ(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldData, v))
+// ChainEventNEQ applies the NEQ predicate on the "chain_event" field.
+func ChainEventNEQ(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldChainEvent, v))
 }
 
-// DataIn applies the In predicate on the "data" field.
-func DataIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldData, vs...))
+// ChainEventIn applies the In predicate on the "chain_event" field.
+func ChainEventIn(vs ...*schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldChainEvent, vs...))
 }
 
-// DataNotIn applies the NotIn predicate on the "data" field.
-func DataNotIn(vs ...[]byte) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldData, vs...))
+// ChainEventNotIn applies the NotIn predicate on the "chain_event" field.
+func ChainEventNotIn(vs ...*schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldChainEvent, vs...))
 }
 
-// DataGT applies the GT predicate on the "data" field.
-func DataGT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGT(FieldData, v))
+// ChainEventGT applies the GT predicate on the "chain_event" field.
+func ChainEventGT(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldChainEvent, v))
 }
 
-// DataGTE applies the GTE predicate on the "data" field.
-func DataGTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldGTE(FieldData, v))
+// ChainEventGTE applies the GTE predicate on the "chain_event" field.
+func ChainEventGTE(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldChainEvent, v))
 }
 
-// DataLT applies the LT predicate on the "data" field.
-func DataLT(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLT(FieldData, v))
+// ChainEventLT applies the LT predicate on the "chain_event" field.
+func ChainEventLT(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldChainEvent, v))
 }
 
-// DataLTE applies the LTE predicate on the "data" field.
-func DataLTE(v []byte) predicate.Event {
-	return predicate.Event(sql.FieldLTE(FieldData, v))
+// ChainEventLTE applies the LTE predicate on the "chain_event" field.
+func ChainEventLTE(v *schema.ChainEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldChainEvent, v))
+}
+
+// ChainEventIsNil applies the IsNil predicate on the "chain_event" field.
+func ChainEventIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldChainEvent))
+}
+
+// ChainEventNotNil applies the NotNil predicate on the "chain_event" field.
+func ChainEventNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldChainEvent))
+}
+
+// ContractEventEQ applies the EQ predicate on the "contract_event" field.
+func ContractEventEQ(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldContractEvent, v))
+}
+
+// ContractEventNEQ applies the NEQ predicate on the "contract_event" field.
+func ContractEventNEQ(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldContractEvent, v))
+}
+
+// ContractEventIn applies the In predicate on the "contract_event" field.
+func ContractEventIn(vs ...*schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldContractEvent, vs...))
+}
+
+// ContractEventNotIn applies the NotIn predicate on the "contract_event" field.
+func ContractEventNotIn(vs ...*schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldContractEvent, vs...))
+}
+
+// ContractEventGT applies the GT predicate on the "contract_event" field.
+func ContractEventGT(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldContractEvent, v))
+}
+
+// ContractEventGTE applies the GTE predicate on the "contract_event" field.
+func ContractEventGTE(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldContractEvent, v))
+}
+
+// ContractEventLT applies the LT predicate on the "contract_event" field.
+func ContractEventLT(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldContractEvent, v))
+}
+
+// ContractEventLTE applies the LTE predicate on the "contract_event" field.
+func ContractEventLTE(v *schema.ContractEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldContractEvent, v))
+}
+
+// ContractEventIsNil applies the IsNil predicate on the "contract_event" field.
+func ContractEventIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldContractEvent))
+}
+
+// ContractEventNotNil applies the NotNil predicate on the "contract_event" field.
+func ContractEventNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldContractEvent))
+}
+
+// WalletEventEQ applies the EQ predicate on the "wallet_event" field.
+func WalletEventEQ(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldWalletEvent, v))
+}
+
+// WalletEventNEQ applies the NEQ predicate on the "wallet_event" field.
+func WalletEventNEQ(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldWalletEvent, v))
+}
+
+// WalletEventIn applies the In predicate on the "wallet_event" field.
+func WalletEventIn(vs ...*schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldWalletEvent, vs...))
+}
+
+// WalletEventNotIn applies the NotIn predicate on the "wallet_event" field.
+func WalletEventNotIn(vs ...*schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldWalletEvent, vs...))
+}
+
+// WalletEventGT applies the GT predicate on the "wallet_event" field.
+func WalletEventGT(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldWalletEvent, v))
+}
+
+// WalletEventGTE applies the GTE predicate on the "wallet_event" field.
+func WalletEventGTE(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldWalletEvent, v))
+}
+
+// WalletEventLT applies the LT predicate on the "wallet_event" field.
+func WalletEventLT(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldWalletEvent, v))
+}
+
+// WalletEventLTE applies the LTE predicate on the "wallet_event" field.
+func WalletEventLTE(v *schema.WalletEventWithScan) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldWalletEvent, v))
+}
+
+// WalletEventIsNil applies the IsNil predicate on the "wallet_event" field.
+func WalletEventIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldWalletEvent))
+}
+
+// WalletEventNotNil applies the NotNil predicate on the "wallet_event" field.
+func WalletEventNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldWalletEvent))
 }
 
 // DataTypeEQ applies the EQ predicate on the "data_type" field.
@@ -243,16 +365,6 @@ func DataTypeIn(vs ...DataType) predicate.Event {
 // DataTypeNotIn applies the NotIn predicate on the "data_type" field.
 func DataTypeNotIn(vs ...DataType) predicate.Event {
 	return predicate.Event(sql.FieldNotIn(FieldDataType, vs...))
-}
-
-// IsTxEventEQ applies the EQ predicate on the "is_tx_event" field.
-func IsTxEventEQ(v bool) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldIsTxEvent, v))
-}
-
-// IsTxEventNEQ applies the NEQ predicate on the "is_tx_event" field.
-func IsTxEventNEQ(v bool) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldIsTxEvent, v))
 }
 
 // NotifyTimeEQ applies the EQ predicate on the "notify_time" field.
@@ -303,6 +415,16 @@ func IsReadEQ(v bool) predicate.Event {
 // IsReadNEQ applies the NEQ predicate on the "is_read" field.
 func IsReadNEQ(v bool) predicate.Event {
 	return predicate.Event(sql.FieldNEQ(FieldIsRead, v))
+}
+
+// IsBackgroundEQ applies the EQ predicate on the "is_background" field.
+func IsBackgroundEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldIsBackground, v))
+}
+
+// IsBackgroundNEQ applies the NEQ predicate on the "is_background" field.
+func IsBackgroundNEQ(v bool) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldIsBackground, v))
 }
 
 // HasEventListener applies the HasEdge predicate on the "event_listener" edge.

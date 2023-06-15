@@ -1,10 +1,10 @@
 use sycamore::prelude::*;
 
-use crate::{AppRoutes, AppState, EventsState};
 use crate::config::keys;
 use crate::pages::notifications::page::NotificationsState;
-use crate::types::types::grpc::EventType;
+use crate::types::protobuf::event::EventType;
 use crate::utils::url::safe_navigate;
+use crate::{AppRoutes, AppState, EventsState};
 
 #[component]
 pub fn Header<G: Html>(cx: Scope) -> View<G> {
@@ -49,14 +49,20 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             .event_count_map
             .get()
             .get(&event_type)
-            .map(|e| e.unread_count.clone())
+            .map(|e| e.unread_count)
             .filter(|e| *e > 0)
     }
 
-    let cnt_funding = create_memo(cx, move || get_event_count(&events_state, EventType::Funding));
-    let cnt_staking = create_memo(cx, move || get_event_count(&events_state, EventType::Staking));
-    let cnt_dex = create_memo(cx, move || get_event_count(&events_state, EventType::Dex));
-    let cnt_governance = create_memo(cx, move || get_event_count(&events_state, EventType::Governance));
+    let cnt_funding = create_memo(cx, move || {
+        get_event_count(events_state, EventType::Funding)
+    });
+    let cnt_staking = create_memo(cx, move || {
+        get_event_count(events_state, EventType::Staking)
+    });
+    let cnt_dex = create_memo(cx, move || get_event_count(events_state, EventType::Dex));
+    let cnt_governance = create_memo(cx, move || {
+        get_event_count(events_state, EventType::Governance)
+    });
     let cnt_all = create_memo(cx, || {
         let all = cnt_funding.get().as_ref().unwrap_or_else(|| 0)
             + cnt_staking.get().as_ref().unwrap_or_else(|| 0)
@@ -71,8 +77,13 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let is_sidebar_hovered = create_signal(cx, false);
 
-    fn is_active_notification_route(event_type: Option<EventType>, notifications_state: &NotificationsState, active_route: &AppRoutes) -> bool {
-        active_route == &AppRoutes::Notifications && notifications_state.has_filter_applied(event_type)
+    fn is_active_notification_route(
+        event_type: Option<EventType>,
+        notifications_state: &NotificationsState,
+        active_route: &AppRoutes,
+    ) -> bool {
+        active_route == &AppRoutes::Notifications
+            && notifications_state.has_filter_applied(event_type)
     }
 
     let button_class = "relative flex flex-row items-center text-center max-w-full h-11 pr-6";
@@ -83,10 +94,30 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let button_data = vec![
         (None, "icon-[lucide--copy-check]", "All", cnt_all),
-        (Some(EventType::Funding), "icon-[ep--coin]", "Funding", cnt_funding),
-        (Some(EventType::Staking), "icon-[carbon--equalizer]", "Staking", cnt_staking),
-        (Some(EventType::Dex), "icon-[fluent--money-24-regular]", "Dex", cnt_dex),
-        (Some(EventType::Governance), "icon-[icon-park-outline--palace]", "Governance", cnt_governance),
+        (
+            Some(EventType::Funding),
+            "icon-[ep--coin]",
+            "Funding",
+            cnt_funding,
+        ),
+        (
+            Some(EventType::Staking),
+            "icon-[carbon--equalizer]",
+            "Staking",
+            cnt_staking,
+        ),
+        (
+            Some(EventType::Dex),
+            "icon-[fluent--money-24-regular]",
+            "Dex",
+            cnt_dex,
+        ),
+        (
+            Some(EventType::Governance),
+            "icon-[icon-park-outline--palace]",
+            "Governance",
+            cnt_governance,
+        ),
     ];
 
     let notification_button_views = View::new_fragment(

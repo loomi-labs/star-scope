@@ -4,11 +4,14 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/loomi-labs/star-scope/chain_crawler"
 	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/crawler/chain_crawler"
+	"github.com/loomi-labs/star-scope/crawler/governance_crawler"
+	"github.com/loomi-labs/star-scope/crawler/validator_crawler"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/grpc"
 	"github.com/loomi-labs/star-scope/kafka"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"log"
 	"strings"
 	"time"
@@ -53,9 +56,9 @@ var startGrpcServerCmd = &cobra.Command{
 	},
 }
 
-var startIndexEventConsumerCmd = &cobra.Command{
-	Use:   "index-event-consumer",
-	Short: "Start the index event consumer",
+var startWalletEventConsumerCmd = &cobra.Command{
+	Use:   "wallet-event-consumer",
+	Short: "Start the wallet event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
@@ -65,30 +68,65 @@ var startIndexEventConsumerCmd = &cobra.Command{
 			fakeEventCreator := kafka.NewFakeEventCreator(dbManagers, fakeWalletAddresses, kafkaBrokers...)
 			fakeEventCreator.CreateFakeEvents()
 		} else {
-			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
-			eventConsumer.ProcessIndexedEvents()
+			eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers)
+			eventConsumer.ProcessWalletEvents()
 		}
 	},
 }
 
-var startQueryEventConsumerCmd = &cobra.Command{
-	Use:   "query-event-consumer",
-	Short: "Start the query event consumer",
+var startChainEventConsumerCmd = &cobra.Command{
+	Use:   "chain-event-consumer",
+	Short: "Start the chain event consumer",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
-		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers...)
-		eventConsumer.ProcessQueryEvents()
+		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers)
+		eventConsumer.ProcessChainEvents()
 	},
 }
 
-var startCrawlerCmd = &cobra.Command{
-	Use:   "crawler",
-	Short: "Start the chain crwaler",
+var startContractEventConsumerCmd = &cobra.Command{
+	Use:   "contract-event-consumer",
+	Short: "Start the contract event consumer",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		eventConsumer := kafka.NewKafka(dbManagers, kafkaBrokers)
+		eventConsumer.ProcessContractEvents()
+	},
+}
+
+var startChainCrawlerCmd = &cobra.Command{
+	Use:   "chain-crawler",
+	Short: "Start the chain crawler",
 	Run: func(cmd *cobra.Command, args []string) {
 		dbManagers := database.NewDefaultDbManagers()
 		chainCrawler := chain_crawler.NewChainCrawler(dbManagers)
-		chainCrawler.AddOrUpdateChains()
+		chainCrawler.StartCrawling()
+	},
+}
+
+var startGovernanceCrawlerCmd = &cobra.Command{
+	Use:   "gov-crawler",
+	Short: "Start the governance crawler",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+		chainCrawler := governance_crawler.NewGovernanceCrawler(dbManagers, kafkaInternal)
+		chainCrawler.StartCrawling()
+	},
+}
+
+var startValidatorCrawlerCmd = &cobra.Command{
+	Use:   "validator-crawler",
+	Short: "Start the validator crawler",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
+		kafkaInternal := kafka_internal.NewKafkaInternal(kafkaBrokers)
+		crawler := validator_crawler.NewValidatorCrawler(dbManagers, kafkaInternal)
+		crawler.StartCrawling()
 	},
 }
 
@@ -96,9 +134,13 @@ func init() {
 	rootCmd.AddCommand(serviceCmd)
 
 	serviceCmd.AddCommand(startGrpcServerCmd)
-	serviceCmd.AddCommand(startIndexEventConsumerCmd)
-	serviceCmd.AddCommand(startQueryEventConsumerCmd)
-	serviceCmd.AddCommand(startCrawlerCmd)
+	serviceCmd.AddCommand(startWalletEventConsumerCmd)
+	serviceCmd.AddCommand(startChainEventConsumerCmd)
+	serviceCmd.AddCommand(startContractEventConsumerCmd)
 
-	startIndexEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
+	serviceCmd.AddCommand(startChainCrawlerCmd)
+	serviceCmd.AddCommand(startGovernanceCrawlerCmd)
+	serviceCmd.AddCommand(startValidatorCrawlerCmd)
+
+	startWalletEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }

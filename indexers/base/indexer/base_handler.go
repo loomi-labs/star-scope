@@ -1,15 +1,14 @@
 package indexer
 
 import (
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"errors"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcChannel "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
@@ -23,11 +22,11 @@ import (
 
 type baseMessageHandler struct {
 	TxHandler
-	chainInfo ChainInfo
+	chainInfo *indexerpb.IndexingChain
 	txHelper  TxHelper
 }
 
-func NewBaseMessageHandler(chainInfo ChainInfo, encodingConfig EncodingConfig) TxHandler {
+func NewBaseMessageHandler(chainInfo *indexerpb.IndexingChain, encodingConfig EncodingConfig) TxHandler {
 	return &baseMessageHandler{
 		chainInfo: chainInfo,
 		txHelper:  NewTxHelper(chainInfo, encodingConfig),
@@ -62,9 +61,6 @@ func (m *baseMessageHandler) handleMsg(tx []byte, anyMsg sdktypes.Msg, result *i
 			return err
 		}
 		addToResultIfNoError(result, msg, protoMsg)
-	case *govtypes.MsgDeposit:
-		//TODO: Remove this
-		log.Sugar.Panicf("govtypes.MsgDeposit")
 	case *authz.MsgExec:
 		for _, authzEncMsg := range msg.Msgs {
 			authzMsg, err := sdktypes.GetMsgFromTypeURL(m.txHelper.encodingConfig.Codec, authzEncMsg.GetTypeUrl())
@@ -146,13 +142,13 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 	if txResponse == nil || len(txResponse.Events) == 0 {
 		return nil, nil
 	}
-	txEvent := &indexevent.TxEvent{
-		ChainId:    i.chainInfo.ChainId,
+	walletEvent := &event.WalletEvent{
+		ChainId:    i.chainInfo.Id,
 		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
-		Event: &indexevent.TxEvent_CoinReceived{
-			CoinReceived: &indexevent.CoinReceivedEvent{
-				Coin: &indexevent.Coin{},
+		Event: &event.WalletEvent_CoinReceived{
+			CoinReceived: &event.CoinReceivedEvent{
+				Coin: &event.Coin{},
 			},
 		},
 	}
@@ -170,11 +166,11 @@ func (i *baseMessageHandler) handleFungibleTokenPacketEvent(txResponse *sdktypes
 	if result[success] != "true" {
 		return nil, nil
 	}
-	txEvent.WalletAddress = result[receiver]
-	txEvent.GetCoinReceived().Sender = result[sender]
-	txEvent.GetCoinReceived().GetCoin().Amount = result[amount]
-	txEvent.GetCoinReceived().GetCoin().Denom = result[denom]
-	return proto.Marshal(txEvent)
+	walletEvent.WalletAddress = result[receiver]
+	walletEvent.GetCoinReceived().Sender = result[sender]
+	walletEvent.GetCoinReceived().GetCoin().Amount = result[amount]
+	walletEvent.GetCoinReceived().GetCoin().Denom = result[denom]
+	return proto.Marshal(walletEvent)
 }
 
 func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([]byte, error) {
@@ -183,15 +179,15 @@ func (i *baseMessageHandler) handleMsgSend(msg *banktypes.MsgSend, tx []byte) ([
 		return nil, err
 	}
 	if wasSuccessful {
-		var txEvent = &indexevent.TxEvent{
-			ChainId:       i.chainInfo.ChainId,
+		var txEvent = &event.WalletEvent{
+			ChainId:       i.chainInfo.Id,
 			WalletAddress: msg.ToAddress,
 			Timestamp:     timestamp,
 			NotifyTime:    timestamppb.Now(),
-			Event: &indexevent.TxEvent_CoinReceived{
-				CoinReceived: &indexevent.CoinReceivedEvent{
+			Event: &event.WalletEvent_CoinReceived{
+				CoinReceived: &event.CoinReceivedEvent{
 					Sender: msg.FromAddress,
-					Coin: &indexevent.Coin{
+					Coin: &event.Coin{
 						Amount: msg.Amount[0].Amount.String(),
 						Denom:  msg.Amount[0].Denom,
 					},
@@ -229,13 +225,13 @@ func (i *baseMessageHandler) handleMsgUndelegate(msg *stakingtypes.MsgUndelegate
 	if err != nil {
 		return nil, err
 	}
-	txEvent := &indexevent.TxEvent{
-		ChainId:    i.chainInfo.ChainId,
+	txEvent := &event.WalletEvent{
+		ChainId:    i.chainInfo.Id,
 		Timestamp:  timestamp,
 		NotifyTime: timestamppb.Now(),
-		Event: &indexevent.TxEvent_Unstake{
-			Unstake: &indexevent.UnstakeEvent{
-				Coin: &indexevent.Coin{
+		Event: &event.WalletEvent_Unstake{
+			Unstake: &event.UnstakeEvent{
+				Coin: &event.Coin{
 					Denom:  msg.Amount.Denom,
 					Amount: msg.Amount.Amount.String(),
 				},

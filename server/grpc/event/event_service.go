@@ -3,9 +3,12 @@ package event
 import (
 	"context"
 	"github.com/bufbuild/connect-go"
+	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
+	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
 	"github.com/loomi-labs/star-scope/grpc/types"
@@ -31,37 +34,36 @@ func NewEventServiceHandler(dbManagers *database.DbManagers, kafka *kafka.Kafka)
 	}
 }
 
-func (e EventService) EventStream(ctx context.Context, _ *connect.Request[emptypb.Empty], stream *connect.ServerStream[eventpb.EventList]) error {
+func (e EventService) EventStream(ctx context.Context, _ *connect.Request[emptypb.Empty], stream *connect.ServerStream[eventpb.NewEvent]) error {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
 		return types.UserNotFoundErr
 	}
 
-	processedEvents := make(chan *eventpb.EventList, 100)
+	newEvents := make(chan *eventpb.NewEvent)
 
-	go e.kafka.ConsumeProcessedEvents(ctx, user, processedEvents)
+	go e.kafka.ConsumeProcessedEvents(ctx, user, newEvents)
 
-	// Timer for sending empty message every 30 seconds
+	// Timer for sending empty message every 30 seconds to keep connection alive
 	timer := time.NewTicker(30 * time.Second)
 	defer timer.Stop()
 
 	for {
 		select {
-		case eventList, ok := <-processedEvents:
+		case msg, ok := <-newEvents:
 			if !ok {
 				log.Sugar.Debugf("processed events channel closed")
 				return types.UnknownErr
 			}
-			log.Sugar.Debugf("received processed %v events", len(eventList.GetEvents()))
-			err := stream.Send(eventList)
+			err := stream.Send(msg)
 			if err != nil {
-				log.Sugar.Debugf("error sending processed eventList: %v", err)
+				log.Sugar.Debugf("error sending processed msg: %v", err)
 				return types.UnknownErr
 			}
 		case <-timer.C:
 			log.Sugar.Debugf("sending empty message")
-			err := stream.Send(&eventpb.EventList{})
+			err := stream.Send(&eventpb.NewEvent{})
 			if err != nil {
 				log.Sugar.Debugf("error sending empty message: %v", err)
 				return types.UnknownErr
@@ -80,6 +82,10 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 	els := e.eventListenerManager.QueryByUser(ctx, user)
 	pbEvents := make([]*eventpb.Event, 0)
 	for _, el := range els {
+		if el.DataType == eventlistener.DataTypeWalletEvent_Voted { // can be ignored because they are background events
+			continue
+		}
+
 		events, err := e.eventListenerManager.QueryEvents(
 			ctx,
 			el,
@@ -130,34 +136,35 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 		return nil, types.UserNotFoundErr
 	}
 
-	cntRead, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, true)
+	cntRead, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, true, false)
 	if err != nil {
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
 	}
-	cntUnread, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, false)
+	cntUnread, err := e.eventListenerManager.QueryCountEventsByType(ctx, user, false, false)
 	if err != nil {
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
 	}
-	counters := make([]*eventpb.EventsCount, len(eventpb.EventType_name))
-	for i, name := range eventpb.EventType_name {
+	counters := make([]*eventpb.EventsCount, len(kafkaevent.EventType_name))
+	for i, name := range kafkaevent.EventType_name {
 		counters[i] = &eventpb.EventsCount{
-			EventType: eventpb.EventType(i),
+			EventType: kafkaevent.EventType(i),
 			Count:     0,
 		}
-		for _, cnt := range cntRead {
+		for _, cnt := range *cntRead {
 			if cnt.EventType.String() == name {
 				counters[i].Count = int32(cnt.Count)
 				break
 			}
 		}
-		for _, cnt := range cntUnread {
+		for _, cnt := range *cntUnread {
 			if cnt.EventType.String() == name {
 				counters[i].UnreadCount += int32(cnt.Count)
 				break
 			}
 		}
+		counters[i].Count += counters[i].UnreadCount
 	}
 
 	return connect.NewResponse(&eventpb.ListEventsCountResponse{
@@ -172,7 +179,13 @@ func (e EventService) MarkEventRead(ctx context.Context, request *connect.Reques
 		return nil, types.UserNotFoundErr
 	}
 
-	err := e.eventListenerManager.UpdateMarkEventRead(ctx, user, int(request.Msg.GetEventId()))
+	eventId, err := uuid.Parse(request.Msg.GetEventId())
+	if err != nil {
+		log.Sugar.Error(err)
+		return nil, types.UnknownErr
+	}
+
+	err = e.eventListenerManager.UpdateMarkEventRead(ctx, user, eventId)
 	if err != nil {
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
@@ -190,12 +203,19 @@ func (e EventService) GetWelcomeMessage(ctx context.Context, _ *connect.Request[
 
 	els := e.eventListenerManager.QueryByUser(ctx, user)
 	pbWallets := make([]*eventpb.WalletInfo, 0)
+	chains := make(map[int]*ent.Chain)
 	for _, el := range els {
-		pbWallets = append(pbWallets, &eventpb.WalletInfo{
-			Address:  el.WalletAddress,
-			Name:     el.Edges.Chain.PrettyName,
-			ImageUrl: el.Edges.Chain.Image,
-		})
+		if el.WalletAddress == "" {
+			continue
+		}
+		if _, ok := chains[el.Edges.Chain.ID]; !ok {
+			pbWallets = append(pbWallets, &eventpb.WalletInfo{
+				Address:  el.WalletAddress,
+				Name:     el.Edges.Chain.PrettyName,
+				ImageUrl: el.Edges.Chain.Image,
+			})
+			chains[el.Edges.Chain.ID] = el.Edges.Chain
+		}
 	}
 	return connect.NewResponse(&eventpb.WelcomeMessageResponse{Wallets: pbWallets}), nil
 }

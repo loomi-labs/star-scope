@@ -1,6 +1,6 @@
-use walkdir::{WalkDir};
-use std::path::PathBuf;
 use std::io;
+use std::path::PathBuf;
+use walkdir::WalkDir;
 
 fn get_files_in_dir(path: &str) -> Result<Vec<PathBuf>, io::Error> {
     let mut files = Vec::new();
