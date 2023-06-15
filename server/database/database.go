@@ -17,7 +17,6 @@ import (
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/pkg/errors"
 	"github.com/shifty11/go-logger/log"
-	"golang.org/x/exp/slices"
 	"os"
 	"path/filepath"
 	"strings"
@@ -269,12 +268,6 @@ func InitDb() {
 				UpdateOne(chain).
 				SetRestEndpoint(restEndpoint).
 				ExecX(ctx)
-		}
-		if slices.Contains([]string{"neutron", "neutron-pion", "cosmoshub", "osmosis", "juno"}, chain.Path) {
-			_, err := chainManager.UpdateSetEnabled(ctx, chain, true, nil)
-			if err != nil {
-				log.Sugar.Panicf("failed to enable chain: %v", err)
-			}
 		}
 	}
 	log.Sugar.Info("database successfully initialized")
