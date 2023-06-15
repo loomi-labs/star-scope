@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
@@ -89,6 +90,7 @@ func (m *ChainManager) Create(ctx context.Context, chainData *types.ChainData) (
 		SetBech32Prefix(chainData.Bech32Prefix).
 		SetPath(chainData.Path).
 		SetImage(chainData.Image).
+		SetRestEndpoint(fmt.Sprintf("https://rest.cosmos.directory/%v", chainData.Path)).
 		Save(ctx)
 }
 
