@@ -286,6 +286,9 @@ func (i *Indexer) StartIndexing(updateChannel chan SyncStatus, stopChannel chan 
 			if err != nil {
 				if status == 400 {
 					log.Sugar.Debugf("%-15sBlock does not yet exist: %v", i.chain.Name, syncStatus.Height)
+				} else if status == 429 {
+					log.Sugar.Warnf("%-15sRate limited: %v", i.chain.Name, err)
+					time.Sleep(1 * time.Second)
 				} else if status > 400 && status < 500 {
 					log.Sugar.Warnf("%-15sFailed to get block: %v %v", i.chain.Name, status, err)
 				} else if status >= 500 {
