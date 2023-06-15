@@ -291,7 +291,14 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
             AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
             AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
             AppRoutes::Settings => view!(cx, LayoutWrapper{Settings {}}),
-            AppRoutes::Login => Login(cx),
+            AppRoutes::Login => {
+                if *app_state.auth_state.get() == AuthState::LoggedIn {
+                    app_state.route.set(AppRoutes::Notifications);
+                    view!(cx, LayoutWrapper{Notifications {}})
+                } else {
+                    Login(cx)
+                }
+            },
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
         }
     } else {
