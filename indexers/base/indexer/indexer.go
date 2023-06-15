@@ -32,7 +32,7 @@ func NewIndexer(chain *indexerpb.IndexingChain, encodingConfig EncodingConfig, k
 	return Indexer{
 		chain:          chain,
 		encodingConfig: encodingConfig,
-		kafkaProducer:  kafka.NewKafkaProducer(kafka.IndexEventsTopic, kafkaBrokers...),
+		kafkaProducer:  kafka.NewKafkaProducer(kafka.WalletEvents, kafkaBrokers...),
 		txHandler:      txHandler,
 	}
 }

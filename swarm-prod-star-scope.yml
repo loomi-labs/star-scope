@@ -79,7 +79,6 @@ services:
     environment:
       - DEBUG=true
       - INDEXER_AUTH_TOKEN=jkasdfgiouwersdas
-      - KAFKA_TOPIC=index-events
       - KAFKA_BROKERS=kafka:29092
       - INDEXER_GRPC_ENDPOINT=http://grpc:50001
     secrets:

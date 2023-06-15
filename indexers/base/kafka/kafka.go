@@ -10,8 +10,7 @@ import (
 type Topic string
 
 var (
-	IndexEventsTopic Topic = "index-events"
-	QueryEventsTopic Topic = "query-events"
+	WalletEvents Topic = "wallet-events"
 )
 
 type KafkaProducer struct {
