@@ -14,10 +14,10 @@ import (
 type Topic string
 
 const (
-	DbEntityChanged     = Topic(types.DbEntityChanged)
-	WalletEventsTopic   = Topic(types.WalletEventsTopic)
-	ChainEventsTopic    = Topic(types.ChainEventsTopic)
-	ContractEventsTopic = Topic(types.ContractEventsTopic)
+	DbEntityChangedTopic = Topic(types.DbEntityChanged)
+	WalletEventsTopic    = Topic(types.WalletEventsTopic)
+	ChainEventsTopic     = Topic(types.ChainEventsTopic)
+	ContractEventsTopic  = Topic(types.ContractEventsTopic)
 )
 
 type DbChange string
@@ -97,7 +97,7 @@ func (k *kafkaInternal) closeWriter(w *kafka.Writer) {
 }
 
 func (k *kafkaInternal) ProduceDbChangeMsg(dbChange DbChange) {
-	w := k.writer(DbEntityChanged)
+	w := k.writer(DbEntityChangedTopic)
 	defer k.closeWriter(w)
 
 	err := w.WriteMessages(context.Background(), kafka.Message{Value: []byte(dbChange)})
@@ -107,7 +107,7 @@ func (k *kafkaInternal) ProduceDbChangeMsg(dbChange DbChange) {
 }
 
 func (k *kafkaInternal) ReadDbChanges(ctx context.Context, ch chan DbChange, subscribedChanges []DbChange) {
-	r := k.reader(DbEntityChanged)
+	r := k.reader(DbEntityChangedTopic)
 	defer k.closeReader(r)
 	err := r.SetOffsetAt(context.Background(), time.Now())
 	if err != nil {
