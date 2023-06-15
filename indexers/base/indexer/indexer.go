@@ -296,7 +296,7 @@ func (i *Indexer) StartIndexing(updateChannel chan SyncStatus, stopChannel chan 
 				} else {
 					log.Sugar.Errorf("%-15sFailed to get block: %v %v", i.chain.Name, status, err)
 				}
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 			} else {
 				syncStatus.recordBlock(blockResponse)
 				var startHandleBlock = time.Now()
