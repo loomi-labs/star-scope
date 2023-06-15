@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
@@ -21,14 +22,15 @@ import (
 // EventListenerQuery is the builder for querying EventListener entities.
 type EventListenerQuery struct {
 	config
-	ctx        *QueryContext
-	order      []eventlistener.OrderOption
-	inters     []Interceptor
-	predicates []predicate.EventListener
-	withUser   *UserQuery
-	withChain  *ChainQuery
-	withEvents *EventQuery
-	withFKs    bool
+	ctx              *QueryContext
+	order            []eventlistener.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.EventListener
+	withUsers        *UserQuery
+	withChain        *ChainQuery
+	withEvents       *EventQuery
+	withCommChannels *CommChannelQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,8 +67,8 @@ func (elq *EventListenerQuery) Order(o ...eventlistener.OrderOption) *EventListe
 	return elq
 }
 
-// QueryUser chains the current query on the "user" edge.
-func (elq *EventListenerQuery) QueryUser() *UserQuery {
+// QueryUsers chains the current query on the "users" edge.
+func (elq *EventListenerQuery) QueryUsers() *UserQuery {
 	query := (&UserClient{config: elq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := elq.prepareQuery(ctx); err != nil {
@@ -79,7 +81,7 @@ func (elq *EventListenerQuery) QueryUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, eventlistener.UserTable, eventlistener.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, eventlistener.UsersTable, eventlistener.UsersPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(elq.driver.Dialect(), step)
 		return fromU, nil
@@ -124,6 +126,28 @@ func (elq *EventListenerQuery) QueryEvents() *EventQuery {
 			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, selector),
 			sqlgraph.To(event.Table, event.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, eventlistener.EventsTable, eventlistener.EventsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(elq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCommChannels chains the current query on the "comm_channels" edge.
+func (elq *EventListenerQuery) QueryCommChannels() *CommChannelQuery {
+	query := (&CommChannelClient{config: elq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := elq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := elq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, selector),
+			sqlgraph.To(commchannel.Table, commchannel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, eventlistener.CommChannelsTable, eventlistener.CommChannelsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(elq.driver.Dialect(), step)
 		return fromU, nil
@@ -318,28 +342,29 @@ func (elq *EventListenerQuery) Clone() *EventListenerQuery {
 		return nil
 	}
 	return &EventListenerQuery{
-		config:     elq.config,
-		ctx:        elq.ctx.Clone(),
-		order:      append([]eventlistener.OrderOption{}, elq.order...),
-		inters:     append([]Interceptor{}, elq.inters...),
-		predicates: append([]predicate.EventListener{}, elq.predicates...),
-		withUser:   elq.withUser.Clone(),
-		withChain:  elq.withChain.Clone(),
-		withEvents: elq.withEvents.Clone(),
+		config:           elq.config,
+		ctx:              elq.ctx.Clone(),
+		order:            append([]eventlistener.OrderOption{}, elq.order...),
+		inters:           append([]Interceptor{}, elq.inters...),
+		predicates:       append([]predicate.EventListener{}, elq.predicates...),
+		withUsers:        elq.withUsers.Clone(),
+		withChain:        elq.withChain.Clone(),
+		withEvents:       elq.withEvents.Clone(),
+		withCommChannels: elq.withCommChannels.Clone(),
 		// clone intermediate query.
 		sql:  elq.sql.Clone(),
 		path: elq.path,
 	}
 }
 
-// WithUser tells the query-builder to eager-load the nodes that are connected to
-// the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (elq *EventListenerQuery) WithUser(opts ...func(*UserQuery)) *EventListenerQuery {
+// WithUsers tells the query-builder to eager-load the nodes that are connected to
+// the "users" edge. The optional arguments are used to configure the query builder of the edge.
+func (elq *EventListenerQuery) WithUsers(opts ...func(*UserQuery)) *EventListenerQuery {
 	query := (&UserClient{config: elq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	elq.withUser = query
+	elq.withUsers = query
 	return elq
 }
 
@@ -362,6 +387,17 @@ func (elq *EventListenerQuery) WithEvents(opts ...func(*EventQuery)) *EventListe
 		opt(query)
 	}
 	elq.withEvents = query
+	return elq
+}
+
+// WithCommChannels tells the query-builder to eager-load the nodes that are connected to
+// the "comm_channels" edge. The optional arguments are used to configure the query builder of the edge.
+func (elq *EventListenerQuery) WithCommChannels(opts ...func(*CommChannelQuery)) *EventListenerQuery {
+	query := (&CommChannelClient{config: elq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	elq.withCommChannels = query
 	return elq
 }
 
@@ -444,13 +480,14 @@ func (elq *EventListenerQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 		nodes       = []*EventListener{}
 		withFKs     = elq.withFKs
 		_spec       = elq.querySpec()
-		loadedTypes = [3]bool{
-			elq.withUser != nil,
+		loadedTypes = [4]bool{
+			elq.withUsers != nil,
 			elq.withChain != nil,
 			elq.withEvents != nil,
+			elq.withCommChannels != nil,
 		}
 	)
-	if elq.withUser != nil || elq.withChain != nil {
+	if elq.withChain != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -474,9 +511,10 @@ func (elq *EventListenerQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := elq.withUser; query != nil {
-		if err := elq.loadUser(ctx, query, nodes, nil,
-			func(n *EventListener, e *User) { n.Edges.User = e }); err != nil {
+	if query := elq.withUsers; query != nil {
+		if err := elq.loadUsers(ctx, query, nodes,
+			func(n *EventListener) { n.Edges.Users = []*User{} },
+			func(n *EventListener, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -493,37 +531,73 @@ func (elq *EventListenerQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 			return nil, err
 		}
 	}
+	if query := elq.withCommChannels; query != nil {
+		if err := elq.loadCommChannels(ctx, query, nodes,
+			func(n *EventListener) { n.Edges.CommChannels = []*CommChannel{} },
+			func(n *EventListener, e *CommChannel) { n.Edges.CommChannels = append(n.Edges.CommChannels, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
-func (elq *EventListenerQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*EventListener, init func(*EventListener), assign func(*EventListener, *User)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*EventListener)
-	for i := range nodes {
-		if nodes[i].user_event_listeners == nil {
-			continue
+func (elq *EventListenerQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*EventListener, init func(*EventListener), assign func(*EventListener, *User)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*EventListener)
+	nids := make(map[int]map[*EventListener]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
 		}
-		fk := *nodes[i].user_event_listeners
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(eventlistener.UsersTable)
+		s.Join(joinT).On(s.C(user.FieldID), joinT.C(eventlistener.UsersPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(eventlistener.UsersPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(eventlistener.UsersPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
 	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*EventListener]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_event_listeners" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "users" node returned %v`, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
+		for kn := range nodes {
+			assign(kn, n)
 		}
 	}
 	return nil
@@ -588,6 +662,67 @@ func (elq *EventListenerQuery) loadEvents(ctx context.Context, query *EventQuery
 			return fmt.Errorf(`unexpected referenced foreign-key "event_listener_events" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (elq *EventListenerQuery) loadCommChannels(ctx context.Context, query *CommChannelQuery, nodes []*EventListener, init func(*EventListener), assign func(*EventListener, *CommChannel)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*EventListener)
+	nids := make(map[int]map[*EventListener]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(eventlistener.CommChannelsTable)
+		s.Join(joinT).On(s.C(commchannel.FieldID), joinT.C(eventlistener.CommChannelsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(eventlistener.CommChannelsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(eventlistener.CommChannelsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*EventListener]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*CommChannel](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "comm_channels" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

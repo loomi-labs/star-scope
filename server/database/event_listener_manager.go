@@ -48,7 +48,7 @@ func (m *EventListenerManager) QueryByUser(ctx context.Context, entUser *ent.Use
 	return m.client.EventListener.
 		Query().
 		Where(
-			eventlistener.HasUserWith(
+			eventlistener.HasUsersWith(
 				user.IDEQ(entUser.ID)),
 		).
 		WithChain().
@@ -63,7 +63,7 @@ type EventsCount []struct {
 func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUser *ent.User, isRead bool, withBackgroundEvents bool) (*EventsCount, error) {
 	var eventsCount = EventsCount{}
 	var predicates = []predicate.Event{
-		event.HasEventListenerWith(eventlistener.HasUserWith(user.IDEQ(entUser.ID))),
+		event.HasEventListenerWith(eventlistener.HasUsersWith(user.IDEQ(entUser.ID))),
 		event.NotifyTimeLTE(time.Now()),
 		event.IsRead(isRead),
 	}
@@ -243,7 +243,7 @@ func (m *EventListenerManager) CreateBulk(
 			bulk = append(bulk, m.client.EventListener.
 				Create().
 				SetChain(entChain).
-				SetUser(entUser).
+				AddUsers(entUser).
 				SetWalletAddress(walletAddress).
 				SetDataType(dt))
 		}
@@ -251,14 +251,14 @@ func (m *EventListenerManager) CreateBulk(
 			bulk = append(bulk, m.client.EventListener.
 				Create().
 				SetChain(entChain).
-				SetUser(entUser).
+				AddUsers(entUser).
 				SetDataType(dt))
 		}
 		for _, dt := range getContractEvents(entChain) {
 			bulk = append(bulk, m.client.EventListener.
 				Create().
 				SetChain(entChain).
-				SetUser(entUser).
+				AddUsers(entUser).
 				SetDataType(dt))
 		}
 	}
@@ -339,7 +339,7 @@ func (m *EventListenerManager) UpdateMarkEventRead(ctx context.Context, u *ent.U
 		Update().
 		Where(
 			event.And(
-				event.HasEventListenerWith(eventlistener.HasUserWith(user.IDEQ(u.ID))),
+				event.HasEventListenerWith(eventlistener.HasUsersWith(user.IDEQ(u.ID))),
 				event.IDEQ(id),
 			),
 		).

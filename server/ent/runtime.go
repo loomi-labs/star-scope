@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -59,6 +60,21 @@ func init() {
 	chainDescIsEnabled := chainFields[11].Descriptor()
 	// chain.DefaultIsEnabled holds the default value on creation for the is_enabled field.
 	chain.DefaultIsEnabled = chainDescIsEnabled.Default.(bool)
+	commchannelMixin := schema.CommChannel{}.Mixin()
+	commchannelMixinFields0 := commchannelMixin[0].Fields()
+	_ = commchannelMixinFields0
+	commchannelFields := schema.CommChannel{}.Fields()
+	_ = commchannelFields
+	// commchannelDescCreateTime is the schema descriptor for create_time field.
+	commchannelDescCreateTime := commchannelMixinFields0[0].Descriptor()
+	// commchannel.DefaultCreateTime holds the default value on creation for the create_time field.
+	commchannel.DefaultCreateTime = commchannelDescCreateTime.Default.(func() time.Time)
+	// commchannelDescUpdateTime is the schema descriptor for update_time field.
+	commchannelDescUpdateTime := commchannelMixinFields0[1].Descriptor()
+	// commchannel.DefaultUpdateTime holds the default value on creation for the update_time field.
+	commchannel.DefaultUpdateTime = commchannelDescUpdateTime.Default.(func() time.Time)
+	// commchannel.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	commchannel.UpdateDefaultUpdateTime = commchannelDescUpdateTime.UpdateDefault.(func() time.Time)
 	contractproposalMixin := schema.ContractProposal{}.Mixin()
 	contractproposalMixinFields0 := contractproposalMixin[0].Fields()
 	_ = contractproposalMixinFields0

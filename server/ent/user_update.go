@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
@@ -70,6 +71,21 @@ func (uu *UserUpdate) AddEventListeners(e ...*EventListener) *UserUpdate {
 	return uu.AddEventListenerIDs(ids...)
 }
 
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (uu *UserUpdate) AddCommChannelIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddCommChannelIDs(ids...)
+	return uu
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (uu *UserUpdate) AddCommChannels(c ...*CommChannel) *UserUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.AddCommChannelIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -94,6 +110,27 @@ func (uu *UserUpdate) RemoveEventListeners(e ...*EventListener) *UserUpdate {
 		ids[i] = e[i].ID
 	}
 	return uu.RemoveEventListenerIDs(ids...)
+}
+
+// ClearCommChannels clears all "comm_channels" edges to the CommChannel entity.
+func (uu *UserUpdate) ClearCommChannels() *UserUpdate {
+	uu.mutation.ClearCommChannels()
+	return uu
+}
+
+// RemoveCommChannelIDs removes the "comm_channels" edge to CommChannel entities by IDs.
+func (uu *UserUpdate) RemoveCommChannelIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveCommChannelIDs(ids...)
+	return uu
+}
+
+// RemoveCommChannels removes "comm_channels" edges to CommChannel entities.
+func (uu *UserUpdate) RemoveCommChannels(c ...*CommChannel) *UserUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.RemoveCommChannelIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -165,10 +202,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -178,10 +215,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uu.mutation.RemovedEventListenersIDs(); len(nodes) > 0 && !uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -194,13 +231,58 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uu.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedCommChannelsIDs(); len(nodes) > 0 && !uu.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -269,6 +351,21 @@ func (uuo *UserUpdateOne) AddEventListeners(e ...*EventListener) *UserUpdateOne 
 	return uuo.AddEventListenerIDs(ids...)
 }
 
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (uuo *UserUpdateOne) AddCommChannelIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddCommChannelIDs(ids...)
+	return uuo
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (uuo *UserUpdateOne) AddCommChannels(c ...*CommChannel) *UserUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.AddCommChannelIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -293,6 +390,27 @@ func (uuo *UserUpdateOne) RemoveEventListeners(e ...*EventListener) *UserUpdateO
 		ids[i] = e[i].ID
 	}
 	return uuo.RemoveEventListenerIDs(ids...)
+}
+
+// ClearCommChannels clears all "comm_channels" edges to the CommChannel entity.
+func (uuo *UserUpdateOne) ClearCommChannels() *UserUpdateOne {
+	uuo.mutation.ClearCommChannels()
+	return uuo
+}
+
+// RemoveCommChannelIDs removes the "comm_channels" edge to CommChannel entities by IDs.
+func (uuo *UserUpdateOne) RemoveCommChannelIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveCommChannelIDs(ids...)
+	return uuo
+}
+
+// RemoveCommChannels removes "comm_channels" edges to CommChannel entities.
+func (uuo *UserUpdateOne) RemoveCommChannels(c ...*CommChannel) *UserUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.RemoveCommChannelIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -394,10 +512,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -407,10 +525,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if nodes := uuo.mutation.RemovedEventListenersIDs(); len(nodes) > 0 && !uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -423,13 +541,58 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if nodes := uuo.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedCommChannelsIDs(); len(nodes) > 0 && !uuo.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

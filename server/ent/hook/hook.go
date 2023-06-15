@@ -21,6 +21,18 @@ func (f ChainFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChainMutation", m)
 }
 
+// The CommChannelFunc type is an adapter to allow the use of ordinary
+// function as CommChannel mutator.
+type CommChannelFunc func(context.Context, *ent.CommChannelMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CommChannelFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CommChannelMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommChannelMutation", m)
+}
+
 // The ContractProposalFunc type is an adapter to allow the use of ordinary
 // function as ContractProposal mutator.
 type ContractProposalFunc func(context.Context, *ent.ContractProposalMutation) (ent.Value, error)

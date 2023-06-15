@@ -245,21 +245,21 @@ func DataTypeNotIn(vs ...DataType) predicate.EventListener {
 	return predicate.EventListener(sql.FieldNotIn(FieldDataType, vs...))
 }
 
-// HasUser applies the HasEdge predicate on the "user" edge.
-func HasUser() predicate.EventListener {
+// HasUsers applies the HasEdge predicate on the "users" edge.
+func HasUsers() predicate.EventListener {
 	return predicate.EventListener(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, UsersTable, UsersPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
-func HasUserWith(preds ...predicate.User) predicate.EventListener {
+// HasUsersWith applies the HasEdge predicate on the "users" edge with a given conditions (other predicates).
+func HasUsersWith(preds ...predicate.User) predicate.EventListener {
 	return predicate.EventListener(func(s *sql.Selector) {
-		step := newUserStep()
+		step := newUsersStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -306,6 +306,29 @@ func HasEvents() predicate.EventListener {
 func HasEventsWith(preds ...predicate.Event) predicate.EventListener {
 	return predicate.EventListener(func(s *sql.Selector) {
 		step := newEventsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCommChannels applies the HasEdge predicate on the "comm_channels" edge.
+func HasCommChannels() predicate.EventListener {
+	return predicate.EventListener(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, CommChannelsTable, CommChannelsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommChannelsWith applies the HasEdge predicate on the "comm_channels" edge with a given conditions (other predicates).
+func HasCommChannelsWith(preds ...predicate.CommChannel) predicate.EventListener {
+	return predicate.EventListener(func(s *sql.Selector) {
+		step := newCommChannelsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

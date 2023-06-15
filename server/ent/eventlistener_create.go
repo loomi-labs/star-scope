@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
@@ -72,23 +73,19 @@ func (elc *EventListenerCreate) SetDataType(et eventlistener.DataType) *EventLis
 	return elc
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (elc *EventListenerCreate) SetUserID(id int) *EventListenerCreate {
-	elc.mutation.SetUserID(id)
+// AddUserIDs adds the "users" edge to the User entity by IDs.
+func (elc *EventListenerCreate) AddUserIDs(ids ...int) *EventListenerCreate {
+	elc.mutation.AddUserIDs(ids...)
 	return elc
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (elc *EventListenerCreate) SetNillableUserID(id *int) *EventListenerCreate {
-	if id != nil {
-		elc = elc.SetUserID(*id)
+// AddUsers adds the "users" edges to the User entity.
+func (elc *EventListenerCreate) AddUsers(u ...*User) *EventListenerCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return elc
-}
-
-// SetUser sets the "user" edge to the User entity.
-func (elc *EventListenerCreate) SetUser(u *User) *EventListenerCreate {
-	return elc.SetUserID(u.ID)
+	return elc.AddUserIDs(ids...)
 }
 
 // SetChainID sets the "chain" edge to the Chain entity by ID.
@@ -123,6 +120,21 @@ func (elc *EventListenerCreate) AddEvents(e ...*Event) *EventListenerCreate {
 		ids[i] = e[i].ID
 	}
 	return elc.AddEventIDs(ids...)
+}
+
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (elc *EventListenerCreate) AddCommChannelIDs(ids ...int) *EventListenerCreate {
+	elc.mutation.AddCommChannelIDs(ids...)
+	return elc
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (elc *EventListenerCreate) AddCommChannels(c ...*CommChannel) *EventListenerCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return elc.AddCommChannelIDs(ids...)
 }
 
 // Mutation returns the EventListenerMutation object of the builder.
@@ -228,12 +240,12 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 		_spec.SetField(eventlistener.FieldDataType, field.TypeEnum, value)
 		_node.DataType = value
 	}
-	if nodes := elc.mutation.UserIDs(); len(nodes) > 0 {
+	if nodes := elc.mutation.UsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   eventlistener.UserTable,
-			Columns: []string{eventlistener.UserColumn},
+			Table:   eventlistener.UsersTable,
+			Columns: eventlistener.UsersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
@@ -242,7 +254,6 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_event_listeners = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := elc.mutation.ChainIDs(); len(nodes) > 0 {
@@ -271,6 +282,22 @@ func (elc *EventListenerCreate) createSpec() (*EventListener, *sqlgraph.CreateSp
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := elc.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   eventlistener.CommChannelsTable,
+			Columns: eventlistener.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

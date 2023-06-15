@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -31,6 +32,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Chain is the client for interacting with the Chain builders.
 	Chain *ChainClient
+	// CommChannel is the client for interacting with the CommChannel builders.
+	CommChannel *CommChannelClient
 	// ContractProposal is the client for interacting with the ContractProposal builders.
 	ContractProposal *ContractProposalClient
 	// Event is the client for interacting with the Event builders.
@@ -57,6 +60,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Chain = NewChainClient(c.config)
+	c.CommChannel = NewCommChannelClient(c.config)
 	c.ContractProposal = NewContractProposalClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.EventListener = NewEventListenerClient(c.config)
@@ -146,6 +150,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:              ctx,
 		config:           cfg,
 		Chain:            NewChainClient(cfg),
+		CommChannel:      NewCommChannelClient(cfg),
 		ContractProposal: NewContractProposalClient(cfg),
 		Event:            NewEventClient(cfg),
 		EventListener:    NewEventListenerClient(cfg),
@@ -172,6 +177,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:              ctx,
 		config:           cfg,
 		Chain:            NewChainClient(cfg),
+		CommChannel:      NewCommChannelClient(cfg),
 		ContractProposal: NewContractProposalClient(cfg),
 		Event:            NewEventClient(cfg),
 		EventListener:    NewEventListenerClient(cfg),
@@ -207,8 +213,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Chain, c.ContractProposal, c.Event, c.EventListener, c.Proposal, c.User,
-		c.Validator,
+		c.Chain, c.CommChannel, c.ContractProposal, c.Event, c.EventListener,
+		c.Proposal, c.User, c.Validator,
 	} {
 		n.Use(hooks...)
 	}
@@ -218,8 +224,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Chain, c.ContractProposal, c.Event, c.EventListener, c.Proposal, c.User,
-		c.Validator,
+		c.Chain, c.CommChannel, c.ContractProposal, c.Event, c.EventListener,
+		c.Proposal, c.User, c.Validator,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -230,6 +236,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ChainMutation:
 		return c.Chain.mutate(ctx, m)
+	case *CommChannelMutation:
+		return c.CommChannel.mutate(ctx, m)
 	case *ContractProposalMutation:
 		return c.ContractProposal.mutate(ctx, m)
 	case *EventMutation:
@@ -426,6 +434,156 @@ func (c *ChainClient) mutate(ctx context.Context, m *ChainMutation) (Value, erro
 		return (&ChainDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Chain mutation op: %q", m.Op())
+	}
+}
+
+// CommChannelClient is a client for the CommChannel schema.
+type CommChannelClient struct {
+	config
+}
+
+// NewCommChannelClient returns a client for the CommChannel from the given config.
+func NewCommChannelClient(c config) *CommChannelClient {
+	return &CommChannelClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `commchannel.Hooks(f(g(h())))`.
+func (c *CommChannelClient) Use(hooks ...Hook) {
+	c.hooks.CommChannel = append(c.hooks.CommChannel, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `commchannel.Intercept(f(g(h())))`.
+func (c *CommChannelClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CommChannel = append(c.inters.CommChannel, interceptors...)
+}
+
+// Create returns a builder for creating a CommChannel entity.
+func (c *CommChannelClient) Create() *CommChannelCreate {
+	mutation := newCommChannelMutation(c.config, OpCreate)
+	return &CommChannelCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CommChannel entities.
+func (c *CommChannelClient) CreateBulk(builders ...*CommChannelCreate) *CommChannelCreateBulk {
+	return &CommChannelCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CommChannel.
+func (c *CommChannelClient) Update() *CommChannelUpdate {
+	mutation := newCommChannelMutation(c.config, OpUpdate)
+	return &CommChannelUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CommChannelClient) UpdateOne(cc *CommChannel) *CommChannelUpdateOne {
+	mutation := newCommChannelMutation(c.config, OpUpdateOne, withCommChannel(cc))
+	return &CommChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CommChannelClient) UpdateOneID(id int) *CommChannelUpdateOne {
+	mutation := newCommChannelMutation(c.config, OpUpdateOne, withCommChannelID(id))
+	return &CommChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CommChannel.
+func (c *CommChannelClient) Delete() *CommChannelDelete {
+	mutation := newCommChannelMutation(c.config, OpDelete)
+	return &CommChannelDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CommChannelClient) DeleteOne(cc *CommChannel) *CommChannelDeleteOne {
+	return c.DeleteOneID(cc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CommChannelClient) DeleteOneID(id int) *CommChannelDeleteOne {
+	builder := c.Delete().Where(commchannel.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CommChannelDeleteOne{builder}
+}
+
+// Query returns a query builder for CommChannel.
+func (c *CommChannelClient) Query() *CommChannelQuery {
+	return &CommChannelQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCommChannel},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CommChannel entity by its id.
+func (c *CommChannelClient) Get(ctx context.Context, id int) (*CommChannel, error) {
+	return c.Query().Where(commchannel.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CommChannelClient) GetX(ctx context.Context, id int) *CommChannel {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEventListeners queries the event_listeners edge of a CommChannel.
+func (c *CommChannelClient) QueryEventListeners(cc *CommChannel) *EventListenerQuery {
+	query := (&EventListenerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commchannel.Table, commchannel.FieldID, id),
+			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, commchannel.EventListenersTable, commchannel.EventListenersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(cc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUsers queries the users edge of a CommChannel.
+func (c *CommChannelClient) QueryUsers(cc *CommChannel) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commchannel.Table, commchannel.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, commchannel.UsersTable, commchannel.UsersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(cc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CommChannelClient) Hooks() []Hook {
+	return c.hooks.CommChannel
+}
+
+// Interceptors returns the client interceptors.
+func (c *CommChannelClient) Interceptors() []Interceptor {
+	return c.inters.CommChannel
+}
+
+func (c *CommChannelClient) mutate(ctx context.Context, m *CommChannelMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CommChannelCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CommChannelUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CommChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CommChannelDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CommChannel mutation op: %q", m.Op())
 	}
 }
 
@@ -790,15 +948,15 @@ func (c *EventListenerClient) GetX(ctx context.Context, id int) *EventListener {
 	return obj
 }
 
-// QueryUser queries the user edge of a EventListener.
-func (c *EventListenerClient) QueryUser(el *EventListener) *UserQuery {
+// QueryUsers queries the users edge of a EventListener.
+func (c *EventListenerClient) QueryUsers(el *EventListener) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := el.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, eventlistener.UserTable, eventlistener.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, eventlistener.UsersTable, eventlistener.UsersPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(el.driver.Dialect(), step)
 		return fromV, nil
@@ -831,6 +989,22 @@ func (c *EventListenerClient) QueryEvents(el *EventListener) *EventQuery {
 			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, id),
 			sqlgraph.To(event.Table, event.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, eventlistener.EventsTable, eventlistener.EventsColumn),
+		)
+		fromV = sqlgraph.Neighbors(el.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommChannels queries the comm_channels edge of a EventListener.
+func (c *EventListenerClient) QueryCommChannels(el *EventListener) *CommChannelQuery {
+	query := (&CommChannelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := el.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(eventlistener.Table, eventlistener.FieldID, id),
+			sqlgraph.To(commchannel.Table, commchannel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, eventlistener.CommChannelsTable, eventlistener.CommChannelsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(el.driver.Dialect(), step)
 		return fromV, nil
@@ -1098,7 +1272,23 @@ func (c *UserClient) QueryEventListeners(u *User) *EventListenerQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(eventlistener.Table, eventlistener.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.EventListenersTable, user.EventListenersColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.EventListenersTable, user.EventListenersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommChannels queries the comm_channels edge of a User.
+func (c *UserClient) QueryCommChannels(u *User) *CommChannelQuery {
+	query := (&CommChannelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(commchannel.Table, commchannel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.CommChannelsTable, user.CommChannelsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -1268,11 +1458,11 @@ func (c *ValidatorClient) mutate(ctx context.Context, m *ValidatorMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Chain, ContractProposal, Event, EventListener, Proposal, User,
+		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, User,
 		Validator []ent.Hook
 	}
 	inters struct {
-		Chain, ContractProposal, Event, EventListener, Proposal, User,
+		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, User,
 		Validator []ent.Interceptor
 	}
 )

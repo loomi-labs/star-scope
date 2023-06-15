@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
@@ -88,6 +89,21 @@ func (uc *UserCreate) AddEventListeners(e ...*EventListener) *UserCreate {
 		ids[i] = e[i].ID
 	}
 	return uc.AddEventListenerIDs(ids...)
+}
+
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (uc *UserCreate) AddCommChannelIDs(ids ...int) *UserCreate {
+	uc.mutation.AddCommChannelIDs(ids...)
+	return uc
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (uc *UserCreate) AddCommChannels(c ...*CommChannel) *UserCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddCommChannelIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -214,13 +230,29 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if nodes := uc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

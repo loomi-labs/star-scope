@@ -37,9 +37,11 @@ type User struct {
 type UserEdges struct {
 	// EventListeners holds the value of the event_listeners edge.
 	EventListeners []*EventListener `json:"event_listeners,omitempty"`
+	// CommChannels holds the value of the comm_channels edge.
+	CommChannels []*CommChannel `json:"comm_channels,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // EventListenersOrErr returns the EventListeners value or an error if the edge
@@ -49,6 +51,15 @@ func (e UserEdges) EventListenersOrErr() ([]*EventListener, error) {
 		return e.EventListeners, nil
 	}
 	return nil, &NotLoadedError{edge: "event_listeners"}
+}
+
+// CommChannelsOrErr returns the CommChannels value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CommChannelsOrErr() ([]*CommChannel, error) {
+	if e.loadedTypes[1] {
+		return e.CommChannels, nil
+	}
+	return nil, &NotLoadedError{edge: "comm_channels"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -129,6 +140,11 @@ func (u *User) Value(name string) (ent.Value, error) {
 // QueryEventListeners queries the "event_listeners" edge of the User entity.
 func (u *User) QueryEventListeners() *EventListenerQuery {
 	return NewUserClient(u.config).QueryEventListeners(u)
+}
+
+// QueryCommChannels queries the "comm_channels" edge of the User entity.
+func (u *User) QueryCommChannels() *CommChannelQuery {
+	return NewUserClient(u.config).QueryCommChannels(u)
 }
 
 // Update returns a builder for updating this User.

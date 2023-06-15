@@ -32,9 +32,8 @@ func (EventListener) Fields() []ent.Field {
 // Edges of the EventListener.
 func (EventListener) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("user", User.Type).
-			Ref("event_listeners").
-			Unique(),
+		edge.From("users", User.Type).
+			Ref("event_listeners"),
 		edge.From("chain", Chain.Type).
 			Ref("event_listeners").
 			Unique(),
@@ -42,5 +41,7 @@ func (EventListener) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
+		edge.From("comm_channels", CommChannel.Type).
+			Ref("event_listeners"),
 	}
 }

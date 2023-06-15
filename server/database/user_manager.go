@@ -81,9 +81,41 @@ func (m *UserManager) CreateOrUpdate(ctx context.Context, userName string, walle
 }
 
 func (m *UserManager) Delete(ctx context.Context, u *ent.User) error {
-	err := m.client.User.
-		DeleteOne(u).
-		Exec(ctx)
+	err := withTx(m.client, ctx, func(tx *ent.Tx) error {
+		els, err := tx.User.QueryEventListeners(u).All(ctx)
+		if err != nil {
+			return err
+		}
+		for _, el := range els {
+			cntUsers, err := tx.EventListener.QueryUsers(el).Count(ctx)
+			if err != nil {
+				return err
+			}
+			if cntUsers <= 1 {
+				err = tx.EventListener.DeleteOne(el).Exec(ctx)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		ccs, err := tx.User.QueryCommChannels(u).All(ctx)
+		if err != nil {
+			return err
+		}
+		for _, cc := range ccs {
+			cntUsers, err := tx.CommChannel.QueryUsers(cc).Count(ctx)
+			if err != nil {
+				return err
+			}
+			if cntUsers <= 1 {
+				err = tx.CommChannel.DeleteOne(cc).Exec(ctx)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return tx.User.DeleteOne(u).Exec(ctx)
+	})
 	if err != nil {
 		return err
 	}
