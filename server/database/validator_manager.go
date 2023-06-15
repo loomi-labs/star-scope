@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const timeUntilConsideredInactive = time.Hour * 24 * 7
+const timeUntilConsideredInactive = time.Hour * 24
 
 type ValidatorManager struct {
 	client *ent.Client
@@ -49,7 +49,7 @@ func (m *ValidatorManager) Create(
 	}
 	var firstInactiveTime *time.Time
 	if !isActive {
-		var now = time.Now()
+		var now = time.Now().Add(-timeUntilConsideredInactive)
 		firstInactiveTime = &now
 	}
 	return m.client.Validator.
