@@ -134,7 +134,7 @@ pub fn Footer<G: Html>(cx: Scope) -> View<G> {
                     a(class="p-4 hover:text-primary", href="https://discord.com/users/228978159440232453", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[mingcute--discord-fill]") {}
                     }
-                    a(class="p-4 hover:text-primary", href="https://twitter.com/Rapha90", target="_blank") {
+                    a(class="p-4 hover:text-primary", href="https://twitter.com/StarScopeCosmos", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[mdi--twitter]") {}
                     }
                 }
