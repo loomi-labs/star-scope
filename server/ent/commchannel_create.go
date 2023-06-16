@@ -68,15 +68,39 @@ func (ccc *CommChannelCreate) SetTelegramChatID(i int64) *CommChannelCreate {
 	return ccc
 }
 
+// SetNillableTelegramChatID sets the "telegram_chat_id" field if the given value is not nil.
+func (ccc *CommChannelCreate) SetNillableTelegramChatID(i *int64) *CommChannelCreate {
+	if i != nil {
+		ccc.SetTelegramChatID(*i)
+	}
+	return ccc
+}
+
 // SetDiscordChannelID sets the "discord_channel_id" field.
 func (ccc *CommChannelCreate) SetDiscordChannelID(i int64) *CommChannelCreate {
 	ccc.mutation.SetDiscordChannelID(i)
 	return ccc
 }
 
+// SetNillableDiscordChannelID sets the "discord_channel_id" field if the given value is not nil.
+func (ccc *CommChannelCreate) SetNillableDiscordChannelID(i *int64) *CommChannelCreate {
+	if i != nil {
+		ccc.SetDiscordChannelID(*i)
+	}
+	return ccc
+}
+
 // SetIsGroup sets the "is_group" field.
 func (ccc *CommChannelCreate) SetIsGroup(b bool) *CommChannelCreate {
 	ccc.mutation.SetIsGroup(b)
+	return ccc
+}
+
+// SetNillableIsGroup sets the "is_group" field if the given value is not nil.
+func (ccc *CommChannelCreate) SetNillableIsGroup(b *bool) *CommChannelCreate {
+	if b != nil {
+		ccc.SetIsGroup(*b)
+	}
 	return ccc
 }
 
@@ -153,6 +177,10 @@ func (ccc *CommChannelCreate) defaults() {
 		v := commchannel.DefaultUpdateTime()
 		ccc.mutation.SetUpdateTime(v)
 	}
+	if _, ok := ccc.mutation.IsGroup(); !ok {
+		v := commchannel.DefaultIsGroup
+		ccc.mutation.SetIsGroup(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -173,12 +201,6 @@ func (ccc *CommChannelCreate) check() error {
 		if err := commchannel.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CommChannel.type": %w`, err)}
 		}
-	}
-	if _, ok := ccc.mutation.TelegramChatID(); !ok {
-		return &ValidationError{Name: "telegram_chat_id", err: errors.New(`ent: missing required field "CommChannel.telegram_chat_id"`)}
-	}
-	if _, ok := ccc.mutation.DiscordChannelID(); !ok {
-		return &ValidationError{Name: "discord_channel_id", err: errors.New(`ent: missing required field "CommChannel.discord_channel_id"`)}
 	}
 	if _, ok := ccc.mutation.IsGroup(); !ok {
 		return &ValidationError{Name: "is_group", err: errors.New(`ent: missing required field "CommChannel.is_group"`)}

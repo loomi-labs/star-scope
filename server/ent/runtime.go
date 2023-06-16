@@ -75,6 +75,10 @@ func init() {
 	commchannel.DefaultUpdateTime = commchannelDescUpdateTime.Default.(func() time.Time)
 	// commchannel.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	commchannel.UpdateDefaultUpdateTime = commchannelDescUpdateTime.UpdateDefault.(func() time.Time)
+	// commchannelDescIsGroup is the schema descriptor for is_group field.
+	commchannelDescIsGroup := commchannelFields[4].Descriptor()
+	// commchannel.DefaultIsGroup holds the default value on creation for the is_group field.
+	commchannel.DefaultIsGroup = commchannelDescIsGroup.Default.(bool)
 	contractproposalMixin := schema.ContractProposal{}.Mixin()
 	contractproposalMixinFields0 := contractproposalMixin[0].Fields()
 	_ = contractproposalMixinFields0
@@ -166,10 +170,6 @@ func init() {
 	user.DefaultUpdateTime = userDescUpdateTime.Default.(func() time.Time)
 	// user.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	user.UpdateDefaultUpdateTime = userDescUpdateTime.UpdateDefault.(func() time.Time)
-	// userDescWalletAddress is the schema descriptor for wallet_address field.
-	userDescWalletAddress := userFields[1].Descriptor()
-	// user.WalletAddressValidator is a validator for the "wallet_address" field. It is called by the builders before save.
-	user.WalletAddressValidator = userDescWalletAddress.Validators[0].(func(string) error)
 	validatorMixin := schema.Validator{}.Mixin()
 	validatorMixinFields0 := validatorMixin[0].Fields()
 	_ = validatorMixinFields0

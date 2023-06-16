@@ -56,12 +56,6 @@ func (uc *UserCreate) SetName(s string) *UserCreate {
 	return uc
 }
 
-// SetWalletAddress sets the "wallet_address" field.
-func (uc *UserCreate) SetWalletAddress(s string) *UserCreate {
-	uc.mutation.SetWalletAddress(s)
-	return uc
-}
-
 // SetRole sets the "role" field.
 func (uc *UserCreate) SetRole(u user.Role) *UserCreate {
 	uc.mutation.SetRole(u)
@@ -72,6 +66,48 @@ func (uc *UserCreate) SetRole(u user.Role) *UserCreate {
 func (uc *UserCreate) SetNillableRole(u *user.Role) *UserCreate {
 	if u != nil {
 		uc.SetRole(*u)
+	}
+	return uc
+}
+
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (uc *UserCreate) SetTelegramUserID(i int64) *UserCreate {
+	uc.mutation.SetTelegramUserID(i)
+	return uc
+}
+
+// SetNillableTelegramUserID sets the "telegram_user_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableTelegramUserID(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetTelegramUserID(*i)
+	}
+	return uc
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (uc *UserCreate) SetDiscordUserID(i int64) *UserCreate {
+	uc.mutation.SetDiscordUserID(i)
+	return uc
+}
+
+// SetNillableDiscordUserID sets the "discord_user_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDiscordUserID(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetDiscordUserID(*i)
+	}
+	return uc
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (uc *UserCreate) SetWalletAddress(s string) *UserCreate {
+	uc.mutation.SetWalletAddress(s)
+	return uc
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (uc *UserCreate) SetNillableWalletAddress(s *string) *UserCreate {
+	if s != nil {
+		uc.SetWalletAddress(*s)
 	}
 	return uc
 }
@@ -166,14 +202,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
 	}
-	if _, ok := uc.mutation.WalletAddress(); !ok {
-		return &ValidationError{Name: "wallet_address", err: errors.New(`ent: missing required field "User.wallet_address"`)}
-	}
-	if v, ok := uc.mutation.WalletAddress(); ok {
-		if err := user.WalletAddressValidator(v); err != nil {
-			return &ValidationError{Name: "wallet_address", err: fmt.Errorf(`ent: validator failed for field "User.wallet_address": %w`, err)}
-		}
-	}
 	if _, ok := uc.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
 	}
@@ -220,13 +248,21 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := uc.mutation.WalletAddress(); ok {
-		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
-		_node.WalletAddress = value
-	}
 	if value, ok := uc.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
+	}
+	if value, ok := uc.mutation.TelegramUserID(); ok {
+		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
+		_node.TelegramUserID = value
+	}
+	if value, ok := uc.mutation.DiscordUserID(); ok {
+		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
+		_node.DiscordUserID = value
+	}
+	if value, ok := uc.mutation.WalletAddress(); ok {
+		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
+		_node.WalletAddress = value
 	}
 	if nodes := uc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

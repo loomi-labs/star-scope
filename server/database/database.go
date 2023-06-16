@@ -143,8 +143,10 @@ func withTxResult[T any](client *ent.Client, ctx context.Context, fn func(tx *en
 	}
 	defer func() {
 		if v := recover(); v != nil {
-			//goland:noinspection GoUnhandledErrorResult
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				log.Sugar.Error(err)
+			}
 			panic(v)
 		}
 	}()

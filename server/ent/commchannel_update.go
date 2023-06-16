@@ -42,12 +42,6 @@ func (ccu *CommChannelUpdate) SetName(s string) *CommChannelUpdate {
 	return ccu
 }
 
-// SetType sets the "type" field.
-func (ccu *CommChannelUpdate) SetType(c commchannel.Type) *CommChannelUpdate {
-	ccu.mutation.SetType(c)
-	return ccu
-}
-
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (ccu *CommChannelUpdate) AddEventListenerIDs(ids ...int) *CommChannelUpdate {
 	ccu.mutation.AddEventListenerIDs(ids...)
@@ -161,20 +155,7 @@ func (ccu *CommChannelUpdate) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (ccu *CommChannelUpdate) check() error {
-	if v, ok := ccu.mutation.GetType(); ok {
-		if err := commchannel.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CommChannel.type": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (ccu *CommChannelUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := ccu.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(commchannel.Table, commchannel.Columns, sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt))
 	if ps := ccu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -189,8 +170,11 @@ func (ccu *CommChannelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ccu.mutation.Name(); ok {
 		_spec.SetField(commchannel.FieldName, field.TypeString, value)
 	}
-	if value, ok := ccu.mutation.GetType(); ok {
-		_spec.SetField(commchannel.FieldType, field.TypeEnum, value)
+	if ccu.mutation.TelegramChatIDCleared() {
+		_spec.ClearField(commchannel.FieldTelegramChatID, field.TypeInt64)
+	}
+	if ccu.mutation.DiscordChannelIDCleared() {
+		_spec.ClearField(commchannel.FieldDiscordChannelID, field.TypeInt64)
 	}
 	if ccu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -311,12 +295,6 @@ func (ccuo *CommChannelUpdateOne) SetUpdateTime(t time.Time) *CommChannelUpdateO
 // SetName sets the "name" field.
 func (ccuo *CommChannelUpdateOne) SetName(s string) *CommChannelUpdateOne {
 	ccuo.mutation.SetName(s)
-	return ccuo
-}
-
-// SetType sets the "type" field.
-func (ccuo *CommChannelUpdateOne) SetType(c commchannel.Type) *CommChannelUpdateOne {
-	ccuo.mutation.SetType(c)
 	return ccuo
 }
 
@@ -446,20 +424,7 @@ func (ccuo *CommChannelUpdateOne) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (ccuo *CommChannelUpdateOne) check() error {
-	if v, ok := ccuo.mutation.GetType(); ok {
-		if err := commchannel.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CommChannel.type": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (ccuo *CommChannelUpdateOne) sqlSave(ctx context.Context) (_node *CommChannel, err error) {
-	if err := ccuo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(commchannel.Table, commchannel.Columns, sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt))
 	id, ok := ccuo.mutation.ID()
 	if !ok {
@@ -491,8 +456,11 @@ func (ccuo *CommChannelUpdateOne) sqlSave(ctx context.Context) (_node *CommChann
 	if value, ok := ccuo.mutation.Name(); ok {
 		_spec.SetField(commchannel.FieldName, field.TypeString, value)
 	}
-	if value, ok := ccuo.mutation.GetType(); ok {
-		_spec.SetField(commchannel.FieldType, field.TypeEnum, value)
+	if ccuo.mutation.TelegramChatIDCleared() {
+		_spec.ClearField(commchannel.FieldTelegramChatID, field.TypeInt64)
+	}
+	if ccuo.mutation.DiscordChannelIDCleared() {
+		_spec.ClearField(commchannel.FieldDiscordChannelID, field.TypeInt64)
 	}
 	if ccuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

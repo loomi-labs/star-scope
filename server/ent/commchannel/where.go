@@ -290,6 +290,16 @@ func TelegramChatIDLTE(v int64) predicate.CommChannel {
 	return predicate.CommChannel(sql.FieldLTE(FieldTelegramChatID, v))
 }
 
+// TelegramChatIDIsNil applies the IsNil predicate on the "telegram_chat_id" field.
+func TelegramChatIDIsNil() predicate.CommChannel {
+	return predicate.CommChannel(sql.FieldIsNull(FieldTelegramChatID))
+}
+
+// TelegramChatIDNotNil applies the NotNil predicate on the "telegram_chat_id" field.
+func TelegramChatIDNotNil() predicate.CommChannel {
+	return predicate.CommChannel(sql.FieldNotNull(FieldTelegramChatID))
+}
+
 // DiscordChannelIDEQ applies the EQ predicate on the "discord_channel_id" field.
 func DiscordChannelIDEQ(v int64) predicate.CommChannel {
 	return predicate.CommChannel(sql.FieldEQ(FieldDiscordChannelID, v))
@@ -328,6 +338,16 @@ func DiscordChannelIDLT(v int64) predicate.CommChannel {
 // DiscordChannelIDLTE applies the LTE predicate on the "discord_channel_id" field.
 func DiscordChannelIDLTE(v int64) predicate.CommChannel {
 	return predicate.CommChannel(sql.FieldLTE(FieldDiscordChannelID, v))
+}
+
+// DiscordChannelIDIsNil applies the IsNil predicate on the "discord_channel_id" field.
+func DiscordChannelIDIsNil() predicate.CommChannel {
+	return predicate.CommChannel(sql.FieldIsNull(FieldDiscordChannelID))
+}
+
+// DiscordChannelIDNotNil applies the NotNil predicate on the "discord_channel_id" field.
+func DiscordChannelIDNotNil() predicate.CommChannel {
+	return predicate.CommChannel(sql.FieldNotNull(FieldDiscordChannelID))
 }
 
 // IsGroupEQ applies the EQ predicate on the "is_group" field.

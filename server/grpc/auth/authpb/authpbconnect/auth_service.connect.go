@@ -35,6 +35,12 @@ const (
 const (
 	// AuthServiceKeplrLoginProcedure is the fully-qualified name of the AuthService's KeplrLogin RPC.
 	AuthServiceKeplrLoginProcedure = "/starscope.grpc.AuthService/KeplrLogin"
+	// AuthServiceTelegramLoginProcedure is the fully-qualified name of the AuthService's TelegramLogin
+	// RPC.
+	AuthServiceTelegramLoginProcedure = "/starscope.grpc.AuthService/TelegramLogin"
+	// AuthServiceDiscordLoginProcedure is the fully-qualified name of the AuthService's DiscordLogin
+	// RPC.
+	AuthServiceDiscordLoginProcedure = "/starscope.grpc.AuthService/DiscordLogin"
 	// AuthServiceRefreshAccessTokenProcedure is the fully-qualified name of the AuthService's
 	// RefreshAccessToken RPC.
 	AuthServiceRefreshAccessTokenProcedure = "/starscope.grpc.AuthService/RefreshAccessToken"
@@ -43,6 +49,8 @@ const (
 // AuthServiceClient is a client for the starscope.grpc.AuthService service.
 type AuthServiceClient interface {
 	KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
+	TelegramLogin(context.Context, *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
+	DiscordLogin(context.Context, *connect_go.Request[authpb.DiscordLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
 	RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error)
 }
 
@@ -61,6 +69,16 @@ func NewAuthServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+AuthServiceKeplrLoginProcedure,
 			opts...,
 		),
+		telegramLogin: connect_go.NewClient[authpb.TelegramLoginRequest, authpb.LoginResponse](
+			httpClient,
+			baseURL+AuthServiceTelegramLoginProcedure,
+			opts...,
+		),
+		discordLogin: connect_go.NewClient[authpb.DiscordLoginRequest, authpb.LoginResponse](
+			httpClient,
+			baseURL+AuthServiceDiscordLoginProcedure,
+			opts...,
+		),
 		refreshAccessToken: connect_go.NewClient[authpb.RefreshAccessTokenRequest, authpb.RefreshAccessTokenResponse](
 			httpClient,
 			baseURL+AuthServiceRefreshAccessTokenProcedure,
@@ -72,12 +90,24 @@ func NewAuthServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 // authServiceClient implements AuthServiceClient.
 type authServiceClient struct {
 	keplrLogin         *connect_go.Client[authpb.KeplrLoginRequest, authpb.LoginResponse]
+	telegramLogin      *connect_go.Client[authpb.TelegramLoginRequest, authpb.LoginResponse]
+	discordLogin       *connect_go.Client[authpb.DiscordLoginRequest, authpb.LoginResponse]
 	refreshAccessToken *connect_go.Client[authpb.RefreshAccessTokenRequest, authpb.RefreshAccessTokenResponse]
 }
 
 // KeplrLogin calls starscope.grpc.AuthService.KeplrLogin.
 func (c *authServiceClient) KeplrLogin(ctx context.Context, req *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	return c.keplrLogin.CallUnary(ctx, req)
+}
+
+// TelegramLogin calls starscope.grpc.AuthService.TelegramLogin.
+func (c *authServiceClient) TelegramLogin(ctx context.Context, req *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
+	return c.telegramLogin.CallUnary(ctx, req)
+}
+
+// DiscordLogin calls starscope.grpc.AuthService.DiscordLogin.
+func (c *authServiceClient) DiscordLogin(ctx context.Context, req *connect_go.Request[authpb.DiscordLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
+	return c.discordLogin.CallUnary(ctx, req)
 }
 
 // RefreshAccessToken calls starscope.grpc.AuthService.RefreshAccessToken.
@@ -88,6 +118,8 @@ func (c *authServiceClient) RefreshAccessToken(ctx context.Context, req *connect
 // AuthServiceHandler is an implementation of the starscope.grpc.AuthService service.
 type AuthServiceHandler interface {
 	KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
+	TelegramLogin(context.Context, *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
+	DiscordLogin(context.Context, *connect_go.Request[authpb.DiscordLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
 	RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error)
 }
 
@@ -103,6 +135,16 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect_go.HandlerOpt
 		svc.KeplrLogin,
 		opts...,
 	))
+	mux.Handle(AuthServiceTelegramLoginProcedure, connect_go.NewUnaryHandler(
+		AuthServiceTelegramLoginProcedure,
+		svc.TelegramLogin,
+		opts...,
+	))
+	mux.Handle(AuthServiceDiscordLoginProcedure, connect_go.NewUnaryHandler(
+		AuthServiceDiscordLoginProcedure,
+		svc.DiscordLogin,
+		opts...,
+	))
 	mux.Handle(AuthServiceRefreshAccessTokenProcedure, connect_go.NewUnaryHandler(
 		AuthServiceRefreshAccessTokenProcedure,
 		svc.RefreshAccessToken,
@@ -116,6 +158,14 @@ type UnimplementedAuthServiceHandler struct{}
 
 func (UnimplementedAuthServiceHandler) KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.KeplrLogin is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) TelegramLogin(context.Context, *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.TelegramLogin is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) DiscordLogin(context.Context, *connect_go.Request[authpb.DiscordLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.DiscordLogin is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {

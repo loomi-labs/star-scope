@@ -6,6 +6,7 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
@@ -15,6 +16,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/user"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/kafka_internal"
+	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
 	"time"
@@ -190,6 +192,28 @@ func (m *EventListenerManager) QueryForVoteReminderAddresses(ctx context.Context
 	return voteReminders, nil
 }
 
+func (m *EventListenerManager) QuerySubscriptionsCountForTelegramChat(ctx context.Context, chatId int64) int {
+	cnt, err := m.client.EventListener.
+		Query().
+		Where(eventlistener.HasCommChannelsWith(commchannel.TelegramChatIDEQ(chatId))).
+		Count(ctx)
+	if err != nil {
+		log.Sugar.Errorf("Could not count subscriptions for telegram chat: %v", err)
+	}
+	return cnt
+}
+
+func (m *EventListenerManager) QuerySubscriptionsCountForDiscordChannel(ctx context.Context, channelId int64) int {
+	cnt, err := m.client.EventListener.
+		Query().
+		Where(eventlistener.HasCommChannelsWith(commchannel.DiscordChannelIDEQ(channelId))).
+		Count(ctx)
+	if err != nil {
+		log.Sugar.Errorf("Could not count subscriptions for discord channel: %v", err)
+	}
+	return cnt
+}
+
 func getWalletEvents(entChain *ent.Chain) []eventlistener.DataType {
 	dt := []eventlistener.DataType{
 		eventlistener.DataTypeWalletEvent_CoinReceived,
@@ -229,6 +253,7 @@ func getContractEvents(entChain *ent.Chain) []eventlistener.DataType {
 
 func (m *EventListenerManager) CreateBulk(
 	ctx context.Context,
+	tx *ent.Tx,
 	entUser *ent.User,
 	entChains []*ent.Chain,
 	mainAddress string,
@@ -240,7 +265,7 @@ func (m *EventListenerManager) CreateBulk(
 			return nil, err
 		}
 		for _, dt := range getWalletEvents(entChain) {
-			bulk = append(bulk, m.client.EventListener.
+			bulk = append(bulk, tx.EventListener.
 				Create().
 				SetChain(entChain).
 				AddUsers(entUser).
@@ -248,21 +273,21 @@ func (m *EventListenerManager) CreateBulk(
 				SetDataType(dt))
 		}
 		for _, dt := range getChainEvents(entChain) {
-			bulk = append(bulk, m.client.EventListener.
+			bulk = append(bulk, tx.EventListener.
 				Create().
 				SetChain(entChain).
 				AddUsers(entUser).
 				SetDataType(dt))
 		}
 		for _, dt := range getContractEvents(entChain) {
-			bulk = append(bulk, m.client.EventListener.
+			bulk = append(bulk, tx.EventListener.
 				Create().
 				SetChain(entChain).
 				AddUsers(entUser).
 				SetDataType(dt))
 		}
 	}
-	el, err := m.client.EventListener.
+	el, err := tx.EventListener.
 		CreateBulk(bulk...).
 		Save(ctx)
 	if err != nil {

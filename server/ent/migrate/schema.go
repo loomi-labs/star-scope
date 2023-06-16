@@ -46,15 +46,27 @@ var (
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"webpush", "telegram", "discord"}},
-		{Name: "telegram_chat_id", Type: field.TypeInt64, Unique: true},
-		{Name: "discord_channel_id", Type: field.TypeInt64, Unique: true},
-		{Name: "is_group", Type: field.TypeBool},
+		{Name: "telegram_chat_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "discord_channel_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "is_group", Type: field.TypeBool, Default: false},
 	}
 	// CommChannelsTable holds the schema information for the "comm_channels" table.
 	CommChannelsTable = &schema.Table{
 		Name:       "comm_channels",
 		Columns:    CommChannelsColumns,
 		PrimaryKey: []*schema.Column{CommChannelsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "commchannel_telegram_chat_id",
+				Unique:  false,
+				Columns: []*schema.Column{CommChannelsColumns[5]},
+			},
+			{
+				Name:    "commchannel_discord_channel_id",
+				Unique:  false,
+				Columns: []*schema.Column{CommChannelsColumns[6]},
+			},
+		},
 	}
 	// ContractProposalsColumns holds the columns for the "contract_proposals" table.
 	ContractProposalsColumns = []*schema.Column{
@@ -89,7 +101,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"DEX", "GOVERNANCE", "FUNDING", "STAKING"}},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"STAKING", "DEX", "GOVERNANCE", "FUNDING"}},
 		{Name: "chain_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "contract_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "wallet_event", Type: field.TypeBytes, Nullable: true},
@@ -146,7 +158,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -169,14 +181,33 @@ var (
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
-		{Name: "wallet_address", Type: field.TypeString},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"user", "admin"}, Default: "user"},
+		{Name: "telegram_user_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "discord_user_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "wallet_address", Type: field.TypeString, Unique: true, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_telegram_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[5]},
+			},
+			{
+				Name:    "user_discord_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[6]},
+			},
+			{
+				Name:    "user_wallet_address",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[7]},
+			},
+		},
 	}
 	// ValidatorsColumns holds the columns for the "validators" table.
 	ValidatorsColumns = []*schema.Column{

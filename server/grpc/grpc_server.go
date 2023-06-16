@@ -16,8 +16,10 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/user/userpb/userpbconnect"
 	"github.com/loomi-labs/star-scope/kafka"
 	"github.com/loomi-labs/star-scope/kafka_internal"
+	"github.com/ravener/discord-oauth2"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/net/http2"
+	"golang.org/x/oauth2"
 	"strings"
 
 	"golang.org/x/net/http2/h2c"
@@ -55,6 +57,17 @@ func (s GRPCServer) Run() {
 	authInterceptor := auth.NewAuthInterceptor(jwtManager, s.dbManagers.UserManager, auth.AccessibleRoles(), s.config.IndexerAuthToken)
 	kafkaBrokers := strings.Split(common.GetEnvX("KAFKA_BROKERS"), ",")
 
+	telegramToken := common.GetEnvX("TELEGRAM_BOT_TOKEN")
+	discordClientId := common.GetEnvX("DISCORD_CLIENT_ID")
+	discordClientSecret := common.GetEnvX("DISCORD_CLIENT_SECRET")
+	var discordConfig = &oauth2.Config{
+		RedirectURL:  "webAppUrl",
+		ClientID:     discordClientId,
+		ClientSecret: discordClientSecret,
+		Scopes:       []string{discord.ScopeIdentify},
+		Endpoint:     discord.Endpoint,
+	}
+
 	interceptors := connect.WithInterceptors(authInterceptor)
 
 	reflector := grpcreflect.NewStaticReflector(auth.ServiceNames()...)
@@ -64,7 +77,7 @@ func (s GRPCServer) Run() {
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	mux.Handle(authpbconnect.NewAuthServiceHandler(
-		auth.NewAuthServiceHandler(s.dbManagers, jwtManager, kafka_internal.NewKafkaInternal(kafkaBrokers)),
+		auth.NewAuthServiceHandler(s.dbManagers, jwtManager, kafka_internal.NewKafkaInternal(kafkaBrokers), telegramToken, discordConfig),
 		interceptors,
 	))
 	mux.Handle(indexerpbconnect.NewIndexerServiceHandler(

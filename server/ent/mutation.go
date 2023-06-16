@@ -1768,10 +1768,24 @@ func (m *CommChannelMutation) AddedTelegramChatID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearTelegramChatID clears the value of the "telegram_chat_id" field.
+func (m *CommChannelMutation) ClearTelegramChatID() {
+	m.telegram_chat_id = nil
+	m.addtelegram_chat_id = nil
+	m.clearedFields[commchannel.FieldTelegramChatID] = struct{}{}
+}
+
+// TelegramChatIDCleared returns if the "telegram_chat_id" field was cleared in this mutation.
+func (m *CommChannelMutation) TelegramChatIDCleared() bool {
+	_, ok := m.clearedFields[commchannel.FieldTelegramChatID]
+	return ok
+}
+
 // ResetTelegramChatID resets all changes to the "telegram_chat_id" field.
 func (m *CommChannelMutation) ResetTelegramChatID() {
 	m.telegram_chat_id = nil
 	m.addtelegram_chat_id = nil
+	delete(m.clearedFields, commchannel.FieldTelegramChatID)
 }
 
 // SetDiscordChannelID sets the "discord_channel_id" field.
@@ -1824,10 +1838,24 @@ func (m *CommChannelMutation) AddedDiscordChannelID() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearDiscordChannelID clears the value of the "discord_channel_id" field.
+func (m *CommChannelMutation) ClearDiscordChannelID() {
+	m.discord_channel_id = nil
+	m.adddiscord_channel_id = nil
+	m.clearedFields[commchannel.FieldDiscordChannelID] = struct{}{}
+}
+
+// DiscordChannelIDCleared returns if the "discord_channel_id" field was cleared in this mutation.
+func (m *CommChannelMutation) DiscordChannelIDCleared() bool {
+	_, ok := m.clearedFields[commchannel.FieldDiscordChannelID]
+	return ok
+}
+
 // ResetDiscordChannelID resets all changes to the "discord_channel_id" field.
 func (m *CommChannelMutation) ResetDiscordChannelID() {
 	m.discord_channel_id = nil
 	m.adddiscord_channel_id = nil
+	delete(m.clearedFields, commchannel.FieldDiscordChannelID)
 }
 
 // SetIsGroup sets the "is_group" field.
@@ -2189,7 +2217,14 @@ func (m *CommChannelMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *CommChannelMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(commchannel.FieldTelegramChatID) {
+		fields = append(fields, commchannel.FieldTelegramChatID)
+	}
+	if m.FieldCleared(commchannel.FieldDiscordChannelID) {
+		fields = append(fields, commchannel.FieldDiscordChannelID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2202,6 +2237,14 @@ func (m *CommChannelMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *CommChannelMutation) ClearField(name string) error {
+	switch name {
+	case commchannel.FieldTelegramChatID:
+		m.ClearTelegramChatID()
+		return nil
+	case commchannel.FieldDiscordChannelID:
+		m.ClearDiscordChannelID()
+		return nil
+	}
 	return fmt.Errorf("unknown CommChannel nullable field %s", name)
 }
 
@@ -5794,8 +5837,12 @@ type UserMutation struct {
 	create_time            *time.Time
 	update_time            *time.Time
 	name                   *string
-	wallet_address         *string
 	role                   *user.Role
+	telegram_user_id       *int64
+	addtelegram_user_id    *int64
+	discord_user_id        *int64
+	adddiscord_user_id     *int64
+	wallet_address         *string
 	clearedFields          map[string]struct{}
 	event_listeners        map[int]struct{}
 	removedevent_listeners map[int]struct{}
@@ -6014,42 +6061,6 @@ func (m *UserMutation) ResetName() {
 	m.name = nil
 }
 
-// SetWalletAddress sets the "wallet_address" field.
-func (m *UserMutation) SetWalletAddress(s string) {
-	m.wallet_address = &s
-}
-
-// WalletAddress returns the value of the "wallet_address" field in the mutation.
-func (m *UserMutation) WalletAddress() (r string, exists bool) {
-	v := m.wallet_address
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldWalletAddress returns the old "wallet_address" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldWalletAddress(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldWalletAddress is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldWalletAddress requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldWalletAddress: %w", err)
-	}
-	return oldValue.WalletAddress, nil
-}
-
-// ResetWalletAddress resets all changes to the "wallet_address" field.
-func (m *UserMutation) ResetWalletAddress() {
-	m.wallet_address = nil
-}
-
 // SetRole sets the "role" field.
 func (m *UserMutation) SetRole(u user.Role) {
 	m.role = &u
@@ -6084,6 +6095,195 @@ func (m *UserMutation) OldRole(ctx context.Context) (v user.Role, err error) {
 // ResetRole resets all changes to the "role" field.
 func (m *UserMutation) ResetRole() {
 	m.role = nil
+}
+
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (m *UserMutation) SetTelegramUserID(i int64) {
+	m.telegram_user_id = &i
+	m.addtelegram_user_id = nil
+}
+
+// TelegramUserID returns the value of the "telegram_user_id" field in the mutation.
+func (m *UserMutation) TelegramUserID() (r int64, exists bool) {
+	v := m.telegram_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTelegramUserID returns the old "telegram_user_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldTelegramUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTelegramUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTelegramUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTelegramUserID: %w", err)
+	}
+	return oldValue.TelegramUserID, nil
+}
+
+// AddTelegramUserID adds i to the "telegram_user_id" field.
+func (m *UserMutation) AddTelegramUserID(i int64) {
+	if m.addtelegram_user_id != nil {
+		*m.addtelegram_user_id += i
+	} else {
+		m.addtelegram_user_id = &i
+	}
+}
+
+// AddedTelegramUserID returns the value that was added to the "telegram_user_id" field in this mutation.
+func (m *UserMutation) AddedTelegramUserID() (r int64, exists bool) {
+	v := m.addtelegram_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTelegramUserID clears the value of the "telegram_user_id" field.
+func (m *UserMutation) ClearTelegramUserID() {
+	m.telegram_user_id = nil
+	m.addtelegram_user_id = nil
+	m.clearedFields[user.FieldTelegramUserID] = struct{}{}
+}
+
+// TelegramUserIDCleared returns if the "telegram_user_id" field was cleared in this mutation.
+func (m *UserMutation) TelegramUserIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldTelegramUserID]
+	return ok
+}
+
+// ResetTelegramUserID resets all changes to the "telegram_user_id" field.
+func (m *UserMutation) ResetTelegramUserID() {
+	m.telegram_user_id = nil
+	m.addtelegram_user_id = nil
+	delete(m.clearedFields, user.FieldTelegramUserID)
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (m *UserMutation) SetDiscordUserID(i int64) {
+	m.discord_user_id = &i
+	m.adddiscord_user_id = nil
+}
+
+// DiscordUserID returns the value of the "discord_user_id" field in the mutation.
+func (m *UserMutation) DiscordUserID() (r int64, exists bool) {
+	v := m.discord_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDiscordUserID returns the old "discord_user_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldDiscordUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDiscordUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDiscordUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDiscordUserID: %w", err)
+	}
+	return oldValue.DiscordUserID, nil
+}
+
+// AddDiscordUserID adds i to the "discord_user_id" field.
+func (m *UserMutation) AddDiscordUserID(i int64) {
+	if m.adddiscord_user_id != nil {
+		*m.adddiscord_user_id += i
+	} else {
+		m.adddiscord_user_id = &i
+	}
+}
+
+// AddedDiscordUserID returns the value that was added to the "discord_user_id" field in this mutation.
+func (m *UserMutation) AddedDiscordUserID() (r int64, exists bool) {
+	v := m.adddiscord_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearDiscordUserID clears the value of the "discord_user_id" field.
+func (m *UserMutation) ClearDiscordUserID() {
+	m.discord_user_id = nil
+	m.adddiscord_user_id = nil
+	m.clearedFields[user.FieldDiscordUserID] = struct{}{}
+}
+
+// DiscordUserIDCleared returns if the "discord_user_id" field was cleared in this mutation.
+func (m *UserMutation) DiscordUserIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldDiscordUserID]
+	return ok
+}
+
+// ResetDiscordUserID resets all changes to the "discord_user_id" field.
+func (m *UserMutation) ResetDiscordUserID() {
+	m.discord_user_id = nil
+	m.adddiscord_user_id = nil
+	delete(m.clearedFields, user.FieldDiscordUserID)
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (m *UserMutation) SetWalletAddress(s string) {
+	m.wallet_address = &s
+}
+
+// WalletAddress returns the value of the "wallet_address" field in the mutation.
+func (m *UserMutation) WalletAddress() (r string, exists bool) {
+	v := m.wallet_address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWalletAddress returns the old "wallet_address" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldWalletAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWalletAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWalletAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWalletAddress: %w", err)
+	}
+	return oldValue.WalletAddress, nil
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (m *UserMutation) ClearWalletAddress() {
+	m.wallet_address = nil
+	m.clearedFields[user.FieldWalletAddress] = struct{}{}
+}
+
+// WalletAddressCleared returns if the "wallet_address" field was cleared in this mutation.
+func (m *UserMutation) WalletAddressCleared() bool {
+	_, ok := m.clearedFields[user.FieldWalletAddress]
+	return ok
+}
+
+// ResetWalletAddress resets all changes to the "wallet_address" field.
+func (m *UserMutation) ResetWalletAddress() {
+	m.wallet_address = nil
+	delete(m.clearedFields, user.FieldWalletAddress)
 }
 
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
@@ -6228,7 +6428,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 7)
 	if m.create_time != nil {
 		fields = append(fields, user.FieldCreateTime)
 	}
@@ -6238,11 +6438,17 @@ func (m *UserMutation) Fields() []string {
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
-	if m.wallet_address != nil {
-		fields = append(fields, user.FieldWalletAddress)
-	}
 	if m.role != nil {
 		fields = append(fields, user.FieldRole)
+	}
+	if m.telegram_user_id != nil {
+		fields = append(fields, user.FieldTelegramUserID)
+	}
+	if m.discord_user_id != nil {
+		fields = append(fields, user.FieldDiscordUserID)
+	}
+	if m.wallet_address != nil {
+		fields = append(fields, user.FieldWalletAddress)
 	}
 	return fields
 }
@@ -6258,10 +6464,14 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdateTime()
 	case user.FieldName:
 		return m.Name()
-	case user.FieldWalletAddress:
-		return m.WalletAddress()
 	case user.FieldRole:
 		return m.Role()
+	case user.FieldTelegramUserID:
+		return m.TelegramUserID()
+	case user.FieldDiscordUserID:
+		return m.DiscordUserID()
+	case user.FieldWalletAddress:
+		return m.WalletAddress()
 	}
 	return nil, false
 }
@@ -6277,10 +6487,14 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldUpdateTime(ctx)
 	case user.FieldName:
 		return m.OldName(ctx)
-	case user.FieldWalletAddress:
-		return m.OldWalletAddress(ctx)
 	case user.FieldRole:
 		return m.OldRole(ctx)
+	case user.FieldTelegramUserID:
+		return m.OldTelegramUserID(ctx)
+	case user.FieldDiscordUserID:
+		return m.OldDiscordUserID(ctx)
+	case user.FieldWalletAddress:
+		return m.OldWalletAddress(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -6311,19 +6525,33 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetName(v)
 		return nil
-	case user.FieldWalletAddress:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetWalletAddress(v)
-		return nil
 	case user.FieldRole:
 		v, ok := value.(user.Role)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRole(v)
+		return nil
+	case user.FieldTelegramUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTelegramUserID(v)
+		return nil
+	case user.FieldDiscordUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDiscordUserID(v)
+		return nil
+	case user.FieldWalletAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWalletAddress(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -6332,13 +6560,26 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addtelegram_user_id != nil {
+		fields = append(fields, user.FieldTelegramUserID)
+	}
+	if m.adddiscord_user_id != nil {
+		fields = append(fields, user.FieldDiscordUserID)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldTelegramUserID:
+		return m.AddedTelegramUserID()
+	case user.FieldDiscordUserID:
+		return m.AddedDiscordUserID()
+	}
 	return nil, false
 }
 
@@ -6347,6 +6588,20 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldTelegramUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTelegramUserID(v)
+		return nil
+	case user.FieldDiscordUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDiscordUserID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -6354,7 +6609,17 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(user.FieldTelegramUserID) {
+		fields = append(fields, user.FieldTelegramUserID)
+	}
+	if m.FieldCleared(user.FieldDiscordUserID) {
+		fields = append(fields, user.FieldDiscordUserID)
+	}
+	if m.FieldCleared(user.FieldWalletAddress) {
+		fields = append(fields, user.FieldWalletAddress)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -6367,6 +6632,17 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
+	switch name {
+	case user.FieldTelegramUserID:
+		m.ClearTelegramUserID()
+		return nil
+	case user.FieldDiscordUserID:
+		m.ClearDiscordUserID()
+		return nil
+	case user.FieldWalletAddress:
+		m.ClearWalletAddress()
+		return nil
+	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
 
@@ -6383,11 +6659,17 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldName:
 		m.ResetName()
 		return nil
-	case user.FieldWalletAddress:
-		m.ResetWalletAddress()
-		return nil
 	case user.FieldRole:
 		m.ResetRole()
+		return nil
+	case user.FieldTelegramUserID:
+		m.ResetTelegramUserID()
+		return nil
+	case user.FieldDiscordUserID:
+		m.ResetDiscordUserID()
+		return nil
+	case user.FieldWalletAddress:
+		m.ResetWalletAddress()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

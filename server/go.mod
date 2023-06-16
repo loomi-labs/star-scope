@@ -7,19 +7,24 @@ require (
 	entgo.io/ent v0.12.3
 	github.com/bufbuild/connect-go v1.7.0
 	github.com/bufbuild/connect-grpcreflect-go v1.0.0
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/cosmos/cosmos-sdk v0.47.2
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.3.0
 	github.com/hedwigz/entviz v0.0.0-20221011080911-9d47f6f1d818
+	github.com/icza/gog v0.0.0-20230509085756-00e776132a34
 	github.com/pkg/errors v0.9.1
+	github.com/ravener/discord-oauth2 v0.0.0-20230514095040-ae65713199b3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/segmentio/kafka-go v0.4.40
 	github.com/shifty11/go-logger v0.0.0-20230427145303-ff4524109957
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 	golang.org/x/net v0.9.0
+	golang.org/x/oauth2 v0.6.0
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )
@@ -134,6 +139,7 @@ require (
 	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.8.1-0.20230428195545-5283a0178901 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -141,3 +147,5 @@ require (
 	pgregory.net/rapid v0.5.5 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/go-telegram-bot-api/telegram-bot-api/v5 => github.com/shifty11/telegram-bot-api/v5 v5.6.0

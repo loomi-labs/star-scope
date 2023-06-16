@@ -56,6 +56,80 @@ func (uu *UserUpdate) SetNillableRole(u *user.Role) *UserUpdate {
 	return uu
 }
 
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (uu *UserUpdate) SetTelegramUserID(i int64) *UserUpdate {
+	uu.mutation.ResetTelegramUserID()
+	uu.mutation.SetTelegramUserID(i)
+	return uu
+}
+
+// SetNillableTelegramUserID sets the "telegram_user_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableTelegramUserID(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetTelegramUserID(*i)
+	}
+	return uu
+}
+
+// AddTelegramUserID adds i to the "telegram_user_id" field.
+func (uu *UserUpdate) AddTelegramUserID(i int64) *UserUpdate {
+	uu.mutation.AddTelegramUserID(i)
+	return uu
+}
+
+// ClearTelegramUserID clears the value of the "telegram_user_id" field.
+func (uu *UserUpdate) ClearTelegramUserID() *UserUpdate {
+	uu.mutation.ClearTelegramUserID()
+	return uu
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (uu *UserUpdate) SetDiscordUserID(i int64) *UserUpdate {
+	uu.mutation.ResetDiscordUserID()
+	uu.mutation.SetDiscordUserID(i)
+	return uu
+}
+
+// SetNillableDiscordUserID sets the "discord_user_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableDiscordUserID(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetDiscordUserID(*i)
+	}
+	return uu
+}
+
+// AddDiscordUserID adds i to the "discord_user_id" field.
+func (uu *UserUpdate) AddDiscordUserID(i int64) *UserUpdate {
+	uu.mutation.AddDiscordUserID(i)
+	return uu
+}
+
+// ClearDiscordUserID clears the value of the "discord_user_id" field.
+func (uu *UserUpdate) ClearDiscordUserID() *UserUpdate {
+	uu.mutation.ClearDiscordUserID()
+	return uu
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (uu *UserUpdate) SetWalletAddress(s string) *UserUpdate {
+	uu.mutation.SetWalletAddress(s)
+	return uu
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableWalletAddress(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetWalletAddress(*s)
+	}
+	return uu
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (uu *UserUpdate) ClearWalletAddress() *UserUpdate {
+	uu.mutation.ClearWalletAddress()
+	return uu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uu *UserUpdate) AddEventListenerIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddEventListenerIDs(ids...)
@@ -200,6 +274,30 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
+	if value, ok := uu.mutation.TelegramUserID(); ok {
+		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedTelegramUserID(); ok {
+		_spec.AddField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if uu.mutation.TelegramUserIDCleared() {
+		_spec.ClearField(user.FieldTelegramUserID, field.TypeInt64)
+	}
+	if value, ok := uu.mutation.DiscordUserID(); ok {
+		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedDiscordUserID(); ok {
+		_spec.AddField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if uu.mutation.DiscordUserIDCleared() {
+		_spec.ClearField(user.FieldDiscordUserID, field.TypeInt64)
+	}
+	if value, ok := uu.mutation.WalletAddress(); ok {
+		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
+	}
+	if uu.mutation.WalletAddressCleared() {
+		_spec.ClearField(user.FieldWalletAddress, field.TypeString)
+	}
 	if uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -333,6 +431,80 @@ func (uuo *UserUpdateOne) SetNillableRole(u *user.Role) *UserUpdateOne {
 	if u != nil {
 		uuo.SetRole(*u)
 	}
+	return uuo
+}
+
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (uuo *UserUpdateOne) SetTelegramUserID(i int64) *UserUpdateOne {
+	uuo.mutation.ResetTelegramUserID()
+	uuo.mutation.SetTelegramUserID(i)
+	return uuo
+}
+
+// SetNillableTelegramUserID sets the "telegram_user_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableTelegramUserID(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetTelegramUserID(*i)
+	}
+	return uuo
+}
+
+// AddTelegramUserID adds i to the "telegram_user_id" field.
+func (uuo *UserUpdateOne) AddTelegramUserID(i int64) *UserUpdateOne {
+	uuo.mutation.AddTelegramUserID(i)
+	return uuo
+}
+
+// ClearTelegramUserID clears the value of the "telegram_user_id" field.
+func (uuo *UserUpdateOne) ClearTelegramUserID() *UserUpdateOne {
+	uuo.mutation.ClearTelegramUserID()
+	return uuo
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (uuo *UserUpdateOne) SetDiscordUserID(i int64) *UserUpdateOne {
+	uuo.mutation.ResetDiscordUserID()
+	uuo.mutation.SetDiscordUserID(i)
+	return uuo
+}
+
+// SetNillableDiscordUserID sets the "discord_user_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableDiscordUserID(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetDiscordUserID(*i)
+	}
+	return uuo
+}
+
+// AddDiscordUserID adds i to the "discord_user_id" field.
+func (uuo *UserUpdateOne) AddDiscordUserID(i int64) *UserUpdateOne {
+	uuo.mutation.AddDiscordUserID(i)
+	return uuo
+}
+
+// ClearDiscordUserID clears the value of the "discord_user_id" field.
+func (uuo *UserUpdateOne) ClearDiscordUserID() *UserUpdateOne {
+	uuo.mutation.ClearDiscordUserID()
+	return uuo
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (uuo *UserUpdateOne) SetWalletAddress(s string) *UserUpdateOne {
+	uuo.mutation.SetWalletAddress(s)
+	return uuo
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableWalletAddress(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetWalletAddress(*s)
+	}
+	return uuo
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (uuo *UserUpdateOne) ClearWalletAddress() *UserUpdateOne {
+	uuo.mutation.ClearWalletAddress()
 	return uuo
 }
 
@@ -509,6 +681,30 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+	}
+	if value, ok := uuo.mutation.TelegramUserID(); ok {
+		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedTelegramUserID(); ok {
+		_spec.AddField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if uuo.mutation.TelegramUserIDCleared() {
+		_spec.ClearField(user.FieldTelegramUserID, field.TypeInt64)
+	}
+	if value, ok := uuo.mutation.DiscordUserID(); ok {
+		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedDiscordUserID(); ok {
+		_spec.AddField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if uuo.mutation.DiscordUserIDCleared() {
+		_spec.ClearField(user.FieldDiscordUserID, field.TypeInt64)
+	}
+	if value, ok := uuo.mutation.WalletAddress(); ok {
+		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
+	}
+	if uuo.mutation.WalletAddressCleared() {
+		_spec.ClearField(user.FieldWalletAddress, field.TypeString)
 	}
 	if uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
