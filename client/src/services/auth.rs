@@ -8,10 +8,12 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use simple_error::bail;
 use tonic::Status;
+use urlencoding::decode;
+use wasm_bindgen::JsValue;
 
 use crate::config::keys;
 use crate::types::protobuf::grpc::auth_service_client::AuthServiceClient;
-use crate::types::protobuf::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
+use crate::types::protobuf::grpc::{DiscordLoginRequest, KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest, TelegramLoginRequest};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum Role {
@@ -168,16 +170,11 @@ impl AuthService {
     pub async fn login(&mut self, keplr_response: String) -> Result<(), Status> {
         let request = KeplrLoginRequest { keplr_response };
         let client = Client::new(self.endpoint_url.clone());
-        let response = AuthServiceClient::new(client).keplr_login(request).await;
-        match response {
-            Ok(result) => {
-                self.save_login_response(result.into_inner());
-                Ok(())
-            }
-            Err(msg) => Err(msg),
-        }
+        let response = AuthServiceClient::new(client).keplr_login(request).await?;
+        self.save_login_response(response.into_inner());
+        Ok(())
     }
-
+    
     pub fn logout(&self) {
         LocalStorage::delete(keys::LS_KEY_ACCESS_TOKEN);
         LocalStorage::delete(keys::LS_KEY_REFRESH_TOKEN);
@@ -198,5 +195,104 @@ impl AuthService {
         self.get_jwt_claims()
             .map(|claims| claims.role == Role::User)
             .unwrap_or(false)
+    }
+
+    pub async fn login_with_query_params(&self) -> Result<(), Status> {
+        if self.has_discord_login_query_params() {
+            let result = self.login_with_discord_query_params().await?;
+            self.save_login_response(result);
+        } else if self.has_telegram_login_query_params() {
+            let result = self.login_with_telegram_query_params().await?;
+            self.save_login_response(result);
+        }
+        Err(Status::new(
+            tonic::Code::InvalidArgument,
+            "Invalid query params".to_string(),
+        ))
+    }
+
+    async fn login_with_discord_query_params(&self) -> Result<LoginResponse, Status> {
+        debug!("login_with_discord_query_params");
+        let mut auth_service = self.auth_service();
+        let code = self
+            .get_query_params()
+            .iter()
+            .find(|params: &&(String, String)| params.0 == "code")
+            .unwrap()
+            .1
+            .clone();
+        let req = DiscordLoginRequest { code };
+        let resp = auth_service
+            .discord_login(req)
+            .await
+            .map(|res| res.into_inner());
+        self.save_login_response(resp.clone()?);
+        resp
+    }
+
+    async fn login_with_telegram_query_params(&self) -> Result<LoginResponse, Status> {
+        debug!("login_with_telegram_query_params");
+        let mut auth_service = self.auth_service();
+        let query_params = self.get_query_params();
+        let hash = query_params
+            .iter()
+            .find(|params: &&(String, String)| params.0 == "hash")
+            .unwrap()
+            .1
+            .clone();
+        let mut data = query_params
+            .iter()
+            .filter(|params: &&(String, String)| params.0 != "hash")
+            .map(|params: &(String, String)| format!("{}={}", params.0, params.1))
+            .collect::<Vec<_>>();
+        data.sort();
+        let data_str = data.join("\n");
+        let data_str_decoded = decode(data_str.as_str()).expect("UTF-8");
+
+        let req = TelegramLoginRequest {
+            data_str: data_str_decoded.to_string(),
+            hash,
+        };
+
+        let resp = auth_service
+            .telegram_login(req)
+            .await
+            .map(|res| res.into_inner());
+        debug!("login_with_telegram_query_params: {:?}", resp);
+        resp
+    }
+
+    pub fn has_login_query_params(&self) -> bool {
+        self.has_telegram_login_query_params() || self.has_discord_login_query_params()
+    }
+
+    fn has_telegram_login_query_params(&self) -> bool {
+        self.get_query_params()
+            .iter()
+            .map(|params: &(String, String)| params.0 == "hash")
+            .any(|x| x)
+    }
+
+    fn has_discord_login_query_params(&self) -> bool {
+        self.get_query_params()
+            .iter()
+            .map(|params: &(String, String)| params.0 == "code")
+            .any(|x| x)
+    }
+
+    fn get_query_params(&self) -> Vec<(String, String)> {
+        let location = web_sys::window().unwrap().location();
+        let search: Result<String, JsValue> = location.search();
+        let mut params = Vec::new();
+        for s in search.unwrap().trim_start_matches('?').split('&') {
+            if s.is_empty() {
+                continue;
+            }
+            let mut kv = s.split('=');
+            let k = kv.next().unwrap();
+            let v = kv.next().unwrap();
+            params.push((k.to_string(), v.to_string()));
+        }
+        params
     }
 }

@@ -45,6 +45,8 @@ func AccessibleRoles() map[string][]Role {
 	roles := map[string][]Role{
 		authService + "KeplrLogin":                    {Unauthenticated, User, Admin},
 		authService + "RefreshAccessToken":            {Unauthenticated, User, Admin},
+		authService + "DiscordLogin":                  {Unauthenticated, User, Admin},
+		authService + "TelegramLogin":                 {Unauthenticated, User, Admin},
 		userService + "GetUser":                       {User, Admin},
 		userService + "ListChannels":                  {User, Admin},
 		userService + "DeleteAccount":                 {User, Admin},

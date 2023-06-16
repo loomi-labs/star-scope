@@ -17,6 +17,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"io"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -28,7 +30,7 @@ type AuthService struct {
 	eventListenerManager *database.EventListenerManager
 	jwtManager           *JWTManager
 	kafkaInternal        kafka_internal.KafkaInternal
-	telegramToken        string
+	telegramBotToken     string
 	discordOAuth2Config  *oauth2.Config
 }
 
@@ -36,7 +38,7 @@ func NewAuthServiceHandler(
 	dbManagers *database.DbManagers,
 	jwtManager *JWTManager,
 	kafkaInternal kafka_internal.KafkaInternal,
-	telegramToken string,
+	telegramBotToken string,
 	discordOAuth2Config *oauth2.Config,
 ) authpbconnect.AuthServiceHandler {
 	return &AuthService{
@@ -45,7 +47,7 @@ func NewAuthServiceHandler(
 		eventListenerManager: dbManagers.EventListenerManager,
 		jwtManager:           jwtManager,
 		kafkaInternal:        kafkaInternal,
-		telegramToken:        telegramToken,
+		telegramBotToken:     telegramBotToken,
 		discordOAuth2Config:  discordOAuth2Config,
 	}
 }
@@ -178,14 +180,14 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 
 func (s *AuthService) secretKey1() []byte {
 	sha := sha256.New()
-	sha.Write([]byte(s.telegramToken))
+	sha.Write([]byte(s.telegramBotToken))
 	secretKey := sha.Sum(nil)
 	return secretKey
 }
 
 func (s *AuthService) secretKey2() []byte {
 	h1 := hmac.New(sha256.New, []byte("WebAppData"))
-	h1.Write([]byte(s.telegramToken))
+	h1.Write([]byte(s.telegramBotToken))
 	secretKey := h1.Sum(nil)
 	return secretKey
 }
@@ -198,17 +200,64 @@ func (s *AuthService) isValid(dataStr string, secretKey []byte, hash string) boo
 	return resultHash == hash
 }
 
+type TelegramLoginData struct {
+	AuthDate  time.Time
+	UserId    int64
+	Firstname string
+	Lastname  string
+	Username  string
+	PhotoURL  string
+}
+
+func (s *AuthService) parseTelegramData(dataStr string) (*TelegramLoginData, error) {
+	var data TelegramLoginData
+	for _, v := range strings.Split(dataStr, "\n") {
+		split := strings.Split(v, "=")
+		if len(split) == 2 {
+			switch split[0] {
+			case "auth_date":
+				authDate, err := strconv.ParseInt(split[1], 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				data.AuthDate = time.Unix(authDate, 0)
+			case "id":
+				userId, err := strconv.ParseInt(split[1], 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				data.UserId = userId
+			case "first_name":
+				data.Firstname = split[1]
+			case "last_name":
+				data.Lastname = split[1]
+			case "username":
+				data.Username = split[1]
+			case "photo_url":
+				data.PhotoURL = split[1]
+			}
+		}
+	}
+	return &data, nil
+}
+
 func (s *AuthService) TelegramLogin(ctx context.Context, request *connect.Request[authpb.TelegramLoginRequest]) (*connect.Response[authpb.LoginResponse], error) {
 	var msg = request.Msg
 	if !s.isValid(msg.DataStr, s.secretKey1(), msg.Hash) && !s.isValid(msg.DataStr, s.secretKey2(), msg.Hash) {
 		return nil, ErrorLoginFailed
 	}
 
-	if time.Now().Sub(time.Unix(msg.AuthDate, 0)) > time.Hour {
+	data, err := s.parseTelegramData(msg.DataStr)
+	if err != nil {
+		log.Sugar.Errorf("error while parsing telegram data: %v", err)
+		return nil, ErrorLoginFailed
+	}
+
+	if time.Now().Sub(data.AuthDate) > time.Hour {
 		return nil, ErrorLoginExpired
 	}
 
-	user, err := s.userManager.QueryByTelegram(ctx, msg.UserId)
+	user, err := s.userManager.QueryByTelegram(ctx, data.UserId)
 	if err != nil {
 		log.Sugar.Errorf("error while querying user by telegram chat id: %v", err)
 		return nil, ErrorLoginFailed

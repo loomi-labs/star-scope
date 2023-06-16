@@ -130,7 +130,7 @@ func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *en
 }
 
 func (m *UserManager) CreateOrUpdateForTelegramUser(ctx context.Context, userId int64, userName string, chatId int64, chatName string, isGroup bool) error {
-	log.Sugar.Debugf("CreateOrUpdateForTelegramUser: %s (%s)", userName, userId)
+	log.Sugar.Debugf("CreateOrUpdateForTelegramUser: %v (%v)", userName, userId)
 	return withTx(m.client, ctx, func(tx *ent.Tx) error {
 		u, err := tx.User.
 			Query().
@@ -182,7 +182,7 @@ func (m *UserManager) CreateOrUpdateForDiscordUser(ctx context.Context, userId i
 	return withTx(m.client, ctx, func(tx *ent.Tx) error {
 		u, err := tx.User.
 			Query().
-			Where(user.HasCommChannelsWith(commchannel.DiscordChannelIDEQ(userId))).
+			Where(user.DiscordUserIDEQ(userId)).
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
 			return err

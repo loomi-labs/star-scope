@@ -32,6 +32,7 @@ chrono = "0.4.24"
 enum-iterator = "1.4.1"
 querystring = "1.1.0"
 Inflector = "0.11.4"
+urlencoding = "2.1.2"
 
 [build-dependencies]
 tonic-build = { version = "0.9.1", default-features = false, features = ["prost"] }
