@@ -21,6 +21,14 @@ module.exports = {
         'badge-red': '#EF3C65',
         'badge-orange': '#F07D6C',
         'badge-green': '#11AA89',
+        'keplr-blue': {
+            500: '#314FDF',
+            600: '#273fb2',
+        },
+        'discord-purple': {
+          500: '#5865f2',
+          600: '#4651c2',
+        },
         black: '#000000',
         white: '#FFFFFF',
         purple: {

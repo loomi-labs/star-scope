@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
+use urlencoding::encode;
 use wasm_bindgen::prelude::*;
 
 use crate::components::messages::{create_error_msg_from_status, create_message};
@@ -60,9 +61,15 @@ fn is_mobile() -> bool {
 pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let class_button = "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm \
-    font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
+    font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
     let is_mobile = is_mobile();
+
+    let discord_login_url = format!(
+        "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
+        keys::DISCORD_CLIENT_ID,
+        encode(keys::WEB_APP_URL)
+    );
 
     let color = keys::WHITE_COLOR;
     view!(cx,
@@ -103,10 +110,26 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                                     }
                                 };
                             });
-                        }, class=format!("{} {}", class_button, if is_mobile { "hidden" } else { "" })) {
+                        }, class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {} {}", class_button, if is_mobile { "hidden" } else { "" })) {
                             "Keplr Login"
                         }
-                        p(class=format!("{}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
+                        p(class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
+                    }
+                    // discord login
+                    div(class="mt-6 relative") {
+                        div(class="absolute inset-0 flex items-center") {
+                            div(class="w-full border-t border-gray-300")
+                        }
+                        div(class="relative flex justify-center text-sm") {
+                            span(class="px-2 bg-white dark:bg-purple-700 text-gray-500 dark:text-white") {
+                                "Or continue with"
+                            }
+                        }
+                    }
+                    div(class="flex items-center justify-center space-y-6") {
+                        a(class=format!("bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target="_blank") {
+                            "Discord Login"
+                        }
                     }
                 }
             }

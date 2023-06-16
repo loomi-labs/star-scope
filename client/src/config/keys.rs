@@ -10,3 +10,6 @@ pub const SCOPE_IMG: &str = "assets/images/scope.png";
 pub const SCOPE_SMALL_IMG: &str = "assets/images/scope_small.png";
 
 pub const GRPC_WEB_ENDPOINT_URL: &str = env!("GRPC_WEB_ENDPOINT_URL");
+
+pub const WEB_APP_URL: &str = env!("WEB_APP_URL");
+pub const DISCORD_CLIENT_ID: &str = env!("DISCORD_CLIENT_ID");
