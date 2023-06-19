@@ -11,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
-	"github.com/loomi-labs/star-scope/ent/user"
 )
 
 // EventListener is the model entity for the EventListener schema.
@@ -31,34 +30,31 @@ type EventListener struct {
 	// The values are being populated by the EventListenerQuery when eager-loading is set.
 	Edges                 EventListenerEdges `json:"edges"`
 	chain_event_listeners *int
-	user_event_listeners  *int
 	selectValues          sql.SelectValues
 }
 
 // EventListenerEdges holds the relations/edges for other nodes in the graph.
 type EventListenerEdges struct {
-	// User holds the value of the user edge.
-	User *User `json:"user,omitempty"`
+	// Users holds the value of the users edge.
+	Users []*User `json:"users,omitempty"`
 	// Chain holds the value of the chain edge.
 	Chain *Chain `json:"chain,omitempty"`
 	// Events holds the value of the events edge.
 	Events []*Event `json:"events,omitempty"`
+	// CommChannels holds the value of the comm_channels edge.
+	CommChannels []*CommChannel `json:"comm_channels,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
-// UserOrErr returns the User value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e EventListenerEdges) UserOrErr() (*User, error) {
+// UsersOrErr returns the Users value or an error if the edge
+// was not loaded in eager-loading.
+func (e EventListenerEdges) UsersOrErr() ([]*User, error) {
 	if e.loadedTypes[0] {
-		if e.User == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: user.Label}
-		}
-		return e.User, nil
+		return e.Users, nil
 	}
-	return nil, &NotLoadedError{edge: "user"}
+	return nil, &NotLoadedError{edge: "users"}
 }
 
 // ChainOrErr returns the Chain value or an error if the edge
@@ -83,6 +79,15 @@ func (e EventListenerEdges) EventsOrErr() ([]*Event, error) {
 	return nil, &NotLoadedError{edge: "events"}
 }
 
+// CommChannelsOrErr returns the CommChannels value or an error if the edge
+// was not loaded in eager-loading.
+func (e EventListenerEdges) CommChannelsOrErr() ([]*CommChannel, error) {
+	if e.loadedTypes[3] {
+		return e.CommChannels, nil
+	}
+	return nil, &NotLoadedError{edge: "comm_channels"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*EventListener) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -95,8 +100,6 @@ func (*EventListener) scanValues(columns []string) ([]any, error) {
 		case eventlistener.FieldCreateTime, eventlistener.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
 		case eventlistener.ForeignKeys[0]: // chain_event_listeners
-			values[i] = new(sql.NullInt64)
-		case eventlistener.ForeignKeys[1]: // user_event_listeners
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -150,13 +153,6 @@ func (el *EventListener) assignValues(columns []string, values []any) error {
 				el.chain_event_listeners = new(int)
 				*el.chain_event_listeners = int(value.Int64)
 			}
-		case eventlistener.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_event_listeners", value)
-			} else if value.Valid {
-				el.user_event_listeners = new(int)
-				*el.user_event_listeners = int(value.Int64)
-			}
 		default:
 			el.selectValues.Set(columns[i], values[i])
 		}
@@ -170,9 +166,9 @@ func (el *EventListener) Value(name string) (ent.Value, error) {
 	return el.selectValues.Get(name)
 }
 
-// QueryUser queries the "user" edge of the EventListener entity.
-func (el *EventListener) QueryUser() *UserQuery {
-	return NewEventListenerClient(el.config).QueryUser(el)
+// QueryUsers queries the "users" edge of the EventListener entity.
+func (el *EventListener) QueryUsers() *UserQuery {
+	return NewEventListenerClient(el.config).QueryUsers(el)
 }
 
 // QueryChain queries the "chain" edge of the EventListener entity.
@@ -183,6 +179,11 @@ func (el *EventListener) QueryChain() *ChainQuery {
 // QueryEvents queries the "events" edge of the EventListener entity.
 func (el *EventListener) QueryEvents() *EventQuery {
 	return NewEventListenerClient(el.config).QueryEvents(el)
+}
+
+// QueryCommChannels queries the "comm_channels" edge of the EventListener entity.
+func (el *EventListener) QueryCommChannels() *CommChannelQuery {
+	return NewEventListenerClient(el.config).QueryCommChannels(el)
 }
 
 // Update returns a builder for updating this EventListener.

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
@@ -55,6 +56,80 @@ func (uu *UserUpdate) SetNillableRole(u *user.Role) *UserUpdate {
 	return uu
 }
 
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (uu *UserUpdate) SetTelegramUserID(i int64) *UserUpdate {
+	uu.mutation.ResetTelegramUserID()
+	uu.mutation.SetTelegramUserID(i)
+	return uu
+}
+
+// SetNillableTelegramUserID sets the "telegram_user_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableTelegramUserID(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetTelegramUserID(*i)
+	}
+	return uu
+}
+
+// AddTelegramUserID adds i to the "telegram_user_id" field.
+func (uu *UserUpdate) AddTelegramUserID(i int64) *UserUpdate {
+	uu.mutation.AddTelegramUserID(i)
+	return uu
+}
+
+// ClearTelegramUserID clears the value of the "telegram_user_id" field.
+func (uu *UserUpdate) ClearTelegramUserID() *UserUpdate {
+	uu.mutation.ClearTelegramUserID()
+	return uu
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (uu *UserUpdate) SetDiscordUserID(i int64) *UserUpdate {
+	uu.mutation.ResetDiscordUserID()
+	uu.mutation.SetDiscordUserID(i)
+	return uu
+}
+
+// SetNillableDiscordUserID sets the "discord_user_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableDiscordUserID(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetDiscordUserID(*i)
+	}
+	return uu
+}
+
+// AddDiscordUserID adds i to the "discord_user_id" field.
+func (uu *UserUpdate) AddDiscordUserID(i int64) *UserUpdate {
+	uu.mutation.AddDiscordUserID(i)
+	return uu
+}
+
+// ClearDiscordUserID clears the value of the "discord_user_id" field.
+func (uu *UserUpdate) ClearDiscordUserID() *UserUpdate {
+	uu.mutation.ClearDiscordUserID()
+	return uu
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (uu *UserUpdate) SetWalletAddress(s string) *UserUpdate {
+	uu.mutation.SetWalletAddress(s)
+	return uu
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableWalletAddress(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetWalletAddress(*s)
+	}
+	return uu
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (uu *UserUpdate) ClearWalletAddress() *UserUpdate {
+	uu.mutation.ClearWalletAddress()
+	return uu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uu *UserUpdate) AddEventListenerIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddEventListenerIDs(ids...)
@@ -68,6 +143,21 @@ func (uu *UserUpdate) AddEventListeners(e ...*EventListener) *UserUpdate {
 		ids[i] = e[i].ID
 	}
 	return uu.AddEventListenerIDs(ids...)
+}
+
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (uu *UserUpdate) AddCommChannelIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddCommChannelIDs(ids...)
+	return uu
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (uu *UserUpdate) AddCommChannels(c ...*CommChannel) *UserUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.AddCommChannelIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -94,6 +184,27 @@ func (uu *UserUpdate) RemoveEventListeners(e ...*EventListener) *UserUpdate {
 		ids[i] = e[i].ID
 	}
 	return uu.RemoveEventListenerIDs(ids...)
+}
+
+// ClearCommChannels clears all "comm_channels" edges to the CommChannel entity.
+func (uu *UserUpdate) ClearCommChannels() *UserUpdate {
+	uu.mutation.ClearCommChannels()
+	return uu
+}
+
+// RemoveCommChannelIDs removes the "comm_channels" edge to CommChannel entities by IDs.
+func (uu *UserUpdate) RemoveCommChannelIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveCommChannelIDs(ids...)
+	return uu
+}
+
+// RemoveCommChannels removes "comm_channels" edges to CommChannel entities.
+func (uu *UserUpdate) RemoveCommChannels(c ...*CommChannel) *UserUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uu.RemoveCommChannelIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -163,12 +274,36 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
+	if value, ok := uu.mutation.TelegramUserID(); ok {
+		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedTelegramUserID(); ok {
+		_spec.AddField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if uu.mutation.TelegramUserIDCleared() {
+		_spec.ClearField(user.FieldTelegramUserID, field.TypeInt64)
+	}
+	if value, ok := uu.mutation.DiscordUserID(); ok {
+		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedDiscordUserID(); ok {
+		_spec.AddField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if uu.mutation.DiscordUserIDCleared() {
+		_spec.ClearField(user.FieldDiscordUserID, field.TypeInt64)
+	}
+	if value, ok := uu.mutation.WalletAddress(); ok {
+		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
+	}
+	if uu.mutation.WalletAddressCleared() {
+		_spec.ClearField(user.FieldWalletAddress, field.TypeString)
+	}
 	if uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -178,10 +313,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uu.mutation.RemovedEventListenersIDs(); len(nodes) > 0 && !uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -194,13 +329,58 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uu.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedCommChannelsIDs(); len(nodes) > 0 && !uu.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -254,6 +434,80 @@ func (uuo *UserUpdateOne) SetNillableRole(u *user.Role) *UserUpdateOne {
 	return uuo
 }
 
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (uuo *UserUpdateOne) SetTelegramUserID(i int64) *UserUpdateOne {
+	uuo.mutation.ResetTelegramUserID()
+	uuo.mutation.SetTelegramUserID(i)
+	return uuo
+}
+
+// SetNillableTelegramUserID sets the "telegram_user_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableTelegramUserID(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetTelegramUserID(*i)
+	}
+	return uuo
+}
+
+// AddTelegramUserID adds i to the "telegram_user_id" field.
+func (uuo *UserUpdateOne) AddTelegramUserID(i int64) *UserUpdateOne {
+	uuo.mutation.AddTelegramUserID(i)
+	return uuo
+}
+
+// ClearTelegramUserID clears the value of the "telegram_user_id" field.
+func (uuo *UserUpdateOne) ClearTelegramUserID() *UserUpdateOne {
+	uuo.mutation.ClearTelegramUserID()
+	return uuo
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (uuo *UserUpdateOne) SetDiscordUserID(i int64) *UserUpdateOne {
+	uuo.mutation.ResetDiscordUserID()
+	uuo.mutation.SetDiscordUserID(i)
+	return uuo
+}
+
+// SetNillableDiscordUserID sets the "discord_user_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableDiscordUserID(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetDiscordUserID(*i)
+	}
+	return uuo
+}
+
+// AddDiscordUserID adds i to the "discord_user_id" field.
+func (uuo *UserUpdateOne) AddDiscordUserID(i int64) *UserUpdateOne {
+	uuo.mutation.AddDiscordUserID(i)
+	return uuo
+}
+
+// ClearDiscordUserID clears the value of the "discord_user_id" field.
+func (uuo *UserUpdateOne) ClearDiscordUserID() *UserUpdateOne {
+	uuo.mutation.ClearDiscordUserID()
+	return uuo
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (uuo *UserUpdateOne) SetWalletAddress(s string) *UserUpdateOne {
+	uuo.mutation.SetWalletAddress(s)
+	return uuo
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableWalletAddress(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetWalletAddress(*s)
+	}
+	return uuo
+}
+
+// ClearWalletAddress clears the value of the "wallet_address" field.
+func (uuo *UserUpdateOne) ClearWalletAddress() *UserUpdateOne {
+	uuo.mutation.ClearWalletAddress()
+	return uuo
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uuo *UserUpdateOne) AddEventListenerIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddEventListenerIDs(ids...)
@@ -267,6 +521,21 @@ func (uuo *UserUpdateOne) AddEventListeners(e ...*EventListener) *UserUpdateOne 
 		ids[i] = e[i].ID
 	}
 	return uuo.AddEventListenerIDs(ids...)
+}
+
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (uuo *UserUpdateOne) AddCommChannelIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddCommChannelIDs(ids...)
+	return uuo
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (uuo *UserUpdateOne) AddCommChannels(c ...*CommChannel) *UserUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.AddCommChannelIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -293,6 +562,27 @@ func (uuo *UserUpdateOne) RemoveEventListeners(e ...*EventListener) *UserUpdateO
 		ids[i] = e[i].ID
 	}
 	return uuo.RemoveEventListenerIDs(ids...)
+}
+
+// ClearCommChannels clears all "comm_channels" edges to the CommChannel entity.
+func (uuo *UserUpdateOne) ClearCommChannels() *UserUpdateOne {
+	uuo.mutation.ClearCommChannels()
+	return uuo
+}
+
+// RemoveCommChannelIDs removes the "comm_channels" edge to CommChannel entities by IDs.
+func (uuo *UserUpdateOne) RemoveCommChannelIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveCommChannelIDs(ids...)
+	return uuo
+}
+
+// RemoveCommChannels removes "comm_channels" edges to CommChannel entities.
+func (uuo *UserUpdateOne) RemoveCommChannels(c ...*CommChannel) *UserUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uuo.RemoveCommChannelIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -392,12 +682,36 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
+	if value, ok := uuo.mutation.TelegramUserID(); ok {
+		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedTelegramUserID(); ok {
+		_spec.AddField(user.FieldTelegramUserID, field.TypeInt64, value)
+	}
+	if uuo.mutation.TelegramUserIDCleared() {
+		_spec.ClearField(user.FieldTelegramUserID, field.TypeInt64)
+	}
+	if value, ok := uuo.mutation.DiscordUserID(); ok {
+		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedDiscordUserID(); ok {
+		_spec.AddField(user.FieldDiscordUserID, field.TypeInt64, value)
+	}
+	if uuo.mutation.DiscordUserIDCleared() {
+		_spec.ClearField(user.FieldDiscordUserID, field.TypeInt64)
+	}
+	if value, ok := uuo.mutation.WalletAddress(); ok {
+		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
+	}
+	if uuo.mutation.WalletAddressCleared() {
+		_spec.ClearField(user.FieldWalletAddress, field.TypeString)
+	}
 	if uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -407,10 +721,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if nodes := uuo.mutation.RemovedEventListenersIDs(); len(nodes) > 0 && !uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
@@ -423,13 +737,58 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if nodes := uuo.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedCommChannelsIDs(); len(nodes) > 0 && !uuo.mutation.CommChannelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

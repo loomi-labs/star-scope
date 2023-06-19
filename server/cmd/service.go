@@ -12,6 +12,8 @@ import (
 	"github.com/loomi-labs/star-scope/grpc"
 	"github.com/loomi-labs/star-scope/kafka"
 	"github.com/loomi-labs/star-scope/kafka_internal"
+	"github.com/loomi-labs/star-scope/notification/discord"
+	"github.com/loomi-labs/star-scope/notification/telegram"
 	"log"
 	"strings"
 	"time"
@@ -130,6 +132,38 @@ var startValidatorCrawlerCmd = &cobra.Command{
 	},
 }
 
+var startTelegramBotCmd = &cobra.Command{
+	Use:   "telegram-bot",
+	Short: "Start the telegram bot",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		telegramBotToken := common.GetEnvX("TELEGRAM_BOT_TOKEN")
+		useTestApi := common.GetEnvAsBoolX("TELEGRAM_USE_TEST_API")
+		apiEndpoint := ""
+		if useTestApi {
+			apiEndpoint = "https://api.telegram.org/bot%s/test/%s"
+		}
+		webAppUrl := common.GetEnvX("TELEGRAM_WEB_APP_URL")
+
+		bot := telegram.NewTelegramBot(dbManagers, telegramBotToken, apiEndpoint, webAppUrl)
+		bot.Start()
+	},
+}
+
+var startDiscordBotCmd = &cobra.Command{
+	Use:   "discord-bot",
+	Short: "Start the discord bot",
+	Run: func(cmd *cobra.Command, args []string) {
+		dbManagers := database.NewDefaultDbManagers()
+		discordBotToken := common.GetEnvX("DISCORD_BOT_TOKEN")
+		discordClientId := common.GetEnvX("DISCORD_CLIENT_ID")
+		webAppUrl := common.GetEnvX("DISCORD_WEB_APP_URL")
+
+		bot := discord.NewDiscordBot(dbManagers, discordBotToken, discordClientId, webAppUrl)
+		bot.Start()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(serviceCmd)
 
@@ -141,6 +175,9 @@ func init() {
 	serviceCmd.AddCommand(startChainCrawlerCmd)
 	serviceCmd.AddCommand(startGovernanceCrawlerCmd)
 	serviceCmd.AddCommand(startValidatorCrawlerCmd)
+
+	serviceCmd.AddCommand(startTelegramBotCmd)
+	serviceCmd.AddCommand(startDiscordBotCmd)
 
 	startWalletEventConsumerCmd.Flags().BoolP("fake", "f", false, "Create fake events")
 }

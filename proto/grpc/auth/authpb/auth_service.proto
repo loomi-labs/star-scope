@@ -6,11 +6,22 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/auth/authpb";
 
 service AuthService {
   rpc KeplrLogin (KeplrLoginRequest) returns (LoginResponse) {}
+  rpc TelegramLogin (TelegramLoginRequest) returns (LoginResponse) {}
+  rpc DiscordLogin (DiscordLoginRequest) returns (LoginResponse) {}
   rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {}
 }
 
 message KeplrLoginRequest {
   string keplrResponse = 1;
+}
+
+message TelegramLoginRequest {
+  string dataStr = 1;
+  string hash = 2;
+}
+
+message DiscordLoginRequest {
+  string code = 1;
 }
 
 message LoginResponse {

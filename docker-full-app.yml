@@ -190,12 +190,42 @@ services:
       db-migration:
         condition: service_completed_successfully
 
+  telegram-bot:
+    build: server
+    container_name: starscope_telegram_bot
+    working_dir: /app
+    env_file:
+      - server/.env
+    command: "/starscope service telegram-bot"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+  discord-bot:
+    build: server
+    container_name: starscope_discord_bot
+    working_dir: /app
+    env_file:
+      - server/.env
+    command: "/starscope service discord-bot"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
   client:
     build:
       context: .
       dockerfile: client/Dockerfile
       args:
+        - DEBUG=true
         - GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:8080
+        - WEB_APP_URL=http://test.mydomain.com:8080
+        - DISCORD_CLIENT_ID=953923165808107540
+        - TELEGRAM_BOT_NAME=cosmos_gov_bot
     container_name: starscope_client
     ports:
       - "8080:80"

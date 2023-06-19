@@ -21,21 +21,30 @@ const (
 	FieldUpdateTime = "update_time"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldWalletAddress holds the string denoting the wallet_address field in the database.
-	FieldWalletAddress = "wallet_address"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
+	// FieldTelegramUserID holds the string denoting the telegram_user_id field in the database.
+	FieldTelegramUserID = "telegram_user_id"
+	// FieldDiscordUserID holds the string denoting the discord_user_id field in the database.
+	FieldDiscordUserID = "discord_user_id"
+	// FieldWalletAddress holds the string denoting the wallet_address field in the database.
+	FieldWalletAddress = "wallet_address"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
+	// EdgeCommChannels holds the string denoting the comm_channels edge name in mutations.
+	EdgeCommChannels = "comm_channels"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// EventListenersTable is the table that holds the event_listeners relation/edge.
-	EventListenersTable = "event_listeners"
+	// EventListenersTable is the table that holds the event_listeners relation/edge. The primary key declared below.
+	EventListenersTable = "user_event_listeners"
 	// EventListenersInverseTable is the table name for the EventListener entity.
 	// It exists in this package in order to avoid circular dependency with the "eventlistener" package.
 	EventListenersInverseTable = "event_listeners"
-	// EventListenersColumn is the table column denoting the event_listeners relation/edge.
-	EventListenersColumn = "user_event_listeners"
+	// CommChannelsTable is the table that holds the comm_channels relation/edge. The primary key declared below.
+	CommChannelsTable = "user_comm_channels"
+	// CommChannelsInverseTable is the table name for the CommChannel entity.
+	// It exists in this package in order to avoid circular dependency with the "commchannel" package.
+	CommChannelsInverseTable = "comm_channels"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -44,9 +53,20 @@ var Columns = []string{
 	FieldCreateTime,
 	FieldUpdateTime,
 	FieldName,
-	FieldWalletAddress,
 	FieldRole,
+	FieldTelegramUserID,
+	FieldDiscordUserID,
+	FieldWalletAddress,
 }
+
+var (
+	// EventListenersPrimaryKey and EventListenersColumn2 are the table columns denoting the
+	// primary key for the event_listeners relation (M2M).
+	EventListenersPrimaryKey = []string{"user_id", "event_listener_id"}
+	// CommChannelsPrimaryKey and CommChannelsColumn2 are the table columns denoting the
+	// primary key for the comm_channels relation (M2M).
+	CommChannelsPrimaryKey = []string{"user_id", "comm_channel_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -65,8 +85,6 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
-	// WalletAddressValidator is a validator for the "wallet_address" field. It is called by the builders before save.
-	WalletAddressValidator func(string) error
 )
 
 // Role defines the type for the "role" enum field.
@@ -118,14 +136,24 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
-// ByWalletAddress orders the results by the wallet_address field.
-func ByWalletAddress(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWalletAddress, opts...).ToFunc()
-}
-
 // ByRole orders the results by the role field.
 func ByRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRole, opts...).ToFunc()
+}
+
+// ByTelegramUserID orders the results by the telegram_user_id field.
+func ByTelegramUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTelegramUserID, opts...).ToFunc()
+}
+
+// ByDiscordUserID orders the results by the discord_user_id field.
+func ByDiscordUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDiscordUserID, opts...).ToFunc()
+}
+
+// ByWalletAddress orders the results by the wallet_address field.
+func ByWalletAddress(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWalletAddress, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.
@@ -141,10 +169,31 @@ func ByEventListeners(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEventListenersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCommChannelsCount orders the results by comm_channels count.
+func ByCommChannelsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCommChannelsStep(), opts...)
+	}
+}
+
+// ByCommChannels orders the results by comm_channels terms.
+func ByCommChannels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommChannelsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEventListenersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EventListenersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, EventListenersTable, EventListenersColumn),
+		sqlgraph.Edge(sqlgraph.M2M, false, EventListenersTable, EventListenersPrimaryKey...),
+	)
+}
+func newCommChannelsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommChannelsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, CommChannelsTable, CommChannelsPrimaryKey...),
 	)
 }

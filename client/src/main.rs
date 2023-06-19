@@ -10,7 +10,7 @@ use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
-use sycamore_router::{navigate, HistoryIntegration, Route, Router};
+use sycamore_router::{HistoryIntegration, Route, Router};
 use uuid::Uuid;
 
 use crate::components::layout::LayoutWrapper;
@@ -423,12 +423,29 @@ async fn query_events_count(cx: Scope<'_>) {
     }
 }
 
+async fn login_by_query_params(cx: Scope<'_>) {
+    let services = use_context::<Services>(cx);
+    if services.auth_manager.clone().has_login_query_params() {
+        let response = use_context::<Services>(cx).auth_manager.clone().login_with_query_params().await;
+        match response {
+            Ok(_) => {
+                let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
+                *auth_state = AuthState::LoggedIn;
+            }
+            Err(status) => {
+                create_error_msg_from_status(cx, status);
+                safe_navigate(cx, AppRoutes::Home);
+            },
+        }
+    }
+}
+
 #[component]
 pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
-    provide_context(cx, services);
+    provide_context(cx, services.clone());
     provide_context(cx, app_state);
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());
@@ -445,7 +462,15 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                         let app_state = use_context::<AppState>(cx);
                         let auth_state = app_state.auth_state.get();
                         match auth_state.as_ref() {
-                            AuthState::LoggedOut => safe_navigate(cx, AppRoutes::Home),
+                            AuthState::LoggedOut => {
+                                if services.auth_manager.clone().has_login_query_params() {
+                                    spawn_local_scoped(cx, async move {
+                                        login_by_query_params(cx.to_owned()).await;
+                                    });
+                                } else {
+                                    safe_navigate(cx, AppRoutes::Home)
+                                }
+                            },
                             AuthState::LoggedIn => {
                                 let event_state = use_context::<EventsState>(cx);
                                 let notifications_state = use_context::<NotificationsState>(cx);
@@ -456,7 +481,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                                     query_events_count(cx).await;
                                     subscribe_to_events(cx);
                                 });
-                                navigate(AppRoutes::Notifications.to_string().as_str())
+                                safe_navigate(cx, AppRoutes::Notifications)
                             },
                             AuthState::LoggingIn => {}
                         }

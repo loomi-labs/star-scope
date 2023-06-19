@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
 )
@@ -55,12 +56,6 @@ func (uc *UserCreate) SetName(s string) *UserCreate {
 	return uc
 }
 
-// SetWalletAddress sets the "wallet_address" field.
-func (uc *UserCreate) SetWalletAddress(s string) *UserCreate {
-	uc.mutation.SetWalletAddress(s)
-	return uc
-}
-
 // SetRole sets the "role" field.
 func (uc *UserCreate) SetRole(u user.Role) *UserCreate {
 	uc.mutation.SetRole(u)
@@ -71,6 +66,48 @@ func (uc *UserCreate) SetRole(u user.Role) *UserCreate {
 func (uc *UserCreate) SetNillableRole(u *user.Role) *UserCreate {
 	if u != nil {
 		uc.SetRole(*u)
+	}
+	return uc
+}
+
+// SetTelegramUserID sets the "telegram_user_id" field.
+func (uc *UserCreate) SetTelegramUserID(i int64) *UserCreate {
+	uc.mutation.SetTelegramUserID(i)
+	return uc
+}
+
+// SetNillableTelegramUserID sets the "telegram_user_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableTelegramUserID(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetTelegramUserID(*i)
+	}
+	return uc
+}
+
+// SetDiscordUserID sets the "discord_user_id" field.
+func (uc *UserCreate) SetDiscordUserID(i int64) *UserCreate {
+	uc.mutation.SetDiscordUserID(i)
+	return uc
+}
+
+// SetNillableDiscordUserID sets the "discord_user_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDiscordUserID(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetDiscordUserID(*i)
+	}
+	return uc
+}
+
+// SetWalletAddress sets the "wallet_address" field.
+func (uc *UserCreate) SetWalletAddress(s string) *UserCreate {
+	uc.mutation.SetWalletAddress(s)
+	return uc
+}
+
+// SetNillableWalletAddress sets the "wallet_address" field if the given value is not nil.
+func (uc *UserCreate) SetNillableWalletAddress(s *string) *UserCreate {
+	if s != nil {
+		uc.SetWalletAddress(*s)
 	}
 	return uc
 }
@@ -88,6 +125,21 @@ func (uc *UserCreate) AddEventListeners(e ...*EventListener) *UserCreate {
 		ids[i] = e[i].ID
 	}
 	return uc.AddEventListenerIDs(ids...)
+}
+
+// AddCommChannelIDs adds the "comm_channels" edge to the CommChannel entity by IDs.
+func (uc *UserCreate) AddCommChannelIDs(ids ...int) *UserCreate {
+	uc.mutation.AddCommChannelIDs(ids...)
+	return uc
+}
+
+// AddCommChannels adds the "comm_channels" edges to the CommChannel entity.
+func (uc *UserCreate) AddCommChannels(c ...*CommChannel) *UserCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddCommChannelIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -150,14 +202,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
 	}
-	if _, ok := uc.mutation.WalletAddress(); !ok {
-		return &ValidationError{Name: "wallet_address", err: errors.New(`ent: missing required field "User.wallet_address"`)}
-	}
-	if v, ok := uc.mutation.WalletAddress(); ok {
-		if err := user.WalletAddressValidator(v); err != nil {
-			return &ValidationError{Name: "wallet_address", err: fmt.Errorf(`ent: validator failed for field "User.wallet_address": %w`, err)}
-		}
-	}
 	if _, ok := uc.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
 	}
@@ -204,23 +248,47 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := uc.mutation.WalletAddress(); ok {
-		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
-		_node.WalletAddress = value
-	}
 	if value, ok := uc.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
 	}
+	if value, ok := uc.mutation.TelegramUserID(); ok {
+		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
+		_node.TelegramUserID = value
+	}
+	if value, ok := uc.mutation.DiscordUserID(); ok {
+		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
+		_node.DiscordUserID = value
+	}
+	if value, ok := uc.mutation.WalletAddress(); ok {
+		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
+		_node.WalletAddress = value
+	}
 	if nodes := uc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   user.EventListenersTable,
-			Columns: []string{user.EventListenersColumn},
+			Columns: user.EventListenersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(eventlistener.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.CommChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.CommChannelsTable,
+			Columns: user.CommChannelsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

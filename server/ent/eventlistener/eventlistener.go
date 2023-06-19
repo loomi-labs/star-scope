@@ -23,21 +23,21 @@ const (
 	FieldWalletAddress = "wallet_address"
 	// FieldDataType holds the string denoting the data_type field in the database.
 	FieldDataType = "data_type"
-	// EdgeUser holds the string denoting the user edge name in mutations.
-	EdgeUser = "user"
+	// EdgeUsers holds the string denoting the users edge name in mutations.
+	EdgeUsers = "users"
 	// EdgeChain holds the string denoting the chain edge name in mutations.
 	EdgeChain = "chain"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
 	EdgeEvents = "events"
+	// EdgeCommChannels holds the string denoting the comm_channels edge name in mutations.
+	EdgeCommChannels = "comm_channels"
 	// Table holds the table name of the eventlistener in the database.
 	Table = "event_listeners"
-	// UserTable is the table that holds the user relation/edge.
-	UserTable = "event_listeners"
-	// UserInverseTable is the table name for the User entity.
+	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
+	UsersTable = "user_event_listeners"
+	// UsersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
-	UserInverseTable = "users"
-	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_event_listeners"
+	UsersInverseTable = "users"
 	// ChainTable is the table that holds the chain relation/edge.
 	ChainTable = "event_listeners"
 	// ChainInverseTable is the table name for the Chain entity.
@@ -52,6 +52,11 @@ const (
 	EventsInverseTable = "events"
 	// EventsColumn is the table column denoting the events relation/edge.
 	EventsColumn = "event_listener_events"
+	// CommChannelsTable is the table that holds the comm_channels relation/edge. The primary key declared below.
+	CommChannelsTable = "comm_channel_event_listeners"
+	// CommChannelsInverseTable is the table name for the CommChannel entity.
+	// It exists in this package in order to avoid circular dependency with the "commchannel" package.
+	CommChannelsInverseTable = "comm_channels"
 )
 
 // Columns holds all SQL columns for eventlistener fields.
@@ -67,8 +72,16 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"chain_event_listeners",
-	"user_event_listeners",
 }
+
+var (
+	// UsersPrimaryKey and UsersColumn2 are the table columns denoting the
+	// primary key for the users relation (M2M).
+	UsersPrimaryKey = []string{"user_id", "event_listener_id"}
+	// CommChannelsPrimaryKey and CommChannelsColumn2 are the table columns denoting the
+	// primary key for the comm_channels relation (M2M).
+	CommChannelsPrimaryKey = []string{"comm_channel_id", "event_listener_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -155,10 +168,17 @@ func ByDataType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDataType, opts...).ToFunc()
 }
 
-// ByUserField orders the results by user field.
-func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByUsersCount orders the results by users count.
+func ByUsersCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newUsersStep(), opts...)
+	}
+}
+
+// ByUsers orders the results by users terms.
+func ByUsers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -182,11 +202,25 @@ func ByEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newUserStep() *sqlgraph.Step {
+
+// ByCommChannelsCount orders the results by comm_channels count.
+func ByCommChannelsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCommChannelsStep(), opts...)
+	}
+}
+
+// ByCommChannels orders the results by comm_channels terms.
+func ByCommChannels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommChannelsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newUsersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+		sqlgraph.To(UsersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, UsersTable, UsersPrimaryKey...),
 	)
 }
 func newChainStep() *sqlgraph.Step {
@@ -201,5 +235,12 @@ func newEventsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EventsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EventsTable, EventsColumn),
+	)
+}
+func newCommChannelsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommChannelsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, CommChannelsTable, CommChannelsPrimaryKey...),
 	)
 }

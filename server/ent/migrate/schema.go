@@ -39,6 +39,35 @@ var (
 			},
 		},
 	}
+	// CommChannelsColumns holds the columns for the "comm_channels" table.
+	CommChannelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"webpush", "telegram", "discord"}},
+		{Name: "telegram_chat_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "discord_channel_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "is_group", Type: field.TypeBool, Default: false},
+	}
+	// CommChannelsTable holds the schema information for the "comm_channels" table.
+	CommChannelsTable = &schema.Table{
+		Name:       "comm_channels",
+		Columns:    CommChannelsColumns,
+		PrimaryKey: []*schema.Column{CommChannelsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "commchannel_telegram_chat_id",
+				Unique:  false,
+				Columns: []*schema.Column{CommChannelsColumns[5]},
+			},
+			{
+				Name:    "commchannel_discord_channel_id",
+				Unique:  false,
+				Columns: []*schema.Column{CommChannelsColumns[6]},
+			},
+		},
+	}
 	// ContractProposalsColumns holds the columns for the "contract_proposals" table.
 	ContractProposalsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -50,7 +79,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"EXECUTION_FAILED", "OPEN", "REJECTED", "PASSED", "EXECUTED", "CLOSED"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
@@ -72,7 +101,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"FUNDING", "STAKING", "DEX", "GOVERNANCE"}},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"STAKING", "DEX", "GOVERNANCE", "FUNDING"}},
 		{Name: "chain_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "contract_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "wallet_event", Type: field.TypeBytes, Nullable: true},
@@ -104,7 +133,6 @@ var (
 		{Name: "wallet_address", Type: field.TypeString, Nullable: true},
 		{Name: "data_type", Type: field.TypeEnum, Enums: []string{"WalletEvent_CoinReceived", "WalletEvent_OsmosisPoolUnlock", "WalletEvent_Unstake", "WalletEvent_NeutronTokenVesting", "WalletEvent_Voted", "WalletEvent_VoteReminder", "ChainEvent_ValidatorOutOfActiveSet", "ChainEvent_ValidatorSlash", "ChainEvent_GovernanceProposal_Ongoing", "ChainEvent_GovernanceProposal_Finished", "ContractEvent_ContractGovernanceProposal_Ongoing", "ContractEvent_ContractGovernanceProposal_Finished"}},
 		{Name: "chain_event_listeners", Type: field.TypeInt, Nullable: true},
-		{Name: "user_event_listeners", Type: field.TypeInt, Nullable: true},
 	}
 	// EventListenersTable holds the schema information for the "event_listeners" table.
 	EventListenersTable = &schema.Table{
@@ -116,12 +144,6 @@ var (
 				Symbol:     "event_listeners_chains_event_listeners",
 				Columns:    []*schema.Column{EventListenersColumns[5]},
 				RefColumns: []*schema.Column{ChainsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "event_listeners_users_event_listeners",
-				Columns:    []*schema.Column{EventListenersColumns[6]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -136,7 +158,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -159,14 +181,33 @@ var (
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
-		{Name: "wallet_address", Type: field.TypeString},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"user", "admin"}, Default: "user"},
+		{Name: "telegram_user_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "discord_user_id", Type: field.TypeInt64, Unique: true, Nullable: true},
+		{Name: "wallet_address", Type: field.TypeString, Unique: true, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_telegram_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[5]},
+			},
+			{
+				Name:    "user_discord_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[6]},
+			},
+			{
+				Name:    "user_wallet_address",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[7]},
+			},
+		},
 	}
 	// ValidatorsColumns holds the columns for the "validators" table.
 	ValidatorsColumns = []*schema.Column{
@@ -231,15 +272,94 @@ var (
 			},
 		},
 	}
+	// CommChannelEventListenersColumns holds the columns for the "comm_channel_event_listeners" table.
+	CommChannelEventListenersColumns = []*schema.Column{
+		{Name: "comm_channel_id", Type: field.TypeInt},
+		{Name: "event_listener_id", Type: field.TypeInt},
+	}
+	// CommChannelEventListenersTable holds the schema information for the "comm_channel_event_listeners" table.
+	CommChannelEventListenersTable = &schema.Table{
+		Name:       "comm_channel_event_listeners",
+		Columns:    CommChannelEventListenersColumns,
+		PrimaryKey: []*schema.Column{CommChannelEventListenersColumns[0], CommChannelEventListenersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "comm_channel_event_listeners_comm_channel_id",
+				Columns:    []*schema.Column{CommChannelEventListenersColumns[0]},
+				RefColumns: []*schema.Column{CommChannelsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "comm_channel_event_listeners_event_listener_id",
+				Columns:    []*schema.Column{CommChannelEventListenersColumns[1]},
+				RefColumns: []*schema.Column{EventListenersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserEventListenersColumns holds the columns for the "user_event_listeners" table.
+	UserEventListenersColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "event_listener_id", Type: field.TypeInt},
+	}
+	// UserEventListenersTable holds the schema information for the "user_event_listeners" table.
+	UserEventListenersTable = &schema.Table{
+		Name:       "user_event_listeners",
+		Columns:    UserEventListenersColumns,
+		PrimaryKey: []*schema.Column{UserEventListenersColumns[0], UserEventListenersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_event_listeners_user_id",
+				Columns:    []*schema.Column{UserEventListenersColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_event_listeners_event_listener_id",
+				Columns:    []*schema.Column{UserEventListenersColumns[1]},
+				RefColumns: []*schema.Column{EventListenersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserCommChannelsColumns holds the columns for the "user_comm_channels" table.
+	UserCommChannelsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "comm_channel_id", Type: field.TypeInt},
+	}
+	// UserCommChannelsTable holds the schema information for the "user_comm_channels" table.
+	UserCommChannelsTable = &schema.Table{
+		Name:       "user_comm_channels",
+		Columns:    UserCommChannelsColumns,
+		PrimaryKey: []*schema.Column{UserCommChannelsColumns[0], UserCommChannelsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_comm_channels_user_id",
+				Columns:    []*schema.Column{UserCommChannelsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_comm_channels_comm_channel_id",
+				Columns:    []*schema.Column{UserCommChannelsColumns[1]},
+				RefColumns: []*schema.Column{CommChannelsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ChainsTable,
+		CommChannelsTable,
 		ContractProposalsTable,
 		EventsTable,
 		EventListenersTable,
 		ProposalsTable,
 		UsersTable,
 		ValidatorsTable,
+		CommChannelEventListenersTable,
+		UserEventListenersTable,
+		UserCommChannelsTable,
 	}
 )
 
@@ -247,7 +367,12 @@ func init() {
 	ContractProposalsTable.ForeignKeys[0].RefTable = ChainsTable
 	EventsTable.ForeignKeys[0].RefTable = EventListenersTable
 	EventListenersTable.ForeignKeys[0].RefTable = ChainsTable
-	EventListenersTable.ForeignKeys[1].RefTable = UsersTable
 	ProposalsTable.ForeignKeys[0].RefTable = ChainsTable
 	ValidatorsTable.ForeignKeys[0].RefTable = ChainsTable
+	CommChannelEventListenersTable.ForeignKeys[0].RefTable = CommChannelsTable
+	CommChannelEventListenersTable.ForeignKeys[1].RefTable = EventListenersTable
+	UserEventListenersTable.ForeignKeys[0].RefTable = UsersTable
+	UserEventListenersTable.ForeignKeys[1].RefTable = EventListenersTable
+	UserCommChannelsTable.ForeignKeys[0].RefTable = UsersTable
+	UserCommChannelsTable.ForeignKeys[1].RefTable = CommChannelsTable
 }
