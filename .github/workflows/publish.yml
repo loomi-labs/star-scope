@@ -78,7 +78,7 @@ jobs:
             DEBUG=true
             GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
             WEB_APP_URL=https://star-scope.decrypto.online
-            TELEGRAM_BOT_NAME=StarScopeTestBot
+            TELEGRAM_BOT_NAME=cosmos_gov_bot
             DISCORD_CLIENT_ID=1120308547142549565
 
       - name: Extract metadata (tags, labels) for base-indexer image
@@ -128,16 +128,6 @@ jobs:
           push: true
           tags: ${{ steps.meta-envoy.outputs.tags }}
           labels: ${{ steps.meta-envoy.outputs.labels }}
-
-  deploy-to-swarm:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Deploy to swarm
         uses: wshihadeh/docker-deployment-action@v2
