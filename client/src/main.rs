@@ -463,6 +463,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                         let auth_state = app_state.auth_state.get();
                         match auth_state.as_ref() {
                             AuthState::LoggedOut => {
+                                debug!("Has login query params: {}", services.auth_manager.clone().has_login_query_params());
                                 if services.auth_manager.clone().has_login_query_params() {
                                     spawn_local_scoped(cx, async move {
                                         login_by_query_params(cx.to_owned()).await;
