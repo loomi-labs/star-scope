@@ -1,4 +1,4 @@
-name: Create and publish a Docker image
+name: Create and publish Docker images
 
 on:
   push:
@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push-image:
+  build-and-push-server:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,20 +27,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Detect changes
-        uses: dorny/paths-filter@v2.11.1
         id: changes
+        uses: dorny/paths-filter@v2.11.1
         with:
           filters: |
             server:
               - 'server/**'
-            client:
-              - 'client/**'
-            base-indexer:
-              - 'indexers/base/**/*'
-            osmosis-indexer:
-              - 'indexers/osmosis/**/*'
-            envoy:
-              - 'data/docker/envoy/**/*'
 
       - name: Extract metadata (tags, labels) for server image
         id: meta-server
@@ -57,6 +49,31 @@ jobs:
           push: true
           tags: ${{ steps.meta-server.outputs.tags }}
           labels: ${{ steps.meta-server.outputs.labels }}
+
+  build-and-push-client:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v2.11.1
+        with:
+          filters: |
+            client:
+              - 'client/**'
 
       - name: Extract metadata (tags, labels) for client image
         id: meta-client
@@ -81,6 +98,31 @@ jobs:
             TELEGRAM_BOT_NAME=StarScopeTestBot
             DISCORD_CLIENT_ID=1120308547142549565
 
+  build-and-push-base-indexer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v2.11.1
+        with:
+          filters: |
+            base-indexer:
+              - 'indexers/base/**/*'
+
       - name: Extract metadata (tags, labels) for base-indexer image
         id: meta-base-indexer
         uses: docker/metadata-action@v4.3.0
@@ -97,6 +139,31 @@ jobs:
           tags: ${{ steps.meta-base-indexer.outputs.tags }}
           labels: ${{ steps.meta-base-indexer.outputs.labels }}
 
+  build-and-push-osmosis-indexer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v2.11.1
+        with:
+          filters: |
+            osmosis-indexer:
+              - 'indexers/osmosis/**/*'
+
       - name: Extract metadata (tags, labels) for osmosis-indexer image
         id: meta-osmosis-indexer
         uses: docker/metadata-action@v4.3.0
@@ -112,6 +179,31 @@ jobs:
           push: true
           tags: ${{ steps.meta-osmosis-indexer.outputs.tags }}
           labels: ${{ steps.meta-osmosis-indexer.outputs.labels }}
+
+  build-and-push-envoy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v2.11.1
+        with:
+          filters: |
+            envoy:
+              - 'data/docker/envoy/**/*'
 
       - name: Extract metadata (tags, labels) for envoy image
         id: meta-envoy
@@ -130,7 +222,7 @@ jobs:
           labels: ${{ steps.meta-envoy.outputs.labels }}
 
   deploy-to-swarm:
-    needs: build-and-push-image
+    needs: [build-and-push-server, build-and-push-client, build-and-push-base-indexer, build-and-push-osmosis-indexer, build-and-push-envoy]
     runs-on: ubuntu-latest
     permissions:
       contents: read
