@@ -115,21 +115,18 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                         }
                         p(class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
                     }
-                    // discord login
-                    div(class="mt-6 relative") {
-                        div(class="absolute inset-0 flex items-center") {
-                            div(class="w-full border-t border-gray-300")
-                        }
-                        div(class="relative flex justify-center text-sm") {
-                            span(class="px-2 bg-white dark:bg-purple-700 text-gray-500 dark:text-white") {
-                                "Or continue with"
-                            }
-                        }
-                    }
-                    div(class="flex items-center justify-center space-y-6") {
-                        a(class=format!("bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target="_blank") {
+                    div(class="flex items-center justify-center space-y-6 mt-4") {
+                        a(class=format!("bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url) {
                             "Discord Login"
                         }
+                    }
+                    div(class="flex items-center justify-center space-y-6 mt-4") {
+                        script(async=true, src="https://telegram.org/js/telegram-widget.js?22",
+                            data-telegram-login=keys::TELEGRAM_BOT_NAME,
+                            data-size="large",
+                            data-radius="10",
+                            data-auth-url=keys::WEB_APP_URL,
+                            data-request-access="write") {}
                     }
                 }
             }

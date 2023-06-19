@@ -13,3 +13,4 @@ pub const GRPC_WEB_ENDPOINT_URL: &str = env!("GRPC_WEB_ENDPOINT_URL");
 
 pub const WEB_APP_URL: &str = env!("WEB_APP_URL");
 pub const DISCORD_CLIENT_ID: &str = env!("DISCORD_CLIENT_ID");
+pub const TELEGRAM_BOT_NAME: &str = env!("TELEGRAM_BOT_NAME");

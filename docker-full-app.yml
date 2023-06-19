@@ -195,7 +195,11 @@ services:
       context: .
       dockerfile: client/Dockerfile
       args:
+        - DEBUG=true
         - GRPC_WEB_ENDPOINT_URL=http://127.0.0.1:8080
+        - WEB_APP_URL=http://test.mydomain.com:8080
+        - DISCORD_CLIENT_ID=953923165808107540
+        - TELEGRAM_BOT_NAME=cosmos_gov_bot
     container_name: starscope_client
     ports:
       - "8080:80"
