@@ -146,7 +146,7 @@ fn is_mobile() -> bool {
 #[component]
 pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
     let app_state = use_context::<AppState>(cx);
-    let class_button = "w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm \
+    let class_button = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm \
     font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
     let is_mobile = is_mobile();
@@ -177,21 +177,21 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
             }
             div(class="mt-8 sm:mx-auto sm:w-full sm:max-w-md") {
                 div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow sm:rounded-lg sm:px-10") {
-                    div(class="flex items-center justify-center w-[238px] space-y-6") {
+                    div(class="flex items-center justify-center space-y-6") {
                         button(on:click=move |_| {
-                        }, class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {} {}", class_button, if is_mobile { "hidden" } else { "" })) {
+                        }, class=format!("w-[238px] border-2 border-keplr-blue-500 hover:border-keplr-blue-600 {} {}", class_button, if is_mobile { "hidden" } else { "" })) {
                             span(class="mr-2") {KeplrSvg{}}
-                            "Keplr Login"
+                            "Login with Keplr"
                         }
                         p(class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
                     }
-                    div(class="flex items-center justify-center w-[238px] space-y-6 mt-4") {
-                        a(class=format!("bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url) {
+                    div(class="flex items-center justify-center space-y-6 mt-6") {
+                        a(class=format!("w-[238px] bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url) {
                             span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
-                            "Discord Login"
+                            "Login with Discord"
                         }
                     }
-                    div(class="flex items-center justify-center space-y-6 mt-4") {
+                    div(class="flex items-center justify-center space-y-6 mt-6") {
                         script(async=true, src="https://telegram.org/js/telegram-widget.js?22",
                             data-telegram-login=keys::TELEGRAM_BOT_NAME,
                             data-size="large",
