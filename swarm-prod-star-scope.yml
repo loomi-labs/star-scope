@@ -177,6 +177,30 @@ services:
         constraints:
           - node.role != manager
 
+  telegram-bot:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_telegram_bot
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service telegram-bot"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
+  discord-bot:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    container_name: starscope_discord_bot
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service discord-bot"
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
   client:
     image: ghcr.io/loomi-labs/star-scope-client:main
     container_name: starscope_client

@@ -190,6 +190,32 @@ services:
       db-migration:
         condition: service_completed_successfully
 
+  telegram-bot:
+    build: server
+    container_name: starscope_telegram_bot
+    working_dir: /app
+    env_file:
+      - server/.env
+    command: "/starscope service telegram-bot"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
+  discord-bot:
+    build: server
+    container_name: starscope_discord_bot
+    working_dir: /app
+    env_file:
+      - server/.env
+    command: "/starscope service discord-bot"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migration:
+        condition: service_completed_successfully
+
   client:
     build:
       context: .

@@ -79,7 +79,7 @@ jobs:
             GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
             WEB_APP_URL=https://star-scope.decrypto.online
             TELEGRAM_BOT_NAME=cosmos_gov_bot
-            DISCORD_CLIENT_ID=953923165808107540
+            DISCORD_CLIENT_ID=1120308547142549565
 
       - name: Extract metadata (tags, labels) for base-indexer image
         id: meta-base-indexer
