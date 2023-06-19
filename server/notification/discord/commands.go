@@ -2,7 +2,6 @@ package discord
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/icza/gog"
@@ -36,13 +35,11 @@ var (
 			channelName := getChannelName(s, i)
 			isGroup := isGroup(i)
 
-			state := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("chat-id=%v", channelId)))
 			params := url.Values{}
 			params.Add("client_id", dc.clientId)
 			params.Add("redirect_uri", dc.webAppUrl)
 			params.Add("response_type", "code")
 			params.Add("scope", "identify")
-			params.Add("state", state)
 			redirectUrl := fmt.Sprintf("https://discord.com/oauth2/authorize?%v", params.Encode())
 			text := ""
 

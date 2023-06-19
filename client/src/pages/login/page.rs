@@ -39,7 +39,7 @@ extern "C" {
 
 #[allow(dead_code)]
 fn wallet_connect_login_wrapper() -> Result<String, String> {
-    let login_result = wallet_connect_login("https://star-scope.decrypto.online".to_string());
+    let login_result = wallet_connect_login(keys::WEB_APP_URL.to_string());
     let js_result = serde_wasm_bindgen::from_value(login_result).unwrap_or_else(|_| JsResult {
         result: "".to_string(),
         error: "Wallet connect login failed".to_string(),
@@ -53,7 +53,7 @@ fn wallet_connect_login_wrapper() -> Result<String, String> {
 }
 
 fn is_mobile() -> bool {
-    let result = isMobile("https://star-scope.decrypto.online".to_string());
+    let result = isMobile(keys::WEB_APP_URL.to_string());
     serde_wasm_bindgen::from_value(result).unwrap_or(false)
 }
 

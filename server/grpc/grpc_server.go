@@ -60,8 +60,9 @@ func (s GRPCServer) Run() {
 	telegramToken := common.GetEnvX("TELEGRAM_BOT_TOKEN")
 	discordClientId := common.GetEnvX("DISCORD_CLIENT_ID")
 	discordClientSecret := common.GetEnvX("DISCORD_CLIENT_SECRET")
+	discordWebAppUrl := common.GetEnvX("DISCORD_WEB_APP_URL")
 	var discordConfig = &oauth2.Config{
-		RedirectURL:  "webAppUrl",
+		RedirectURL:  discordWebAppUrl,
 		ClientID:     discordClientId,
 		ClientSecret: discordClientSecret,
 		Scopes:       []string{discord.ScopeIdentify},
