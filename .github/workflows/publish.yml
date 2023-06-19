@@ -129,6 +129,13 @@ jobs:
           tags: ${{ steps.meta-envoy.outputs.tags }}
           labels: ${{ steps.meta-envoy.outputs.labels }}
 
+  deploy-to-swarm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
       - name: Deploy to swarm
         uses: wshihadeh/docker-deployment-action@v2
         with:
