@@ -742,7 +742,7 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
         });
     });
 
-    let cnt_available_events_prev = create_memo(cx, move || {
+    let cnt_available_events_prev = create_selector(cx, move || {
         cnt_available_events(events_state, notifications_state)
     });
 
