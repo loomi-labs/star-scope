@@ -3,7 +3,6 @@ version: '3.9'
 services:
   db:
     image: postgres:14.5
-    container_name: starscope_db
     volumes:
       - data:/var/lib/postgresql/data/
     environment:
@@ -17,7 +16,6 @@ services:
 
   db-migration:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_db_migration
     working_dir: /app
     environment:
       - DEBUG=true
@@ -30,7 +28,6 @@ services:
 
   kafka:
     image: obsidiandynamics/kafka
-    container_name: starscope_kafka
     environment:
       KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092'
       KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:29092,EXTERNAL://localhost:9092'
@@ -48,7 +45,6 @@ services:
 
   kafdrop:
     image: obsidiandynamics/kafdrop
-    container_name: starscope_kafdrop
     networks:
       - caddy
       - default
@@ -62,7 +58,6 @@ services:
 
   grpc:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_grpc
     working_dir: /app
     secrets:
       - starscope-env
@@ -74,7 +69,6 @@ services:
 
   main-indexer:
     image: ghcr.io/loomi-labs/star-scope-base-indexer:main
-    container_name: starscope_main_indexer
     working_dir: /app
     environment:
       - DEBUG=true
@@ -92,7 +86,6 @@ services:
 
   osmosis-indexer:
     image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
-    container_name: starscope_osmosis_indexer
     working_dir: /app
     environment:
       - DEBUG=true
@@ -107,7 +100,6 @@ services:
 
   wallet-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_wallet_event_consumer
     working_dir: /app
     secrets:
       - starscope-env
@@ -119,7 +111,6 @@ services:
 
   chain-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_chain_event_consumer
     working_dir: /app
     secrets:
       - starscope-env
@@ -131,7 +122,6 @@ services:
 
   contract-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_contract_event_consumer
     working_dir: /app
     secrets:
       - starscope-env
@@ -143,7 +133,6 @@ services:
 
   chain-crawler:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_chain_crawler
     working_dir: /app
     secrets:
       - starscope-env
@@ -155,7 +144,6 @@ services:
 
   validator-crawler:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_validator_crawler
     working_dir: /app
     secrets:
       - starscope-env
@@ -167,7 +155,6 @@ services:
 
   gov-crawler:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_gov_crawler
     working_dir: /app
     secrets:
       - starscope-env
@@ -179,7 +166,6 @@ services:
 
   telegram-bot:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_telegram_bot
     working_dir: /app
     secrets:
       - starscope-env
@@ -191,7 +177,6 @@ services:
 
   discord-bot:
     image: ghcr.io/loomi-labs/star-scope-server:main
-    container_name: starscope_discord_bot
     working_dir: /app
     secrets:
       - starscope-env
@@ -203,7 +188,6 @@ services:
 
   client:
     image: ghcr.io/loomi-labs/star-scope-client:main
-    container_name: starscope_client
     networks:
       - caddy
       - default
@@ -221,7 +205,6 @@ services:
 
   pgadmin-ss:
     image: dpage/pgadmin4:latest
-    container_name: starscope_pgadmin
     secrets:
       - pgadmin-password
     environment:
@@ -239,7 +222,6 @@ services:
 
   whoami-client:
     image: jwilder/whoami
-    container_name: starscope_whoami_client
     networks:
       - caddy
     deploy:
@@ -252,7 +234,6 @@ services:
 
   whoami-kafdrop:
     image: jwilder/whoami
-    container_name: starscope_whoami_kafdrop
     networks:
       - caddy
     deploy:
