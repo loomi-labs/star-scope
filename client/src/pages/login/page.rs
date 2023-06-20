@@ -143,6 +143,25 @@ fn is_mobile() -> bool {
     serde_wasm_bindgen::from_value(result).unwrap_or(false)
 }
 
+async fn try_login_with_keplr(cx: Scope<'_>) {
+    let app_state = use_context::<AppState>(cx);
+    if *app_state.auth_state.get() == AuthState::LoggedOut {
+        match keplr_login_wrapper().await {
+            Ok(result) => {
+                let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
+                match response {
+                    Ok(_) => {
+                        let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
+                        *auth_state = AuthState::LoggedIn;
+                    }
+                    Err(status) => create_error_msg_from_status(cx, status),
+                }
+            }
+            Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
+        }
+    };
+}
+
 #[component]
 pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
     let app_state = use_context::<AppState>(cx);
@@ -178,15 +197,17 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
             div(class="mt-8 sm:mx-auto sm:w-full sm:max-w-md") {
                 div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow sm:rounded-lg sm:px-10") {
                     div(class="flex items-center justify-center space-y-6") {
-                        button(on:click=move |_| {
-                        }, class=format!("w-[238px] border-2 border-keplr-blue-500 hover:border-keplr-blue-600 {} {}", class_button, if is_mobile { "hidden" } else { "" })) {
+                        button(on:click=move |_| spawn_local_scoped(cx, async move {
+                            try_login_with_keplr(cx).await;
+                        }),
+                            class=format!("w-[219px] border-2 border-keplr-blue-500 hover:border-keplr-blue-600 {} {}", class_button, if is_mobile { "hidden" } else { "" })) {
                             span(class="mr-2") {KeplrSvg{}}
                             "Login with Keplr"
                         }
                         p(class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
-                        a(class=format!("w-[238px] bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url) {
+                        a(class=format!("w-[219px] bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url) {
                             span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
                             "Login with Discord"
                         }
