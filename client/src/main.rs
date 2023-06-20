@@ -304,14 +304,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
             AppRoutes::Notifications => view!(cx, Notifications {}),
             AppRoutes::Communication => view!(cx, Communication {}),
             AppRoutes::Settings => view!(cx, Settings {}),
-            AppRoutes::Login => {
-                if *app_state.auth_state.get() == AuthState::LoggedIn {
-                    app_state.route.set(AppRoutes::Notifications);
-                    view!(cx, Notifications {})
-                } else {
-                    Login(cx)
-                }
-            },
+            AppRoutes::Login => view!(cx, Login {}),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
         }
     } else {
@@ -454,17 +447,22 @@ async fn login_by_query_params(cx: Scope<'_>) {
 }
 
 fn execute_logged_out_fns(cx: Scope<'_>){
+    debug!("Logged out");
     let services = use_context::<Services>(cx);
     if services.auth_manager.clone().has_login_query_params() {
         spawn_local_scoped(cx, async move {
             login_by_query_params(cx.to_owned()).await;
         });
     } else {
-        safe_navigate(cx, AppRoutes::Home)
+        let app_state = use_context::<AppState>(cx);
+        if app_state.route.get_untracked().as_ref().needs_login() {
+            safe_navigate(cx, AppRoutes::Home)
+        }
     }
 }
 
 fn execute_logged_in_fns(cx: Scope<'_>) {
+    debug!("Logged in");
     let event_state = use_context::<EventsState>(cx);
     let notifications_state = use_context::<NotificationsState>(cx);
     event_state.reset();
@@ -476,7 +474,7 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
     });
 
     let app_state = use_context::<AppState>(cx);
-    if app_state.route.get_untracked().as_ref() == &AppRoutes::Home {
+    if !app_state.route.get_untracked().as_ref().needs_login() {
         debug!("Redirect to notifications");
         safe_navigate(cx, AppRoutes::Notifications)
     }
@@ -503,14 +501,8 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                     let auth_state_changed = create_selector(cx, move || app_state.auth_state.get().as_ref().clone());
                     create_effect(cx, move || {
                         match auth_state_changed.get().as_ref() {
-                            AuthState::LoggedOut => {
-                                debug!("Logged out");
-                                execute_logged_out_fns(cx);
-                            },
-                            AuthState::LoggedIn => {
-                                debug!("Logged in");
-                                execute_logged_in_fns(cx);
-                            },
+                            AuthState::LoggedOut => execute_logged_out_fns(cx),
+                            AuthState::LoggedIn => execute_logged_in_fns(cx),
                             AuthState::LoggingIn => {}
                         }
                     });
