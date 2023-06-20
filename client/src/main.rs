@@ -4,8 +4,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use log::Level;
 use log::{debug, error};
+use log::Level;
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
@@ -134,7 +134,7 @@ pub struct InfoMsg {
 pub struct AppState {
     auth_service: AuthService,
     pub auth_state: RcSignal<AuthState>,
-    pub route: RcSignal<AppRoutes>,
+    pub route: RcSignal<Option<AppRoutes>>,
     pub messages: RcSignal<Vec<RcSignal<InfoMsg>>>,
     pub user: RcSignal<Option<User>>,
 }
@@ -154,7 +154,7 @@ impl AppState {
         Self {
             auth_service,
             auth_state: create_rc_signal(auth_state),
-            route: create_rc_signal(AppRoutes::default()),
+            route: create_rc_signal(None),
             messages: create_rc_signal(vec![]),
             user: create_rc_signal(None),
         }
@@ -298,7 +298,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let services = use_context::<Services>(cx);
     if has_access_permission(&services.auth_manager, route) {
-        app_state.route.set(route.clone());
+        app_state.route.set(Some(route.clone()));
         match route {
             AppRoutes::Home => view!(cx, Home {}),
             AppRoutes::Notifications => view!(cx, Notifications {}),
@@ -308,7 +308,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
         }
     } else {
-        app_state.route.set(AppRoutes::Login);
+        app_state.route.set(Some(AppRoutes::Login));
         create_message(
             cx,
             "Access denied".to_string(),
@@ -441,24 +441,24 @@ async fn login_by_query_params(cx: Scope<'_>) {
             Err(status) => {
                 create_error_msg_from_status(cx, status);
                 safe_navigate(cx, AppRoutes::Home);
-            },
+            }
         }
     }
 }
 
-fn execute_logged_out_fns(cx: Scope<'_>){
+fn execute_logged_out_fns(cx: Scope<'_>) {
     debug!("Logged out");
     let services = use_context::<Services>(cx);
-    if services.auth_manager.clone().has_login_query_params() {
-        spawn_local_scoped(cx, async move {
+    spawn_local_scoped(cx, async move {
+        if services.auth_manager.clone().has_login_query_params() {
             login_by_query_params(cx.to_owned()).await;
-        });
-    } else {
-        let app_state = use_context::<AppState>(cx);
-        if app_state.route.get_untracked().as_ref().needs_login() {
-            safe_navigate(cx, AppRoutes::Home)
+        } else {
+            let app_state = use_context::<AppState>(cx);
+            if app_state.route.get_untracked().as_ref().is_some_and(|route| route.needs_login()) {
+                safe_navigate(cx, AppRoutes::Home);
+            }
         }
-    }
+    });
 }
 
 fn execute_logged_in_fns(cx: Scope<'_>) {
@@ -468,16 +468,15 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
     event_state.reset();
     notifications_state.reset();
     spawn_local_scoped(cx, async move {
+        let app_state = use_context::<AppState>(cx);
+        if app_state.route.get_untracked().as_ref().is_some_and(|route| !route.needs_login()) {
+            debug!("Redirect to notifications");
+            safe_navigate(cx, AppRoutes::Notifications)
+        }
         query_user_info(cx).await;
         query_events_count(cx).await;
         subscribe_to_events(cx);
     });
-
-    let app_state = use_context::<AppState>(cx);
-    if !app_state.route.get_untracked().as_ref().needs_login() {
-        debug!("Redirect to notifications");
-        safe_navigate(cx, AppRoutes::Notifications)
-    }
 }
 
 #[component]

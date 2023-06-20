@@ -78,9 +78,9 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     fn is_active_notification_route(
         event_type: Option<EventType>,
         notifications_state: &NotificationsState,
-        active_route: &AppRoutes,
+        active_route: Option<AppRoutes>,
     ) -> bool {
-        active_route == &AppRoutes::Notifications
+        active_route == Some(AppRoutes::Notifications)
             && notifications_state.has_filter_applied(event_type)
     }
 
@@ -120,8 +120,8 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let notification_button_views = View::new_fragment(
         n_button_data.iter().map(|&d| view! { cx, li {
-            button(on:click=move |_| handle_notification_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) { "text-primary" } else { "" })) {
-                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) {"bg-primary"} else { "" })) {}
+            button(on:click=move |_| handle_notification_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, if is_active_notification_route(d.0, notifications_state, *app_state.route.get()) { "text-primary" } else { "" })) {
+                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, *app_state.route.get()) {"bg-primary"} else { "" })) {}
                 span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
                     div(class="w-16 h-16")
                 }
@@ -141,8 +141,8 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
 
     let s_button_data = vec![
-        (AppRoutes::Communication, "icon-[mi--message]", "Communication"),
-        (AppRoutes::Settings, "icon-[iconamoon--profile]", "Account"),
+        (Some(AppRoutes::Communication), "icon-[mi--message]", "Communication"),
+        (Some(AppRoutes::Settings), "icon-[iconamoon--profile]", "Account"),
     ];
 
     let settings_button_views = View::new_fragment(
@@ -150,7 +150,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             view! { cx,
                 li {
                     button(
-                        on:click=move |_| safe_navigate(cx, d.0),
+                        on:click=move |_| safe_navigate(cx, d.0.unwrap()),
                         class=format!("{} {} {}", button_class, button_interactivity_class, if *app_state.route.get() == d.0 { "text-primary" } else { "" })
                     ) {
                         span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if *app_state.route.get() == d.0 {"bg-primary"} else { "" })) {}
