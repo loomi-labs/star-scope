@@ -201,14 +201,17 @@ impl AuthService {
         if self.has_discord_login_query_params() {
             let result = self.login_with_discord_query_params().await?;
             self.save_login_response(result);
+            Ok(())
         } else if self.has_telegram_login_query_params() {
             let result = self.login_with_telegram_query_params().await?;
             self.save_login_response(result);
+            Ok(())
+        } else  {
+            Err(Status::new(
+                tonic::Code::InvalidArgument,
+                "Invalid query params".to_string(),
+            ))
         }
-        Err(Status::new(
-            tonic::Code::InvalidArgument,
-            "Invalid query params".to_string(),
-        ))
     }
 
     async fn login_with_discord_query_params(&self) -> Result<LoginResponse, Status> {
