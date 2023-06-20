@@ -49,6 +49,19 @@ pub enum AppRoutes {
     NotFound,
 }
 
+impl AppRoutes {
+    fn needs_login(&self) -> bool {
+        match self {
+            AppRoutes::Home => false,
+            AppRoutes::Notifications => true,
+            AppRoutes::Communication => true,
+            AppRoutes::Settings => true,
+            AppRoutes::Login => false,
+            AppRoutes::NotFound => false,
+        }
+    }
+}
+
 impl ToString for AppRoutes {
     fn to_string(&self) -> String {
         match self {
@@ -288,13 +301,13 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
         app_state.route.set(route.clone());
         match route {
             AppRoutes::Home => view!(cx, Home {}),
-            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
-            AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
-            AppRoutes::Settings => view!(cx, LayoutWrapper{Settings {}}),
+            AppRoutes::Notifications => view!(cx, Notifications {}),
+            AppRoutes::Communication => view!(cx, Communication {}),
+            AppRoutes::Settings => view!(cx, Settings {}),
             AppRoutes::Login => {
                 if *app_state.auth_state.get() == AuthState::LoggedIn {
                     app_state.route.set(AppRoutes::Notifications);
-                    view!(cx, LayoutWrapper{Notifications {}})
+                    view!(cx, Notifications {})
                 } else {
                     Login(cx)
                 }
@@ -501,9 +514,15 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                             AuthState::LoggingIn => {}
                         }
                     });
-                    view! {cx, (
+                    let has_layout_wrapper = create_selector(cx, move || route.get().as_ref().needs_login());
+                    view! {cx,
+                        (if *has_layout_wrapper.get() {
+                            view! {cx,
+                                LayoutWrapper{ (activate_view(cx, route.get().as_ref())) }
+                            }
+                        } else {
                             activate_view(cx, route.get().as_ref())
-                        )
+                        })
                     }
                 }
             )

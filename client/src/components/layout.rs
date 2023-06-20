@@ -147,19 +147,20 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 
     let settings_button_views = View::new_fragment(
         s_button_data.iter().map(|&d| {
-            let is_active = *app_state.route.get() == d.0;
-            view! { cx, li {
-            button(
-                on:click=move |_| safe_navigate(cx, d.0),
-                class=format!("{} {} {}", button_class, button_interactivity_class, if is_active { "text-primary" } else { "" })
-            ) {
-                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active {"bg-primary"} else { "" })) {}
-                span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
-                    div(class="w-16 h-16") {}
+            view! { cx,
+                li {
+                    button(
+                        on:click=move |_| safe_navigate(cx, d.0),
+                        class=format!("{} {} {}", button_class, button_interactivity_class, if *app_state.route.get() == d.0 { "text-primary" } else { "" })
+                    ) {
+                        span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if *app_state.route.get() == d.0 {"bg-primary"} else { "" })) {}
+                        span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
+                            div(class="w-16 h-16") {}
+                        }
+                        span(class=span_text_class) { (d.2) }
+                    }
                 }
-                span(class=span_text_class) { (d.2) }
             }
-        } }
         }).collect()
     );
 
