@@ -44,7 +44,7 @@ pub fn get_query_param(key: &str) -> Option<String> {
 
 pub fn safe_navigate(cx: Scope, route: AppRoutes) {
     let app_state = use_context::<AppState>(cx);
-    if app_state.route.get().as_ref() != &route {
+    if app_state.route.get_untracked().as_ref() != &route {
         navigate(route.to_string().as_str());
     }
 }

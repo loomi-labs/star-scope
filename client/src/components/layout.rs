@@ -119,32 +119,24 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     ];
 
     let notification_button_views = View::new_fragment(
-        n_button_data.iter().map(|&d| {
-            let is_active = is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref());
-            let badge_view = if d.3.get().is_some() {
-                view! { cx,
-                div(class="absolute top-0 right-1") {
-                    div(class=badge_class) { (d.3.get().unwrap_or(0)) }
+        n_button_data.iter().map(|&d| view! { cx, li {
+            button(on:click=move |_| handle_notification_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) { "text-primary" } else { "" })) {
+                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) {"bg-primary"} else { "" })) {}
+                span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
+                    div(class="w-16 h-16")
                 }
-            }
-            } else {
-                view! { cx, div() }
-            };
-
-            view! { cx, li {
-                button(
-                    on:click=move |_| handle_notification_click(cx, d.0),
-                    class=format!("{} {} {}", button_class, button_interactivity_class, if is_active { "text-primary" } else { "" })
-                ) {
-                    span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active { "bg-primary" } else { "" })) {}
-                    span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
-                        div(class="w-16 h-16") {}
+                span(class=span_text_class) { (d.2) }
+                (if d.3.get().is_some() {
+                    view! {cx,
+                        div(class="absolute top-0 right-1") {
+                            div(class=badge_class) { (d.3.get().unwrap_or(0)) }
+                        }
                     }
-                    span(class=span_text_class) { (d.2) }
-                    (badge_view)
-                }
-            } }
-        }).collect()
+                    } else {
+                    view! {cx, div()}
+                })
+            }
+        } }).collect()
     );
 
 

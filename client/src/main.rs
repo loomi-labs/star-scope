@@ -440,13 +440,42 @@ async fn login_by_query_params(cx: Scope<'_>) {
     }
 }
 
+fn execute_logged_out_fns(cx: Scope<'_>){
+    let services = use_context::<Services>(cx);
+    if services.auth_manager.clone().has_login_query_params() {
+        spawn_local_scoped(cx, async move {
+            login_by_query_params(cx.to_owned()).await;
+        });
+    } else {
+        safe_navigate(cx, AppRoutes::Home)
+    }
+}
+
+fn execute_logged_in_fns(cx: Scope<'_>) {
+    let event_state = use_context::<EventsState>(cx);
+    let notifications_state = use_context::<NotificationsState>(cx);
+    event_state.reset();
+    notifications_state.reset();
+    spawn_local_scoped(cx, async move {
+        query_user_info(cx).await;
+        query_events_count(cx).await;
+        subscribe_to_events(cx);
+    });
+
+    let app_state = use_context::<AppState>(cx);
+    if app_state.route.get_untracked().as_ref() == &AppRoutes::Home {
+        debug!("Redirect to notifications");
+        safe_navigate(cx, AppRoutes::Notifications)
+    }
+}
+
 #[component]
 pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
     provide_context(cx, services.clone());
-    provide_context(cx, app_state);
+    provide_context(cx, app_state.clone());
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());
 
@@ -458,31 +487,16 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
             Router(
                 integration=HistoryIntegration::new(),
                 view=|cx, route: &ReadSignal<AppRoutes>| {
+                    let auth_state_changed = create_selector(cx, move || app_state.auth_state.get().as_ref().clone());
                     create_effect(cx, move || {
-                        let app_state = use_context::<AppState>(cx);
-                        let auth_state = app_state.auth_state.get();
-                        match auth_state.as_ref() {
+                        match auth_state_changed.get().as_ref() {
                             AuthState::LoggedOut => {
-                                debug!("Has login query params: {}", services.auth_manager.clone().has_login_query_params());
-                                if services.auth_manager.clone().has_login_query_params() {
-                                    spawn_local_scoped(cx, async move {
-                                        login_by_query_params(cx.to_owned()).await;
-                                    });
-                                } else {
-                                    safe_navigate(cx, AppRoutes::Home)
-                                }
+                                debug!("Logged out");
+                                execute_logged_out_fns(cx);
                             },
                             AuthState::LoggedIn => {
-                                let event_state = use_context::<EventsState>(cx);
-                                let notifications_state = use_context::<NotificationsState>(cx);
-                                event_state.reset();
-                                notifications_state.reset();
-                                spawn_local_scoped(cx, async move {
-                                    query_user_info(cx).await;
-                                    query_events_count(cx).await;
-                                    subscribe_to_events(cx);
-                                });
-                                safe_navigate(cx, AppRoutes::Notifications)
+                                debug!("Logged in");
+                                execute_logged_in_fns(cx);
                             },
                             AuthState::LoggingIn => {}
                         }
