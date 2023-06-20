@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::config::keys;
 use crate::{AppState, AuthState, InfoLevel, Services};
+use crate::components::social_media::TelegramLoginButton;
 
 
 #[component]
@@ -164,7 +165,6 @@ async fn try_login_with_keplr(cx: Scope<'_>) {
 
 #[component]
 pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
-    let app_state = use_context::<AppState>(cx);
     let class_button = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm \
     font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
@@ -213,12 +213,7 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                         }
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
-                        script(async=true, src="https://telegram.org/js/telegram-widget.js?22",
-                            data-telegram-login=keys::TELEGRAM_BOT_NAME,
-                            data-size="large",
-                            data-radius="10",
-                            data-auth-url=keys::WEB_APP_URL,
-                            data-request-access="write") {}
+                        TelegramLoginButton {}
                     }
                 }
             }
