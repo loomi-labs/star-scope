@@ -39,7 +39,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let events_state = use_context::<EventsState>(cx);
 
-    let handle_click = |cx: Scope, event_type: Option<EventType>| {
+    let handle_notification_click = |cx: Scope, event_type: Option<EventType>| {
         notifications_state.apply_filter(event_type);
         safe_navigate(cx, AppRoutes::Notifications);
     };
@@ -90,7 +90,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-base tracking-wide truncate";
     let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-[10px] font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
 
-    let button_data = vec![
+    let n_button_data = vec![
         (None, "icon-[lucide--copy-check]", "All", cnt_all),
         (
             Some(EventType::Funding),
@@ -119,24 +119,56 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     ];
 
     let notification_button_views = View::new_fragment(
-        button_data.iter().map(|&d| view! { cx, li {
-            button(on:click=move |_| handle_click(cx, d.0), class=format!("{} {} {}", button_class, button_interactivity_class, if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) { "text-primary" } else { "" })) {
-                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref()) {"bg-primary"} else { "" })) {}
+        n_button_data.iter().map(|&d| {
+            let is_active = is_active_notification_route(d.0, notifications_state, app_state.route.get().as_ref());
+            let badge_view = if d.3.get().is_some() {
+                view! { cx,
+                div(class="absolute top-0 right-1") {
+                    div(class=badge_class) { (d.3.get().unwrap_or(0)) }
+                }
+            }
+            } else {
+                view! { cx, div() }
+            };
+
+            view! { cx, li {
+                button(
+                    on:click=move |_| handle_notification_click(cx, d.0),
+                    class=format!("{} {} {}", button_class, button_interactivity_class, if is_active { "text-primary" } else { "" })
+                ) {
+                    span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active { "bg-primary" } else { "" })) {}
+                    span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
+                        div(class="w-16 h-16") {}
+                    }
+                    span(class=span_text_class) { (d.2) }
+                    (badge_view)
+                }
+            } }
+        }).collect()
+    );
+
+
+    let s_button_data = vec![
+        (AppRoutes::Communication, "icon-[mi--message]", "Communication"),
+        (AppRoutes::Settings, "icon-[iconamoon--profile]", "Account"),
+    ];
+
+    let settings_button_views = View::new_fragment(
+        s_button_data.iter().map(|&d| {
+            let is_active = *app_state.route.get() == d.0;
+            view! { cx, li {
+            button(
+                on:click=move |_| safe_navigate(cx, d.0),
+                class=format!("{} {} {}", button_class, button_interactivity_class, if is_active { "text-primary" } else { "" })
+            ) {
+                span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if is_active {"bg-primary"} else { "" })) {}
                 span(class=format!("{} {} {}", d.1, span_icon_class, if *is_sidebar_hovered.get() { "ml-2" } else { "ml-4" })) {
-                    div(class="w-16 h-16")
+                    div(class="w-16 h-16") {}
                 }
                 span(class=span_text_class) { (d.2) }
-                (if d.3.get().is_some() {
-                    view! {cx,
-                        div(class="absolute top-0 right-1") {
-                            div(class=badge_class) { (d.3.get().unwrap_or(0)) }
-                        }
-                    }
-                    } else {
-                    view! {cx, div()}
-                })
             }
-        } }).collect()
+        } }
+        }).collect()
     );
 
     view! { cx,
@@ -158,16 +190,17 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     }
                 }
             }
-            div(class="flex flex-col", style="height: calc(100vh - 460px)")
+            div(class="flex flex-col", style="height: calc(100vh - 520px)")
             div(class="flex flex-col pb-10") {
                 ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
                     li() {
-                        a(href=AppRoutes::Settings, class=format!("{} {} {}", button_class, button_interactivity_class, if *app_state.route.get() == AppRoutes::Settings {"text-primary"} else { "" })) {
-                            span(class=format!("{} w-1 h-5 rounded-r-lg absolute", if *app_state.route.get() == AppRoutes::Settings {"bg-primary"} else { "" })) {}
-                            span(class=format!("{} icon-[streamline--interface-setting-cog-work-loading-cog-gear-settings-machine]", span_icon_class)) {
-                                div(class="w-16 h-16")
+                        a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
+                            div(style="overflow: hidden; text-overflow: ellipsis;") {
+                                span(class=format!("ml-4 text-base tracking-wide")) { "Settings" }
                             }
-                            span(class=span_text_class) { "Settings" }
+                        }
+                        ul() {
+                            (settings_button_views)
                         }
                     }
                 }

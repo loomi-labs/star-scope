@@ -33,7 +33,7 @@ mod services;
 mod types;
 mod utils;
 
-#[derive(Route, Debug, Clone, PartialEq)]
+#[derive(Route, Debug, Clone, Copy, PartialEq)]
 pub enum AppRoutes {
     #[to("/")]
     Home,
