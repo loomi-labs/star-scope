@@ -137,6 +137,7 @@ pub struct AppState {
     pub route: RcSignal<Option<AppRoutes>>,
     pub messages: RcSignal<Vec<RcSignal<InfoMsg>>>,
     pub user: RcSignal<Option<User>>,
+    pub is_dialog_open: RcSignal<bool>,
 }
 
 impl Default for AppState {
@@ -157,6 +158,7 @@ impl AppState {
             route: create_rc_signal(None),
             messages: create_rc_signal(vec![]),
             user: create_rc_signal(None),
+            is_dialog_open: create_rc_signal(false),
         }
     }
 
@@ -181,6 +183,10 @@ impl AppState {
         self.auth_service.logout();
         self.user.set(None);
         self.auth_state.set(AuthState::LoggedOut);
+    }
+
+    pub fn set_showing_dialog(&self, is_open: bool) {
+        self.is_dialog_open.set(is_open);
     }
 }
 
@@ -240,7 +246,7 @@ impl EventsState {
     pub fn mark_as_read(&self, event_id: String) {
         let events = self.events.modify();
         if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
-            let mut event = events[index].get().as_ref().clone();
+            let mut event = events[index.clone()].get().as_ref().clone();
             event.read = true;
             *events[index].modify() = event.clone();
             let event_type = event.event_type();
@@ -492,31 +498,43 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     start_jwt_refresh_timer(cx.to_owned());
 
     view! {cx,
-        div(class="bg-white dark:bg-d-bg text-black dark:text-white antialiased") {
-            MessageOverlay {}
-            Router(
-                integration=HistoryIntegration::new(),
-                view=|cx, route: &ReadSignal<AppRoutes>| {
-                    let auth_state_changed = create_selector(cx, move || app_state.auth_state.get().as_ref().clone());
-                    create_effect(cx, move || {
-                        match auth_state_changed.get().as_ref() {
-                            AuthState::LoggedOut => execute_logged_out_fns(cx),
-                            AuthState::LoggedIn => execute_logged_in_fns(cx),
-                            AuthState::LoggingIn => {}
-                        }
-                    });
-                    let has_layout_wrapper = create_selector(cx, move || route.get().as_ref().needs_login());
-                    view! {cx,
-                        (if *has_layout_wrapper.get() {
-                            view! {cx,
-                                LayoutWrapper{ (activate_view(cx, route.get().as_ref())) }
-                            }
-                        } else {
-                            activate_view(cx, route.get().as_ref())
-                        })
+        div(class="relative") {
+            div(class="bg-white dark:bg-d-bg text-black dark:text-white antialiased") {
+                MessageOverlay {}
+                (if *app_state.is_dialog_open.get() {
+                    let app_state = use_context::<AppState>(cx);
+                    view!{cx,
+                        div(class="fixed inset-0 bg-black opacity-50 z-50", on:click=move |_| app_state.is_dialog_open.set(false)) {}
                     }
-                }
-            )
+                } else {
+                    view!{cx,
+                        div {}
+                    }
+                })
+                Router(
+                    integration=HistoryIntegration::new(),
+                    view=|cx, route: &ReadSignal<AppRoutes>| {
+                        let auth_state_changed = create_selector(cx, move || app_state.auth_state.get().as_ref().clone());
+                        create_effect(cx, move || {
+                            match auth_state_changed.get().as_ref() {
+                                AuthState::LoggedOut => execute_logged_out_fns(cx),
+                                AuthState::LoggedIn => execute_logged_in_fns(cx),
+                                AuthState::LoggingIn => {}
+                            }
+                        });
+                        let has_layout_wrapper = create_selector(cx, move || route.get().as_ref().needs_login());
+                        view! {cx,
+                            (if *has_layout_wrapper.get() {
+                                view! {cx,
+                                    LayoutWrapper{ (activate_view(cx, route.get().as_ref())) }
+                                }
+                            } else {
+                                activate_view(cx, route.get().as_ref())
+                            })
+                        }
+                    }
+                )
+            }
         }
     }
 }

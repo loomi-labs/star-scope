@@ -68,12 +68,31 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
         }
     });
 
+    create_effect(cx, move || {
+        if show_delete_dialog.get().is_some() || *show_add_channel_dialog.get() {
+            app_state.set_showing_dialog(true);
+        } else {
+            app_state.set_showing_dialog(false);
+        }
+    });
+
+    create_effect(cx, move || {
+        if *app_state.is_dialog_open.get() == false {
+            if show_delete_dialog.get_untracked().is_some() {
+                show_delete_dialog.set(None);
+            }
+            if *show_add_channel_dialog.get_untracked() {
+                show_add_channel_dialog.set(false);
+            }
+        }
+    });
+
     let class_button = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm \
     font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
     view! {cx,
         div(class="p-8 rounded-lg dark:bg-purple-700") {
-            dialog(class="absolute rounded-lg drop-shadow-lg dark:bg-white", open=*show_add_channel_dialog.get()) {
+            dialog(class="fixed bg-white p-4 rounded-lg z-50", open=*show_add_channel_dialog.get()) {
                 div(class="flex flex-col p-4") {
                     div(class="flex flex-col items-center") {
                         div(class="flex items-center justify-center rounded-full bg-discord-purple-500 text-white w-8 h-8 mr-2") {
@@ -93,7 +112,7 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
                     }
                 }
             }
-            dialog(class="absolute rounded-lg drop-shadow-lg dark:bg-white", open=show_delete_dialog.get().is_some()) {
+            dialog(class="fixed bg-white p-4 rounded-lg z-50", open=show_delete_dialog.get().is_some()) {
                 div(class="flex flex-col p-4") {
                     div(class="flex flex-col items-center") {
                         span(class="w-12 h-12 text-black icon-[ph--trash]") {}
