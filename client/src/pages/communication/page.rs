@@ -58,6 +58,7 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let channels = create_signal(cx, Vec::<DiscordChannel>::new());
     let is_loading = create_signal(cx, false);
     let show_delete_dialog = create_signal(cx, None::<i64>);
+    let show_add_channel_dialog = create_signal(cx, false);
 
     create_effect(cx, move || {
         if *is_connected.get() {
@@ -72,6 +73,26 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
 
     view! {cx,
         div(class="p-8 rounded-lg dark:bg-purple-700") {
+            dialog(class="absolute rounded-lg drop-shadow-lg dark:bg-white", open=*show_add_channel_dialog.get()) {
+                div(class="flex flex-col p-4") {
+                    div(class="flex flex-col items-center") {
+                        div(class="flex items-center justify-center rounded-full bg-discord-purple-500 text-white w-8 h-8 mr-2") {
+                            span(class="w-6 h-6 icon-[mingcute--discord-fill]") {}
+                        }
+                        h2(class="text-lg font-semibold mt-2") { "Add Channel" }
+                        p(class="mt-4 text-center") { "Add the Star Scope bot to your server." }
+                        p(class="mb-4 text-center") { "Then send the bot command `/start` in the channel(s) that you want to add." }
+                    }
+                    div(class="flex justify-center mt-2") {
+                        button(class="border-2 border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-semibold px-4 py-2 rounded mr-2", on:click=move |_| {
+                            spawn_local_scoped(cx, async move {
+                                query_discord_channels(cx.clone(), channels, &is_loading).await;
+                            });
+                            show_add_channel_dialog.set(false);
+                        }) { "Okay" }
+                    }
+                }
+            }
             dialog(class="absolute rounded-lg drop-shadow-lg dark:bg-white", open=show_delete_dialog.get().is_some()) {
                 div(class="flex flex-col p-4") {
                     div(class="flex flex-col items-center") {
@@ -131,7 +152,7 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
                                     )
                                 }
                                 div(class="flex items-center justify-items-end mt-4") {
-                                    a(class=format!("w-48 bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target="_blank") {
+                                    a(class=format!("w-48 bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target="_blank", on:click=move |_| show_add_channel_dialog.set(true)) {
                                         span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
                                         "Add Channel"
                                     }
