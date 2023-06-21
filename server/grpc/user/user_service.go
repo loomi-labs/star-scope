@@ -26,7 +26,7 @@ func NewUserServiceHandler(dbManagers *database.DbManagers) userpbconnect.UserSe
 	}
 }
 
-func (s UserService) GetUser(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.User], error) {
+func (s *UserService) GetUser(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.User], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -50,7 +50,7 @@ func (s UserService) GetUser(ctx context.Context, _ *connect.Request[emptypb.Emp
 	}), nil
 }
 
-func (s UserService) DeleteAccount(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
+func (s *UserService) DeleteAccount(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -66,7 +66,7 @@ func (s UserService) DeleteAccount(ctx context.Context, _ *connect.Request[empty
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
-func (s UserService) GetDiscordChannels(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.DiscordChannels], error) {
+func (s *UserService) GetDiscordChannels(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.DiscordChannels], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -93,4 +93,20 @@ func (s UserService) GetDiscordChannels(ctx context.Context, _ *connect.Request[
 	return connect.NewResponse(&userpb.DiscordChannels{
 		Channels: pbChannels,
 	}), nil
+}
+
+func (s *UserService) DeleteDiscordChannel(ctx context.Context, request *connect.Request[userpb.DeleteDiscordChannelRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	err := s.userManager.DeleteDiscordCommChannel(ctx, user.DiscordUserID, request.Msg.GetChannelId(), false)
+	if err != nil {
+		log.Sugar.Errorf("error deleting discord comm channel: %v", err)
+		return nil, types.UnknownErr
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }

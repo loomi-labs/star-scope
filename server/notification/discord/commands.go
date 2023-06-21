@@ -103,7 +103,7 @@ var (
 			log.Sugar.Debugf("Send stop to %v %v (%v)", gog.If(isGroup, "group", "user"), channelName, channelId)
 
 			text := ":sleeping: Bot stopped. Send `/start` to start it again."
-			err := dc.userManager.DeleteDiscordCommChannel(context.Background(), userId, channelId)
+			err := dc.userManager.DeleteDiscordCommChannel(context.Background(), userId, channelId, true)
 			if err != nil {
 				log.Sugar.Errorf("Error while deleting user: %v", err)
 				text = "There was an error unregistering your user. Please try again later."

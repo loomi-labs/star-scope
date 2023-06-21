@@ -52,6 +52,7 @@ func AccessibleRoles() map[string][]Role {
 		userService + "ListChannels":                  {User, Admin},
 		userService + "DeleteAccount":                 {User, Admin},
 		userService + "GetDiscordChannels":            {User, Admin},
+		userService + "DeleteDiscordChannel":          {User, Admin},
 		eventService + "EventStream":                  {User, Admin},
 		eventService + "ListEvents":                   {User, Admin},
 		eventService + "ListChains":                   {User, Admin},

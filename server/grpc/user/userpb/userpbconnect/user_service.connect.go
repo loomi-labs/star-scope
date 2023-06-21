@@ -42,6 +42,9 @@ const (
 	// UserServiceGetDiscordChannelsProcedure is the fully-qualified name of the UserService's
 	// GetDiscordChannels RPC.
 	UserServiceGetDiscordChannelsProcedure = "/starscope.grpc.UserService/GetDiscordChannels"
+	// UserServiceDeleteDiscordChannelProcedure is the fully-qualified name of the UserService's
+	// DeleteDiscordChannel RPC.
+	UserServiceDeleteDiscordChannelProcedure = "/starscope.grpc.UserService/DeleteDiscordChannel"
 )
 
 // UserServiceClient is a client for the starscope.grpc.UserService service.
@@ -49,6 +52,7 @@ type UserServiceClient interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
 	DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error)
 	GetDiscordChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error)
+	DeleteDiscordChannel(context.Context, *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error)
 }
 
 // NewUserServiceClient constructs a client for the starscope.grpc.UserService service. By default,
@@ -76,14 +80,20 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+UserServiceGetDiscordChannelsProcedure,
 			opts...,
 		),
+		deleteDiscordChannel: connect_go.NewClient[userpb.DeleteDiscordChannelRequest, emptypb.Empty](
+			httpClient,
+			baseURL+UserServiceDeleteDiscordChannelProcedure,
+			opts...,
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getUser            *connect_go.Client[emptypb.Empty, userpb.User]
-	deleteAccount      *connect_go.Client[emptypb.Empty, emptypb.Empty]
-	getDiscordChannels *connect_go.Client[emptypb.Empty, userpb.DiscordChannels]
+	getUser              *connect_go.Client[emptypb.Empty, userpb.User]
+	deleteAccount        *connect_go.Client[emptypb.Empty, emptypb.Empty]
+	getDiscordChannels   *connect_go.Client[emptypb.Empty, userpb.DiscordChannels]
+	deleteDiscordChannel *connect_go.Client[userpb.DeleteDiscordChannelRequest, emptypb.Empty]
 }
 
 // GetUser calls starscope.grpc.UserService.GetUser.
@@ -101,11 +111,17 @@ func (c *userServiceClient) GetDiscordChannels(ctx context.Context, req *connect
 	return c.getDiscordChannels.CallUnary(ctx, req)
 }
 
+// DeleteDiscordChannel calls starscope.grpc.UserService.DeleteDiscordChannel.
+func (c *userServiceClient) DeleteDiscordChannel(ctx context.Context, req *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.deleteDiscordChannel.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the starscope.grpc.UserService service.
 type UserServiceHandler interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
 	DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error)
 	GetDiscordChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error)
+	DeleteDiscordChannel(context.Context, *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -130,6 +146,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetDiscordChannels,
 		opts...,
 	))
+	mux.Handle(UserServiceDeleteDiscordChannelProcedure, connect_go.NewUnaryHandler(
+		UserServiceDeleteDiscordChannelProcedure,
+		svc.DeleteDiscordChannel,
+		opts...,
+	))
 	return "/starscope.grpc.UserService/", mux
 }
 
@@ -146,4 +167,8 @@ func (UnimplementedUserServiceHandler) DeleteAccount(context.Context, *connect_g
 
 func (UnimplementedUserServiceHandler) GetDiscordChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.GetDiscordChannels is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) DeleteDiscordChannel(context.Context, *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.DeleteDiscordChannel is not implemented"))
 }

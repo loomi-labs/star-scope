@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
-use urlencoding::encode;
 use wasm_bindgen::prelude::*;
 
 use crate::components::messages::{create_error_msg_from_status, create_message};

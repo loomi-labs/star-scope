@@ -11,6 +11,7 @@ service UserService {
   rpc GetUser (google.protobuf.Empty) returns (User) {}
   rpc DeleteAccount (google.protobuf.Empty) returns (google.protobuf.Empty) {}
   rpc GetDiscordChannels (google.protobuf.Empty) returns (DiscordChannels) {}
+  rpc DeleteDiscordChannel (DeleteDiscordChannelRequest) returns (google.protobuf.Empty) {}
 }
 
 message User {
@@ -30,4 +31,9 @@ message DiscordChannel {
 message DiscordChannels {
   repeated DiscordChannel channels = 1;
 }
+
+message DeleteDiscordChannelRequest {
+  int64 channel_id = 1;
+}
+
 

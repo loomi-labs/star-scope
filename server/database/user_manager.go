@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/commchannel"
+	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka_internal"
@@ -85,16 +86,21 @@ func (m *UserManager) QueryUsersForDiscordChannel(ctx context.Context, channelId
 }
 
 func (m *UserManager) QueryCommChannels(ctx context.Context, u *ent.User, t *commchannel.Type) ([]*ent.CommChannel, error) {
-	if t == nil {
-		return u.QueryCommChannels().All(ctx)
-	}
+	var predicates []predicate.CommChannel
 	if *t == commchannel.TypeTelegram {
-		return u.QueryCommChannels().Where(commchannel.TelegramChatIDNotNil()).All(ctx)
+		predicates = append(predicates, commchannel.TelegramChatIDNotNil())
 	}
 	if *t == commchannel.TypeDiscord {
-		return u.QueryCommChannels().Where(commchannel.DiscordChannelIDNotNil()).All(ctx)
+		predicates = append(predicates, commchannel.DiscordChannelIDNotNil())
 	}
-	return nil, fmt.Errorf("unknown comm channel type: %v", t)
+	if *t == commchannel.TypeWebpush {
+		return nil, fmt.Errorf("webpush not implemented")
+	}
+	return u.
+		QueryCommChannels().
+		Where(predicates...).
+		Order(ent.Asc(commchannel.FieldName)).
+		All(ctx)
 }
 
 func (m *UserManager) UpdateRole(ctx context.Context, name string, role user.Role) (*ent.User, error) {
@@ -303,14 +309,14 @@ func (m *UserManager) DeleteTelegramCommChannel(ctx context.Context, userId int6
 	return nil
 }
 
-func (m *UserManager) DeleteDiscordCommChannel(ctx context.Context, userId int64, channelId int64) error {
-	log.Sugar.Debugf("DeleteDiscordCommChannel: %d for %d", channelId, userId)
+func (m *UserManager) DeleteDiscordCommChannel(ctx context.Context, discordUserId int64, channelId int64, mustDeleteEmptyUsers bool) error {
+	log.Sugar.Debugf("DeleteDiscordCommChannel: %d for %d", channelId, discordUserId)
 	err := withTx(m.client, ctx, func(tx *ent.Tx) error {
 		commChannel, err := tx.CommChannel.
 			Query().
 			Where(commchannel.And(
 				commchannel.DiscordChannelIDEQ(channelId),
-				commchannel.HasUsersWith(user.DiscordUserID(userId)),
+				commchannel.HasUsersWith(user.DiscordUserID(discordUserId)),
 			)).
 			Only(ctx)
 		if err != nil {
@@ -328,10 +334,10 @@ func (m *UserManager) DeleteDiscordCommChannel(ctx context.Context, userId int64
 		return err
 	}
 	cnt := m.client.CommChannel.Query().
-		Where(commchannel.HasUsersWith(user.DiscordUserID(userId))).
+		Where(commchannel.HasUsersWith(user.DiscordUserID(discordUserId))).
 		CountX(ctx)
-	if cnt == 0 {
-		u, err := m.client.User.Query().Where(user.DiscordUserID(userId)).Only(ctx)
+	if cnt == 0 && mustDeleteEmptyUsers {
+		u, err := m.client.User.Query().Where(user.DiscordUserID(discordUserId)).Only(ctx)
 		if err != nil {
 			return err
 		}
