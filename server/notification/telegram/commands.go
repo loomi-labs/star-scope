@@ -56,7 +56,7 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 		if isGroup {
 			adminText += "\n👮‍♂ Bot admins in this chat\n"
 			for _, user := range client.UserManager.QueryUsersForTelegramChat(ctx, chatId) {
-				adminText += fmt.Sprintf("- @%v\n", user.Name)
+				adminText += fmt.Sprintf("- @%v\n", user.TelegramUsername)
 			}
 		}
 		cnt := client.EventListenerManager.QuerySubscriptionsCountForTelegramChat(ctx, chatId)

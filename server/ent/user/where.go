@@ -65,19 +65,24 @@ func UpdateTime(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUpdateTime, v))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldName, v))
-}
-
 // TelegramUserID applies equality check predicate on the "telegram_user_id" field. It's identical to TelegramUserIDEQ.
 func TelegramUserID(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTelegramUserID, v))
 }
 
+// TelegramUsername applies equality check predicate on the "telegram_username" field. It's identical to TelegramUsernameEQ.
+func TelegramUsername(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldTelegramUsername, v))
+}
+
 // DiscordUserID applies equality check predicate on the "discord_user_id" field. It's identical to DiscordUserIDEQ.
 func DiscordUserID(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDiscordUserID, v))
+}
+
+// DiscordUsername applies equality check predicate on the "discord_username" field. It's identical to DiscordUsernameEQ.
+func DiscordUsername(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldDiscordUsername, v))
 }
 
 // WalletAddress applies equality check predicate on the "wallet_address" field. It's identical to WalletAddressEQ.
@@ -165,71 +170,6 @@ func UpdateTimeLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldUpdateTime, v))
 }
 
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldName, v))
-}
-
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.User {
-	return predicate.User(sql.FieldNEQ(FieldName, v))
-}
-
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.User {
-	return predicate.User(sql.FieldIn(FieldName, vs...))
-}
-
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.User {
-	return predicate.User(sql.FieldNotIn(FieldName, vs...))
-}
-
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.User {
-	return predicate.User(sql.FieldGT(FieldName, v))
-}
-
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.User {
-	return predicate.User(sql.FieldGTE(FieldName, v))
-}
-
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.User {
-	return predicate.User(sql.FieldLT(FieldName, v))
-}
-
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.User {
-	return predicate.User(sql.FieldLTE(FieldName, v))
-}
-
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.User {
-	return predicate.User(sql.FieldContains(FieldName, v))
-}
-
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.User {
-	return predicate.User(sql.FieldHasPrefix(FieldName, v))
-}
-
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.User {
-	return predicate.User(sql.FieldHasSuffix(FieldName, v))
-}
-
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.User {
-	return predicate.User(sql.FieldEqualFold(FieldName, v))
-}
-
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.User {
-	return predicate.User(sql.FieldContainsFold(FieldName, v))
-}
-
 // RoleEQ applies the EQ predicate on the "role" field.
 func RoleEQ(v Role) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldRole, v))
@@ -300,6 +240,81 @@ func TelegramUserIDNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldTelegramUserID))
 }
 
+// TelegramUsernameEQ applies the EQ predicate on the "telegram_username" field.
+func TelegramUsernameEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameNEQ applies the NEQ predicate on the "telegram_username" field.
+func TelegramUsernameNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameIn applies the In predicate on the "telegram_username" field.
+func TelegramUsernameIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldTelegramUsername, vs...))
+}
+
+// TelegramUsernameNotIn applies the NotIn predicate on the "telegram_username" field.
+func TelegramUsernameNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldTelegramUsername, vs...))
+}
+
+// TelegramUsernameGT applies the GT predicate on the "telegram_username" field.
+func TelegramUsernameGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameGTE applies the GTE predicate on the "telegram_username" field.
+func TelegramUsernameGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameLT applies the LT predicate on the "telegram_username" field.
+func TelegramUsernameLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameLTE applies the LTE predicate on the "telegram_username" field.
+func TelegramUsernameLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameContains applies the Contains predicate on the "telegram_username" field.
+func TelegramUsernameContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameHasPrefix applies the HasPrefix predicate on the "telegram_username" field.
+func TelegramUsernameHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameHasSuffix applies the HasSuffix predicate on the "telegram_username" field.
+func TelegramUsernameHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameIsNil applies the IsNil predicate on the "telegram_username" field.
+func TelegramUsernameIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldTelegramUsername))
+}
+
+// TelegramUsernameNotNil applies the NotNil predicate on the "telegram_username" field.
+func TelegramUsernameNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldTelegramUsername))
+}
+
+// TelegramUsernameEqualFold applies the EqualFold predicate on the "telegram_username" field.
+func TelegramUsernameEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldTelegramUsername, v))
+}
+
+// TelegramUsernameContainsFold applies the ContainsFold predicate on the "telegram_username" field.
+func TelegramUsernameContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldTelegramUsername, v))
+}
+
 // DiscordUserIDEQ applies the EQ predicate on the "discord_user_id" field.
 func DiscordUserIDEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDiscordUserID, v))
@@ -348,6 +363,81 @@ func DiscordUserIDIsNil() predicate.User {
 // DiscordUserIDNotNil applies the NotNil predicate on the "discord_user_id" field.
 func DiscordUserIDNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldDiscordUserID))
+}
+
+// DiscordUsernameEQ applies the EQ predicate on the "discord_username" field.
+func DiscordUsernameEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameNEQ applies the NEQ predicate on the "discord_username" field.
+func DiscordUsernameNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameIn applies the In predicate on the "discord_username" field.
+func DiscordUsernameIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldDiscordUsername, vs...))
+}
+
+// DiscordUsernameNotIn applies the NotIn predicate on the "discord_username" field.
+func DiscordUsernameNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldDiscordUsername, vs...))
+}
+
+// DiscordUsernameGT applies the GT predicate on the "discord_username" field.
+func DiscordUsernameGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameGTE applies the GTE predicate on the "discord_username" field.
+func DiscordUsernameGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameLT applies the LT predicate on the "discord_username" field.
+func DiscordUsernameLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameLTE applies the LTE predicate on the "discord_username" field.
+func DiscordUsernameLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameContains applies the Contains predicate on the "discord_username" field.
+func DiscordUsernameContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameHasPrefix applies the HasPrefix predicate on the "discord_username" field.
+func DiscordUsernameHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameHasSuffix applies the HasSuffix predicate on the "discord_username" field.
+func DiscordUsernameHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameIsNil applies the IsNil predicate on the "discord_username" field.
+func DiscordUsernameIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldDiscordUsername))
+}
+
+// DiscordUsernameNotNil applies the NotNil predicate on the "discord_username" field.
+func DiscordUsernameNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldDiscordUsername))
+}
+
+// DiscordUsernameEqualFold applies the EqualFold predicate on the "discord_username" field.
+func DiscordUsernameEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldDiscordUsername, v))
+}
+
+// DiscordUsernameContainsFold applies the ContainsFold predicate on the "discord_username" field.
+func DiscordUsernameContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldDiscordUsername, v))
 }
 
 // WalletAddressEQ applies the EQ predicate on the "wallet_address" field.

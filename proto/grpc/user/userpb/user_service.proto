@@ -10,9 +10,24 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/user/userpb";
 service UserService {
   rpc GetUser (google.protobuf.Empty) returns (User) {}
   rpc DeleteAccount (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc GetDiscordChannels (google.protobuf.Empty) returns (DiscordChannels) {}
 }
 
 message User {
   int64 id = 1;
   string name = 2;
+  bool has_discord = 3;
+  bool has_telegram = 4;
 }
+
+message DiscordChannel {
+  int64 id = 1;
+  int64 channel_id = 2;
+  string name = 3;
+  bool is_group = 4;
+}
+
+message DiscordChannels {
+  repeated DiscordChannel channels = 1;
+}
+

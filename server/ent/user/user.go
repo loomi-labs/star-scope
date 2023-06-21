@@ -19,14 +19,16 @@ const (
 	FieldCreateTime = "create_time"
 	// FieldUpdateTime holds the string denoting the update_time field in the database.
 	FieldUpdateTime = "update_time"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
 	// FieldTelegramUserID holds the string denoting the telegram_user_id field in the database.
 	FieldTelegramUserID = "telegram_user_id"
+	// FieldTelegramUsername holds the string denoting the telegram_username field in the database.
+	FieldTelegramUsername = "telegram_username"
 	// FieldDiscordUserID holds the string denoting the discord_user_id field in the database.
 	FieldDiscordUserID = "discord_user_id"
+	// FieldDiscordUsername holds the string denoting the discord_username field in the database.
+	FieldDiscordUsername = "discord_username"
 	// FieldWalletAddress holds the string denoting the wallet_address field in the database.
 	FieldWalletAddress = "wallet_address"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
@@ -52,10 +54,11 @@ var Columns = []string{
 	FieldID,
 	FieldCreateTime,
 	FieldUpdateTime,
-	FieldName,
 	FieldRole,
 	FieldTelegramUserID,
+	FieldTelegramUsername,
 	FieldDiscordUserID,
+	FieldDiscordUsername,
 	FieldWalletAddress,
 }
 
@@ -131,11 +134,6 @@ func ByUpdateTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdateTime, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
 // ByRole orders the results by the role field.
 func ByRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRole, opts...).ToFunc()
@@ -146,9 +144,19 @@ func ByTelegramUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTelegramUserID, opts...).ToFunc()
 }
 
+// ByTelegramUsername orders the results by the telegram_username field.
+func ByTelegramUsername(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTelegramUsername, opts...).ToFunc()
+}
+
 // ByDiscordUserID orders the results by the discord_user_id field.
 func ByDiscordUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDiscordUserID, opts...).ToFunc()
+}
+
+// ByDiscordUsername orders the results by the discord_username field.
+func ByDiscordUsername(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDiscordUsername, opts...).ToFunc()
 }
 
 // ByWalletAddress orders the results by the wallet_address field.

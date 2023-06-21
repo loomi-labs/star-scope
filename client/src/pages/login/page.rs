@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::config::keys;
 use crate::{AppState, AuthState, InfoLevel, Services};
-use crate::components::social_media::TelegramLoginButton;
+use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
 
 
 #[component]
@@ -170,12 +170,6 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
 
     let is_mobile = is_mobile();
 
-    let discord_login_url = format!(
-        "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
-        keys::DISCORD_CLIENT_ID,
-        encode(keys::WEB_APP_URL)
-    );
-
     let color = keys::WHITE_COLOR;
     view!(cx,
         div(class="h-screen w-screen bg-gray-100 dark:bg-d-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8") {
@@ -207,10 +201,7 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                         p(class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
-                        a(class=format!("w-[219px] bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url) {
-                            span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
-                            "Login with Discord"
-                        }
+                        DiscordLoginButton(text="Login with Discord".to_string())
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
                         TelegramLoginButton {}

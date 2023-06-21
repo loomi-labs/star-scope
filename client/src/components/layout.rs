@@ -183,7 +183,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     }
                 }
             }
-            div(class="flex flex-col", style="height: calc(100vh - 520px)")
+            div(class="flex flex-col", style="height: calc(100vh - 540px)")
             div(class="flex flex-col pb-10") {
                 ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
                     li() {

@@ -22,15 +22,18 @@ func (User) Mixin() []ent.Mixin {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name"),
 		field.Enum("role").
 			Values("user", "admin").
 			Default("user"),
 		field.Int64("telegram_user_id").
 			Unique().
 			Optional(),
+		field.String("telegram_username").
+			Optional(),
 		field.Int64("discord_user_id").
 			Unique().
+			Optional(),
+		field.String("discord_username").
 			Optional(),
 		field.String("wallet_address").
 			Unique().

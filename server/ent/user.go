@@ -21,14 +21,16 @@ type User struct {
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
 	// Role holds the value of the "role" field.
 	Role user.Role `json:"role,omitempty"`
 	// TelegramUserID holds the value of the "telegram_user_id" field.
 	TelegramUserID int64 `json:"telegram_user_id,omitempty"`
+	// TelegramUsername holds the value of the "telegram_username" field.
+	TelegramUsername string `json:"telegram_username,omitempty"`
 	// DiscordUserID holds the value of the "discord_user_id" field.
 	DiscordUserID int64 `json:"discord_user_id,omitempty"`
+	// DiscordUsername holds the value of the "discord_username" field.
+	DiscordUsername string `json:"discord_username,omitempty"`
 	// WalletAddress holds the value of the "wallet_address" field.
 	WalletAddress string `json:"wallet_address,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -73,7 +75,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldID, user.FieldTelegramUserID, user.FieldDiscordUserID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldName, user.FieldRole, user.FieldWalletAddress:
+		case user.FieldRole, user.FieldTelegramUsername, user.FieldDiscordUsername, user.FieldWalletAddress:
 			values[i] = new(sql.NullString)
 		case user.FieldCreateTime, user.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
@@ -110,12 +112,6 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.UpdateTime = value.Time
 			}
-		case user.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				u.Name = value.String
-			}
 		case user.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
@@ -128,11 +124,23 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.TelegramUserID = value.Int64
 			}
+		case user.FieldTelegramUsername:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field telegram_username", values[i])
+			} else if value.Valid {
+				u.TelegramUsername = value.String
+			}
 		case user.FieldDiscordUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field discord_user_id", values[i])
 			} else if value.Valid {
 				u.DiscordUserID = value.Int64
+			}
+		case user.FieldDiscordUsername:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field discord_username", values[i])
+			} else if value.Valid {
+				u.DiscordUsername = value.String
 			}
 		case user.FieldWalletAddress:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -192,17 +200,20 @@ func (u *User) String() string {
 	builder.WriteString("update_time=")
 	builder.WriteString(u.UpdateTime.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(u.Name)
-	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", u.Role))
 	builder.WriteString(", ")
 	builder.WriteString("telegram_user_id=")
 	builder.WriteString(fmt.Sprintf("%v", u.TelegramUserID))
 	builder.WriteString(", ")
+	builder.WriteString("telegram_username=")
+	builder.WriteString(u.TelegramUsername)
+	builder.WriteString(", ")
 	builder.WriteString("discord_user_id=")
 	builder.WriteString(fmt.Sprintf("%v", u.DiscordUserID))
+	builder.WriteString(", ")
+	builder.WriteString("discord_username=")
+	builder.WriteString(u.DiscordUsername)
 	builder.WriteString(", ")
 	builder.WriteString("wallet_address=")
 	builder.WriteString(u.WalletAddress)

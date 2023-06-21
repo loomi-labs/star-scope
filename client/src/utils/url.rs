@@ -37,7 +37,11 @@ pub fn get_query_param(key: &str) -> Option<String> {
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
     let url = document.url().unwrap();
-    let query_params = querystring::querify(url.as_str());
+    let segments = url.split('?').collect::<Vec<_>>();
+    if segments.len() < 2 {
+        return None;
+    }
+    let query_params = querystring::querify(segments[1]);
     let index = query_params.iter().position(|(k, _)| *k == key);
     index.map(|index| query_params[index].1.to_string())
 }

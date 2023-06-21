@@ -36,12 +36,6 @@ func (uu *UserUpdate) SetUpdateTime(t time.Time) *UserUpdate {
 	return uu
 }
 
-// SetName sets the "name" field.
-func (uu *UserUpdate) SetName(s string) *UserUpdate {
-	uu.mutation.SetName(s)
-	return uu
-}
-
 // SetRole sets the "role" field.
 func (uu *UserUpdate) SetRole(u user.Role) *UserUpdate {
 	uu.mutation.SetRole(u)
@@ -83,6 +77,26 @@ func (uu *UserUpdate) ClearTelegramUserID() *UserUpdate {
 	return uu
 }
 
+// SetTelegramUsername sets the "telegram_username" field.
+func (uu *UserUpdate) SetTelegramUsername(s string) *UserUpdate {
+	uu.mutation.SetTelegramUsername(s)
+	return uu
+}
+
+// SetNillableTelegramUsername sets the "telegram_username" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableTelegramUsername(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetTelegramUsername(*s)
+	}
+	return uu
+}
+
+// ClearTelegramUsername clears the value of the "telegram_username" field.
+func (uu *UserUpdate) ClearTelegramUsername() *UserUpdate {
+	uu.mutation.ClearTelegramUsername()
+	return uu
+}
+
 // SetDiscordUserID sets the "discord_user_id" field.
 func (uu *UserUpdate) SetDiscordUserID(i int64) *UserUpdate {
 	uu.mutation.ResetDiscordUserID()
@@ -107,6 +121,26 @@ func (uu *UserUpdate) AddDiscordUserID(i int64) *UserUpdate {
 // ClearDiscordUserID clears the value of the "discord_user_id" field.
 func (uu *UserUpdate) ClearDiscordUserID() *UserUpdate {
 	uu.mutation.ClearDiscordUserID()
+	return uu
+}
+
+// SetDiscordUsername sets the "discord_username" field.
+func (uu *UserUpdate) SetDiscordUsername(s string) *UserUpdate {
+	uu.mutation.SetDiscordUsername(s)
+	return uu
+}
+
+// SetNillableDiscordUsername sets the "discord_username" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableDiscordUsername(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetDiscordUsername(*s)
+	}
+	return uu
+}
+
+// ClearDiscordUsername clears the value of the "discord_username" field.
+func (uu *UserUpdate) ClearDiscordUsername() *UserUpdate {
+	uu.mutation.ClearDiscordUsername()
 	return uu
 }
 
@@ -268,9 +302,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := uu.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-	}
 	if value, ok := uu.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
@@ -283,6 +314,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.TelegramUserIDCleared() {
 		_spec.ClearField(user.FieldTelegramUserID, field.TypeInt64)
 	}
+	if value, ok := uu.mutation.TelegramUsername(); ok {
+		_spec.SetField(user.FieldTelegramUsername, field.TypeString, value)
+	}
+	if uu.mutation.TelegramUsernameCleared() {
+		_spec.ClearField(user.FieldTelegramUsername, field.TypeString)
+	}
 	if value, ok := uu.mutation.DiscordUserID(); ok {
 		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
 	}
@@ -291,6 +328,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.DiscordUserIDCleared() {
 		_spec.ClearField(user.FieldDiscordUserID, field.TypeInt64)
+	}
+	if value, ok := uu.mutation.DiscordUsername(); ok {
+		_spec.SetField(user.FieldDiscordUsername, field.TypeString, value)
+	}
+	if uu.mutation.DiscordUsernameCleared() {
+		_spec.ClearField(user.FieldDiscordUsername, field.TypeString)
 	}
 	if value, ok := uu.mutation.WalletAddress(); ok {
 		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
@@ -414,12 +457,6 @@ func (uuo *UserUpdateOne) SetUpdateTime(t time.Time) *UserUpdateOne {
 	return uuo
 }
 
-// SetName sets the "name" field.
-func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
-	uuo.mutation.SetName(s)
-	return uuo
-}
-
 // SetRole sets the "role" field.
 func (uuo *UserUpdateOne) SetRole(u user.Role) *UserUpdateOne {
 	uuo.mutation.SetRole(u)
@@ -461,6 +498,26 @@ func (uuo *UserUpdateOne) ClearTelegramUserID() *UserUpdateOne {
 	return uuo
 }
 
+// SetTelegramUsername sets the "telegram_username" field.
+func (uuo *UserUpdateOne) SetTelegramUsername(s string) *UserUpdateOne {
+	uuo.mutation.SetTelegramUsername(s)
+	return uuo
+}
+
+// SetNillableTelegramUsername sets the "telegram_username" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableTelegramUsername(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetTelegramUsername(*s)
+	}
+	return uuo
+}
+
+// ClearTelegramUsername clears the value of the "telegram_username" field.
+func (uuo *UserUpdateOne) ClearTelegramUsername() *UserUpdateOne {
+	uuo.mutation.ClearTelegramUsername()
+	return uuo
+}
+
 // SetDiscordUserID sets the "discord_user_id" field.
 func (uuo *UserUpdateOne) SetDiscordUserID(i int64) *UserUpdateOne {
 	uuo.mutation.ResetDiscordUserID()
@@ -485,6 +542,26 @@ func (uuo *UserUpdateOne) AddDiscordUserID(i int64) *UserUpdateOne {
 // ClearDiscordUserID clears the value of the "discord_user_id" field.
 func (uuo *UserUpdateOne) ClearDiscordUserID() *UserUpdateOne {
 	uuo.mutation.ClearDiscordUserID()
+	return uuo
+}
+
+// SetDiscordUsername sets the "discord_username" field.
+func (uuo *UserUpdateOne) SetDiscordUsername(s string) *UserUpdateOne {
+	uuo.mutation.SetDiscordUsername(s)
+	return uuo
+}
+
+// SetNillableDiscordUsername sets the "discord_username" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableDiscordUsername(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetDiscordUsername(*s)
+	}
+	return uuo
+}
+
+// ClearDiscordUsername clears the value of the "discord_username" field.
+func (uuo *UserUpdateOne) ClearDiscordUsername() *UserUpdateOne {
+	uuo.mutation.ClearDiscordUsername()
 	return uuo
 }
 
@@ -676,9 +753,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.UpdateTime(); ok {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := uuo.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-	}
 	if value, ok := uuo.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 	}
@@ -691,6 +765,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.TelegramUserIDCleared() {
 		_spec.ClearField(user.FieldTelegramUserID, field.TypeInt64)
 	}
+	if value, ok := uuo.mutation.TelegramUsername(); ok {
+		_spec.SetField(user.FieldTelegramUsername, field.TypeString, value)
+	}
+	if uuo.mutation.TelegramUsernameCleared() {
+		_spec.ClearField(user.FieldTelegramUsername, field.TypeString)
+	}
 	if value, ok := uuo.mutation.DiscordUserID(); ok {
 		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
 	}
@@ -699,6 +779,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.DiscordUserIDCleared() {
 		_spec.ClearField(user.FieldDiscordUserID, field.TypeInt64)
+	}
+	if value, ok := uuo.mutation.DiscordUsername(); ok {
+		_spec.SetField(user.FieldDiscordUsername, field.TypeString, value)
+	}
+	if uuo.mutation.DiscordUsernameCleared() {
+		_spec.ClearField(user.FieldDiscordUsername, field.TypeString)
 	}
 	if value, ok := uuo.mutation.WalletAddress(); ok {
 		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)

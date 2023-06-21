@@ -459,7 +459,7 @@ func (k *Kafka) ProcessContractEvents() {
 }
 
 func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, eventsChannel chan *eventpb.NewEvent) {
-	log.Sugar.Debugf("Start processed-events consumer for user %v", user.Name)
+	log.Sugar.Debugf("Start processed-events consumer for user %v", user.ID)
 	els := k.eventListenerManager.QueryByUser(ctx, user)
 	subscriptions := map[string]interface{}{}
 	for _, el := range els {
@@ -481,7 +481,7 @@ func (k *Kafka) ConsumeProcessedEvents(ctx context.Context, user *ent.User, even
 	for {
 		select {
 		case <-ctx.Done():
-			log.Sugar.Debugf("Stop the processed-events consumer for user %v", user.Name)
+			log.Sugar.Debugf("Stop the processed-events consumer for user %v", user.ID)
 			return
 		default:
 			msg, err := r.ReadMessage(context.Background())

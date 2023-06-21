@@ -53,7 +53,7 @@ var (
 				if isGroup {
 					adminText := ""
 					for _, user := range dc.userManager.QueryUsersForDiscordChannel(ctx, channelId) {
-						adminText += fmt.Sprintf("- `%v`\n", user.Name)
+						adminText += fmt.Sprintf("- `%v`\n", user.DiscordUsername)
 					}
 					text = fmt.Sprintf(":rocket: Star Scope bot started\n\n") +
 						fmt.Sprintf(":police_officer: Bot admins in this channel:\n%v\n", adminText) +

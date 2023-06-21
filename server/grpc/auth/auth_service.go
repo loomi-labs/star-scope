@@ -7,15 +7,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/bufbuild/connect-go"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb"
 	"github.com/loomi-labs/star-scope/grpc/auth/authpb/authpbconnect"
+	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"strconv"
 	"strings"
@@ -55,9 +58,8 @@ func NewAuthServiceHandler(
 var (
 	ErrorLoginFailed             = status.Error(codes.Unauthenticated, "login failed")
 	ErrorLoginExpired            = status.Error(codes.Unauthenticated, "login credentials expired")
-	ErrorUserNotFound            = status.Error(codes.NotFound, "user not found")
-	ErrorInternal                = status.Error(codes.Internal, "internal error")
 	ErrorTokenVerificationFailed = status.Error(codes.Unauthenticated, "token verification failed")
+	ErrorUserAddFailed           = status.Error(codes.Internal, "could not add user account")
 )
 
 func verifySignature(message string) bool {
@@ -125,14 +127,14 @@ func getWalletAddress(message string) (string, error) {
 func (s *AuthService) login(user *ent.User) (*connect.Response[authpb.LoginResponse], error) {
 	accessToken, err := s.jwtManager.GenerateToken(user, AccessToken)
 	if err != nil {
-		log.Sugar.Errorf("Could not generate accessToken for user %v (%v): %v", user.Name, user.ID, err)
+		log.Sugar.Errorf("Could not generate accessToken for user %v: %v", user.ID, err)
 		return nil, ErrorLoginFailed
 	}
 
 	refreshToken, err := s.jwtManager.GenerateToken(user, RefreshToken)
 	if err != nil {
-		log.Sugar.Errorf("Could not generate refreshToken for user %v (%v): %v", user.Name, user.ID, err)
-		return nil, ErrorInternal
+		log.Sugar.Errorf("Could not generate refreshToken for user %v: %v", user.ID, err)
+		return nil, types.UnknownErr
 	}
 	return connect.NewResponse(&authpb.LoginResponse{
 		AccessToken:  accessToken,
@@ -266,13 +268,29 @@ func (s *AuthService) TelegramLogin(ctx context.Context, request *connect.Reques
 	return s.login(user)
 }
 
-type DiscordIdentity struct {
-	ID       json.Number `json:"id"`
-	Username string      `json:"username"`
+func (s *AuthService) deepCopyDiscordOAuth2Config(original *oauth2.Config) *oauth2.Config {
+	configCopy := &oauth2.Config{
+		ClientID:     original.ClientID,
+		ClientSecret: original.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:   original.Endpoint.AuthURL,
+			TokenURL:  original.Endpoint.TokenURL,
+			AuthStyle: original.Endpoint.AuthStyle,
+		},
+		RedirectURL: original.RedirectURL,
+		Scopes:      make([]string, len(original.Scopes)),
+	}
+	configCopy.Scopes = append(configCopy.Scopes, original.Scopes...)
+	return configCopy
 }
 
-func (s *AuthService) DiscordLogin(ctx context.Context, request *connect.Request[authpb.DiscordLoginRequest]) (*connect.Response[authpb.LoginResponse], error) {
-	token, err := s.discordOAuth2Config.Exchange(context.Background(), request.Msg.GetCode())
+func (s *AuthService) getDiscordIdentity(code string, webAppUrl string) (*types.DiscordIdentity, error) {
+	config := s.discordOAuth2Config
+	if webAppUrl != "" {
+		config = s.deepCopyDiscordOAuth2Config(config)
+		config.RedirectURL = webAppUrl
+	}
+	token, err := config.Exchange(context.Background(), code)
 	if err != nil {
 		log.Sugar.Infof("Error exchanging code for token: %v", err)
 		return nil, ErrorLoginFailed
@@ -290,27 +308,54 @@ func (s *AuthService) DiscordLogin(ctx context.Context, request *connect.Request
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Sugar.Infof("Error reading response body: %v", err)
-		return nil, ErrorInternal
+		return nil, types.UnknownErr
 	}
 
-	var identity DiscordIdentity
+	var identity types.DiscordIdentity
 	err = json.Unmarshal(body, &identity)
 	if err != nil {
 		log.Sugar.Infof("Error unmarshalling response body: %v", err)
-		return nil, ErrorInternal
+		return nil, types.UnknownErr
 	}
 
-	id, err := identity.ID.Int64()
+	return &identity, nil
+}
+
+func (s *AuthService) DiscordLogin(ctx context.Context, request *connect.Request[authpb.DiscordLoginRequest]) (*connect.Response[authpb.LoginResponse], error) {
+	discordIdentity, err := s.getDiscordIdentity(request.Msg.GetCode(), "")
 	if err != nil {
-		log.Sugar.Infof("Error converting id to int64: %v", err)
-		return nil, ErrorInternal
+		log.Sugar.Errorf("Error getting discord identity: %v", err)
+		return nil, ErrorLoginFailed
 	}
-	user, err := s.userManager.QueryByDiscordChannel(ctx, id)
+
+	user, err := s.userManager.QueryByDiscord(ctx, discordIdentity.Id)
 	if err != nil {
-		return nil, ErrorUserNotFound
+		return nil, types.UserNotFoundErr
 	}
 
 	return s.login(user)
+}
+
+func (s *AuthService) ConnectDiscord(ctx context.Context, request *connect.Request[authpb.ConnectDiscordRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	discordIdentity, err := s.getDiscordIdentity(request.Msg.GetCode(), request.Msg.GetWebAppUrl())
+	if err != nil {
+		log.Sugar.Errorf("Error getting discord identity: %v", err)
+		return nil, ErrorUserAddFailed
+	}
+
+	err = s.userManager.UpdateConnectDiscord(ctx, user, discordIdentity)
+	if err != nil {
+		log.Sugar.Errorf("Error connecting discord: %v", err)
+		return nil, ErrorUserAddFailed
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
 func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect.Request[authpb.RefreshAccessTokenRequest]) (*connect.Response[authpb.RefreshAccessTokenResponse], error) {
@@ -322,13 +367,13 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, request *connect.R
 	entUser, err := s.userManager.QueryById(ctx, claims.UserId)
 	if err != nil {
 		log.Sugar.Errorf("Could not find user %v (%v): %v", claims.UserId, claims.UserId, err)
-		return nil, ErrorUserNotFound
+		return nil, types.UserNotFoundErr
 	}
 
 	accessToken, err := s.jwtManager.GenerateToken(entUser, AccessToken)
 	if err != nil {
-		log.Sugar.Errorf("Could not generate accessToken for user %v (%v): %v", entUser.Name, entUser.ID, err)
-		return nil, ErrorInternal
+		log.Sugar.Errorf("Could not generate accessToken for user %v: %v", entUser.ID, err)
+		return nil, types.UnknownErr
 	}
 
 	return connect.NewResponse(&authpb.RefreshAccessTokenResponse{AccessToken: accessToken}), nil
