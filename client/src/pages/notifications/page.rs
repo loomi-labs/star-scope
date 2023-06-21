@@ -444,9 +444,9 @@ impl FromStr for ReadStatusFilter {
     }
 }
 
-const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center";
-const DROPDOWN_ICON_CLASS: &str = "absolute left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
-const DROPDOWN_SELECT_CLASS: &str = "block capitalize pl-8 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
+const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center w-full";
+const DROPDOWN_ICON_CLASS: &str = "absolute w-full left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
+const DROPDOWN_SELECT_CLASS: &str = "block capitalize w-full md:w-auto pl-8 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
 
 #[component]
 pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
@@ -725,7 +725,7 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     });
 
     view! {cx,
-        div(class="flex flex-col pl-4") {
+        div(class="flex flex-col") {
             div(class="hidden lg:flex flex-row justify-between items-center pb-4") {
                 h1(class="text-4xl font-bold") { "Notifications" }
                 div(class="flex flex-row space-x-4 h-8") {

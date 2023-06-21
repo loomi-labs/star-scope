@@ -71,8 +71,8 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
     view! {cx,
-        div(class="shadow p-8 rounded-lg dark:bg-purple-700") {
-            dialog(class="absolute rounded-lg dark:bg-white", open=show_delete_dialog.get().is_some()) {
+        div(class="p-8 rounded-lg dark:bg-purple-700") {
+            dialog(class="absolute rounded-lg drop-shadow-lg dark:bg-white", open=show_delete_dialog.get().is_some()) {
                 div(class="flex flex-col p-4") {
                     div(class="flex flex-col items-center") {
                         span(class="w-12 h-12 text-black icon-[ph--trash]") {}

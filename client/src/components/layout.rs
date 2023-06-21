@@ -10,17 +10,17 @@ use crate::utils::url::safe_navigate;
 pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     view!(cx,
-        div(class="flex items-center justify-between h-14 mr-8 z-10 text-white dark:text-purple-600") {
-            div(class="flex flex-grow items-center justify-start pl-3 h-14 dark:bg-purple-800") {
+        div(class="flex items-center justify-between h-14 z-10 text-white dark:text-purple-600 dark:bg-purple-800") {
+            div(class="flex flex-grow items-center justify-start pl-3 h-14") {
                 button(on:click=move |_| safe_navigate(cx, AppRoutes::Home), class="relative") {
                         img(src=keys::LOGO_WITH_TEXT_WHITE_IMG, class="h-auto w-44 transition-transform duration-300 transform")
                         img(src=keys::LOGO_WITH_TEXT_ORANGE_IMG, class="h-auto w-44 absolute top-0 left-0 opacity-0 transition-opacity duration-300 transform hover:opacity-100")
                 }
             }
-            div(class="flex justify-between items-center h-14 header-right dark:bg-purple-800") {
+            div(class="flex justify-between items-center h-14 pr-8") {
                 ul(class="flex items-center") {
                     li {
-                        button(class="flex items-center mr-4 p-2 rounded dark:bg-purple-800 hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
+                        button(class="flex items-center p-2 rounded dark:bg-purple-800 hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
                             span(class="inline-flex mr-1") {
                                 i(class="fas fa-sign-out-alt text-xl") {}
                             }
@@ -211,7 +211,7 @@ pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> V
                 Header{}
                 div(class="flex flex-row h-full w-full") {
                     Sidebar{}
-                    div(class="p-8 w-full max-w-[90vw] md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto overflow-x-visible") {
+                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto overflow-x-visible") {
                         (children)
                     }
                 }
