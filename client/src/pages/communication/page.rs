@@ -100,7 +100,7 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
                         h2(class="text-lg font-semibold") { "Delete Channel" }
                         p(class="my-4 text-center") { "Are you sure you want to delete this channel?" }
                     }
-                    div(class="flex justify-center") {
+                    div(class="flex justify-center mt-2") {
                         button(class="border-2 border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-semibold px-4 py-2 rounded mr-2", on:click=move |_| show_delete_dialog.set(None)) { "Cancel" }
                         button(class="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded", on:click=move |_| {
                             let channel_id = show_delete_dialog.get().unwrap();
