@@ -42,10 +42,10 @@ func (m *UserManager) QueryByWalletAddress(ctx context.Context, walletAddress st
 		Only(ctx)
 }
 
-func (m *UserManager) QueryByTelegram(ctx context.Context, tgChatId int64) (*ent.User, error) {
+func (m *UserManager) QueryByTelegram(ctx context.Context, tgUserId int64) (*ent.User, error) {
 	return m.client.User.
 		Query().
-		Where(user.TelegramUserIDEQ(tgChatId)).
+		Where(user.TelegramUserIDEQ(tgUserId)).
 		Only(ctx)
 }
 
@@ -272,7 +272,7 @@ func (m *UserManager) Delete(ctx context.Context, u *ent.User) error {
 	return nil
 }
 
-func (m *UserManager) DeleteTelegramCommChannel(ctx context.Context, userId int64, chatId int64) error {
+func (m *UserManager) DeleteTelegramCommChannel(ctx context.Context, userId int64, chatId int64, mustDeleteEmptyUsers bool) error {
 	log.Sugar.Debugf("DeleteTelegramCommChannel: %d for %d", chatId, userId)
 	err := withTx(m.client, ctx, func(tx *ent.Tx) error {
 		commChannel, err := tx.CommChannel.
@@ -299,7 +299,7 @@ func (m *UserManager) DeleteTelegramCommChannel(ctx context.Context, userId int6
 	cnt := m.client.CommChannel.Query().
 		Where(commchannel.HasUsersWith(user.TelegramUserID(userId))).
 		CountX(ctx)
-	if cnt == 0 {
+	if cnt == 0 && mustDeleteEmptyUsers {
 		u, err := m.client.User.Query().Where(user.TelegramUserID(userId)).Only(ctx)
 		if err != nil {
 			return err
@@ -459,6 +459,45 @@ func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, dis
 			UpdateOne(u).
 			SetDiscordUserID(discord.Id).
 			SetDiscordUsername(discord.Username).
+			Exec(ctx)
+	})
+	if err != nil {
+		return err
+	}
+	if isEventListenerDeleted {
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
+	}
+	return nil
+}
+
+func (m *UserManager) UpdateConnectTelegram(ctx context.Context, u *ent.User, data *types.TelegramLoginData) error {
+	if u.TelegramUserID == data.UserId {
+		return nil
+	}
+	if u.TelegramUserID != 0 {
+		return fmt.Errorf("user %d already connected to telegram", u.ID)
+	}
+	var isEventListenerDeleted = false
+	err := withTx(m.client, ctx, func(tx *ent.Tx) error {
+		oldDiscordUser, err := m.QueryByTelegram(ctx, data.UserId)
+		if err != nil && !ent.IsNotFound(err) {
+			return err
+		} else if err == nil { // user already exists and has to be merged
+			isEventListenerDeleted, err = m.moveEventListeners(ctx, tx, u, oldDiscordUser)
+			if err != nil {
+				return err
+			}
+
+			if err := m.moveCommChannels(ctx, tx, u, oldDiscordUser); err != nil {
+				return err
+			}
+			return m.delete(ctx, tx, oldDiscordUser)
+		}
+
+		return tx.User.
+			UpdateOne(u).
+			SetTelegramUserID(data.UserId).
+			SetTelegramUsername(data.Username).
 			Exec(ctx)
 	})
 	if err != nil {

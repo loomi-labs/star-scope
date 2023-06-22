@@ -66,7 +66,7 @@ func (s *UserService) DeleteAccount(ctx context.Context, _ *connect.Request[empt
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
-func (s *UserService) GetDiscordChannels(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.DiscordChannels], error) {
+func (s *UserService) ListDiscordChannels(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.DiscordChannels], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -105,6 +105,51 @@ func (s *UserService) DeleteDiscordChannel(ctx context.Context, request *connect
 	err := s.userManager.DeleteDiscordCommChannel(ctx, user.DiscordUserID, request.Msg.GetChannelId(), false)
 	if err != nil {
 		log.Sugar.Errorf("error deleting discord comm channel: %v", err)
+		return nil, types.UnknownErr
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *UserService) ListTelegramChats(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.TelegramChats], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	t := commchannel.TypeTelegram
+	channels, err := s.userManager.QueryCommChannels(ctx, user, &t)
+	if err != nil {
+		log.Sugar.Errorf("error querying comm channels: %v", err)
+		return nil, types.UnknownErr
+	}
+
+	pbChats := make([]*userpb.TelegramChat, len(channels))
+	for i, channel := range channels {
+		pbChats[i] = &userpb.TelegramChat{
+			Id:      int64(channel.ID),
+			ChatId:  channel.TelegramChatID,
+			Name:    channel.Name,
+			IsGroup: channel.IsGroup,
+		}
+	}
+
+	return connect.NewResponse(&userpb.TelegramChats{
+		Chats: pbChats,
+	}), nil
+}
+
+func (s *UserService) DeleteTelegramChat(ctx context.Context, request *connect.Request[userpb.DeleteTelegramChatRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	err := s.userManager.DeleteTelegramCommChannel(ctx, user.DiscordUserID, request.Msg.GetChatId(), false)
+	if err != nil {
+		log.Sugar.Errorf("error deleting telegram comm channel: %v", err)
 		return nil, types.UnknownErr
 	}
 

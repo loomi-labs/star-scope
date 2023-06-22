@@ -94,7 +94,7 @@ func (client TelegramBot) handleStop(update *tgbotapi.Update) {
 	log.Sugar.Debugf("Send stop to %v %v (%v)", gog.If(isGroup, "group", "user"), chatName, chatId)
 
 	text := ""
-	err := client.UserManager.DeleteTelegramCommChannel(context.Background(), userId, chatId)
+	err := client.UserManager.DeleteTelegramCommChannel(context.Background(), userId, chatId, true)
 	if err != nil {
 		text = "There was an error unregistering your user. Please try again later."
 	} else {

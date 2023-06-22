@@ -202,17 +202,8 @@ func (s *AuthService) isValid(dataStr string, secretKey []byte, hash string) boo
 	return resultHash == hash
 }
 
-type TelegramLoginData struct {
-	AuthDate  time.Time
-	UserId    int64
-	Firstname string
-	Lastname  string
-	Username  string
-	PhotoURL  string
-}
-
-func (s *AuthService) parseTelegramData(dataStr string) (*TelegramLoginData, error) {
-	var data TelegramLoginData
+func (s *AuthService) parseTelegramData(dataStr string) (*types.TelegramLoginData, error) {
+	var data types.TelegramLoginData
 	for _, v := range strings.Split(dataStr, "\n") {
 		split := strings.Split(v, "=")
 		if len(split) == 2 {
@@ -266,6 +257,37 @@ func (s *AuthService) TelegramLogin(ctx context.Context, request *connect.Reques
 	}
 
 	return s.login(user)
+}
+
+func (s *AuthService) ConnectTelegram(ctx context.Context, request *connect.Request[authpb.ConnectTelegramRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	var msg = request.Msg
+	if !s.isValid(msg.DataStr, s.secretKey1(), msg.Hash) && !s.isValid(msg.DataStr, s.secretKey2(), msg.Hash) {
+		return nil, ErrorLoginFailed
+	}
+
+	data, err := s.parseTelegramData(msg.DataStr)
+	if err != nil {
+		log.Sugar.Errorf("error while parsing telegram data: %v", err)
+		return nil, ErrorLoginFailed
+	}
+
+	if time.Now().Sub(data.AuthDate) > time.Hour {
+		return nil, ErrorLoginExpired
+	}
+
+	err = s.userManager.UpdateConnectTelegram(ctx, user, data)
+	if err != nil {
+		log.Sugar.Errorf("Error connecting discord: %v", err)
+		return nil, ErrorUserAddFailed
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
 func (s *AuthService) deepCopyDiscordOAuth2Config(original *oauth2.Config) *oauth2.Config {

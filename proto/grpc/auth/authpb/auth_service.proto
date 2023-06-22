@@ -12,6 +12,7 @@ service AuthService {
   rpc DiscordLogin (DiscordLoginRequest) returns (LoginResponse) {}
   rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {}
   rpc ConnectDiscord (ConnectDiscordRequest) returns (google.protobuf.Empty) {}
+  rpc ConnectTelegram (ConnectTelegramRequest) returns (google.protobuf.Empty) {}
 }
 
 message KeplrLoginRequest {
@@ -43,4 +44,9 @@ message RefreshAccessTokenResponse {
 message ConnectDiscordRequest {
   string code = 1;
   string web_app_url = 2;
+}
+
+message ConnectTelegramRequest {
+  string dataStr = 1;
+  string hash = 2;
 }

@@ -29,6 +29,10 @@ module.exports = {
           500: '#5865f2',
           600: '#4651c2',
         },
+        'telegram-blue': {
+          500: '#54A9EB',
+          600: '#4790C8',
+        },
         black: '#000000',
         white: '#FFFFFF',
         purple: {
