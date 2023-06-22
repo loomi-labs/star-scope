@@ -346,6 +346,89 @@ func (m *UserManager) DeleteDiscordCommChannel(ctx context.Context, discordUserI
 	return nil
 }
 
+func (m *UserManager) moveEventListeners(ctx context.Context, tx *ent.Tx, newUser *ent.User, oldUser *ent.User) error {
+	oldEls, err := oldUser.
+		QueryEventListeners().
+		All(ctx)
+	if err != nil {
+		return err
+	}
+	els, err := tx.User.
+		QueryEventListeners(newUser).
+		WithUsers().
+		All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, oldEl := range oldEls {
+		var foundNewEl *ent.EventListener
+		for _, el := range els {
+			if oldEl.WalletAddress == el.WalletAddress && oldEl.DataType == el.DataType {
+				foundNewEl = el
+				break
+			}
+		}
+		if foundNewEl != nil {
+			if len(oldEl.Edges.Users) > 1 {
+				err = tx.EventListener.
+					UpdateOne(oldEl).
+					RemoveUsers(oldUser).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+			} else {
+				oldEvents := oldEl.
+					QueryEvents().
+					AllX(ctx)
+				for _, event := range oldEvents {
+					tx.Event.
+						UpdateOne(event).
+						SetEventListenerID(foundNewEl.ID).
+						ExecX(ctx)
+				}
+				err = tx.EventListener.
+					DeleteOne(oldEl).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+				// TODO: what happens to comm channels? Should we remove the deleted event listener from them?
+			}
+		} else {
+			err = tx.EventListener.
+				UpdateOne(oldEl).
+				RemoveUsers(oldUser).
+				AddUsers(newUser).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m *UserManager) moveCommChannels(ctx context.Context, tx *ent.Tx, newUser *ent.User, oldUser *ent.User) error {
+	oldCcs, err := oldUser.
+		QueryCommChannels().
+		All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, oldCc := range oldCcs {
+		err = tx.CommChannel.
+			UpdateOne(oldCc).
+			RemoveUsers(oldUser).
+			AddUsers(newUser).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, discord *types.DiscordIdentity) error {
 	if u.DiscordUserID == discord.Id {
 		return nil
@@ -357,67 +440,15 @@ func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, dis
 		oldDiscordUser, err := m.QueryByDiscord(ctx, discord.Id)
 		if err != nil && !ent.IsNotFound(err) {
 			return err
-		} else if err == nil {
-			oldEls, err := oldDiscordUser.
-				QueryEventListeners().
-				All(ctx)
-			if err != nil {
+		} else if err == nil { // user already exists and has to be merged
+			if err := m.moveEventListeners(ctx, tx, u, oldDiscordUser); err != nil {
 				return err
 			}
-			els, err := tx.User.
-				QueryEventListeners(u).
-				WithUsers().
-				All(ctx)
-			for _, oldEl := range oldEls {
-				var foundNewEl *ent.EventListener
-				for _, el := range els {
-					if oldEl.WalletAddress == el.WalletAddress && oldEl.DataType == el.DataType {
-						foundNewEl = el
-						break
-					}
-				}
-				if foundNewEl != nil {
-					if len(oldEl.Edges.Users) > 1 {
-						err = tx.EventListener.
-							UpdateOne(oldEl).
-							RemoveUsers(oldDiscordUser).
-							Exec(ctx)
-						if err != nil {
-							return err
-						}
-					} else {
-						oldEvents := oldEl.
-							QueryEvents().
-							AllX(ctx)
-						for _, event := range oldEvents {
-							tx.Event.
-								UpdateOne(event).
-								SetEventListenerID(foundNewEl.ID).
-								ExecX(ctx)
-						}
-						err = tx.EventListener.
-							DeleteOne(oldEl).
-							Exec(ctx)
-						if err != nil {
-							return err
-						}
-					}
-				} else {
-					err = tx.EventListener.
-						UpdateOne(oldEl).
-						RemoveUsers(oldDiscordUser).
-						AddUsers(u).
-						Exec(ctx)
-					if err != nil {
-						return err
-					}
-				}
-			}
-			// TODO: update CommChannels
-			err = m.delete(ctx, tx, oldDiscordUser)
-			if err != nil {
+
+			if err := m.moveCommChannels(ctx, tx, u, oldDiscordUser); err != nil {
 				return err
 			}
+			return m.delete(ctx, tx, oldDiscordUser)
 		}
 
 		return tx.User.

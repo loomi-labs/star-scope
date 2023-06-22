@@ -33,6 +33,18 @@ pub fn add_or_update_query_params(key: &str, value: &str) {
         .unwrap();
 }
 
+pub fn clean_query_params() {
+    let window = web_sys::window().unwrap();
+    let history = window.history().unwrap();
+    let document = window.document().unwrap();
+    let url = document.url().unwrap();
+    let segments = url.split('?').collect::<Vec<_>>();
+    let stripped_url = segments[0];
+    history
+        .replace_state_with_url(&JsValue::null(), "", Some(stripped_url))
+        .unwrap();
+}
+
 pub fn get_query_param(key: &str) -> Option<String> {
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();

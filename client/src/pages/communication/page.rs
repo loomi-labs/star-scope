@@ -7,7 +7,7 @@ use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
 use crate::config::keys;
 use crate::types::protobuf::grpc::{ConnectDiscordRequest, DeleteDiscordChannelRequest, DiscordChannel};
-use crate::utils::url::get_query_param;
+use crate::utils::url::{get_query_param, clean_query_params};
 
 
 async fn query_discord_channels(cx: Scope<'_>, channels: &Signal<Vec<DiscordChannel>>, is_loading: &Signal<bool>) {
@@ -137,7 +137,7 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
                     false => {
                         let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
                         view! {cx,
-                            p(class="my-4") { "Connect your Discord account to receive notifications via Discord." }
+                            p(class="my-4") { "Receive notifications via Discord." }
                             DiscordLoginButton(text="Connect Discord".to_string(), open_in_new_tab=false, web_app_url=web_app_url)
                         }
                     }
@@ -196,6 +196,8 @@ async fn connect_discord_account(cx: Scope<'_>, code: String) {
         .await
         .map(|res| res.into_inner());
     if let Ok(_) = response {
+        clean_query_params();
+        create_message(cx, "Discord account connected", "Your Discord account is now connected. Add channels to receive notifications.", InfoLevel::Success);
         query_user_info(cx).await;
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
