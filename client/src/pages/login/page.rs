@@ -4,10 +4,9 @@ use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
 
 use crate::components::messages::{create_error_msg_from_status, create_message};
+use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
 use crate::config::keys;
 use crate::{AppState, AuthState, InfoLevel, Services};
-use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
-
 
 #[component]
 fn KeplrSvg<G: Html>(cx: Scope) -> View<G> {
@@ -148,7 +147,11 @@ async fn try_login_with_keplr(cx: Scope<'_>) {
     if *app_state.auth_state.get() == AuthState::LoggedOut {
         match keplr_login_wrapper().await {
             Ok(result) => {
-                let response = use_context::<Services>(cx).auth_manager.clone().login(result.clone()).await;
+                let response = use_context::<Services>(cx)
+                    .auth_manager
+                    .clone()
+                    .login(result.clone())
+                    .await;
                 match response {
                     Ok(_) => {
                         let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
@@ -157,7 +160,12 @@ async fn try_login_with_keplr(cx: Scope<'_>) {
                     Err(status) => create_error_msg_from_status(cx, status),
                 }
             }
-            Err(status) => create_message(cx, "Login failed", format!("Login failed with status: {}", status), InfoLevel::Error),
+            Err(status) => create_message(
+                cx,
+                "Login failed",
+                format!("Login failed with status: {}", status),
+                InfoLevel::Error,
+            ),
         }
     };
 }

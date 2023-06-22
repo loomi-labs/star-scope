@@ -1,9 +1,9 @@
+use crate::types::protobuf::grpc::{DiscordLoginRequest, TelegramLoginRequest};
 use crate::{AppRoutes, AppState};
 use sycamore::prelude::{use_context, Scope};
 use sycamore_router::navigate;
 use urlencoding::decode;
 use wasm_bindgen::JsValue;
-use crate::types::protobuf::grpc::{DiscordLoginRequest, TelegramLoginRequest};
 
 #[allow(dead_code)]
 pub fn add_or_update_query_params(key: &str, value: &str) {
@@ -83,7 +83,7 @@ pub fn has_discord_login_query_params() -> bool {
 }
 
 pub fn get_discord_login_data() -> Option<DiscordLoginRequest> {
-    get_query_param("code").map(|code| DiscordLoginRequest{code})
+    get_query_param("code").map(|code| DiscordLoginRequest { code })
 }
 
 pub fn get_telegram_login_data() -> Option<TelegramLoginRequest> {

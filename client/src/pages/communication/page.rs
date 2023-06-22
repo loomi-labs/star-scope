@@ -1,15 +1,23 @@
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 
-use crate::{AppRoutes, AppState, InfoLevel, query_user_info, Services};
 use crate::components::loading::LoadingSpinner;
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
 use crate::config::keys;
-use crate::types::protobuf::grpc::{ConnectDiscordRequest, ConnectTelegramRequest, DeleteDiscordChannelRequest, DeleteTelegramChatRequest, DiscordChannel, DiscordLoginRequest, TelegramChat, TelegramLoginRequest};
+use crate::types::protobuf::grpc::{
+    ConnectDiscordRequest, ConnectTelegramRequest, DeleteDiscordChannelRequest,
+    DeleteTelegramChatRequest, DiscordChannel, DiscordLoginRequest, TelegramChat,
+    TelegramLoginRequest,
+};
 use crate::utils::url::{clean_query_params, get_discord_login_data, get_telegram_login_data};
+use crate::{query_user_info, AppRoutes, AppState, InfoLevel, Services};
 
-async fn query_discord_channels(cx: Scope<'_>, channels: &Signal<Vec<DiscordChannel>>, is_loading: &Signal<bool>) {
+async fn query_discord_channels(
+    cx: Scope<'_>,
+    channels: &Signal<Vec<DiscordChannel>>,
+    is_loading: &Signal<bool>,
+) {
     is_loading.set(true);
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(());
@@ -27,10 +35,17 @@ async fn query_discord_channels(cx: Scope<'_>, channels: &Signal<Vec<DiscordChan
     is_loading.set(false);
 }
 
-async fn delete_discord_channel(cx: Scope<'_>, channels: &Signal<Vec<DiscordChannel>>, channel_id: i64, is_loading: &Signal<bool>) {
+async fn delete_discord_channel(
+    cx: Scope<'_>,
+    channels: &Signal<Vec<DiscordChannel>>,
+    channel_id: i64,
+    is_loading: &Signal<bool>,
+) {
     is_loading.set(true);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(DeleteDiscordChannelRequest { channel_id });
+    let request = services
+        .grpc_client
+        .create_request(DeleteDiscordChannelRequest { channel_id });
     let response = services
         .grpc_client
         .get_user_service()
@@ -38,8 +53,20 @@ async fn delete_discord_channel(cx: Scope<'_>, channels: &Signal<Vec<DiscordChan
         .await
         .map(|res| res.into_inner());
     if response.is_ok() {
-        channels.set(channels.get_untracked().iter().filter(|channel| channel.channel_id != channel_id).cloned().collect());
-        create_message(cx, "Channel deleted", "Channel successfully deleted".to_string(), InfoLevel::Success);
+        channels.set(
+            channels
+                .get_untracked()
+                .iter()
+                .filter(|channel| channel.channel_id != channel_id)
+                .cloned()
+                .collect(),
+        );
+        create_message(
+            cx,
+            "Channel deleted",
+            "Channel successfully deleted".to_string(),
+            InfoLevel::Success,
+        );
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
@@ -47,12 +74,19 @@ async fn delete_discord_channel(cx: Scope<'_>, channels: &Signal<Vec<DiscordChan
 }
 
 #[component(inline_props)]
-pub fn AddEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>, service_name: &'a str, entity_name: &'a str, icon: &'a str, icon_bg_color: &'a str) -> View<G> {
+pub fn AddEntityDialog<'a, G: Html>(
+    cx: Scope<'a>,
+    is_open: &'a Signal<bool>,
+    service_name: &'a str,
+    entity_name: &'a str,
+    icon: &'a str,
+    icon_bg_color: &'a str,
+) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     create_effect(cx, move || {
         if *is_open.get() {
-            app_state.set_showing_dialog(true);     // sets the backdrop to be visible
+            app_state.set_showing_dialog(true); // sets the backdrop to be visible
         }
     });
 
@@ -84,12 +118,18 @@ pub fn AddEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>, se
 }
 
 #[component(inline_props)]
-pub fn DeleteEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option<i64>>, delete_signal: &'a Signal<Option<i64>>, service_name: &'a str, entity_name: &'a str) -> View<G> {
+pub fn DeleteEntityDialog<'a, G: Html>(
+    cx: Scope<'a>,
+    is_open: &'a Signal<Option<i64>>,
+    delete_signal: &'a Signal<Option<i64>>,
+    service_name: &'a str,
+    entity_name: &'a str,
+) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     create_effect(cx, move || {
         if is_open.get().is_some() {
-            app_state.set_showing_dialog(true);     // sets the backdrop to be visible
+            app_state.set_showing_dialog(true); // sets the backdrop to be visible
         }
     });
 
@@ -123,7 +163,6 @@ pub fn DeleteEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option
     }
 }
 
-
 const CARD_CLASS: &str = "p-8 rounded-lg dark:bg-purple-700";
 const CARD_TITLE_CLASS: &str = "text-2xl font-semibold";
 const CARD_SUBTITLE_CLASS: &str = "text-lg font-semibold mt-2";
@@ -131,7 +170,8 @@ const CARD_LIST_UL_CLASS: &str = "space-y-2";
 const CARD_LIST_LI_CLASS: &str = "border-b border-gray-200 dark:border-purple-600";
 const CARD_LIST_LI_ROW_CLASS: &str = "flex items-center justify-items-start my-2";
 const CARD_LIST_LI_ROW_NAME_CLASS: &str = "flex-grow";
-const CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS: &str = "flex items-center ml-4 bg-red-500 hover:bg-red-600 text-white font-semibold px-1 py-1 rounded";
+const CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS: &str =
+    "flex items-center ml-4 bg-red-500 hover:bg-red-600 text-white font-semibold px-1 py-1 rounded";
 
 const CARD_ADD_DIV: &str = "flex items-center justify-items-end mt-4";
 const CARD_ADD_DIV_BUTTON: &str = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
@@ -141,7 +181,13 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
-        app_state.user.get().as_ref().clone().map(|user| user.has_discord).unwrap_or_else(|| false)
+        app_state
+            .user
+            .get()
+            .as_ref()
+            .clone()
+            .map(|user| user.has_discord)
+            .unwrap_or_else(|| false)
     });
 
     let channels = create_signal(cx, Vec::<DiscordChannel>::new());
@@ -151,7 +197,8 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let delete_signal = create_signal(cx, None::<i64>);
 
     create_effect(cx, move || {
-        if *is_connected.get() {    // query channels if the user has discord
+        if *is_connected.get() {
+            // query channels if the user has discord
             spawn_local_scoped(cx, async move {
                 query_discord_channels(cx, channels, is_loading).await;
             });
@@ -167,7 +214,6 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
             });
         }
     });
-
 
     view! {cx,
         div(class=CARD_CLASS) {
@@ -227,7 +273,11 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     }
 }
 
-async fn query_telegram_chats(cx: Scope<'_>, chats: &Signal<Vec<TelegramChat>>, is_loading: &Signal<bool>) {
+async fn query_telegram_chats(
+    cx: Scope<'_>,
+    chats: &Signal<Vec<TelegramChat>>,
+    is_loading: &Signal<bool>,
+) {
     is_loading.set(true);
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(());
@@ -245,10 +295,17 @@ async fn query_telegram_chats(cx: Scope<'_>, chats: &Signal<Vec<TelegramChat>>, 
     is_loading.set(false);
 }
 
-async fn delete_telegram_chat(cx: Scope<'_>, chats: &Signal<Vec<TelegramChat>>, chat_id: i64, is_loading: &Signal<bool>) {
+async fn delete_telegram_chat(
+    cx: Scope<'_>,
+    chats: &Signal<Vec<TelegramChat>>,
+    chat_id: i64,
+    is_loading: &Signal<bool>,
+) {
     is_loading.set(true);
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(DeleteTelegramChatRequest { chat_id });
+    let request = services
+        .grpc_client
+        .create_request(DeleteTelegramChatRequest { chat_id });
     let response = services
         .grpc_client
         .get_user_service()
@@ -256,21 +313,38 @@ async fn delete_telegram_chat(cx: Scope<'_>, chats: &Signal<Vec<TelegramChat>>, 
         .await
         .map(|res| res.into_inner());
     if response.is_ok() {
-        chats.set(chats.get_untracked().iter().filter(|chat| chat.chat_id != chat_id).cloned().collect());
-        create_message(cx, "Chat deleted", "Chat successfully deleted".to_string(), InfoLevel::Success);
+        chats.set(
+            chats
+                .get_untracked()
+                .iter()
+                .filter(|chat| chat.chat_id != chat_id)
+                .cloned()
+                .collect(),
+        );
+        create_message(
+            cx,
+            "Chat deleted",
+            "Chat successfully deleted".to_string(),
+            InfoLevel::Success,
+        );
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
     is_loading.set(false);
 }
 
-
 #[component]
 pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
-        app_state.user.get().as_ref().clone().map(|user| user.has_telegram).unwrap_or_else(|| false)
+        app_state
+            .user
+            .get()
+            .as_ref()
+            .clone()
+            .map(|user| user.has_telegram)
+            .unwrap_or_else(|| false)
     });
 
     let chats = create_signal(cx, Vec::<TelegramChat>::new());
@@ -280,7 +354,8 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let delete_signal = create_signal(cx, None::<i64>);
 
     create_effect(cx, move || {
-        if *is_connected.get() {    // query chats if the user has telegram
+        if *is_connected.get() {
+            // query chats if the user has telegram
             spawn_local_scoped(cx, async move {
                 query_telegram_chats(cx, chats, is_loading).await;
             });
@@ -354,7 +429,10 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
 async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
     let services = use_context::<Services>(cx);
     let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
-    let request = services.grpc_client.create_request(ConnectDiscordRequest { code: data.code, web_app_url });
+    let request = services.grpc_client.create_request(ConnectDiscordRequest {
+        code: data.code,
+        web_app_url,
+    });
     let response = services
         .grpc_client
         .get_auth_service()
@@ -363,7 +441,12 @@ async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
         .map(|res| res.into_inner());
     if response.is_ok() {
         clean_query_params();
-        create_message(cx, "Discord account connected", "Your Discord account is now connected. Add channels to receive notifications.", InfoLevel::Success);
+        create_message(
+            cx,
+            "Discord account connected",
+            "Your Discord account is now connected. Add channels to receive notifications.",
+            InfoLevel::Success,
+        );
         query_user_info(cx).await;
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
@@ -372,7 +455,10 @@ async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
 
 async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(ConnectTelegramRequest { data_str: data.data_str, hash: data.hash });
+    let request = services.grpc_client.create_request(ConnectTelegramRequest {
+        data_str: data.data_str,
+        hash: data.hash,
+    });
     let response = services
         .grpc_client
         .get_auth_service()
@@ -381,7 +467,12 @@ async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
         .map(|res| res.into_inner());
     if response.is_ok() {
         clean_query_params();
-        create_message(cx, "Telegram account connected", "Your Telegram account is now connected. Add chats to receive notifications.", InfoLevel::Success);
+        create_message(
+            cx,
+            "Telegram account connected",
+            "Your Telegram account is now connected. Add chats to receive notifications.",
+            InfoLevel::Success,
+        );
         query_user_info(cx).await;
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());

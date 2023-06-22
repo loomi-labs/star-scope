@@ -713,9 +713,8 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
         query_chains(cx.to_owned()).await;
     });
 
-    let event_type_filter = create_selector(cx, move || {
-        *notifications_state.event_type_filter.get()
-    });
+    let event_type_filter =
+        create_selector(cx, move || *notifications_state.event_type_filter.get());
 
     create_effect(cx, move || {
         let event_type = *event_type_filter.get();

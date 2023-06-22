@@ -1,10 +1,10 @@
 use sycamore::prelude::*;
 
-use crate::{AppRoutes, AppState, EventsState};
 use crate::config::keys;
 use crate::pages::notifications::page::NotificationsState;
 use crate::types::protobuf::event::EventType;
 use crate::utils::url::safe_navigate;
+use crate::{AppRoutes, AppState, EventsState};
 
 #[component]
 pub fn Header<G: Html>(cx: Scope) -> View<G> {
@@ -53,14 +53,16 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
             .filter(|e| *e > 0)
     }
 
-    let cnt_funding = create_selector(cx, move ||
-        get_event_count(events_state, EventType::Funding));
-    let cnt_staking = create_selector(cx, move ||
-        get_event_count(events_state, EventType::Staking));
-    let cnt_dex = create_selector(cx, move ||
-        get_event_count(events_state, EventType::Dex));
-    let cnt_governance = create_selector(cx, move ||
-        get_event_count(events_state, EventType::Governance));
+    let cnt_funding = create_selector(cx, move || {
+        get_event_count(events_state, EventType::Funding)
+    });
+    let cnt_staking = create_selector(cx, move || {
+        get_event_count(events_state, EventType::Staking)
+    });
+    let cnt_dex = create_selector(cx, move || get_event_count(events_state, EventType::Dex));
+    let cnt_governance = create_selector(cx, move || {
+        get_event_count(events_state, EventType::Governance)
+    });
     let cnt_all = create_selector(cx, || {
         let all = cnt_funding.get().as_ref().unwrap_or_else(|| 0)
             + cnt_staking.get().as_ref().unwrap_or_else(|| 0)
@@ -139,10 +141,17 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
         } }).collect()
     );
 
-
     let s_button_data = vec![
-        (Some(AppRoutes::Communication), "icon-[mi--message]", "Communication"),
-        (Some(AppRoutes::Settings), "icon-[iconamoon--profile]", "Account"),
+        (
+            Some(AppRoutes::Communication),
+            "icon-[mi--message]",
+            "Communication",
+        ),
+        (
+            Some(AppRoutes::Settings),
+            "icon-[iconamoon--profile]",
+            "Account",
+        ),
     ];
 
     let settings_button_views = View::new_fragment(

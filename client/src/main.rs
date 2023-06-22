@@ -4,8 +4,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use log::{debug, error};
 use log::Level;
+use log::{debug, error};
 use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
@@ -438,7 +438,11 @@ async fn query_events_count(cx: Scope<'_>) {
 async fn login_by_query_params(cx: Scope<'_>) {
     let services = use_context::<Services>(cx);
     if services.auth_manager.clone().has_login_query_params() {
-        let response = use_context::<Services>(cx).auth_manager.clone().login_with_query_params().await;
+        let response = use_context::<Services>(cx)
+            .auth_manager
+            .clone()
+            .login_with_query_params()
+            .await;
         match response {
             Ok(_) => {
                 let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
@@ -460,7 +464,12 @@ fn execute_logged_out_fns(cx: Scope<'_>) {
             login_by_query_params(cx.to_owned()).await;
         } else {
             let app_state = use_context::<AppState>(cx);
-            if app_state.route.get_untracked().as_ref().is_some_and(|route| route.needs_login()) {
+            if app_state
+                .route
+                .get_untracked()
+                .as_ref()
+                .is_some_and(|route| route.needs_login())
+            {
                 safe_navigate(cx, AppRoutes::Home);
             }
         }
@@ -475,7 +484,12 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
     notifications_state.reset();
     spawn_local_scoped(cx, async move {
         let app_state = use_context::<AppState>(cx);
-        if app_state.route.get_untracked().as_ref().is_some_and(|route| !route.needs_login()) {
+        if app_state
+            .route
+            .get_untracked()
+            .as_ref()
+            .is_some_and(|route| !route.needs_login())
+        {
             debug!("Redirect to notifications");
             safe_navigate(cx, AppRoutes::Notifications)
         }

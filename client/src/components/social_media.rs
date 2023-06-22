@@ -37,7 +37,11 @@ pub fn DiscordLoginButton<G: Html>(cx: Scope, props: DiscordLoginButtonProps) ->
         encode(props.web_app_url.as_str())
     );
 
-    let target = if props.open_in_new_tab { "_blank" } else { "_self" };
+    let target = if props.open_in_new_tab {
+        "_blank"
+    } else {
+        "_self"
+    };
 
     view!(
         cx,
@@ -47,4 +51,3 @@ pub fn DiscordLoginButton<G: Html>(cx: Scope, props: DiscordLoginButtonProps) ->
         }
     )
 }
-
