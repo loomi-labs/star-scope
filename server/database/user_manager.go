@@ -346,20 +346,21 @@ func (m *UserManager) DeleteDiscordCommChannel(ctx context.Context, discordUserI
 	return nil
 }
 
-func (m *UserManager) moveEventListeners(ctx context.Context, tx *ent.Tx, newUser *ent.User, oldUser *ent.User) error {
+func (m *UserManager) moveEventListeners(ctx context.Context, tx *ent.Tx, newUser *ent.User, oldUser *ent.User) (bool, error) {
 	oldEls, err := oldUser.
 		QueryEventListeners().
 		All(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 	els, err := tx.User.
 		QueryEventListeners(newUser).
 		WithUsers().
 		All(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
+	var isEventListenerDeleted = false
 	for _, oldEl := range oldEls {
 		var foundNewEl *ent.EventListener
 		for _, el := range els {
@@ -375,7 +376,7 @@ func (m *UserManager) moveEventListeners(ctx context.Context, tx *ent.Tx, newUse
 					RemoveUsers(oldUser).
 					Exec(ctx)
 				if err != nil {
-					return err
+					return false, err
 				}
 			} else {
 				oldEvents := oldEl.
@@ -391,8 +392,9 @@ func (m *UserManager) moveEventListeners(ctx context.Context, tx *ent.Tx, newUse
 					DeleteOne(oldEl).
 					Exec(ctx)
 				if err != nil {
-					return err
+					return false, err
 				}
+				isEventListenerDeleted = true
 				// TODO: what happens to comm channels? Should we remove the deleted event listener from them?
 			}
 		} else {
@@ -402,11 +404,11 @@ func (m *UserManager) moveEventListeners(ctx context.Context, tx *ent.Tx, newUse
 				AddUsers(newUser).
 				Exec(ctx)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 	}
-	return nil
+	return isEventListenerDeleted, nil
 }
 
 func (m *UserManager) moveCommChannels(ctx context.Context, tx *ent.Tx, newUser *ent.User, oldUser *ent.User) error {
@@ -436,12 +438,14 @@ func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, dis
 	if u.DiscordUserID != 0 {
 		return fmt.Errorf("user %d already connected to discord", u.ID)
 	}
+	var isEventListenerDeleted = false
 	err := withTx(m.client, ctx, func(tx *ent.Tx) error {
 		oldDiscordUser, err := m.QueryByDiscord(ctx, discord.Id)
 		if err != nil && !ent.IsNotFound(err) {
 			return err
 		} else if err == nil { // user already exists and has to be merged
-			if err := m.moveEventListeners(ctx, tx, u, oldDiscordUser); err != nil {
+			isEventListenerDeleted, err = m.moveEventListeners(ctx, tx, u, oldDiscordUser)
+			if err != nil {
 				return err
 			}
 
@@ -460,7 +464,8 @@ func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, dis
 	if err != nil {
 		return err
 	}
-	// TODO: add eventlistener changed event
-	m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
+	if isEventListenerDeleted {
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
+	}
 	return nil
 }
