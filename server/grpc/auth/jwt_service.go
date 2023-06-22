@@ -48,6 +48,7 @@ func AccessibleRoles() map[string][]Role {
 		authService + "DiscordLogin":            {Unauthenticated, User, Admin},
 		authService + "TelegramLogin":           {Unauthenticated, User, Admin},
 		authService + "ConnectDiscord":          {User, Admin},
+		authService + "ConnectTelegram":         {User, Admin},
 		userService + "GetUser":                 {User, Admin},
 		userService + "ListChannels":            {User, Admin},
 		userService + "DeleteAccount":           {User, Admin},
