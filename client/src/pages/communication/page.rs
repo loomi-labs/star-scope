@@ -6,9 +6,8 @@ use crate::components::loading::LoadingSpinner;
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
 use crate::config::keys;
-use crate::types::protobuf::grpc::{ConnectDiscordRequest, DeleteDiscordChannelRequest, DeleteTelegramChatRequest, DiscordChannel, TelegramChat};
-use crate::utils::url::{get_query_param, clean_query_params};
-
+use crate::types::protobuf::grpc::{ConnectDiscordRequest, ConnectTelegramRequest, DeleteDiscordChannelRequest, DeleteTelegramChatRequest, DiscordChannel, DiscordLoginRequest, TelegramChat, TelegramLoginRequest};
+use crate::utils::url::{clean_query_params, get_discord_login_data, get_telegram_login_data};
 
 async fn query_discord_channels(cx: Scope<'_>, channels: &Signal<Vec<DiscordChannel>>, is_loading: &Signal<bool>) {
     is_loading.set(true);
@@ -63,7 +62,7 @@ pub fn AddEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>, se
         }
     });
 
-    view!{cx,
+    view! {cx,
         dialog(class="fixed bg-white p-4 rounded-lg z-50", open=*is_open.get()) {
             div(class="flex flex-col p-4") {
                 div(class="flex flex-col items-center") {
@@ -88,8 +87,6 @@ pub fn AddEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>, se
 pub fn DeleteEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option<i64>>, delete_signal: &'a Signal<Option<i64>>, service_name: &'a str, entity_name: &'a str) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
-    let app_state = use_context::<AppState>(cx);
-
     create_effect(cx, move || {
         if is_open.get().is_some() {
             app_state.set_showing_dialog(true);     // sets the backdrop to be visible
@@ -102,8 +99,8 @@ pub fn DeleteEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option
         }
     });
 
-    view!{cx,
-        dialog(class="fixed bg-white p-4 rounded-lg z-50", open=is_open.get().is_some()) {
+    view! {cx,
+        dialog(class="fixed inset-0 bg-white p-4 rounded-lg z-50", open=is_open.get().is_some()) {
             div(class="flex flex-col p-4") {
                 div(class="flex flex-col items-center") {
                     span(class="w-12 h-12 text-black icon-[ph--trash]") {}
@@ -125,6 +122,19 @@ pub fn DeleteEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option
         }
     }
 }
+
+
+const CARD_CLASS: &str = "p-8 rounded-lg dark:bg-purple-700";
+const CARD_TITLE_CLASS: &str = "text-2xl font-semibold";
+const CARD_SUBTITLE_CLASS: &str = "text-lg font-semibold mt-2";
+const CARD_LIST_UL_CLASS: &str = "space-y-2";
+const CARD_LIST_LI_CLASS: &str = "border-b border-gray-200 dark:border-purple-600";
+const CARD_LIST_LI_ROW_CLASS: &str = "flex items-center justify-items-start my-2";
+const CARD_LIST_LI_ROW_NAME_CLASS: &str = "flex-grow";
+const CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS: &str = "flex items-center ml-4 bg-red-500 hover:bg-red-600 text-white font-semibold px-1 py-1 rounded";
+
+const CARD_ADD_DIV: &str = "flex items-center justify-items-end mt-4";
+const CARD_ADD_DIV_BUTTON: &str = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
 #[component]
 pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
@@ -158,15 +168,13 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
         }
     });
 
-    let class_button = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm \
-    font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
     view! {cx,
-        div(class="p-8 rounded-lg dark:bg-purple-700") {
+        div(class=CARD_CLASS) {
             AddEntityDialog(is_open=show_add_channel_dialog, service_name="Discord", entity_name="channel", icon="icon-[mingcute--discord-fill]", icon_bg_color="bg-discord-purple-500")
             DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Discord", entity_name="channel")
             div {
-                h2(class="text-2xl font-semibold") { "Discord" }
+                h2(class=CARD_TITLE_CLASS) { "Discord" }
                 (match *is_connected.get() {
                     false => {
                         let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
@@ -186,16 +194,16 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
                             }
                         } else {
                             view! {cx,
-                                h3(class="text-lg font-semibold mt-2") { "Connected Channels" }
-                                ul(class="space-y-2") {
+                                h3(class=CARD_SUBTITLE_CLASS) { "Connected Channels" }
+                                ul(class=CARD_LIST_UL_CLASS) {
                                     Indexed(
                                         iterable=channels,
                                         view=move|cx, channel| {
                                             view! { cx,
-                                                li(class="border-b border-gray-200 dark:border-purple-600") {
-                                                    div(class="flex items-center justify-items-start my-2") {
-                                                        p(class="flex-grow") { (format!("{}{}", channel.name, if channel.is_group { " (Group)"} else {""} )) }
-                                                        button(class="flex items-center ml-4 bg-red-500 hover:bg-red-600 text-white font-semibold px-1 py-1 rounded", on:click=move |_| show_delete_dialog.set(Some(channel.channel_id))) {
+                                                li(class=CARD_LIST_LI_CLASS) {
+                                                    div(class=CARD_LIST_LI_ROW_CLASS) {
+                                                        p(class=CARD_LIST_LI_ROW_NAME_CLASS) { (format!("{}{}", channel.name, if channel.is_group { " (Group)"} else {""} )) }
+                                                        button(class=CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS, on:click=move |_| show_delete_dialog.set(Some(channel.channel_id))) {
                                                             span(class="w-6 h-6 icon-[ph--trash]") {}
                                                         }
                                                     }
@@ -204,8 +212,8 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
                                         }
                                     )
                                 }
-                                div(class="flex items-center justify-items-end mt-4") {
-                                    a(class=format!("w-48 bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target="_blank", on:click=move |_| show_add_channel_dialog.set(true)) {
+                                div(class=CARD_ADD_DIV) {
+                                    a(class=format!("w-48 bg-discord-purple-500 hover:bg-discord-purple-600 {}", CARD_ADD_DIV_BUTTON), href=discord_login_url, target="_blank", on:click=move |_| show_add_channel_dialog.set(true)) {
                                         span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
                                         "Add Channel"
                                     }
@@ -289,9 +297,6 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
         }
     });
 
-    let class_button = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm \
-    font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
-
     view! {cx,
         div(class="p-8 rounded-lg dark:bg-purple-700") {
             AddEntityDialog(is_open=show_add_chat_dialog, service_name="Telegram", entity_name="chat", icon="icon-[bxl--telegram]", icon_bg_color="bg-telegram-blue-500")
@@ -313,16 +318,16 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
                         } else {
                             let tg_bot_url = format!("https://t.me/{}", keys::TELEGRAM_BOT_NAME);
                             view! {cx,
-                                h3(class="text-lg font-semibold mt-2") { "Connected Chats" }
-                                ul(class="space-y-2") {
+                                h3(class=CARD_SUBTITLE_CLASS) { "Connected Chats" }
+                                ul(class=CARD_LIST_UL_CLASS) {
                                     Indexed(
                                         iterable=chats,
                                         view=move|cx, chat| {
                                             view! { cx,
-                                                li(class="border-b border-gray-200 dark:border-purple-600") {
-                                                    div(class="flex items-center justify-items-start my-2") {
-                                                        p(class="flex-grow") { (format!("{}{}", chat.name, if chat.is_group { " (Group)"} else {""} )) }
-                                                        button(class="flex items-center ml-4 bg-red-500 hover:bg-red-600 text-white font-semibold px-1 py-1 rounded", on:click=move |_| show_delete_dialog.set(Some(chat.chat_id))) {
+                                                li(class=CARD_LIST_LI_CLASS) {
+                                                    div(class=CARD_LIST_LI_ROW_CLASS) {
+                                                        p(class=CARD_LIST_LI_ROW_NAME_CLASS) { (format!("{}{}", chat.name, if chat.is_group { " (Group)"} else {""} )) }
+                                                        button(class=CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS, on:click=move |_| show_delete_dialog.set(Some(chat.chat_id))) {
                                                             span(class="w-6 h-6 icon-[ph--trash]") {}
                                                         }
                                                     }
@@ -331,8 +336,8 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
                                         }
                                     )
                                 }
-                                div(class="flex items-center justify-items-end mt-4") {
-                                    a(class=format!("w-48 bg-telegram-blue-500 hover:bg-telegram-blue-600 {}", class_button), href=tg_bot_url, target="_blank", on:click=move |_| show_add_chat_dialog.set(true)) {
+                                div(class=CARD_ADD_DIV) {
+                                    a(class=format!("w-48 bg-telegram-blue-500 hover:bg-telegram-blue-600 {}", CARD_ADD_DIV_BUTTON), href=tg_bot_url, target="_blank", on:click=move |_| show_add_chat_dialog.set(true)) {
                                         span(class="w-6 h-6 mr-2 icon-[bxl--telegram]") {}
                                         "Add Chat"
                                     }
@@ -346,10 +351,10 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     }
 }
 
-async fn connect_discord_account(cx: Scope<'_>, code: String) {
+async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
     let services = use_context::<Services>(cx);
     let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
-    let request = services.grpc_client.create_request(ConnectDiscordRequest { code, web_app_url });
+    let request = services.grpc_client.create_request(ConnectDiscordRequest { code: data.code, web_app_url });
     let response = services
         .grpc_client
         .get_auth_service()
@@ -365,11 +370,34 @@ async fn connect_discord_account(cx: Scope<'_>, code: String) {
     }
 }
 
+async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(ConnectTelegramRequest { data_str: data.data_str, hash: data.hash });
+    let response = services
+        .grpc_client
+        .get_auth_service()
+        .connect_telegram(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(_) = response {
+        clean_query_params();
+        create_message(cx, "Telegram account connected", "Your Telegram account is now connected. Add chats to receive notifications.", InfoLevel::Success);
+        query_user_info(cx).await;
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+    }
+}
+
 #[component]
 pub fn Communication<G: Html>(cx: Scope) -> View<G> {
-    if let Some(code) = get_query_param("code") {
+    if let Some(req) = get_discord_login_data() {
         spawn_local_scoped(cx, async move {
-            connect_discord_account(cx.clone(), code).await;
+            connect_discord_account(cx.clone(), req).await;
+        });
+    }
+    if let Some(req) = get_telegram_login_data() {
+        spawn_local_scoped(cx, async move {
+            connect_telegram_account(cx.clone(), req).await;
         });
     }
 
