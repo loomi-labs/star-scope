@@ -3,8 +3,14 @@ use urlencoding::encode;
 
 use crate::config::keys;
 
+#[derive(Prop)]
+pub struct TelegramLoginButtonProps {
+    #[builder(default = keys::WEB_APP_URL.to_string())]
+    web_app_url: String,
+}
+
 #[component]
-pub fn TelegramLoginButton<G: Html>(cx: Scope) -> View<G> {
+pub fn TelegramLoginButton<G: Html>(cx: Scope, props: TelegramLoginButtonProps) -> View<G> {
     view!(
         cx,
         script(async=true, src="https://telegram.org/js/telegram-widget.js?22",
@@ -12,7 +18,7 @@ pub fn TelegramLoginButton<G: Html>(cx: Scope) -> View<G> {
             data-size="large",
             data-radius="10",
             data-userpic="false",
-            data-auth-url=keys::WEB_APP_URL,
+            data-auth-url=props.web_app_url,
             data-request-access="write") {}
     )
 }

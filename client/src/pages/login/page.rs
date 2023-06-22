@@ -211,7 +211,7 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                         DiscordLoginButton(text="Login with Discord".to_string())
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
-                        TelegramLoginButton {}
+                        TelegramLoginButton(web_app_url=keys::WEB_APP_URL.to_string())
                     }
                 }
             }
