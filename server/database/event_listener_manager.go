@@ -32,16 +32,24 @@ func NewEventListenerManager(client *ent.Client, kafkaInternal kafka_internal.Ka
 }
 
 func (m *EventListenerManager) Query(ctx context.Context, dataTypes ...eventlistener.DataType) []*ent.EventListener {
+	var predicates []predicate.EventListener
+	if len(dataTypes) == 0 {
+		predicates = append(predicates, eventlistener.DataTypeIn(dataTypes...))
+	}
 	return m.client.EventListener.
 		Query().
-		Where(eventlistener.DataTypeIn(dataTypes...)).
+		Where(predicates...).
 		AllX(ctx)
 }
 
 func (m *EventListenerManager) QueryWithChain(ctx context.Context, dataTypes ...eventlistener.DataType) []*ent.EventListener {
+	var predicates []predicate.EventListener
+	if len(dataTypes) > 0 {
+		predicates = append(predicates, eventlistener.DataTypeIn(dataTypes...))
+	}
 	return m.client.EventListener.
 		Query().
-		Where(eventlistener.DataTypeIn(dataTypes...)).
+		Where(predicates...).
 		WithChain().
 		AllX(ctx)
 }

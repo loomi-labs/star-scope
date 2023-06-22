@@ -8,12 +8,14 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use simple_error::bail;
 use tonic::Status;
-use urlencoding::decode;
-use wasm_bindgen::JsValue;
 
 use crate::config::keys;
 use crate::types::protobuf::grpc::auth_service_client::AuthServiceClient;
-use crate::types::protobuf::grpc::{DiscordLoginRequest, KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest, TelegramLoginRequest};
+use crate::types::protobuf::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
+use crate::utils::url::{
+    get_discord_login_data, get_telegram_login_data, has_discord_login_query_params,
+    has_telegram_login_query_params,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum Role {
@@ -174,7 +176,7 @@ impl AuthService {
         self.save_login_response(response.into_inner());
         Ok(())
     }
-    
+
     pub fn logout(&self) {
         LocalStorage::delete(keys::LS_KEY_ACCESS_TOKEN);
         LocalStorage::delete(keys::LS_KEY_REFRESH_TOKEN);
@@ -198,15 +200,11 @@ impl AuthService {
     }
 
     pub async fn login_with_query_params(&self) -> Result<(), Status> {
-        if self.has_discord_login_query_params() {
-            let result = self.login_with_discord_query_params().await?;
-            self.save_login_response(result);
-            Ok(())
-        } else if self.has_telegram_login_query_params() {
-            let result = self.login_with_telegram_query_params().await?;
-            self.save_login_response(result);
-            Ok(())
-        } else  {
+        if has_discord_login_query_params() {
+            self.login_with_discord_query_params().await
+        } else if has_telegram_login_query_params() {
+            self.login_with_telegram_query_params().await
+        } else {
             Err(Status::new(
                 tonic::Code::InvalidArgument,
                 "Invalid query params".to_string(),
@@ -214,88 +212,43 @@ impl AuthService {
         }
     }
 
-    async fn login_with_discord_query_params(&self) -> Result<LoginResponse, Status> {
+    async fn login_with_discord_query_params(&self) -> Result<(), Status> {
         debug!("login_with_discord_query_params");
-        let mut auth_service = self.auth_service();
-        let code = self
-            .get_query_params()
-            .iter()
-            .find(|params: &&(String, String)| params.0 == "code")
-            .unwrap()
-            .1
-            .clone();
-        let req = DiscordLoginRequest { code };
-        let resp = auth_service
-            .discord_login(req)
-            .await
-            .map(|res| res.into_inner());
-        self.save_login_response(resp.clone()?);
-        resp
+        if let Some(req) = get_discord_login_data() {
+            let mut auth_service = self.auth_service();
+            let resp = auth_service
+                .discord_login(req)
+                .await
+                .map(|res| res.into_inner())?;
+            self.save_login_response(resp);
+            Ok(())
+        } else {
+            Err(Status::new(
+                tonic::Code::InvalidArgument,
+                "Invalid query params".to_string(),
+            ))
+        }
     }
 
-    async fn login_with_telegram_query_params(&self) -> Result<LoginResponse, Status> {
+    async fn login_with_telegram_query_params(&self) -> Result<(), Status> {
         debug!("login_with_telegram_query_params");
-        let mut auth_service = self.auth_service();
-        let query_params = self.get_query_params();
-        let hash = query_params
-            .iter()
-            .find(|params: &&(String, String)| params.0 == "hash")
-            .unwrap()
-            .1
-            .clone();
-        let mut data = query_params
-            .iter()
-            .filter(|params: &&(String, String)| params.0 != "hash")
-            .map(|params: &(String, String)| format!("{}={}", params.0, params.1))
-            .collect::<Vec<_>>();
-        data.sort();
-        let data_str = data.join("\n");
-        let data_str_decoded = decode(data_str.as_str()).expect("UTF-8");
-
-        let req = TelegramLoginRequest {
-            data_str: data_str_decoded.to_string(),
-            hash,
-        };
-
-        let resp = auth_service
-            .telegram_login(req)
-            .await
-            .map(|res| res.into_inner());
-        debug!("login_with_telegram_query_params: {:?}", resp);
-        resp
+        if let Some(req) = get_telegram_login_data() {
+            let mut auth_service = self.auth_service();
+            let resp = auth_service
+                .telegram_login(req)
+                .await
+                .map(|res| res.into_inner())?;
+            self.save_login_response(resp);
+            Ok(())
+        } else {
+            Err(Status::new(
+                tonic::Code::InvalidArgument,
+                "Invalid query params".to_string(),
+            ))
+        }
     }
 
     pub fn has_login_query_params(&self) -> bool {
-        self.has_telegram_login_query_params() || self.has_discord_login_query_params()
-    }
-
-    fn has_telegram_login_query_params(&self) -> bool {
-        self.get_query_params()
-            .iter()
-            .map(|params: &(String, String)| params.0 == "hash")
-            .any(|x| x)
-    }
-
-    fn has_discord_login_query_params(&self) -> bool {
-        self.get_query_params()
-            .iter()
-            .map(|params: &(String, String)| params.0 == "code")
-            .any(|x| x)
-    }
-
-    fn get_query_params(&self) -> Vec<(String, String)> {
-        let location = web_sys::window().unwrap().location();
-        let search: Result<String, JsValue> = location.search();
-        let mut params = Vec::new();
-        for s in search.unwrap().trim_start_matches('?').split('&') {
-            if s.is_empty() {
-                continue;
-            }
-            let mut kv = s.split('=');
-            let k = kv.next().unwrap();
-            let v = kv.next().unwrap();
-            params.push((k.to_string(), v.to_string()));
-        }
-        params
+        has_telegram_login_query_params() || has_discord_login_query_params()
     }
 }

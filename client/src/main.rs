@@ -33,7 +33,7 @@ mod services;
 mod types;
 mod utils;
 
-#[derive(Route, Debug, Clone, PartialEq)]
+#[derive(Route, Debug, Clone, Copy, PartialEq)]
 pub enum AppRoutes {
     #[to("/")]
     Home,
@@ -47,6 +47,19 @@ pub enum AppRoutes {
     Login,
     #[not_found]
     NotFound,
+}
+
+impl AppRoutes {
+    fn needs_login(&self) -> bool {
+        match self {
+            AppRoutes::Home => false,
+            AppRoutes::Notifications => true,
+            AppRoutes::Communication => true,
+            AppRoutes::Settings => true,
+            AppRoutes::Login => false,
+            AppRoutes::NotFound => false,
+        }
+    }
 }
 
 impl ToString for AppRoutes {
@@ -121,9 +134,10 @@ pub struct InfoMsg {
 pub struct AppState {
     auth_service: AuthService,
     pub auth_state: RcSignal<AuthState>,
-    pub route: RcSignal<AppRoutes>,
+    pub route: RcSignal<Option<AppRoutes>>,
     pub messages: RcSignal<Vec<RcSignal<InfoMsg>>>,
     pub user: RcSignal<Option<User>>,
+    pub is_dialog_open: RcSignal<bool>,
 }
 
 impl Default for AppState {
@@ -141,9 +155,10 @@ impl AppState {
         Self {
             auth_service,
             auth_state: create_rc_signal(auth_state),
-            route: create_rc_signal(AppRoutes::default()),
+            route: create_rc_signal(None),
             messages: create_rc_signal(vec![]),
             user: create_rc_signal(None),
+            is_dialog_open: create_rc_signal(false),
         }
     }
 
@@ -168,6 +183,10 @@ impl AppState {
         self.auth_service.logout();
         self.user.set(None);
         self.auth_state.set(AuthState::LoggedOut);
+    }
+
+    pub fn set_showing_dialog(&self, is_open: bool) {
+        self.is_dialog_open.set(is_open);
     }
 }
 
@@ -285,24 +304,17 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let services = use_context::<Services>(cx);
     if has_access_permission(&services.auth_manager, route) {
-        app_state.route.set(route.clone());
+        app_state.route.set(Some(*route));
         match route {
             AppRoutes::Home => view!(cx, Home {}),
-            AppRoutes::Notifications => view!(cx, LayoutWrapper{Notifications {}}),
-            AppRoutes::Communication => view!(cx, LayoutWrapper{Communication {}}),
-            AppRoutes::Settings => view!(cx, LayoutWrapper{Settings {}}),
-            AppRoutes::Login => {
-                if *app_state.auth_state.get() == AuthState::LoggedIn {
-                    app_state.route.set(AppRoutes::Notifications);
-                    view!(cx, LayoutWrapper{Notifications {}})
-                } else {
-                    Login(cx)
-                }
-            },
+            AppRoutes::Notifications => view!(cx, Notifications {}),
+            AppRoutes::Communication => view!(cx, Communication {}),
+            AppRoutes::Settings => view!(cx, Settings {}),
+            AppRoutes::Login => view!(cx, Login {}),
             AppRoutes::NotFound => view! { cx, "404 Not Found"},
         }
     } else {
-        app_state.route.set(AppRoutes::Login);
+        app_state.route.set(Some(AppRoutes::Login));
         create_message(
             cx,
             "Access denied".to_string(),
@@ -426,7 +438,11 @@ async fn query_events_count(cx: Scope<'_>) {
 async fn login_by_query_params(cx: Scope<'_>) {
     let services = use_context::<Services>(cx);
     if services.auth_manager.clone().has_login_query_params() {
-        let response = use_context::<Services>(cx).auth_manager.clone().login_with_query_params().await;
+        let response = use_context::<Services>(cx)
+            .auth_manager
+            .clone()
+            .login_with_query_params()
+            .await;
         match response {
             Ok(_) => {
                 let mut auth_state = use_context::<AppState>(cx).auth_state.modify();
@@ -435,9 +451,52 @@ async fn login_by_query_params(cx: Scope<'_>) {
             Err(status) => {
                 create_error_msg_from_status(cx, status);
                 safe_navigate(cx, AppRoutes::Home);
-            },
+            }
         }
     }
+}
+
+fn execute_logged_out_fns(cx: Scope<'_>) {
+    debug!("Logged out");
+    let services = use_context::<Services>(cx);
+    spawn_local_scoped(cx, async move {
+        if services.auth_manager.clone().has_login_query_params() {
+            login_by_query_params(cx.to_owned()).await;
+        } else {
+            let app_state = use_context::<AppState>(cx);
+            if app_state
+                .route
+                .get_untracked()
+                .as_ref()
+                .is_some_and(|route| route.needs_login())
+            {
+                safe_navigate(cx, AppRoutes::Home);
+            }
+        }
+    });
+}
+
+fn execute_logged_in_fns(cx: Scope<'_>) {
+    debug!("Logged in");
+    let event_state = use_context::<EventsState>(cx);
+    let notifications_state = use_context::<NotificationsState>(cx);
+    event_state.reset();
+    notifications_state.reset();
+    spawn_local_scoped(cx, async move {
+        let app_state = use_context::<AppState>(cx);
+        if app_state
+            .route
+            .get_untracked()
+            .as_ref()
+            .is_some_and(|route| !route.needs_login())
+        {
+            debug!("Redirect to notifications");
+            safe_navigate(cx, AppRoutes::Notifications)
+        }
+        query_user_info(cx).await;
+        query_events_count(cx).await;
+        subscribe_to_events(cx);
+    });
 }
 
 #[component]
@@ -445,54 +504,51 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
-    provide_context(cx, services.clone());
-    provide_context(cx, app_state);
+    provide_context(cx, services);
+    provide_context(cx, app_state.clone());
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());
 
     start_jwt_refresh_timer(cx.to_owned());
 
     view! {cx,
-        div(class="bg-white dark:bg-d-bg text-black dark:text-white antialiased") {
-            MessageOverlay {}
-            Router(
-                integration=HistoryIntegration::new(),
-                view=|cx, route: &ReadSignal<AppRoutes>| {
-                    create_effect(cx, move || {
-                        let app_state = use_context::<AppState>(cx);
-                        let auth_state = app_state.auth_state.get();
-                        match auth_state.as_ref() {
-                            AuthState::LoggedOut => {
-                                debug!("Has login query params: {}", services.auth_manager.clone().has_login_query_params());
-                                if services.auth_manager.clone().has_login_query_params() {
-                                    spawn_local_scoped(cx, async move {
-                                        login_by_query_params(cx.to_owned()).await;
-                                    });
-                                } else {
-                                    safe_navigate(cx, AppRoutes::Home)
-                                }
-                            },
-                            AuthState::LoggedIn => {
-                                let event_state = use_context::<EventsState>(cx);
-                                let notifications_state = use_context::<NotificationsState>(cx);
-                                event_state.reset();
-                                notifications_state.reset();
-                                spawn_local_scoped(cx, async move {
-                                    query_user_info(cx).await;
-                                    query_events_count(cx).await;
-                                    subscribe_to_events(cx);
-                                });
-                                safe_navigate(cx, AppRoutes::Notifications)
-                            },
-                            AuthState::LoggingIn => {}
-                        }
-                    });
-                    view! {cx, (
-                            activate_view(cx, route.get().as_ref())
-                        )
+        div(class="relative") {
+            div(class="bg-white dark:bg-d-bg text-black dark:text-white antialiased") {
+                MessageOverlay {}
+                (if *app_state.is_dialog_open.get() {
+                    let app_state = use_context::<AppState>(cx);
+                    view!{cx,
+                        div(class="fixed inset-0 bg-black opacity-50 z-50", on:click=move |_| app_state.is_dialog_open.set(false)) {}
                     }
-                }
-            )
+                } else {
+                    view!{cx,
+                        div {}
+                    }
+                })
+                Router(
+                    integration=HistoryIntegration::new(),
+                    view=|cx, route: &ReadSignal<AppRoutes>| {
+                        let auth_state_changed = create_selector(cx, move || app_state.auth_state.get().as_ref().clone());
+                        create_effect(cx, move || {
+                            match auth_state_changed.get().as_ref() {
+                                AuthState::LoggedOut => execute_logged_out_fns(cx),
+                                AuthState::LoggedIn => execute_logged_in_fns(cx),
+                                AuthState::LoggingIn => {}
+                            }
+                        });
+                        let has_layout_wrapper = create_selector(cx, move || route.get().as_ref().needs_login());
+                        view! {cx,
+                            (if *has_layout_wrapper.get() {
+                                view! {cx,
+                                    LayoutWrapper{ (activate_view(cx, route.get().as_ref())) }
+                                }
+                            } else {
+                                activate_view(cx, route.get().as_ref())
+                            })
+                        }
+                    }
+                )
+            }
         }
     }
 }

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package starscope.grpc;
 
 option go_package = "github.com/loomi-labs/star-scope/grpc/auth/authpb";
@@ -9,6 +11,8 @@ service AuthService {
   rpc TelegramLogin (TelegramLoginRequest) returns (LoginResponse) {}
   rpc DiscordLogin (DiscordLoginRequest) returns (LoginResponse) {}
   rpc RefreshAccessToken (RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {}
+  rpc ConnectDiscord (ConnectDiscordRequest) returns (google.protobuf.Empty) {}
+  rpc ConnectTelegram (ConnectTelegramRequest) returns (google.protobuf.Empty) {}
 }
 
 message KeplrLoginRequest {
@@ -35,4 +39,14 @@ message RefreshAccessTokenRequest {
 
 message RefreshAccessTokenResponse {
   string access_token = 1;
+}
+
+message ConnectDiscordRequest {
+  string code = 1;
+  string web_app_url = 2;
+}
+
+message ConnectTelegramRequest {
+  string dataStr = 1;
+  string hash = 2;
 }

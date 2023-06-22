@@ -39,12 +39,28 @@ const (
 	// UserServiceDeleteAccountProcedure is the fully-qualified name of the UserService's DeleteAccount
 	// RPC.
 	UserServiceDeleteAccountProcedure = "/starscope.grpc.UserService/DeleteAccount"
+	// UserServiceListDiscordChannelsProcedure is the fully-qualified name of the UserService's
+	// ListDiscordChannels RPC.
+	UserServiceListDiscordChannelsProcedure = "/starscope.grpc.UserService/ListDiscordChannels"
+	// UserServiceDeleteDiscordChannelProcedure is the fully-qualified name of the UserService's
+	// DeleteDiscordChannel RPC.
+	UserServiceDeleteDiscordChannelProcedure = "/starscope.grpc.UserService/DeleteDiscordChannel"
+	// UserServiceListTelegramChatsProcedure is the fully-qualified name of the UserService's
+	// ListTelegramChats RPC.
+	UserServiceListTelegramChatsProcedure = "/starscope.grpc.UserService/ListTelegramChats"
+	// UserServiceDeleteTelegramChatProcedure is the fully-qualified name of the UserService's
+	// DeleteTelegramChat RPC.
+	UserServiceDeleteTelegramChatProcedure = "/starscope.grpc.UserService/DeleteTelegramChat"
 )
 
 // UserServiceClient is a client for the starscope.grpc.UserService service.
 type UserServiceClient interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
 	DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error)
+	ListDiscordChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error)
+	DeleteDiscordChannel(context.Context, *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error)
+	ListTelegramChats(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.TelegramChats], error)
+	DeleteTelegramChat(context.Context, *connect_go.Request[userpb.DeleteTelegramChatRequest]) (*connect_go.Response[emptypb.Empty], error)
 }
 
 // NewUserServiceClient constructs a client for the starscope.grpc.UserService service. By default,
@@ -67,13 +83,37 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+UserServiceDeleteAccountProcedure,
 			opts...,
 		),
+		listDiscordChannels: connect_go.NewClient[emptypb.Empty, userpb.DiscordChannels](
+			httpClient,
+			baseURL+UserServiceListDiscordChannelsProcedure,
+			opts...,
+		),
+		deleteDiscordChannel: connect_go.NewClient[userpb.DeleteDiscordChannelRequest, emptypb.Empty](
+			httpClient,
+			baseURL+UserServiceDeleteDiscordChannelProcedure,
+			opts...,
+		),
+		listTelegramChats: connect_go.NewClient[emptypb.Empty, userpb.TelegramChats](
+			httpClient,
+			baseURL+UserServiceListTelegramChatsProcedure,
+			opts...,
+		),
+		deleteTelegramChat: connect_go.NewClient[userpb.DeleteTelegramChatRequest, emptypb.Empty](
+			httpClient,
+			baseURL+UserServiceDeleteTelegramChatProcedure,
+			opts...,
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getUser       *connect_go.Client[emptypb.Empty, userpb.User]
-	deleteAccount *connect_go.Client[emptypb.Empty, emptypb.Empty]
+	getUser              *connect_go.Client[emptypb.Empty, userpb.User]
+	deleteAccount        *connect_go.Client[emptypb.Empty, emptypb.Empty]
+	listDiscordChannels  *connect_go.Client[emptypb.Empty, userpb.DiscordChannels]
+	deleteDiscordChannel *connect_go.Client[userpb.DeleteDiscordChannelRequest, emptypb.Empty]
+	listTelegramChats    *connect_go.Client[emptypb.Empty, userpb.TelegramChats]
+	deleteTelegramChat   *connect_go.Client[userpb.DeleteTelegramChatRequest, emptypb.Empty]
 }
 
 // GetUser calls starscope.grpc.UserService.GetUser.
@@ -86,10 +126,34 @@ func (c *userServiceClient) DeleteAccount(ctx context.Context, req *connect_go.R
 	return c.deleteAccount.CallUnary(ctx, req)
 }
 
+// ListDiscordChannels calls starscope.grpc.UserService.ListDiscordChannels.
+func (c *userServiceClient) ListDiscordChannels(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error) {
+	return c.listDiscordChannels.CallUnary(ctx, req)
+}
+
+// DeleteDiscordChannel calls starscope.grpc.UserService.DeleteDiscordChannel.
+func (c *userServiceClient) DeleteDiscordChannel(ctx context.Context, req *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.deleteDiscordChannel.CallUnary(ctx, req)
+}
+
+// ListTelegramChats calls starscope.grpc.UserService.ListTelegramChats.
+func (c *userServiceClient) ListTelegramChats(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.TelegramChats], error) {
+	return c.listTelegramChats.CallUnary(ctx, req)
+}
+
+// DeleteTelegramChat calls starscope.grpc.UserService.DeleteTelegramChat.
+func (c *userServiceClient) DeleteTelegramChat(ctx context.Context, req *connect_go.Request[userpb.DeleteTelegramChatRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.deleteTelegramChat.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the starscope.grpc.UserService service.
 type UserServiceHandler interface {
 	GetUser(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.User], error)
 	DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error)
+	ListDiscordChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error)
+	DeleteDiscordChannel(context.Context, *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error)
+	ListTelegramChats(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.TelegramChats], error)
+	DeleteTelegramChat(context.Context, *connect_go.Request[userpb.DeleteTelegramChatRequest]) (*connect_go.Response[emptypb.Empty], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -109,6 +173,26 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.DeleteAccount,
 		opts...,
 	))
+	mux.Handle(UserServiceListDiscordChannelsProcedure, connect_go.NewUnaryHandler(
+		UserServiceListDiscordChannelsProcedure,
+		svc.ListDiscordChannels,
+		opts...,
+	))
+	mux.Handle(UserServiceDeleteDiscordChannelProcedure, connect_go.NewUnaryHandler(
+		UserServiceDeleteDiscordChannelProcedure,
+		svc.DeleteDiscordChannel,
+		opts...,
+	))
+	mux.Handle(UserServiceListTelegramChatsProcedure, connect_go.NewUnaryHandler(
+		UserServiceListTelegramChatsProcedure,
+		svc.ListTelegramChats,
+		opts...,
+	))
+	mux.Handle(UserServiceDeleteTelegramChatProcedure, connect_go.NewUnaryHandler(
+		UserServiceDeleteTelegramChatProcedure,
+		svc.DeleteTelegramChat,
+		opts...,
+	))
 	return "/starscope.grpc.UserService/", mux
 }
 
@@ -121,4 +205,20 @@ func (UnimplementedUserServiceHandler) GetUser(context.Context, *connect_go.Requ
 
 func (UnimplementedUserServiceHandler) DeleteAccount(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[emptypb.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.DeleteAccount is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) ListDiscordChannels(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.DiscordChannels], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.ListDiscordChannels is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) DeleteDiscordChannel(context.Context, *connect_go.Request[userpb.DeleteDiscordChannelRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.DeleteDiscordChannel is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) ListTelegramChats(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.TelegramChats], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.ListTelegramChats is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) DeleteTelegramChat(context.Context, *connect_go.Request[userpb.DeleteTelegramChatRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserService.DeleteTelegramChat is not implemented"))
 }

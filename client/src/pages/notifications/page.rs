@@ -444,9 +444,9 @@ impl FromStr for ReadStatusFilter {
     }
 }
 
-const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center";
-const DROPDOWN_ICON_CLASS: &str = "absolute left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
-const DROPDOWN_SELECT_CLASS: &str = "block capitalize pl-8 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
+const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center w-full";
+const DROPDOWN_ICON_CLASS: &str = "absolute w-full left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
+const DROPDOWN_SELECT_CLASS: &str = "block capitalize w-full md:w-auto pl-8 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
 
 #[component]
 pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
@@ -705,59 +705,26 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
     }
 }
 
-fn cnt_available_events(
-    events_state: &EventsState,
-    notifications_state: &NotificationsState,
-) -> i32 {
-    match *notifications_state.event_type_filter.get().as_ref() {
-        None => events_state
-            .event_count_map
-            .get()
-            .values()
-            .map(|c| c.count)
-            .sum::<i32>(),
-        Some(et) => events_state
-            .event_count_map
-            .get()
-            .get(&et)
-            .cloned()
-            .map(|c| c.count)
-            .unwrap_or(0),
-    }
-}
-
 #[component]
 pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);
-    let events_state = use_context::<EventsState>(cx);
 
     spawn_local_scoped(cx.to_owned(), async move {
         query_chains(cx.to_owned()).await;
     });
 
+    let event_type_filter =
+        create_selector(cx, move || *notifications_state.event_type_filter.get());
+
     create_effect(cx, move || {
-        let event_type = *notifications_state.event_type_filter.get();
+        let event_type = *event_type_filter.get();
         spawn_local_scoped(cx.to_owned(), async move {
             query_events(cx.to_owned(), event_type).await;
         });
     });
 
-    let cnt_available_events_prev = create_selector(cx, move || {
-        cnt_available_events(events_state, notifications_state)
-    });
-
-    create_effect(cx, move || {
-        let available_events_prev = *cnt_available_events_prev.get();
-        let event_type = *notifications_state.event_type_filter.get();
-        if available_events_prev != cnt_available_events(events_state, notifications_state) {
-            spawn_local_scoped(cx.to_owned(), async move {
-                query_events(cx.to_owned(), event_type).await;
-            });
-        }
-    });
-
     view! {cx,
-        div(class="flex flex-col pl-4") {
+        div(class="flex flex-col") {
             div(class="hidden lg:flex flex-row justify-between items-center pb-4") {
                 h1(class="text-4xl font-bold") { "Notifications" }
                 div(class="flex flex-row space-x-4 h-8") {

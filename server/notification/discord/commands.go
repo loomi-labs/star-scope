@@ -53,7 +53,7 @@ var (
 				if isGroup {
 					adminText := ""
 					for _, user := range dc.userManager.QueryUsersForDiscordChannel(ctx, channelId) {
-						adminText += fmt.Sprintf("- `%v`\n", user.Name)
+						adminText += fmt.Sprintf("- `%v`\n", user.DiscordUsername)
 					}
 					text = fmt.Sprintf(":rocket: Star Scope bot started\n\n") +
 						fmt.Sprintf(":police_officer: Bot admins in this channel:\n%v\n", adminText) +
@@ -103,7 +103,7 @@ var (
 			log.Sugar.Debugf("Send stop to %v %v (%v)", gog.If(isGroup, "group", "user"), channelName, channelId)
 
 			text := ":sleeping: Bot stopped. Send `/start` to start it again."
-			err := dc.userManager.DeleteDiscordCommChannel(context.Background(), userId, channelId)
+			err := dc.userManager.DeleteDiscordCommChannel(context.Background(), userId, channelId, true)
 			if err != nil {
 				log.Sugar.Errorf("Error while deleting user: %v", err)
 				text = "There was an error unregistering your user. Please try again later."

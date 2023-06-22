@@ -36,12 +36,12 @@ var makeAdminCmd = &cobra.Command{
 			role = user.RoleUser
 		}
 		println(cmd.Flag("remove").Value.String())
-		entUser, err := database.NewDefaultDbManagers().UserManager.UpdateRole(context.Background(), args[0], role)
+		user, err := database.NewDefaultDbManagers().UserManager.UpdateRole(context.Background(), args[0], role)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		fmt.Printf("User %s is now an `%v`\n", entUser.Name, entUser.Role)
+		fmt.Printf("User %s|%s|%s is now an `%v`\n", user.DiscordUsername, user.TelegramUsername, user.WalletAddress, user.Role)
 	},
 }
 
@@ -56,7 +56,7 @@ var listAdminsCmd = &cobra.Command{
 		}
 		text := "Admins:\n"
 		for _, admin := range admins {
-			text += fmt.Sprintf("%s\n", admin.Name)
+			text += fmt.Sprintf("%s|%s|%s\n", admin.DiscordUsername, admin.TelegramUsername, admin.WalletAddress)
 		}
 		fmt.Print(text)
 	},

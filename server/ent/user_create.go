@@ -50,12 +50,6 @@ func (uc *UserCreate) SetNillableUpdateTime(t *time.Time) *UserCreate {
 	return uc
 }
 
-// SetName sets the "name" field.
-func (uc *UserCreate) SetName(s string) *UserCreate {
-	uc.mutation.SetName(s)
-	return uc
-}
-
 // SetRole sets the "role" field.
 func (uc *UserCreate) SetRole(u user.Role) *UserCreate {
 	uc.mutation.SetRole(u)
@@ -84,6 +78,20 @@ func (uc *UserCreate) SetNillableTelegramUserID(i *int64) *UserCreate {
 	return uc
 }
 
+// SetTelegramUsername sets the "telegram_username" field.
+func (uc *UserCreate) SetTelegramUsername(s string) *UserCreate {
+	uc.mutation.SetTelegramUsername(s)
+	return uc
+}
+
+// SetNillableTelegramUsername sets the "telegram_username" field if the given value is not nil.
+func (uc *UserCreate) SetNillableTelegramUsername(s *string) *UserCreate {
+	if s != nil {
+		uc.SetTelegramUsername(*s)
+	}
+	return uc
+}
+
 // SetDiscordUserID sets the "discord_user_id" field.
 func (uc *UserCreate) SetDiscordUserID(i int64) *UserCreate {
 	uc.mutation.SetDiscordUserID(i)
@@ -94,6 +102,20 @@ func (uc *UserCreate) SetDiscordUserID(i int64) *UserCreate {
 func (uc *UserCreate) SetNillableDiscordUserID(i *int64) *UserCreate {
 	if i != nil {
 		uc.SetDiscordUserID(*i)
+	}
+	return uc
+}
+
+// SetDiscordUsername sets the "discord_username" field.
+func (uc *UserCreate) SetDiscordUsername(s string) *UserCreate {
+	uc.mutation.SetDiscordUsername(s)
+	return uc
+}
+
+// SetNillableDiscordUsername sets the "discord_username" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDiscordUsername(s *string) *UserCreate {
+	if s != nil {
+		uc.SetDiscordUsername(*s)
 	}
 	return uc
 }
@@ -199,9 +221,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "User.update_time"`)}
 	}
-	if _, ok := uc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
-	}
 	if _, ok := uc.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
 	}
@@ -244,10 +263,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
-	if value, ok := uc.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
 	if value, ok := uc.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeEnum, value)
 		_node.Role = value
@@ -256,9 +271,17 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldTelegramUserID, field.TypeInt64, value)
 		_node.TelegramUserID = value
 	}
+	if value, ok := uc.mutation.TelegramUsername(); ok {
+		_spec.SetField(user.FieldTelegramUsername, field.TypeString, value)
+		_node.TelegramUsername = value
+	}
 	if value, ok := uc.mutation.DiscordUserID(); ok {
 		_spec.SetField(user.FieldDiscordUserID, field.TypeInt64, value)
 		_node.DiscordUserID = value
+	}
+	if value, ok := uc.mutation.DiscordUsername(); ok {
+		_spec.SetField(user.FieldDiscordUsername, field.TypeString, value)
+		_node.DiscordUsername = value
 	}
 	if value, ok := uc.mutation.WalletAddress(); ok {
 		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)

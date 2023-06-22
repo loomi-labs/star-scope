@@ -56,7 +56,7 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 		if isGroup {
 			adminText += "\n👮‍♂ Bot admins in this chat\n"
 			for _, user := range client.UserManager.QueryUsersForTelegramChat(ctx, chatId) {
-				adminText += fmt.Sprintf("- @%v\n", user.Name)
+				adminText += fmt.Sprintf("- @%v\n", user.TelegramUsername)
 			}
 		}
 		cnt := client.EventListenerManager.QuerySubscriptionsCountForTelegramChat(ctx, chatId)
@@ -94,7 +94,7 @@ func (client TelegramBot) handleStop(update *tgbotapi.Update) {
 	log.Sugar.Debugf("Send stop to %v %v (%v)", gog.If(isGroup, "group", "user"), chatName, chatId)
 
 	text := ""
-	err := client.UserManager.DeleteTelegramCommChannel(context.Background(), userId, chatId)
+	err := client.UserManager.DeleteTelegramCommChannel(context.Background(), userId, chatId, true)
 	if err != nil {
 		text = "There was an error unregistering your user. Please try again later."
 	} else {
