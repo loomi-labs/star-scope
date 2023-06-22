@@ -37,7 +37,7 @@ async fn delete_discord_channel(cx: Scope<'_>, channels: &Signal<Vec<DiscordChan
         .delete_discord_channel(request)
         .await
         .map(|res| res.into_inner());
-    if let Ok(_) = response {
+    if response.is_ok() {
         channels.set(channels.get_untracked().iter().filter(|channel| channel.channel_id != channel_id).cloned().collect());
         create_message(cx, "Channel deleted", "Channel successfully deleted".to_string(), InfoLevel::Success);
     } else {
@@ -57,7 +57,7 @@ pub fn AddEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>, se
     });
 
     create_effect(cx, move || {
-        if *app_state.is_dialog_open.get() == false {
+        if !(*app_state.is_dialog_open.get()) {
             is_open.set(false);
         }
     });
@@ -94,7 +94,7 @@ pub fn DeleteEntityDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option
     });
 
     create_effect(cx, move || {
-        if *app_state.is_dialog_open.get() == false {
+        if !(*app_state.is_dialog_open.get()) {
             is_open.set(None);
         }
     });
@@ -153,7 +153,7 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     create_effect(cx, move || {
         if *is_connected.get() {    // query channels if the user has discord
             spawn_local_scoped(cx, async move {
-                query_discord_channels(cx.clone(), &channels, &is_loading).await;
+                query_discord_channels(cx, channels, is_loading).await;
             });
         }
     });
@@ -162,8 +162,8 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
         if let Some(delete_id) = *delete_signal.get() {
             spawn_local_scoped(cx, async move {
                 delete_signal.set(None);
-                delete_discord_channel(cx.clone(), channels, delete_id, &is_loading).await;
-                query_discord_channels(cx.clone(), &channels, &is_loading).await;
+                delete_discord_channel(cx, channels, delete_id, is_loading).await;
+                query_discord_channels(cx, channels, is_loading).await;
             });
         }
     });
@@ -255,7 +255,7 @@ async fn delete_telegram_chat(cx: Scope<'_>, chats: &Signal<Vec<TelegramChat>>, 
         .delete_telegram_chat(request)
         .await
         .map(|res| res.into_inner());
-    if let Ok(_) = response {
+    if response.is_ok() {
         chats.set(chats.get_untracked().iter().filter(|chat| chat.chat_id != chat_id).cloned().collect());
         create_message(cx, "Chat deleted", "Chat successfully deleted".to_string(), InfoLevel::Success);
     } else {
@@ -282,7 +282,7 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     create_effect(cx, move || {
         if *is_connected.get() {    // query chats if the user has telegram
             spawn_local_scoped(cx, async move {
-                query_telegram_chats(cx.clone(), chats, &is_loading).await;
+                query_telegram_chats(cx, chats, is_loading).await;
             });
         }
     });
@@ -291,8 +291,8 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
         if let Some(delete_id) = *delete_signal.get() {
             spawn_local_scoped(cx, async move {
                 delete_signal.set(None);
-                delete_telegram_chat(cx.clone(), chats, delete_id, &is_loading).await;
-                query_telegram_chats(cx.clone(), chats, &is_loading).await;
+                delete_telegram_chat(cx, chats, delete_id, is_loading).await;
+                query_telegram_chats(cx, chats, is_loading).await;
             });
         }
     });
@@ -361,7 +361,7 @@ async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
         .connect_discord(request)
         .await
         .map(|res| res.into_inner());
-    if let Ok(_) = response {
+    if response.is_ok() {
         clean_query_params();
         create_message(cx, "Discord account connected", "Your Discord account is now connected. Add channels to receive notifications.", InfoLevel::Success);
         query_user_info(cx).await;
@@ -379,7 +379,7 @@ async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
         .connect_telegram(request)
         .await
         .map(|res| res.into_inner());
-    if let Ok(_) = response {
+    if response.is_ok() {
         clean_query_params();
         create_message(cx, "Telegram account connected", "Your Telegram account is now connected. Add chats to receive notifications.", InfoLevel::Success);
         query_user_info(cx).await;
@@ -392,12 +392,12 @@ async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
 pub fn Communication<G: Html>(cx: Scope) -> View<G> {
     if let Some(req) = get_discord_login_data() {
         spawn_local_scoped(cx, async move {
-            connect_discord_account(cx.clone(), req).await;
+            connect_discord_account(cx, req).await;
         });
     }
     if let Some(req) = get_telegram_login_data() {
         spawn_local_scoped(cx, async move {
-            connect_telegram_account(cx.clone(), req).await;
+            connect_telegram_account(cx, req).await;
         });
     }
 

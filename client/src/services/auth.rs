@@ -216,8 +216,8 @@ impl AuthService {
             let resp = auth_service
                 .discord_login(req)
                 .await
-                .map(|res| res.into_inner());
-            self.save_login_response(resp.clone()?);
+                .map(|res| res.into_inner())?;
+            self.save_login_response(resp);
             Ok(())
         } else {
             Err(Status::new(
@@ -234,8 +234,8 @@ impl AuthService {
             let resp = auth_service
                 .telegram_login(req)
                 .await
-                .map(|res| res.into_inner());
-            self.save_login_response(resp.clone()?);
+                .map(|res| res.into_inner())?;
+            self.save_login_response(resp);
             Ok(())
         } else {
             Err(Status::new(

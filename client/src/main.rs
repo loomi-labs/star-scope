@@ -246,7 +246,7 @@ impl EventsState {
     pub fn mark_as_read(&self, event_id: String) {
         let events = self.events.modify();
         if let Some(index) = events.iter().position(|e| e.get().id == event_id) {
-            let mut event = events[index.clone()].get().as_ref().clone();
+            let mut event = events[index].get().as_ref().clone();
             event.read = true;
             *events[index].modify() = event.clone();
             let event_type = event.event_type();
@@ -304,7 +304,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     let services = use_context::<Services>(cx);
     if has_access_permission(&services.auth_manager, route) {
-        app_state.route.set(Some(route.clone()));
+        app_state.route.set(Some(*route));
         match route {
             AppRoutes::Home => view!(cx, Home {}),
             AppRoutes::Notifications => view!(cx, Notifications {}),
@@ -490,7 +490,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
     let services = Services::new();
     let app_state = AppState::new(services.auth_manager.clone());
 
-    provide_context(cx, services.clone());
+    provide_context(cx, services);
     provide_context(cx, app_state.clone());
     provide_context(cx, EventsState::new());
     provide_context(cx, NotificationsState::new());
