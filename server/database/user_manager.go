@@ -158,7 +158,7 @@ func (m *UserManager) CreateOrUpdateForTelegramUser(ctx context.Context, userId 
 	return withTx(m.client, ctx, func(tx *ent.Tx) error {
 		u, err := tx.User.
 			Query().
-			Where(user.HasCommChannelsWith(commchannel.TelegramChatIDEQ(userId))).
+			Where(user.TelegramUserIDEQ(userId)).
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
 			return err
