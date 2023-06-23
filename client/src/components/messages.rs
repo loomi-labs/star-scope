@@ -6,7 +6,66 @@ use sycamore::motion::create_raf;
 use sycamore::prelude::*;
 use tonic::Status;
 
-use crate::{AppState, InfoLevel};
+use crate::{AppState, InfoLevel, InfoMsg};
+
+#[component(inline_props)]
+pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String) -> View<G> {
+    let app_state = use_context::<AppState>(cx);
+
+    let state = create_signal(cx, 1.0);
+    let (_running, start, stop) = create_raf(cx, move || {
+        let elapsed = js_sys::Date::now() - msg.created_at;
+        if elapsed > 7000.0 {
+            let new_state = 1.0 - (elapsed - 7000.0) / 3000.0;
+            state.set(new_state);
+            if new_state <= 0.0 {
+                app_state.remove_message(msg.id);
+            }
+        }
+    });
+    start();
+
+    let color = match msg.level {
+        InfoLevel::Info => "bg-msg-blue border-msg-blue text-msg-blue",
+        InfoLevel::Success => "bg-msg-green border-msg-green text-msg-green",
+        InfoLevel::Error => "bg-msg-red border-msg-red text-msg-red",
+    };
+
+    let hover_color = match msg.level {
+        InfoLevel::Info => "hover:bg-msg-blue",
+        InfoLevel::Success => "hover:bg-msg-green",
+        InfoLevel::Error => "hover:bg-msg-red",
+    };
+
+    let icon = match msg.level {
+        InfoLevel::Info => "icon-[material-symbols--error-rounded]",
+        InfoLevel::Success => "icon-[ic--round-check-circle]",
+        InfoLevel::Error => "icon-[ph--x-circle-fill]",
+    };
+
+    view! { cx,
+        div(class=format!("absolute bottom-0 right-0 flex items-center justify-center w-96 z-50 p-4 mr-6 rounded-lg bg-white border-l-[20px] drop-shadow-lg {}", color), style=format!("{} opacity: {}", style, state.get().as_ref())) {
+            span(class=format!("w-10 h-10 {}", icon)) {}
+            div(class="flex flex-col pl-4") {
+                h3(class="text-lg font-bold") { (msg.title) }
+                p(class="text-sm text-black") { (msg.message) }
+            }
+            button(
+                class="top-0 right-0 self-start",
+                on:click=move |_| {
+                    spawn_local_scoped(cx, async move {
+                        stop();
+                        app_state.remove_message(msg.id);
+                    });
+                }
+            ) {
+                div(class=format!("flex items-center justify-center rounded-full text-white w-8 h-8 {}", hover_color)) {
+                    span(class="w-6 h-6 bg-black icon-[bi--x]") {}
+                }
+            }
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IndexedItem<T> {
@@ -32,53 +91,24 @@ pub fn MessageOverlay<G: Html>(cx: Scope) -> View<G> {
 
     view!(
         cx,
-        Indexed(
-            iterable = messages,
-            view = move |cx, iItem| {
-                let style = format!("margin-bottom: {}rem;", 5 * iItem.index + 2);
-                let color = match iItem.item.get().level {
-                    InfoLevel::Info => "bg-blue-100 border-blue-500 text-blue-700",
-                    InfoLevel::Success => "bg-green-100 border-green-500 text-green-700",
-                    InfoLevel::Error => "bg-red-100 border-red-500 text-red-700",
-                };
-                let item = iItem.item.get();
-                let title = item.title.clone();
-                let message = item.message.clone();
-                let created_at = item.created_at;
-                let id = item.id;
+        div(class="fixed inset-0 min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {
+            div(class="relative flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
+                Indexed(
+                    iterable = messages,
+                    view = move |cx, iItem| {
+                        let style = format!("margin-bottom: {}rem;", 7 * iItem.index + 2);
+                        let item = iItem.item.get();
 
-                let state = create_signal(cx, 1.0);
-                let (_running, start, stop) = create_raf(cx, move || {
-                    let elapsed = js_sys::Date::now() - created_at;
-                    if elapsed > 7000.0 {
-                        let new_state = 1.0 - (elapsed - 7000.0) / 3000.0;
-                        state.set(new_state);
-                        if new_state <= 0.0 {
-                            app_state.remove_message(id);
+                        view!{cx,
+                            Message(
+                                msg=item.as_ref().clone(),
+                                style=style,
+                            )
                         }
-                    }
-                });
-                start();
-
-                view! { cx,
-                    div(class=format!("fixed bottom-0 right-0 w-96 z-50 p-2 m-2 bg-white border-l-4 {}", color), style=format!("{} opacity: {}", style, state.get().as_ref())) {
-                        h3(class="text-lg font-bold") { (title) }
-                        p(class="text-sm") { (message) }
-                        button(
-                            class="absolute top-0 right-0 p-2 m-2",
-                            on:click=move |_| {
-                                spawn_local_scoped(cx, async move {
-                                    stop();
-                                    app_state.remove_message(id);
-                                });
-                            }
-                        ) {
-                            i(class="fas fa-times") {}
-                        }
-                    }
-                }
-            },
-        )
+                    },
+                )
+            }
+        }
     )
 }
 
@@ -92,9 +122,7 @@ pub fn create_message(
     let uuid = app_state.add_message(title.into(), message.into(), level);
     create_effect(cx, move || {
         spawn_local_scoped(cx, async move {
-            debug!("wait 10 seconds before removing message");
             TimeoutFuture::new(1000 * 10).await;
-            debug!("removing message");
             app_state.remove_message(uuid);
         });
     });

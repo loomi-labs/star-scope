@@ -10,7 +10,7 @@ use crate::{AppRoutes, AppState, EventsState};
 pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     view!(cx,
-        div(class="flex items-center justify-between h-14 z-10 text-white dark:text-purple-600 dark:bg-purple-800") {
+        div(class="flex items-center justify-between h-14 text-white dark:text-purple-600 dark:bg-purple-800") {
             div(class="flex flex-grow items-center justify-start pl-3 h-14") {
                 button(on:click=move |_| safe_navigate(cx, AppRoutes::Home), class="relative") {
                         img(src=keys::LOGO_WITH_TEXT_WHITE_IMG, class="h-auto w-44 transition-transform duration-300 transform")
@@ -174,7 +174,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     );
 
     view! { cx,
-        div(class="flex flex-col justify-between w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none z-10",
+        div(class="flex flex-col justify-between w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none",
             on:mouseenter=move |_| is_sidebar_hovered.set(true),
             on:mouseleave=move |_| is_sidebar_hovered.set(false),
         ) {

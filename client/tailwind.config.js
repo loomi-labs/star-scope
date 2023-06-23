@@ -21,6 +21,9 @@ module.exports = {
         'badge-red': '#EF3C65',
         'badge-orange': '#F07D6C',
         'badge-green': '#11AA89',
+        'msg-red': '#C0362D',
+        'msg-green': '#3DA02D',
+        'msg-blue': '#2D68C0',
         'keplr-blue': {
             500: '#314FDF',
             600: '#273fb2',
