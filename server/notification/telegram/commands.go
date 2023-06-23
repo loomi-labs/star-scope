@@ -50,6 +50,7 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 	ctx := context.Background()
 	err := client.UserManager.CreateOrUpdateForTelegramUser(ctx, userId, userName, chatId, chatName, isGroup)
 	if err != nil {
+		log.Sugar.Errorf("Error while registering user %v (%v): %v", chatName, chatId, err)
 		text = "There was an error registering your user. Please try again later."
 	} else {
 		adminText := ""
@@ -96,7 +97,8 @@ func (client TelegramBot) handleStop(update *tgbotapi.Update) {
 	text := ""
 	err := client.UserManager.DeleteTelegramCommChannel(context.Background(), userId, chatId, true)
 	if err != nil {
-		text = "There was an error unregistering your user. Please try again later."
+		log.Sugar.Errorf("Error while unregistering user %v (%v): %v", chatName, chatId, err)
+		text = "There was an error stopping the bot. Please try again later."
 	} else {
 		text = "😴 Bot stopped. Send /start to start it again."
 	}
