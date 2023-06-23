@@ -466,7 +466,15 @@ func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, dis
 			if err := m.moveCommChannels(ctx, tx, u, oldDiscordUser); err != nil {
 				return err
 			}
-			return m.delete(ctx, tx, oldDiscordUser)
+			err = m.delete(ctx, tx, oldDiscordUser)
+			if err != nil {
+				return err
+			}
+			return tx.User.
+				UpdateOne(u).
+				SetDiscordUserID(discord.Id).
+				SetDiscordUsername(discord.Username).
+				Exec(ctx)
 		}
 
 		return tx.User.
@@ -505,7 +513,15 @@ func (m *UserManager) UpdateConnectTelegram(ctx context.Context, u *ent.User, da
 			if err := m.moveCommChannels(ctx, tx, u, oldDiscordUser); err != nil {
 				return err
 			}
-			return m.delete(ctx, tx, oldDiscordUser)
+			err = m.delete(ctx, tx, oldDiscordUser)
+			if err != nil {
+				return err
+			}
+			return tx.User.
+				UpdateOne(u).
+				SetTelegramUserID(data.UserId).
+				SetTelegramUsername(data.Username).
+				Exec(ctx)
 		}
 
 		return tx.User.
