@@ -174,36 +174,31 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     );
 
     view! { cx,
-        div(class="h-full flex flex-col top-14 left-0 w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none z-10",
+        div(class="flex flex-col justify-between w-14 hover:w-64 lg:w-64 text-white transition-all duration-300 border-none z-10",
             on:mouseenter=move |_| is_sidebar_hovered.set(true),
             on:mouseleave=move |_| is_sidebar_hovered.set(false),
         ) {
-            div(class="flex flex-col") {
-                ul(class="flex flex-col py-4 space-y-1 dark:bg-purple-800 rounded") {
-                    li() {
-                        a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
-                            div(style="overflow: hidden; text-overflow: ellipsis;") {
-                                span(class=format!("ml-4 text-base tracking-wide")) { "Notifications" }
-                            }
+            ul(class="py-4 space-y-1 dark:bg-purple-800 rounded-b-lg") {
+                li() {
+                    a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
+                        div(style="overflow: hidden; text-overflow: ellipsis;") {
+                            span(class=format!("ml-4 text-base tracking-wide")) { "Notifications" }
                         }
-                        ul() {
-                            (notification_button_views)
-                        }
+                    }
+                    ul() {
+                        (notification_button_views)
                     }
                 }
             }
-            div(class="flex flex-col", style="height: calc(100vh - 540px)")
-            div(class="flex flex-col pb-10") {
-                ul(class="flex flex-col py-2 space-y-1 dark:bg-purple-800 rounded") {
-                    li() {
-                        a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
-                            div(style="overflow: hidden; text-overflow: ellipsis;") {
-                                span(class=format!("ml-4 text-base tracking-wide")) { "Settings" }
-                            }
+            ul(class="py-4 space-y-1 dark:bg-purple-800 rounded-t-lg") {
+                li() {
+                    a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
+                        div(style="overflow: hidden; text-overflow: ellipsis;") {
+                            span(class=format!("ml-4 text-base tracking-wide")) { "Settings" }
                         }
-                        ul() {
-                            (settings_button_views)
-                        }
+                    }
+                    ul() {
+                        (settings_button_views)
                     }
                 }
             }
@@ -215,7 +210,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
     let children = children.call(cx);
     view! { cx,
-        div(class="min-h-screen flex justify-center items-center flex-auto flex-shrink-0") {
+        div(class="min-h-[100dvh] flex justify-center items-center flex-auto flex-shrink-0") {
             div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
                 Header{}
                 div(class="flex flex-row h-full w-full") {
