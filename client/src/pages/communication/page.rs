@@ -197,8 +197,10 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let delete_signal = create_signal(cx, None::<i64>);
 
     create_effect(cx, move || {
-        if *is_connected.get() {
-            // query channels if the user has discord
+        if *is_connected.get() && !(*show_add_channel_dialog.get()) {
+            // query channels if the user has discord and the add channel dialog is not open
+            // -> query once when the user connects discord
+            // -> queries every time the user closes the add channel dialog
             spawn_local_scoped(cx, async move {
                 query_discord_channels(cx, channels, is_loading).await;
             });
@@ -354,8 +356,10 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let delete_signal = create_signal(cx, None::<i64>);
 
     create_effect(cx, move || {
-        if *is_connected.get() {
-            // query chats if the user has telegram
+        if *is_connected.get() && !(*show_add_chat_dialog.get()) {
+            // query chats if the user has telegram and the add chat dialog is not open
+            // -> query once the user has connected telegram
+            // -> queries every time the add chat dialog is closed
             spawn_local_scoped(cx, async move {
                 query_telegram_chats(cx, chats, is_loading).await;
             });
