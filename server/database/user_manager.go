@@ -470,8 +470,14 @@ func (m *UserManager) UpdateConnectDiscord(ctx context.Context, u *ent.User, dis
 			if err != nil {
 				return err
 			}
-			return tx.User.
-				UpdateOne(u).
+			updateQuery := tx.User.UpdateOne(oldDiscordUser)
+			if oldDiscordUser.TelegramUserID != 0 && u.TelegramUserID == 0 {
+				updateQuery = updateQuery.SetTelegramUserID(u.TelegramUserID)
+			}
+			if oldDiscordUser.WalletAddress != "" && u.WalletAddress == "" {
+				updateQuery = updateQuery.SetWalletAddress(u.WalletAddress)
+			}
+			return updateQuery.
 				SetDiscordUserID(discord.Id).
 				SetDiscordUsername(discord.Username).
 				Exec(ctx)
@@ -517,8 +523,14 @@ func (m *UserManager) UpdateConnectTelegram(ctx context.Context, u *ent.User, da
 			if err != nil {
 				return err
 			}
-			return tx.User.
-				UpdateOne(u).
+			updateQuery := tx.User.UpdateOne(oldDiscordUser)
+			if oldDiscordUser.DiscordUserID != 0 && u.DiscordUserID == 0 {
+				updateQuery = updateQuery.SetDiscordUserID(u.DiscordUserID)
+			}
+			if oldDiscordUser.WalletAddress != "" && u.WalletAddress == "" {
+				updateQuery = updateQuery.SetWalletAddress(u.WalletAddress)
+			}
+			return updateQuery.
 				SetTelegramUserID(data.UserId).
 				SetTelegramUsername(data.Username).
 				Exec(ctx)
