@@ -38,6 +38,9 @@ func (User) Fields() []ent.Field {
 		field.String("wallet_address").
 			Unique().
 			Optional(),
+		field.Time("last_login_time").
+			Optional().
+			Nillable(),
 	}
 }
 

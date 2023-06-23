@@ -5844,6 +5844,7 @@ type UserMutation struct {
 	adddiscord_user_id     *int64
 	discord_username       *string
 	wallet_address         *string
+	last_login_time        *time.Time
 	clearedFields          map[string]struct{}
 	event_listeners        map[int]struct{}
 	removedevent_listeners map[int]struct{}
@@ -6349,6 +6350,55 @@ func (m *UserMutation) ResetWalletAddress() {
 	delete(m.clearedFields, user.FieldWalletAddress)
 }
 
+// SetLastLoginTime sets the "last_login_time" field.
+func (m *UserMutation) SetLastLoginTime(t time.Time) {
+	m.last_login_time = &t
+}
+
+// LastLoginTime returns the value of the "last_login_time" field in the mutation.
+func (m *UserMutation) LastLoginTime() (r time.Time, exists bool) {
+	v := m.last_login_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLoginTime returns the old "last_login_time" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLoginTime(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLoginTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLoginTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLoginTime: %w", err)
+	}
+	return oldValue.LastLoginTime, nil
+}
+
+// ClearLastLoginTime clears the value of the "last_login_time" field.
+func (m *UserMutation) ClearLastLoginTime() {
+	m.last_login_time = nil
+	m.clearedFields[user.FieldLastLoginTime] = struct{}{}
+}
+
+// LastLoginTimeCleared returns if the "last_login_time" field was cleared in this mutation.
+func (m *UserMutation) LastLoginTimeCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLoginTime]
+	return ok
+}
+
+// ResetLastLoginTime resets all changes to the "last_login_time" field.
+func (m *UserMutation) ResetLastLoginTime() {
+	m.last_login_time = nil
+	delete(m.clearedFields, user.FieldLastLoginTime)
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
 func (m *UserMutation) AddEventListenerIDs(ids ...int) {
 	if m.event_listeners == nil {
@@ -6491,7 +6541,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.create_time != nil {
 		fields = append(fields, user.FieldCreateTime)
 	}
@@ -6515,6 +6565,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.wallet_address != nil {
 		fields = append(fields, user.FieldWalletAddress)
+	}
+	if m.last_login_time != nil {
+		fields = append(fields, user.FieldLastLoginTime)
 	}
 	return fields
 }
@@ -6540,6 +6593,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.DiscordUsername()
 	case user.FieldWalletAddress:
 		return m.WalletAddress()
+	case user.FieldLastLoginTime:
+		return m.LastLoginTime()
 	}
 	return nil, false
 }
@@ -6565,6 +6620,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDiscordUsername(ctx)
 	case user.FieldWalletAddress:
 		return m.OldWalletAddress(ctx)
+	case user.FieldLastLoginTime:
+		return m.OldLastLoginTime(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -6629,6 +6686,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetWalletAddress(v)
+		return nil
+	case user.FieldLastLoginTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLoginTime(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -6702,6 +6766,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldWalletAddress) {
 		fields = append(fields, user.FieldWalletAddress)
 	}
+	if m.FieldCleared(user.FieldLastLoginTime) {
+		fields = append(fields, user.FieldLastLoginTime)
+	}
 	return fields
 }
 
@@ -6730,6 +6797,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldWalletAddress:
 		m.ClearWalletAddress()
+		return nil
+	case user.FieldLastLoginTime:
+		m.ClearLastLoginTime()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -6762,6 +6832,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldWalletAddress:
 		m.ResetWalletAddress()
+		return nil
+	case user.FieldLastLoginTime:
+		m.ResetLastLoginTime()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

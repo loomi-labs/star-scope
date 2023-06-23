@@ -44,7 +44,7 @@ var (
 			text := ""
 
 			ctx := context.Background()
-			err := dc.userManager.CreateOrUpdateForDiscordUser(ctx, userId, userName, channelId, channelName, isGroup)
+			_, err := dc.userManager.CreateOrUpdateByDiscordUser(ctx, userId, userName, &channelId, &channelName, &isGroup)
 			if err != nil {
 				log.Sugar.Errorf("Error while creating or updating user: %v", err)
 				text = "There was an error registering your user. Please try again later."

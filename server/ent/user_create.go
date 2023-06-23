@@ -134,6 +134,20 @@ func (uc *UserCreate) SetNillableWalletAddress(s *string) *UserCreate {
 	return uc
 }
 
+// SetLastLoginTime sets the "last_login_time" field.
+func (uc *UserCreate) SetLastLoginTime(t time.Time) *UserCreate {
+	uc.mutation.SetLastLoginTime(t)
+	return uc
+}
+
+// SetNillableLastLoginTime sets the "last_login_time" field if the given value is not nil.
+func (uc *UserCreate) SetNillableLastLoginTime(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetLastLoginTime(*t)
+	}
+	return uc
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uc *UserCreate) AddEventListenerIDs(ids ...int) *UserCreate {
 	uc.mutation.AddEventListenerIDs(ids...)
@@ -286,6 +300,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.WalletAddress(); ok {
 		_spec.SetField(user.FieldWalletAddress, field.TypeString, value)
 		_node.WalletAddress = value
+	}
+	if value, ok := uc.mutation.LastLoginTime(); ok {
+		_spec.SetField(user.FieldLastLoginTime, field.TypeTime, value)
+		_node.LastLoginTime = &value
 	}
 	if nodes := uc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

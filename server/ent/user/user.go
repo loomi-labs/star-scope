@@ -31,6 +31,8 @@ const (
 	FieldDiscordUsername = "discord_username"
 	// FieldWalletAddress holds the string denoting the wallet_address field in the database.
 	FieldWalletAddress = "wallet_address"
+	// FieldLastLoginTime holds the string denoting the last_login_time field in the database.
+	FieldLastLoginTime = "last_login_time"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// EdgeCommChannels holds the string denoting the comm_channels edge name in mutations.
@@ -60,6 +62,7 @@ var Columns = []string{
 	FieldDiscordUserID,
 	FieldDiscordUsername,
 	FieldWalletAddress,
+	FieldLastLoginTime,
 }
 
 var (
@@ -162,6 +165,11 @@ func ByDiscordUsername(opts ...sql.OrderTermOption) OrderOption {
 // ByWalletAddress orders the results by the wallet_address field.
 func ByWalletAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWalletAddress, opts...).ToFunc()
+}
+
+// ByLastLoginTime orders the results by the last_login_time field.
+func ByLastLoginTime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastLoginTime, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.

@@ -48,7 +48,7 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 
 	text := ""
 	ctx := context.Background()
-	err := client.UserManager.CreateOrUpdateForTelegramUser(ctx, userId, userName, chatId, chatName, isGroup)
+	_, err := client.UserManager.CreateOrUpdateByTelegramUser(ctx, userId, userName, &chatId, &chatName, &isGroup)
 	if err != nil {
 		log.Sugar.Errorf("Error while registering user %v (%v): %v", chatName, chatId, err)
 		text = "There was an error registering your user. Please try again later."

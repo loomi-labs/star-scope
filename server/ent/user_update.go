@@ -164,6 +164,26 @@ func (uu *UserUpdate) ClearWalletAddress() *UserUpdate {
 	return uu
 }
 
+// SetLastLoginTime sets the "last_login_time" field.
+func (uu *UserUpdate) SetLastLoginTime(t time.Time) *UserUpdate {
+	uu.mutation.SetLastLoginTime(t)
+	return uu
+}
+
+// SetNillableLastLoginTime sets the "last_login_time" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableLastLoginTime(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetLastLoginTime(*t)
+	}
+	return uu
+}
+
+// ClearLastLoginTime clears the value of the "last_login_time" field.
+func (uu *UserUpdate) ClearLastLoginTime() *UserUpdate {
+	uu.mutation.ClearLastLoginTime()
+	return uu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uu *UserUpdate) AddEventListenerIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddEventListenerIDs(ids...)
@@ -340,6 +360,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.WalletAddressCleared() {
 		_spec.ClearField(user.FieldWalletAddress, field.TypeString)
+	}
+	if value, ok := uu.mutation.LastLoginTime(); ok {
+		_spec.SetField(user.FieldLastLoginTime, field.TypeTime, value)
+	}
+	if uu.mutation.LastLoginTimeCleared() {
+		_spec.ClearField(user.FieldLastLoginTime, field.TypeTime)
 	}
 	if uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -585,6 +611,26 @@ func (uuo *UserUpdateOne) ClearWalletAddress() *UserUpdateOne {
 	return uuo
 }
 
+// SetLastLoginTime sets the "last_login_time" field.
+func (uuo *UserUpdateOne) SetLastLoginTime(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetLastLoginTime(t)
+	return uuo
+}
+
+// SetNillableLastLoginTime sets the "last_login_time" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableLastLoginTime(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetLastLoginTime(*t)
+	}
+	return uuo
+}
+
+// ClearLastLoginTime clears the value of the "last_login_time" field.
+func (uuo *UserUpdateOne) ClearLastLoginTime() *UserUpdateOne {
+	uuo.mutation.ClearLastLoginTime()
+	return uuo
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uuo *UserUpdateOne) AddEventListenerIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddEventListenerIDs(ids...)
@@ -791,6 +837,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.WalletAddressCleared() {
 		_spec.ClearField(user.FieldWalletAddress, field.TypeString)
+	}
+	if value, ok := uuo.mutation.LastLoginTime(); ok {
+		_spec.SetField(user.FieldLastLoginTime, field.TypeTime, value)
+	}
+	if uuo.mutation.LastLoginTimeCleared() {
+		_spec.ClearField(user.FieldLastLoginTime, field.TypeTime)
 	}
 	if uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -250,7 +250,12 @@ func (s *AuthService) TelegramLogin(ctx context.Context, request *connect.Reques
 		return nil, ErrorLoginExpired
 	}
 
-	user, err := s.userManager.QueryByTelegram(ctx, data.UserId)
+	user, err := s.userManager.CreateOrUpdateByTelegramUser(ctx, data.UserId, data.Username, nil, nil, nil)
+	if err != nil && !ent.IsNotFound(err) {
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err != nil {
 		log.Sugar.Errorf("error while querying user by telegram chat id: %v", err)
 		return nil, ErrorLoginFailed
@@ -306,19 +311,19 @@ func (s *AuthService) deepCopyDiscordOAuth2Config(original *oauth2.Config) *oaut
 	return configCopy
 }
 
-func (s *AuthService) getDiscordIdentity(code string, webAppUrl string) (*types.DiscordIdentity, error) {
+func (s *AuthService) getDiscordIdentity(ctx context.Context, code string, webAppUrl string) (*types.DiscordIdentity, error) {
 	config := s.discordOAuth2Config
 	if webAppUrl != "" {
 		config = s.deepCopyDiscordOAuth2Config(config)
 		config.RedirectURL = webAppUrl
 	}
-	token, err := config.Exchange(context.Background(), code)
+	token, err := config.Exchange(ctx, code)
 	if err != nil {
 		log.Sugar.Infof("Error exchanging code for token: %v", err)
 		return nil, ErrorLoginFailed
 	}
 
-	res, err := s.discordOAuth2Config.Client(context.Background(), token).Get("https://discord.com/api/users/@me")
+	res, err := s.discordOAuth2Config.Client(ctx, token).Get("https://discord.com/api/users/@me")
 	if err != nil || res.StatusCode != 200 {
 		log.Sugar.Infof("Error getting user (%v): %v", res.StatusCode, err)
 		return nil, ErrorLoginFailed
@@ -344,13 +349,13 @@ func (s *AuthService) getDiscordIdentity(code string, webAppUrl string) (*types.
 }
 
 func (s *AuthService) DiscordLogin(ctx context.Context, request *connect.Request[authpb.DiscordLoginRequest]) (*connect.Response[authpb.LoginResponse], error) {
-	discordIdentity, err := s.getDiscordIdentity(request.Msg.GetCode(), "")
+	discordIdentity, err := s.getDiscordIdentity(ctx, request.Msg.GetCode(), "")
 	if err != nil {
 		log.Sugar.Errorf("Error getting discord identity: %v", err)
 		return nil, ErrorLoginFailed
 	}
 
-	user, err := s.userManager.QueryByDiscord(ctx, discordIdentity.Id)
+	user, err := s.userManager.CreateOrUpdateByDiscordUser(ctx, discordIdentity.Id, discordIdentity.Username, nil, nil, nil)
 	if err != nil {
 		return nil, types.UserNotFoundErr
 	}
@@ -365,7 +370,7 @@ func (s *AuthService) ConnectDiscord(ctx context.Context, request *connect.Reque
 		return nil, types.UserNotFoundErr
 	}
 
-	discordIdentity, err := s.getDiscordIdentity(request.Msg.GetCode(), request.Msg.GetWebAppUrl())
+	discordIdentity, err := s.getDiscordIdentity(ctx, request.Msg.GetCode(), request.Msg.GetWebAppUrl())
 	if err != nil {
 		log.Sugar.Errorf("Error getting discord identity: %v", err)
 		return nil, ErrorUserAddFailed

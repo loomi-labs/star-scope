@@ -153,15 +153,15 @@ func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *en
 	}
 }
 
-func (m *UserManager) CreateOrUpdateForTelegramUser(ctx context.Context, userId int64, userName string, chatId int64, chatName string, isGroup bool) error {
-	log.Sugar.Debugf("CreateOrUpdateForTelegramUser: %v (%v)", userName, userId)
-	return withTx(m.client, ctx, func(tx *ent.Tx) error {
+func (m *UserManager) CreateOrUpdateByTelegramUser(ctx context.Context, userId int64, userName string, chatId *int64, chatName *string, isGroup *bool) (*ent.User, error) {
+	log.Sugar.Debugf("CreateOrUpdateByTelegramUser: %v (%v)", userName, userId)
+	return withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.User, error) {
 		u, err := tx.User.
 			Query().
 			Where(user.TelegramUserIDEQ(userId)).
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
-			return err
+			return u, err
 		}
 		if u == nil {
 			u, err = tx.User.
@@ -170,10 +170,13 @@ func (m *UserManager) CreateOrUpdateForTelegramUser(ctx context.Context, userId 
 				SetTelegramUserID(userId).
 				Save(ctx)
 			if err != nil {
-				return err
+				return u, err
 			}
 		}
-		return m.createOrAddTelegramCommChannel(ctx, tx, u, chatId, chatName, isGroup)
+		if chatId == nil {
+			return u, nil
+		}
+		return u, m.createOrAddTelegramCommChannel(ctx, tx, u, *chatId, *chatName, *isGroup)
 	})
 }
 
@@ -201,15 +204,15 @@ func (m *UserManager) createOrAddDiscordCommChannel(ctx context.Context, tx *ent
 	}
 }
 
-func (m *UserManager) CreateOrUpdateForDiscordUser(ctx context.Context, userId int64, userName string, channelId int64, channelName string, isGroup bool) error {
-	log.Sugar.Debugf("CreateOrUpdateForDiscordUser: %s (%d) in %s (%d)", userName, userId, channelName, channelId)
-	return withTx(m.client, ctx, func(tx *ent.Tx) error {
+func (m *UserManager) CreateOrUpdateByDiscordUser(ctx context.Context, userId int64, userName string, channelId *int64, channelName *string, isGroup *bool) (*ent.User, error) {
+	log.Sugar.Debugf("CreateOrUpdateByDiscordUser: %s (%d) in %s (%d)", userName, userId, channelName, channelId)
+	return withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.User, error) {
 		u, err := tx.User.
 			Query().
 			Where(user.DiscordUserIDEQ(userId)).
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
-			return err
+			return u, err
 		}
 		if u == nil {
 			u, err = tx.User.
@@ -218,10 +221,13 @@ func (m *UserManager) CreateOrUpdateForDiscordUser(ctx context.Context, userId i
 				SetDiscordUserID(userId).
 				Save(ctx)
 			if err != nil {
-				return err
+				return u, err
 			}
 		}
-		return m.createOrAddDiscordCommChannel(ctx, tx, u, channelId, channelName, isGroup)
+		if channelId == nil {
+			return u, nil
+		}
+		return u, m.createOrAddDiscordCommChannel(ctx, tx, u, *channelId, *channelName, *isGroup)
 	})
 }
 

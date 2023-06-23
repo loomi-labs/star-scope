@@ -33,6 +33,8 @@ type User struct {
 	DiscordUsername string `json:"discord_username,omitempty"`
 	// WalletAddress holds the value of the "wallet_address" field.
 	WalletAddress string `json:"wallet_address,omitempty"`
+	// LastLoginTime holds the value of the "last_login_time" field.
+	LastLoginTime *time.Time `json:"last_login_time,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -77,7 +79,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case user.FieldRole, user.FieldTelegramUsername, user.FieldDiscordUsername, user.FieldWalletAddress:
 			values[i] = new(sql.NullString)
-		case user.FieldCreateTime, user.FieldUpdateTime:
+		case user.FieldCreateTime, user.FieldUpdateTime, user.FieldLastLoginTime:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -148,6 +150,13 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.WalletAddress = value.String
 			}
+		case user.FieldLastLoginTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_login_time", values[i])
+			} else if value.Valid {
+				u.LastLoginTime = new(time.Time)
+				*u.LastLoginTime = value.Time
+			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -217,6 +226,11 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("wallet_address=")
 	builder.WriteString(u.WalletAddress)
+	builder.WriteString(", ")
+	if v := u.LastLoginTime; v != nil {
+		builder.WriteString("last_login_time=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }
