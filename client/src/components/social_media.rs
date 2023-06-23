@@ -4,22 +4,29 @@ use urlencoding::encode;
 use crate::config::keys;
 
 #[derive(Prop)]
-pub struct TelegramLoginButtonProps {
+pub struct TelegramLoginButtonProps<'a> {
     #[builder(default = keys::WEB_APP_URL.to_string())]
     web_app_url: String,
+    #[builder(default = None)]
+    is_shown: Option<&'a ReadSignal<bool>>,
 }
 
 #[component]
-pub fn TelegramLoginButton<G: Html>(cx: Scope, props: TelegramLoginButtonProps) -> View<G> {
+pub fn TelegramLoginButton<'a, G: Html>(cx: Scope<'a>, props: TelegramLoginButtonProps<'a>) -> View<G> {
+    let is_shown = props.is_shown.unwrap_or_else(|| &create_signal(cx, true));
     view!(
         cx,
-        script(async=true, src="https://telegram.org/js/telegram-widget.js?22",
+        script(
+            async=true,
+            src="https://telegram.org/js/telegram-widget.js?22",
+            hidden=!(*is_shown.get()),
             data-telegram-login=keys::TELEGRAM_BOT_NAME,
             data-size="large",
             data-radius="10",
             data-userpic="false",
             data-auth-url=props.web_app_url,
-            data-request-access="write") {}
+            data-request-access="write",
+        ) {}
     )
 }
 
