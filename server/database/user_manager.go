@@ -122,9 +122,9 @@ func (m *UserManager) UpdateRole(ctx context.Context, name string, role user.Rol
 		Save(ctx)
 }
 
-func (m *UserManager) UpdateSetLoginDate(ctx context.Context, u *ent.User) error {
-	return u.
-		Update().
+func (m *UserManager) UpdateSetLoginDate(ctx context.Context, userId int) error {
+	return m.client.User.
+		UpdateOneID(userId).
 		SetLastLoginTime(time.Now()).
 		Exec(ctx)
 }

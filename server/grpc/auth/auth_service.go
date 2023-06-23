@@ -125,7 +125,7 @@ func getWalletAddress(message string) (string, error) {
 }
 
 func (s *AuthService) login(ctx context.Context, user *ent.User) (*connect.Response[authpb.LoginResponse], error) {
-	err := s.userManager.UpdateSetLoginDate(ctx, user)
+	err := s.userManager.UpdateSetLoginDate(ctx, user.ID)
 	if err != nil {
 		log.Sugar.Errorf("Error updating login date: %v", err)
 		return nil, ErrorLoginFailed
