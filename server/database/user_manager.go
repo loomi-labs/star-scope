@@ -10,6 +10,7 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
+	"time"
 )
 
 type UserManager struct {
@@ -119,6 +120,13 @@ func (m *UserManager) UpdateRole(ctx context.Context, name string, role user.Rol
 		Update().
 		SetRole(role).
 		Save(ctx)
+}
+
+func (m *UserManager) UpdateSetLoginDate(ctx context.Context, u *ent.User) error {
+	return u.
+		Update().
+		SetLastLoginTime(time.Now()).
+		Exec(ctx)
 }
 
 func (m *UserManager) CreateByWalletAddress(ctx context.Context, tx *ent.Tx, walletAddress string) (*ent.User, error) {

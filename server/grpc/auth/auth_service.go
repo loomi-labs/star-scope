@@ -124,7 +124,13 @@ func getWalletAddress(message string) (string, error) {
 	return keplrResponse.Signed.Msgs[0].Value.Signer, nil
 }
 
-func (s *AuthService) login(user *ent.User) (*connect.Response[authpb.LoginResponse], error) {
+func (s *AuthService) login(ctx context.Context, user *ent.User) (*connect.Response[authpb.LoginResponse], error) {
+	err := s.userManager.UpdateSetLoginDate(ctx, user)
+	if err != nil {
+		log.Sugar.Errorf("Error updating login date: %v", err)
+		return nil, ErrorLoginFailed
+	}
+
 	accessToken, err := s.jwtManager.GenerateToken(user, AccessToken)
 	if err != nil {
 		log.Sugar.Errorf("Could not generate accessToken for user %v: %v", user.ID, err)
@@ -177,7 +183,7 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 		return nil, ErrorLoginFailed
 	}
 
-	return s.login(user)
+	return s.login(ctx, user)
 }
 
 func (s *AuthService) secretKey1() []byte {
@@ -251,17 +257,12 @@ func (s *AuthService) TelegramLogin(ctx context.Context, request *connect.Reques
 	}
 
 	user, err := s.userManager.CreateOrUpdateByTelegramUser(ctx, data.UserId, data.Username, nil, nil, nil)
-	if err != nil && !ent.IsNotFound(err) {
-		if err != nil {
-			return nil, err
-		}
-	}
 	if err != nil {
 		log.Sugar.Errorf("error while querying user by telegram chat id: %v", err)
 		return nil, ErrorLoginFailed
 	}
 
-	return s.login(user)
+	return s.login(ctx, user)
 }
 
 func (s *AuthService) ConnectTelegram(ctx context.Context, request *connect.Request[authpb.ConnectTelegramRequest]) (*connect.Response[emptypb.Empty], error) {
@@ -357,10 +358,11 @@ func (s *AuthService) DiscordLogin(ctx context.Context, request *connect.Request
 
 	user, err := s.userManager.CreateOrUpdateByDiscordUser(ctx, discordIdentity.Id, discordIdentity.Username, nil, nil, nil)
 	if err != nil {
+		log.Sugar.Errorf("Error creating or updating user: %v", err)
 		return nil, types.UserNotFoundErr
 	}
 
-	return s.login(user)
+	return s.login(ctx, user)
 }
 
 func (s *AuthService) ConnectDiscord(ctx context.Context, request *connect.Request[authpb.ConnectDiscordRequest]) (*connect.Response[emptypb.Empty], error) {
