@@ -383,7 +383,7 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
                         let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
                         view! {cx,
                             p(class="my-4") { "Receive notifications via Telegram." }
-                            TelegramLoginButton(web_app_url=web_app_url, is_shown=Some(is_connected))
+                            TelegramLoginButton(web_app_url=web_app_url, is_hidden=Some(is_connected))
                         }
                     }
                     true => {

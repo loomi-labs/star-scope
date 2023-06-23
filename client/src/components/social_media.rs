@@ -1,3 +1,5 @@
+use log::debug;
+use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
 
@@ -8,18 +10,41 @@ pub struct TelegramLoginButtonProps<'a> {
     #[builder(default = keys::WEB_APP_URL.to_string())]
     web_app_url: String,
     #[builder(default = None)]
-    is_shown: Option<&'a ReadSignal<bool>>,
+    is_hidden: Option<&'a ReadSignal<bool>>,
+}
+
+fn hide_telegram_login_button(cx: Scope) {
+    spawn_local_scoped(cx, async move {
+        gloo_timers::future::TimeoutFuture::new(100).await;
+        let element_id = format!("telegram-login-{}", keys::TELEGRAM_BOT_NAME);
+        let element = web_sys::window()
+            .unwrap()
+            .document()
+            .unwrap()
+            .get_element_by_id(element_id.as_str());
+        if element.is_some() {
+            let _ = element.unwrap().set_attribute("hidden", "");
+        } else {
+            hide_telegram_login_button(cx)
+        }
+    });
 }
 
 #[component]
 pub fn TelegramLoginButton<'a, G: Html>(cx: Scope<'a>, props: TelegramLoginButtonProps<'a>) -> View<G> {
-    let is_shown = props.is_shown.unwrap_or_else(|| &create_signal(cx, true));
+    if let Some(is_hidden) = props.is_hidden {
+        create_effect(cx, move || {
+            if *is_hidden.get() { // necessary because the telegram script inserts the button no matter what
+                hide_telegram_login_button(cx.clone());
+            }
+        });
+    }
+
     view!(
         cx,
         script(
             async=true,
             src="https://telegram.org/js/telegram-widget.js?22",
-            hidden=!(*is_shown.get()),
             data-telegram-login=keys::TELEGRAM_BOT_NAME,
             data-size="large",
             data-radius="10",
