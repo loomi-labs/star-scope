@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hedwigz/entviz v0.0.0-20221011080911-9d47f6f1d818
 	github.com/icza/gog v0.0.0-20230509085756-00e776132a34
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pkg/errors v0.9.1
 	github.com/ravener/discord-oauth2 v0.0.0-20230514095040-ae65713199b3
 	github.com/robfig/cron/v3 v3.0.1
