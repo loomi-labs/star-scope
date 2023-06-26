@@ -33,10 +33,14 @@ const (
 	FieldWalletAddress = "wallet_address"
 	// FieldLastLoginTime holds the string denoting the last_login_time field in the database.
 	FieldLastLoginTime = "last_login_time"
+	// FieldIsSetupComplete holds the string denoting the is_setup_complete field in the database.
+	FieldIsSetupComplete = "is_setup_complete"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// EdgeCommChannels holds the string denoting the comm_channels edge name in mutations.
 	EdgeCommChannels = "comm_channels"
+	// EdgeSetup holds the string denoting the setup edge name in mutations.
+	EdgeSetup = "setup"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// EventListenersTable is the table that holds the event_listeners relation/edge. The primary key declared below.
@@ -49,6 +53,13 @@ const (
 	// CommChannelsInverseTable is the table name for the CommChannel entity.
 	// It exists in this package in order to avoid circular dependency with the "commchannel" package.
 	CommChannelsInverseTable = "comm_channels"
+	// SetupTable is the table that holds the setup relation/edge.
+	SetupTable = "user_setups"
+	// SetupInverseTable is the table name for the UserSetup entity.
+	// It exists in this package in order to avoid circular dependency with the "usersetup" package.
+	SetupInverseTable = "user_setups"
+	// SetupColumn is the table column denoting the setup relation/edge.
+	SetupColumn = "user_setup"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -63,6 +74,7 @@ var Columns = []string{
 	FieldDiscordUsername,
 	FieldWalletAddress,
 	FieldLastLoginTime,
+	FieldIsSetupComplete,
 }
 
 var (
@@ -91,6 +103,8 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultIsSetupComplete holds the default value on creation for the "is_setup_complete" field.
+	DefaultIsSetupComplete bool
 )
 
 // Role defines the type for the "role" enum field.
@@ -172,6 +186,11 @@ func ByLastLoginTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastLoginTime, opts...).ToFunc()
 }
 
+// ByIsSetupComplete orders the results by the is_setup_complete field.
+func ByIsSetupComplete(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsSetupComplete, opts...).ToFunc()
+}
+
 // ByEventListenersCount orders the results by event_listeners count.
 func ByEventListenersCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -199,6 +218,13 @@ func ByCommChannels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCommChannelsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// BySetupField orders the results by setup field.
+func BySetupField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSetupStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newEventListenersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -211,5 +237,12 @@ func newCommChannelsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CommChannelsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, false, CommChannelsTable, CommChannelsPrimaryKey...),
+	)
+}
+func newSetupStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SetupInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, SetupTable, SetupColumn),
 	)
 }

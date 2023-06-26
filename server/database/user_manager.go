@@ -104,6 +104,12 @@ func (m *UserManager) QueryCommChannels(ctx context.Context, u *ent.User, t *com
 		All(ctx)
 }
 
+func (m *UserManager) QuerySetup(ctx context.Context, u *ent.User) (*ent.UserSetup, error) {
+	return u.
+		QuerySetup().
+		Only(ctx)
+}
+
 func (m *UserManager) UpdateRole(ctx context.Context, name string, role user.Role) (*ent.User, error) {
 	entUser, err := m.client.User.
 		Query().
@@ -549,4 +555,8 @@ func (m *UserManager) UpdateConnectTelegram(ctx context.Context, u *ent.User, da
 		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
 	}
 	return nil
+}
+
+func (m *UserManager) UpdateSetup(ctx context.Context, query *ent.UserSetupUpdateOne) (*ent.UserSetup, error) {
+	return query.Save(ctx)
 }

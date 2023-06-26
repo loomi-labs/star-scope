@@ -14,3 +14,11 @@ func ConvertWithOtherPrefix(address string, newPrefix string) (string, error) {
 	}
 	return bech32.ConvertAndEncode(newPrefix, bytes)
 }
+
+func IsBech32AddressFromChain(address string, chainPrefix string) bool {
+	newAddr, err := ConvertWithOtherPrefix(address, chainPrefix)
+	if err != nil {
+		return false
+	}
+	return newAddr == address
+}

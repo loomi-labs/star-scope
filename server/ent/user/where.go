@@ -95,6 +95,11 @@ func LastLoginTime(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldLastLoginTime, v))
 }
 
+// IsSetupComplete applies equality check predicate on the "is_setup_complete" field. It's identical to IsSetupCompleteEQ.
+func IsSetupComplete(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldIsSetupComplete, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreateTime, v))
@@ -570,6 +575,16 @@ func LastLoginTimeNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldLastLoginTime))
 }
 
+// IsSetupCompleteEQ applies the EQ predicate on the "is_setup_complete" field.
+func IsSetupCompleteEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldIsSetupComplete, v))
+}
+
+// IsSetupCompleteNEQ applies the NEQ predicate on the "is_setup_complete" field.
+func IsSetupCompleteNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldIsSetupComplete, v))
+}
+
 // HasEventListeners applies the HasEdge predicate on the "event_listeners" edge.
 func HasEventListeners() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -608,6 +623,29 @@ func HasCommChannels() predicate.User {
 func HasCommChannelsWith(preds ...predicate.CommChannel) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newCommChannelsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSetup applies the HasEdge predicate on the "setup" edge.
+func HasSetup() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, SetupTable, SetupColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSetupWith applies the HasEdge predicate on the "setup" edge with a given conditions (other predicates).
+func HasSetupWith(preds ...predicate.UserSetup) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newSetupStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

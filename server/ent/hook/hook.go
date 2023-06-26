@@ -93,6 +93,18 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
 }
 
+// The UserSetupFunc type is an adapter to allow the use of ordinary
+// function as UserSetup mutator.
+type UserSetupFunc func(context.Context, *ent.UserSetupMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserSetupFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserSetupMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserSetupMutation", m)
+}
+
 // The ValidatorFunc type is an adapter to allow the use of ordinary
 // function as Validator mutator.
 type ValidatorFunc func(context.Context, *ent.ValidatorMutation) (ent.Value, error)

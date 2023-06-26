@@ -41,6 +41,8 @@ func (User) Fields() []ent.Field {
 		field.Time("last_login_time").
 			Optional().
 			Nillable(),
+		field.Bool("is_setup_complete").
+			Default(false),
 	}
 }
 
@@ -49,6 +51,8 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("event_listeners", EventListener.Type),
 		edge.To("comm_channels", CommChannel.Type),
+		edge.To("setup", UserSetup.Type).
+			Unique(),
 	}
 }
 

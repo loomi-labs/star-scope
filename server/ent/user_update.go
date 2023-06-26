@@ -15,6 +15,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -184,6 +185,20 @@ func (uu *UserUpdate) ClearLastLoginTime() *UserUpdate {
 	return uu
 }
 
+// SetIsSetupComplete sets the "is_setup_complete" field.
+func (uu *UserUpdate) SetIsSetupComplete(b bool) *UserUpdate {
+	uu.mutation.SetIsSetupComplete(b)
+	return uu
+}
+
+// SetNillableIsSetupComplete sets the "is_setup_complete" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsSetupComplete(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsSetupComplete(*b)
+	}
+	return uu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uu *UserUpdate) AddEventListenerIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddEventListenerIDs(ids...)
@@ -212,6 +227,25 @@ func (uu *UserUpdate) AddCommChannels(c ...*CommChannel) *UserUpdate {
 		ids[i] = c[i].ID
 	}
 	return uu.AddCommChannelIDs(ids...)
+}
+
+// SetSetupID sets the "setup" edge to the UserSetup entity by ID.
+func (uu *UserUpdate) SetSetupID(id int) *UserUpdate {
+	uu.mutation.SetSetupID(id)
+	return uu
+}
+
+// SetNillableSetupID sets the "setup" edge to the UserSetup entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableSetupID(id *int) *UserUpdate {
+	if id != nil {
+		uu = uu.SetSetupID(*id)
+	}
+	return uu
+}
+
+// SetSetup sets the "setup" edge to the UserSetup entity.
+func (uu *UserUpdate) SetSetup(u *UserSetup) *UserUpdate {
+	return uu.SetSetupID(u.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -259,6 +293,12 @@ func (uu *UserUpdate) RemoveCommChannels(c ...*CommChannel) *UserUpdate {
 		ids[i] = c[i].ID
 	}
 	return uu.RemoveCommChannelIDs(ids...)
+}
+
+// ClearSetup clears the "setup" edge to the UserSetup entity.
+func (uu *UserUpdate) ClearSetup() *UserUpdate {
+	uu.mutation.ClearSetup()
+	return uu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -367,6 +407,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.LastLoginTimeCleared() {
 		_spec.ClearField(user.FieldLastLoginTime, field.TypeTime)
 	}
+	if value, ok := uu.mutation.IsSetupComplete(); ok {
+		_spec.SetField(user.FieldIsSetupComplete, field.TypeBool, value)
+	}
 	if uu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -450,6 +493,35 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.SetupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.SetupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -631,6 +703,20 @@ func (uuo *UserUpdateOne) ClearLastLoginTime() *UserUpdateOne {
 	return uuo
 }
 
+// SetIsSetupComplete sets the "is_setup_complete" field.
+func (uuo *UserUpdateOne) SetIsSetupComplete(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsSetupComplete(b)
+	return uuo
+}
+
+// SetNillableIsSetupComplete sets the "is_setup_complete" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsSetupComplete(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsSetupComplete(*b)
+	}
+	return uuo
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uuo *UserUpdateOne) AddEventListenerIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddEventListenerIDs(ids...)
@@ -659,6 +745,25 @@ func (uuo *UserUpdateOne) AddCommChannels(c ...*CommChannel) *UserUpdateOne {
 		ids[i] = c[i].ID
 	}
 	return uuo.AddCommChannelIDs(ids...)
+}
+
+// SetSetupID sets the "setup" edge to the UserSetup entity by ID.
+func (uuo *UserUpdateOne) SetSetupID(id int) *UserUpdateOne {
+	uuo.mutation.SetSetupID(id)
+	return uuo
+}
+
+// SetNillableSetupID sets the "setup" edge to the UserSetup entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableSetupID(id *int) *UserUpdateOne {
+	if id != nil {
+		uuo = uuo.SetSetupID(*id)
+	}
+	return uuo
+}
+
+// SetSetup sets the "setup" edge to the UserSetup entity.
+func (uuo *UserUpdateOne) SetSetup(u *UserSetup) *UserUpdateOne {
+	return uuo.SetSetupID(u.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -706,6 +811,12 @@ func (uuo *UserUpdateOne) RemoveCommChannels(c ...*CommChannel) *UserUpdateOne {
 		ids[i] = c[i].ID
 	}
 	return uuo.RemoveCommChannelIDs(ids...)
+}
+
+// ClearSetup clears the "setup" edge to the UserSetup entity.
+func (uuo *UserUpdateOne) ClearSetup() *UserUpdateOne {
+	uuo.mutation.ClearSetup()
+	return uuo
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -844,6 +955,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.LastLoginTimeCleared() {
 		_spec.ClearField(user.FieldLastLoginTime, field.TypeTime)
 	}
+	if value, ok := uuo.mutation.IsSetupComplete(); ok {
+		_spec.SetField(user.FieldIsSetupComplete, field.TypeBool, value)
+	}
 	if uuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -927,6 +1041,35 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.SetupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.SetupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

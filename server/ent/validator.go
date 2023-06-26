@@ -34,9 +34,10 @@ type Validator struct {
 	LastSlashValidatorPeriod *uint64 `json:"last_slash_validator_period,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ValidatorQuery when eager-loading is set.
-	Edges            ValidatorEdges `json:"edges"`
-	chain_validators *int
-	selectValues     sql.SelectValues
+	Edges                          ValidatorEdges `json:"edges"`
+	chain_validators               *int
+	user_setup_selected_validators *int
+	selectValues                   sql.SelectValues
 }
 
 // ValidatorEdges holds the relations/edges for other nodes in the graph.
@@ -73,6 +74,8 @@ func (*Validator) scanValues(columns []string) ([]any, error) {
 		case validator.FieldCreateTime, validator.FieldUpdateTime, validator.FieldFirstInactiveTime:
 			values[i] = new(sql.NullTime)
 		case validator.ForeignKeys[0]: // chain_validators
+			values[i] = new(sql.NullInt64)
+		case validator.ForeignKeys[1]: // user_setup_selected_validators
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -145,6 +148,13 @@ func (v *Validator) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				v.chain_validators = new(int)
 				*v.chain_validators = int(value.Int64)
+			}
+		case validator.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_setup_selected_validators", value)
+			} else if value.Valid {
+				v.user_setup_selected_validators = new(int)
+				*v.user_setup_selected_validators = int(value.Int64)
 			}
 		default:
 			v.selectValues.Set(columns[i], values[i])

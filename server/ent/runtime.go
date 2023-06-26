@@ -14,6 +14,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -170,6 +171,49 @@ func init() {
 	user.DefaultUpdateTime = userDescUpdateTime.Default.(func() time.Time)
 	// user.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	user.UpdateDefaultUpdateTime = userDescUpdateTime.UpdateDefault.(func() time.Time)
+	// userDescIsSetupComplete is the schema descriptor for is_setup_complete field.
+	userDescIsSetupComplete := userFields[7].Descriptor()
+	// user.DefaultIsSetupComplete holds the default value on creation for the is_setup_complete field.
+	user.DefaultIsSetupComplete = userDescIsSetupComplete.Default.(bool)
+	usersetupMixin := schema.UserSetup{}.Mixin()
+	usersetupMixinFields0 := usersetupMixin[0].Fields()
+	_ = usersetupMixinFields0
+	usersetupFields := schema.UserSetup{}.Fields()
+	_ = usersetupFields
+	// usersetupDescCreateTime is the schema descriptor for create_time field.
+	usersetupDescCreateTime := usersetupMixinFields0[0].Descriptor()
+	// usersetup.DefaultCreateTime holds the default value on creation for the create_time field.
+	usersetup.DefaultCreateTime = usersetupDescCreateTime.Default.(func() time.Time)
+	// usersetupDescUpdateTime is the schema descriptor for update_time field.
+	usersetupDescUpdateTime := usersetupMixinFields0[1].Descriptor()
+	// usersetup.DefaultUpdateTime holds the default value on creation for the update_time field.
+	usersetup.DefaultUpdateTime = usersetupDescUpdateTime.Default.(func() time.Time)
+	// usersetup.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	usersetup.UpdateDefaultUpdateTime = usersetupDescUpdateTime.UpdateDefault.(func() time.Time)
+	// usersetupDescIsValidator is the schema descriptor for is_validator field.
+	usersetupDescIsValidator := usersetupFields[1].Descriptor()
+	// usersetup.DefaultIsValidator holds the default value on creation for the is_validator field.
+	usersetup.DefaultIsValidator = usersetupDescIsValidator.Default.(bool)
+	// usersetupDescNotifyFunding is the schema descriptor for notify_funding field.
+	usersetupDescNotifyFunding := usersetupFields[3].Descriptor()
+	// usersetup.DefaultNotifyFunding holds the default value on creation for the notify_funding field.
+	usersetup.DefaultNotifyFunding = usersetupDescNotifyFunding.Default.(bool)
+	// usersetupDescNotifyStaking is the schema descriptor for notify_staking field.
+	usersetupDescNotifyStaking := usersetupFields[4].Descriptor()
+	// usersetup.DefaultNotifyStaking holds the default value on creation for the notify_staking field.
+	usersetup.DefaultNotifyStaking = usersetupDescNotifyStaking.Default.(bool)
+	// usersetupDescNotifyGovNewProposal is the schema descriptor for notify_gov_new_proposal field.
+	usersetupDescNotifyGovNewProposal := usersetupFields[5].Descriptor()
+	// usersetup.DefaultNotifyGovNewProposal holds the default value on creation for the notify_gov_new_proposal field.
+	usersetup.DefaultNotifyGovNewProposal = usersetupDescNotifyGovNewProposal.Default.(bool)
+	// usersetupDescNotifyGovVotingEnd is the schema descriptor for notify_gov_voting_end field.
+	usersetupDescNotifyGovVotingEnd := usersetupFields[6].Descriptor()
+	// usersetup.DefaultNotifyGovVotingEnd holds the default value on creation for the notify_gov_voting_end field.
+	usersetup.DefaultNotifyGovVotingEnd = usersetupDescNotifyGovVotingEnd.Default.(bool)
+	// usersetupDescNotifyGovVotingReminder is the schema descriptor for notify_gov_voting_reminder field.
+	usersetupDescNotifyGovVotingReminder := usersetupFields[7].Descriptor()
+	// usersetup.DefaultNotifyGovVotingReminder holds the default value on creation for the notify_gov_voting_reminder field.
+	usersetup.DefaultNotifyGovVotingReminder = usersetupDescNotifyGovVotingReminder.Default.(bool)
 	validatorMixin := schema.Validator{}.Mixin()
 	validatorMixinFields0 := validatorMixin[0].Fields()
 	_ = validatorMixinFields0

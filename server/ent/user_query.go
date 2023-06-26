@@ -15,6 +15,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 )
 
 // UserQuery is the builder for querying User entities.
@@ -26,6 +27,7 @@ type UserQuery struct {
 	predicates         []predicate.User
 	withEventListeners *EventListenerQuery
 	withCommChannels   *CommChannelQuery
+	withSetup          *UserSetupQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -99,6 +101,28 @@ func (uq *UserQuery) QueryCommChannels() *CommChannelQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(commchannel.Table, commchannel.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, user.CommChannelsTable, user.CommChannelsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySetup chains the current query on the "setup" edge.
+func (uq *UserQuery) QuerySetup() *UserSetupQuery {
+	query := (&UserSetupClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.SetupTable, user.SetupColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -300,6 +324,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		predicates:         append([]predicate.User{}, uq.predicates...),
 		withEventListeners: uq.withEventListeners.Clone(),
 		withCommChannels:   uq.withCommChannels.Clone(),
+		withSetup:          uq.withSetup.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -325,6 +350,17 @@ func (uq *UserQuery) WithCommChannels(opts ...func(*CommChannelQuery)) *UserQuer
 		opt(query)
 	}
 	uq.withCommChannels = query
+	return uq
+}
+
+// WithSetup tells the query-builder to eager-load the nodes that are connected to
+// the "setup" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithSetup(opts ...func(*UserSetupQuery)) *UserQuery {
+	query := (&UserSetupClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withSetup = query
 	return uq
 }
 
@@ -406,9 +442,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			uq.withEventListeners != nil,
 			uq.withCommChannels != nil,
+			uq.withSetup != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -440,6 +477,12 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadCommChannels(ctx, query, nodes,
 			func(n *User) { n.Edges.CommChannels = []*CommChannel{} },
 			func(n *User, e *CommChannel) { n.Edges.CommChannels = append(n.Edges.CommChannels, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withSetup; query != nil {
+		if err := uq.loadSetup(ctx, query, nodes, nil,
+			func(n *User, e *UserSetup) { n.Edges.Setup = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -565,6 +608,34 @@ func (uq *UserQuery) loadCommChannels(ctx context.Context, query *CommChannelQue
 		for kn := range nodes {
 			assign(kn, n)
 		}
+	}
+	return nil
+}
+func (uq *UserQuery) loadSetup(ctx context.Context, query *UserSetupQuery, nodes []*User, init func(*User), assign func(*User, *UserSetup)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.UserSetup(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.SetupColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_setup
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_setup" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_setup" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

@@ -30,6 +30,7 @@ type ChainQuery struct {
 	withProposals         *ProposalQuery
 	withContractProposals *ContractProposalQuery
 	withValidators        *ValidatorQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -477,6 +478,7 @@ func (cq *ChainQuery) prepareQuery(ctx context.Context) error {
 func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain, error) {
 	var (
 		nodes       = []*Chain{}
+		withFKs     = cq.withFKs
 		_spec       = cq.querySpec()
 		loadedTypes = [4]bool{
 			cq.withEventListeners != nil,
@@ -485,6 +487,9 @@ func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain,
 			cq.withValidators != nil,
 		}
 	)
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, chain.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Chain).scanValues(nil, columns)
 	}

@@ -47,8 +47,9 @@ type Chain struct {
 	IsEnabled bool `json:"is_enabled,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
-	Edges        ChainEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges                      ChainEdges `json:"edges"`
+	user_setup_selected_chains *int
+	selectValues               sql.SelectValues
 }
 
 // ChainEdges holds the relations/edges for other nodes in the graph.
@@ -115,6 +116,8 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case chain.FieldCreateTime, chain.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
+		case chain.ForeignKeys[0]: // user_setup_selected_chains
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -219,6 +222,13 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field is_enabled", values[i])
 			} else if value.Valid {
 				c.IsEnabled = value.Bool
+			}
+		case chain.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_setup_selected_chains", value)
+			} else if value.Valid {
+				c.user_setup_selected_chains = new(int)
+				*c.user_setup_selected_chains = int(value.Int64)
 			}
 		default:
 			c.selectValues.Set(columns[i], values[i])

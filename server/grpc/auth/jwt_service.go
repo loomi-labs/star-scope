@@ -25,17 +25,19 @@ const (
 )
 
 const (
-	basePath       = "/starscope.grpc"
-	authService    = basePath + ".AuthService/"
-	userService    = basePath + ".UserService/"
-	eventService   = basePath + ".EventService/"
-	indexerService = basePath + ".IndexerService/"
+	basePath         = "/starscope.grpc"
+	authService      = basePath + ".AuthService/"
+	userService      = basePath + ".UserService/"
+	userSetupService = basePath + ".UserSetupService/"
+	eventService     = basePath + ".EventService/"
+	indexerService   = basePath + ".IndexerService/"
 )
 
 func ServiceNames() []string {
 	return []string{
 		authService,
 		userService,
+		userSetupService,
 		eventService,
 		indexerService,
 	}
@@ -56,6 +58,8 @@ func AccessibleRoles() map[string][]Role {
 		userService + "DeleteDiscordChannel":    {User, Admin},
 		userService + "ListTelegramChats":       {User, Admin},
 		userService + "DeleteTelegramChat":      {User, Admin},
+		userSetupService + "GetCurrentStep":     {User, Admin},
+		userSetupService + "FinishStep":         {User, Admin},
 		eventService + "EventStream":            {User, Admin},
 		eventService + "ListEvents":             {User, Admin},
 		eventService + "ListChains":             {User, Admin},

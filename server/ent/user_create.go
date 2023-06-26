@@ -13,6 +13,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 )
 
 // UserCreate is the builder for creating a User entity.
@@ -148,6 +149,20 @@ func (uc *UserCreate) SetNillableLastLoginTime(t *time.Time) *UserCreate {
 	return uc
 }
 
+// SetIsSetupComplete sets the "is_setup_complete" field.
+func (uc *UserCreate) SetIsSetupComplete(b bool) *UserCreate {
+	uc.mutation.SetIsSetupComplete(b)
+	return uc
+}
+
+// SetNillableIsSetupComplete sets the "is_setup_complete" field if the given value is not nil.
+func (uc *UserCreate) SetNillableIsSetupComplete(b *bool) *UserCreate {
+	if b != nil {
+		uc.SetIsSetupComplete(*b)
+	}
+	return uc
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (uc *UserCreate) AddEventListenerIDs(ids ...int) *UserCreate {
 	uc.mutation.AddEventListenerIDs(ids...)
@@ -176,6 +191,25 @@ func (uc *UserCreate) AddCommChannels(c ...*CommChannel) *UserCreate {
 		ids[i] = c[i].ID
 	}
 	return uc.AddCommChannelIDs(ids...)
+}
+
+// SetSetupID sets the "setup" edge to the UserSetup entity by ID.
+func (uc *UserCreate) SetSetupID(id int) *UserCreate {
+	uc.mutation.SetSetupID(id)
+	return uc
+}
+
+// SetNillableSetupID sets the "setup" edge to the UserSetup entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableSetupID(id *int) *UserCreate {
+	if id != nil {
+		uc = uc.SetSetupID(*id)
+	}
+	return uc
+}
+
+// SetSetup sets the "setup" edge to the UserSetup entity.
+func (uc *UserCreate) SetSetup(u *UserSetup) *UserCreate {
+	return uc.SetSetupID(u.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -225,6 +259,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultRole
 		uc.mutation.SetRole(v)
 	}
+	if _, ok := uc.mutation.IsSetupComplete(); !ok {
+		v := user.DefaultIsSetupComplete
+		uc.mutation.SetIsSetupComplete(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -242,6 +280,9 @@ func (uc *UserCreate) check() error {
 		if err := user.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
 		}
+	}
+	if _, ok := uc.mutation.IsSetupComplete(); !ok {
+		return &ValidationError{Name: "is_setup_complete", err: errors.New(`ent: missing required field "User.is_setup_complete"`)}
 	}
 	return nil
 }
@@ -305,6 +346,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldLastLoginTime, field.TypeTime, value)
 		_node.LastLoginTime = &value
 	}
+	if value, ok := uc.mutation.IsSetupComplete(); ok {
+		_spec.SetField(user.FieldIsSetupComplete, field.TypeBool, value)
+		_node.IsSetupComplete = value
+	}
 	if nodes := uc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -330,6 +375,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commchannel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.SetupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
