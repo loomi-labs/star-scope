@@ -207,7 +207,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 }
 
 #[component(inline_props)]
-pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
+pub fn Navigation<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
     let children = children.call(cx);
     view! { cx,
         div(class="min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {

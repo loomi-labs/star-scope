@@ -43,10 +43,11 @@ func (s *UserService) GetUser(ctx context.Context, _ *connect.Request[emptypb.Em
 	}
 
 	return connect.NewResponse(&userpb.User{
-		Id:          int64(user.ID),
-		Name:        username,
-		HasDiscord:  user.DiscordUserID != 0,
-		HasTelegram: user.TelegramUserID != 0,
+		Id:              int64(user.ID),
+		Name:            username,
+		HasDiscord:      user.DiscordUserID != 0,
+		HasTelegram:     user.TelegramUserID != 0,
+		IsSetupComplete: user.IsSetupComplete,
 	}), nil
 }
 
