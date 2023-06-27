@@ -128,7 +128,12 @@ pub fn navigate_launch_app(cx: Scope) {
                 safe_navigate(cx, AppRoutes::Setup)
             }
         } else {
-            create_message(cx, "User not found", "User status unknown", InfoLevel::Error);
+            create_message(
+                cx,
+                "User not found",
+                "User status unknown",
+                InfoLevel::Error,
+            );
         }
     } else {
         safe_navigate(cx, AppRoutes::Login)

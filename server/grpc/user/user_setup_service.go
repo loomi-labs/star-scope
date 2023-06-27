@@ -188,6 +188,7 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 		validatorIds := sf.Map(request.Msg.GetStepTwo().GetValidatorIds(), func(id int64) int { return int(id) })
 		updateQuery = setup.
 			Update().
+			ClearSelectedValidators().
 			AddSelectedValidatorIDs(validatorIds...).
 			SetStep(step)
 	case *userpb.FinishStepRequest_StepThree:
@@ -216,6 +217,7 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 			SetNotifyGovNewProposal(request.Msg.GetStepFour().GetNotifyGovNewProposal()).
 			SetNotifyGovVotingEnd(request.Msg.GetStepFour().GetNotifyGovVotingEnd()).
 			SetNotifyGovVotingReminder(request.Msg.GetStepFour().GetNotifyGovVotingReminder()).
+			ClearSelectedChains().
 			AddSelectedChainIDs(notifyGovChainIds...).
 			SetStep(step)
 	case *userpb.FinishStepRequest_StepFive:

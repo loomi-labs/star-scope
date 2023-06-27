@@ -1,16 +1,25 @@
-use sycamore::{prelude::*, view};
+use std::collections::HashSet;
+
+use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
+use log::debug;
 use sycamore::futures::spawn_local_scoped;
+use sycamore::{prelude::*, view};
 use tonic::Status;
-use web_sys::{Event};
-use crate::components::button::{SolidButton, OutlineButton, ColorScheme};
+use web_sys::Event;
 
 use crate::components::loading::LoadingSpinner;
 use crate::components::messages::{create_error_msg_from_status, create_message};
-use crate::Services;
 use crate::components::navigation::Header;
-use crate::types::protobuf::grpc::{finish_step_request, FinishStepRequest, StepOneRequest, StepOneResponse, StepResponse, StepTwoResponse, StepThreeResponse, GetStepRequest, get_step_request, StepThreeRequest, StepTwoRequest, StepFourRequest, StepFourResponse, StepFiveRequest, StepFiveResponse, Validator};
 use crate::types::protobuf::grpc::step_response::Step;
-use crate::types::protobuf::grpc::step_response::Step::{StepFive, StepFour, StepOne, StepThree, StepTwo};
+use crate::types::protobuf::grpc::step_response::Step::{
+    StepFive, StepFour, StepOne, StepThree, StepTwo,
+};
+use crate::types::protobuf::grpc::{
+    finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest,
+    StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse,
+    StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator,
+};
+use crate::Services;
 
 #[derive(Debug, Clone)]
 pub struct SetupState {
@@ -29,7 +38,6 @@ const TITLE_CLASS: &str = "text-4xl font-bold my-4";
 const SUBTITLE_CLASS: &str = "text-2xl font-semibold my-2";
 const DESCRIPTION_CLASS: &str = "dark:text-purple-600";
 const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-4";
-
 
 #[component(inline_props)]
 pub fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
@@ -63,17 +71,12 @@ struct ValidatorRow<'a> {
 }
 
 #[component(inline_props)]
-pub fn SearchValidator<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
+pub fn SearchValidator<'a, G: Html>(
+    cx: Scope<'a>,
+    validator_rows: Vec<ValidatorRow<'a>>,
+    selected_validator_ids: &'a Signal<HashSet<i64>>,
+) -> View<G> {
     let search_term = create_signal(cx, String::new());
-
-    let mut validator_rows = Vec::<ValidatorRow>::with_capacity(step.available_validators.len());
-    for val in step.available_validators.iter() {
-        let is_selected = create_signal(cx, val.ids.iter().all(|id| step.selected_validator_ids.contains(id)));
-        validator_rows.push(ValidatorRow {
-            validator: val.clone(),
-            is_selected,
-        });
-    }
 
     let search_results = create_selector(cx, move || {
         let search = search_term.get().to_lowercase();
@@ -104,15 +107,12 @@ pub fn SearchValidator<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
         *has_input_focus.get() || *has_dialog_focus.get()
     });
 
-    let has_results = create_selector(cx, move || {
-        search_results.get().len() > 0
-    });
-
+    let has_results = create_selector(cx, move || search_results.get().len() > 0);
 
     view! {cx,
         div(class="relative flex items-center text-gray-500") {
             input(
-                class="w-full placeholder:italic placeholder:text-slate-400 block border border-slate-300 rounded-full px-4 py-2 
+                class="w-full placeholder:italic placeholder:text-slate-400 block border border-slate-300 rounded-full px-4 py-2
                     shadow-sm focus:outline-none focus:border-primary focus:ring-primary focus:ring-1 sm:text-sm",
                 placeholder="Search validator",
                 type="text",
@@ -120,15 +120,15 @@ pub fn SearchValidator<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
                 on:focusin=move |_| has_input_focus.set(true),
                 on:blur=move |_| {
                     // this has to be delayed because otherwise the blur event will fire before the focusin event on the dialog
-                    spawn_local_scoped(cx, async move { 
+                    spawn_local_scoped(cx, async move {
                         gloo_timers::future::TimeoutFuture::new(100).await;
                         has_input_focus.set(false)
                     });
                 },
             )
             span(class="absolute right-3 w-6 h-6 bg-slate-400 icon-[ion--search] pointer-events-none")
-            dialog(class="absolute top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white", 
-                    open=*show_dialog.get(), 
+            dialog(class="absolute top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
+                    open=*show_dialog.get(),
                     on:focusin= move |_| has_dialog_focus.set(true),
                     on:blur= move |_| has_dialog_focus.set(false),
                 ) {
@@ -150,6 +150,16 @@ pub fn SearchValidator<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
                                             (prefix, middle, suffix)
                                         } else {
                                             (row.validator.moniker.clone(), "".to_string(), "".to_string())
+                                        }
+                                    });
+
+                                    create_effect(cx, move || {
+                                        let ids = row.validator.ids.clone();
+                                        let is_selected = *row.is_selected.get();
+                                        if is_selected {
+                                            selected_validator_ids.modify().extend(ids);
+                                        } else {
+                                            selected_validator_ids.modify().retain(|id| !ids.contains(id));
                                         }
                                     });
 
@@ -195,12 +205,43 @@ pub fn SearchValidator<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
 
 #[component(inline_props)]
 pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
+    let validator_rows = step
+        .available_validators
+        .iter()
+        .map(|val| {
+            let is_selected = create_signal(
+                cx,
+                val.ids
+                    .iter()
+                    .all(|id| step.selected_validator_ids.contains(id)),
+            );
+            ValidatorRow {
+                validator: val.clone(),
+                is_selected,
+            }
+        })
+        .collect::<Vec<ValidatorRow>>();
+
+    let selected_validator_ids = create_signal(cx, {
+        validator_rows
+            .iter()
+            .filter(|row| *row.is_selected.get_untracked())
+            .map(|row| row.validator.ids.clone())
+            .flatten()
+            .collect::<HashSet<i64>>()
+    });
+
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
                 step: Some(finish_step_request::Step::StepTwo(StepTwoRequest {
-                    validator_ids: vec![],
+                    validator_ids: selected_validator_ids
+                        .get()
+                        .as_ref()
+                        .clone()
+                        .into_iter()
+                        .collect(),
                 })),
             };
             update_step(cx, finish_step).await;
@@ -210,7 +251,7 @@ pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     view! {cx,
         h2(class=TITLE_CLASS) {"Choose your validator (s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
-        SearchValidator(step=step)
+        SearchValidator(validator_rows=validator_rows.clone(), selected_validator_ids=selected_validator_ids.clone())
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
@@ -224,7 +265,9 @@ pub fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
-                step: Some(finish_step_request::Step::StepThree(StepThreeRequest {wallet_addresses: vec![]})),
+                step: Some(finish_step_request::Step::StepThree(StepThreeRequest {
+                    wallet_addresses: vec![],
+                })),
             };
             update_step(cx, finish_step).await;
         });
@@ -305,7 +348,12 @@ fn handle_setup_step_response(cx: Scope, response: Result<StepResponse, Status>)
             Some(step) => {
                 setup_state.step.set(Some(step));
             }
-            None => create_message(cx, "Setup step not found", "Setup step was not found", crate::InfoLevel::Error),
+            None => create_message(
+                cx,
+                "Setup step not found",
+                "Setup step was not found",
+                crate::InfoLevel::Error,
+            ),
         }
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
@@ -314,7 +362,9 @@ fn handle_setup_step_response(cx: Scope, response: Result<StepResponse, Status>)
 
 async fn query_setup_step(cx: Scope<'_>, requestedStep: Option<get_step_request::Step>) {
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(GetStepRequest {step: requestedStep.unwrap_or_else(|| get_step_request::Step::CurrentStep) as i32});
+    let request = services.grpc_client.create_request(GetStepRequest {
+        step: requestedStep.unwrap_or_else(|| get_step_request::Step::CurrentStep) as i32,
+    });
     let response = services
         .grpc_client
         .get_user_setup_service()
@@ -323,7 +373,6 @@ async fn query_setup_step(cx: Scope<'_>, requestedStep: Option<get_step_request:
         .map(|res| res.into_inner());
     handle_setup_step_response(cx, response)
 }
-
 
 #[component]
 pub fn Setup<G: Html>(cx: Scope) -> View<G> {

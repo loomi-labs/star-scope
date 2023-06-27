@@ -1,8 +1,8 @@
 use sycamore::prelude::*;
 
 use crate::config::keys;
-use crate::utils::url::{safe_navigate, navigate_launch_app};
-use crate::{AppRoutes, AppState, AuthState};
+use crate::utils::url::navigate_launch_app;
+use crate::{AuthState};
 
 #[component]
 pub fn LaunchButton<G: Html>(cx: Scope) -> View<G> {

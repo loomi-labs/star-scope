@@ -31,10 +31,14 @@ fn hide_telegram_login_button(cx: Scope) {
 }
 
 #[component]
-pub fn TelegramLoginButton<'a, G: Html>(cx: Scope<'a>, props: TelegramLoginButtonProps<'a>) -> View<G> {
+pub fn TelegramLoginButton<'a, G: Html>(
+    cx: Scope<'a>,
+    props: TelegramLoginButtonProps<'a>,
+) -> View<G> {
     if let Some(is_hidden) = props.is_hidden {
         create_effect(cx, move || {
-            if *is_hidden.get() { // necessary because the telegram script inserts the button no matter what
+            if *is_hidden.get() {
+                // necessary because the telegram script inserts the button no matter what
                 hide_telegram_login_button(cx.clone());
             }
         });

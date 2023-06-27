@@ -25,7 +25,7 @@ use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
 use crate::types::protobuf::event::EventType;
 use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
-use crate::utils::url::{safe_navigate, navigate_launch_app};
+use crate::utils::url::{navigate_launch_app, safe_navigate};
 
 mod components;
 mod config;
@@ -507,7 +507,11 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
         let app_state = use_context::<AppState>(cx);
 
         // redirect to notifications/setup if user is logged in and route does not need login (e.g. login page, home page, etc.)
-        let is_redirect = app_state.route.get_untracked().as_ref().is_some_and(|route| !route.needs_login())  ;
+        let is_redirect = app_state
+            .route
+            .get_untracked()
+            .as_ref()
+            .is_some_and(|route| !route.needs_login());
         if is_redirect {
             if let Some(user) = app_state.user.get_untracked().as_ref() {
                 if user.is_setup_complete {
@@ -516,7 +520,12 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
                 }
                 navigate_launch_app(cx);
             } else {
-                create_message(cx, "User not found", "User status unknown", InfoLevel::Error);
+                create_message(
+                    cx,
+                    "User not found",
+                    "User status unknown",
+                    InfoLevel::Error,
+                );
             }
         }
     });
