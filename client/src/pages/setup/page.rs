@@ -1,13 +1,12 @@
 use sycamore::{prelude::*, view};
 use sycamore::futures::spawn_local_scoped;
 use tonic::Status;
+use crate::components::button::{SolidButton, OutlineButton, ColorScheme};
 
-use crate::components::button::Button;
 use crate::components::loading::LoadingSpinner;
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::Services;
 use crate::components::navigation::Header;
-use crate::config::style;
 use crate::types::protobuf::grpc::{finish_step_request, FinishStepRequest, StepOneRequest, StepOneResponse, StepResponse, StepTwoResponse, StepThreeResponse, GetStepRequest, get_step_request, StepThreeRequest, StepTwoRequest, StepFourRequest, StepFourResponse, StepFiveRequest, StepFiveResponse};
 use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{StepFive, StepFour, StepOne, StepThree, StepTwo};
@@ -28,10 +27,7 @@ impl SetupState {
 const TITLE_CLASS: &str = "text-4xl font-bold my-4";
 const SUBTITLE_CLASS: &str = "text-2xl font-semibold my-2";
 const DESCRIPTION_CLASS: &str = "dark:text-purple-600";
-
 const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-4";
-const BACK_BUTTON_CLASS: &str = "border border-primary hover:bg-primary text-white font-bold py-2 px-4 rounded";
-const NEXT_BUTTON_CLASS: &str = "text-white font-bold py-2 px-4 rounded";
 
 
 #[component(inline_props)]
@@ -48,15 +44,13 @@ pub fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
         });
     };
 
-    let button_class = "bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded";
-
     view! {cx,
         h1(class=TITLE_CLASS) {"Welcome to Star Scope!"}
         p(class=DESCRIPTION_CLASS) {"We deliver quick and effortless notifications about your Cosmos ecosystem activities."}
         h2(class=SUBTITLE_CLASS) {"Are you a validator?"}
         div(class=BUTTON_ROW_CLASS) {
-            button(class=button_class, on:click=move |_| handle_click(true)) {"Yes"}
-            button(class=button_class, on:click=move |_| handle_click(false)) {"No"}
+            SolidButton(on_click=move || handle_click(true), color=ColorScheme::Subtle) {"Yes"}
+            SolidButton(on_click=move || handle_click(false), color=ColorScheme::Subtle) {"No"}
         }
     }
 }
@@ -79,8 +73,8 @@ pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
         h2(class=TITLE_CLASS) {"Choose your validator (s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
         div(class=BUTTON_ROW_CLASS) {
-            button(class=format!("{} {}", BACK_BUTTON_CLASS, style::PRIMARY_TRANSIENT_BORDER_COLOR), on:click=move |_| handle_click(false)) {"Back"}
-            button(class=format!("{} {}", NEXT_BUTTON_CLASS, style::PRIMARY_TRANSIENT_COLOR), on:click=move |_| handle_click(true)) {"Next"}
+            OutlineButton(on_click=move || handle_click(false)) {"Back"}
+            SolidButton(on_click=move || handle_click(true)) {"Next"}
         }
     }
 }
@@ -98,10 +92,10 @@ pub fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G
     };
 
     view! {cx,
-        div() {
-            p() {"Add your wallet(s)"}
-            button(on:click=move |_| handle_click(false)) {"Back"}
-            button(on:click=move |_| handle_click(true)) {"Next"}
+        p(class=DESCRIPTION_CLASS) {"Add your wallet(s)"}
+        div(class=BUTTON_ROW_CLASS) {
+            OutlineButton(on_click=move || handle_click(false)) {"Back"}
+            SolidButton(on_click=move || handle_click(true)) {"Next"}
         }
     }
 }
@@ -122,10 +116,10 @@ pub fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> 
     };
 
     view! {cx,
-        div() {
-            p() {"Choose your Notifications"}
-            button(on:click=move |_| handle_click(false)) {"Back"}
-            button(on:click=move |_| handle_click(true)) {"Next"}
+        p(class=DESCRIPTION_CLASS) {"Choose your Notifications"}
+        div(class=BUTTON_ROW_CLASS) {
+            OutlineButton(on_click=move || handle_click(false)) {"Back"}
+            SolidButton(on_click=move || handle_click(true)) {"Next"}
         }
     }
 }
@@ -145,10 +139,10 @@ pub fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> 
     };
 
     view! {cx,
-        div() {
-            p() {"Choose where to receive notifications"}
-            button(on:click=move |_| handle_click(false)) {"Back"}
-            button(on:click=move |_| handle_click(true)) {"Finish"}
+        p(class=DESCRIPTION_CLASS) {"Choose where to receive notifications"}
+        div(class=BUTTON_ROW_CLASS) {
+            OutlineButton(on_click=move || handle_click(false)) {"Back"}
+            SolidButton(on_click=move || handle_click(true)) {"Finish"}
         }
     }
 }
