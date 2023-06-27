@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::collections::HashSet;
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
@@ -78,11 +79,12 @@ pub fn SearchValidator<'a, G: Html>(
 ) -> View<G> {
     let search_term = create_signal(cx, String::new());
 
+    let validator_rows_ref = create_ref(cx, validator_rows);
     let search_results = create_selector(cx, move || {
         let search = search_term.get().to_lowercase();
         let mut results = vec![];
-        if search != "" {
-            for row in validator_rows.iter() {
+        if !search.is_empty() {
+            for row in validator_rows_ref.iter() {
                 if row.validator.moniker.to_lowercase().contains(&search) {
                     results.push(row.clone());
                 }
@@ -90,14 +92,30 @@ pub fn SearchValidator<'a, G: Html>(
                     break;
                 }
             }
-        } else {
-            for row in validator_rows.iter() {
-                if *row.is_selected.get() {
-                    results.push(row.clone());
-                }
-            }
         }
         results
+    });
+
+    let selected_validators = create_selector(cx, move || {
+        let mut selected_validators = vec![];
+        for row in validator_rows_ref.iter() {
+            if *row.is_selected.get() {
+                selected_validators.push(row.clone());
+            }
+        }
+        selected_validators
+    });
+
+    validator_rows_ref.iter().for_each(|row| {
+        create_effect(cx, move || {
+            let ids = row.validator.ids.clone();
+            let is_selected = *row.is_selected.get();
+            if is_selected {
+                selected_validator_ids.modify().extend(ids);
+            } else {
+                selected_validator_ids.modify().retain(|id| !ids.contains(id));
+            }
+        });
     });
 
     let has_input_focus = create_signal(cx, false);
@@ -126,8 +144,8 @@ pub fn SearchValidator<'a, G: Html>(
                     });
                 },
             )
-            span(class="absolute right-3 w-6 h-6 bg-slate-400 icon-[ion--search] pointer-events-none")
-            dialog(class="absolute top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
+            span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
+            dialog(class="absolute z-20 top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
                     open=*show_dialog.get(),
                     on:focusin= move |_| has_dialog_focus.set(true),
                     on:blur= move |_| has_dialog_focus.set(false),
@@ -150,16 +168,6 @@ pub fn SearchValidator<'a, G: Html>(
                                             (prefix, middle, suffix)
                                         } else {
                                             (row.validator.moniker.clone(), "".to_string(), "".to_string())
-                                        }
-                                    });
-
-                                    create_effect(cx, move || {
-                                        let ids = row.validator.ids.clone();
-                                        let is_selected = *row.is_selected.get();
-                                        if is_selected {
-                                            selected_validator_ids.modify().extend(ids);
-                                        } else {
-                                            selected_validator_ids.modify().retain(|id| !ids.contains(id));
                                         }
                                     });
 
@@ -199,6 +207,21 @@ pub fn SearchValidator<'a, G: Html>(
                     }
                 })
             }
+        }
+        div(class="flex flex-wrap justify-center items-center") {
+            Indexed(
+                iterable= selected_validators,
+                view=move |cx, val| {
+                    view!{cx, 
+                        div(class="flex items-center justify-center m-1 px-4 py-2 dark:bg-purple-700 rounded-full") {
+                            (val.validator.moniker.clone())
+                            span(class="w-4 h-4 ml-2 z-10 bg-white icon-[material-symbols--close] cursor-pointer",
+                                on:click=move |_| val.is_selected.set(false)
+                            )
+                        }
+                    }
+                }
+            )
         }
     }
 }
