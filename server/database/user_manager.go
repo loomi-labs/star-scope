@@ -557,6 +557,17 @@ func (m *UserManager) UpdateConnectTelegram(ctx context.Context, u *ent.User, da
 	return nil
 }
 
-func (m *UserManager) UpdateSetup(ctx context.Context, query *ent.UserSetupUpdateOne) (*ent.UserSetup, error) {
+func (m *UserManager) UpdateSetup(ctx context.Context, u *ent.User, query *ent.UserSetupUpdateOne, isCompleted bool) (*ent.UserSetup, error) {
+	if isCompleted {
+		return withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.UserSetup, error) {
+			err := tx.User.UpdateOne(u).
+				SetIsSetupComplete(true).
+				Exec(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return query.Save(ctx)
+		})
+	}
 	return query.Save(ctx)
 }

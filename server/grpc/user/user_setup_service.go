@@ -12,7 +12,6 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/user/userpb/userpbconnect"
 	sf "github.com/sa-/slicefunk"
 	"github.com/shifty11/go-logger/log"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -31,9 +30,9 @@ func NewUserSetupServiceHandler(dbManagers *database.DbManagers) userpbconnect.U
 	}
 }
 
-func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.UserSetup) *userpb.StepResponse {
+func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.UserSetup, requestedStep usersetup.Step) *userpb.StepResponse {
 	response := &userpb.StepResponse{}
-	switch setup.Step {
+	switch requestedStep {
 	case usersetup.StepOne:
 		response.Step = &userpb.StepResponse_StepOne{StepOne: &userpb.StepOneResponse{
 			IsValidator: setup.IsValidator,
@@ -97,7 +96,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 	return response
 }
 
-func (u *UserSetupService) GetCurrentStep(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[userpb.StepResponse], error) {
+func (u *UserSetupService) GetStep(ctx context.Context, request *connect.Request[userpb.GetStepRequest]) (*connect.Response[userpb.StepResponse], error) {
 	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
 	if !ok {
 		log.Sugar.Error("invalid user")
@@ -110,7 +109,24 @@ func (u *UserSetupService) GetCurrentStep(ctx context.Context, _ *connect.Reques
 		return nil, types.UnknownErr
 	}
 
-	response := u.createStepResponse(ctx, setup)
+	step := setup.Step
+	if request.Msg != nil {
+		switch request.Msg.GetStep() {
+		case userpb.GetStepRequest_CURRENT_STEP:
+			break
+		case userpb.GetStepRequest_STEP_ONE:
+			step = usersetup.StepOne
+		case userpb.GetStepRequest_STEP_TWO:
+			step = usersetup.StepTwo
+		case userpb.GetStepRequest_STEP_THREE:
+			step = usersetup.StepThree
+		case userpb.GetStepRequest_STEP_FOUR:
+			step = usersetup.StepFour
+		case userpb.GetStepRequest_STEP_FIVE:
+			step = usersetup.StepFive
+		}
+	}
+	response := u.createStepResponse(ctx, setup, step)
 
 	return connect.NewResponse(response), nil
 }
@@ -123,11 +139,11 @@ func isFinishStepRequestValid(request *connect.Request[userpb.FinishStepRequest]
 	case *userpb.FinishStepRequest_StepOne:
 		return request.Msg.GetStepOne() != nil
 	case *userpb.FinishStepRequest_StepTwo:
-		return request.Msg.GetStepTwo() != nil && request.Msg.GetStepTwo().ValidatorIds != nil
+		return request.Msg.GetStepTwo() != nil
 	case *userpb.FinishStepRequest_StepThree:
-		return request.Msg.GetStepThree() != nil && request.Msg.GetStepThree().WalletAddresses != nil
+		return request.Msg.GetStepThree() != nil
 	case *userpb.FinishStepRequest_StepFour:
-		return request.Msg.GetStepFour() != nil && request.Msg.GetStepFour().NotifyGovChainIds != nil
+		return request.Msg.GetStepFour() != nil
 	case *userpb.FinishStepRequest_StepFive:
 		return request.Msg.GetStepFive() != nil
 	}
@@ -142,7 +158,7 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 	}
 
 	if !isFinishStepRequestValid(request) {
-		log.Sugar.Errorf("invalid request for finish step: %v", request)
+		log.Sugar.Errorf("invalid request for finish nextStep: %v", request)
 		return nil, types.InvalidArgumentErr
 	}
 
@@ -152,27 +168,46 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 		return nil, types.UnknownErr
 	}
 
+	var isCompleted = false
 	var updateQuery *ent.UserSetupUpdateOne
 	switch request.Msg.Step.(type) {
 	case *userpb.FinishStepRequest_StepOne:
 		var step = usersetup.StepThree
 		if request.Msg.GetStepOne().GetIsValidator() {
-			setup.Step = usersetup.StepTwo
+			step = usersetup.StepTwo
 		}
 		updateQuery = setup.
 			Update().
 			SetIsValidator(request.Msg.GetStepOne().GetIsValidator()).
 			SetStep(step)
 	case *userpb.FinishStepRequest_StepTwo:
+		step := usersetup.StepThree
+		if !request.Msg.GetGoToNextStep() {
+			step = usersetup.StepOne
+		}
 		validatorIds := sf.Map(request.Msg.GetStepTwo().GetValidatorIds(), func(id int64) int { return int(id) })
 		updateQuery = setup.
 			Update().
-			AddSelectedValidatorIDs(validatorIds...)
+			AddSelectedValidatorIDs(validatorIds...).
+			SetStep(step)
 	case *userpb.FinishStepRequest_StepThree:
+		step := usersetup.StepFour
+		if !request.Msg.GetGoToNextStep() {
+			if setup.IsValidator {
+				step = usersetup.StepTwo
+			} else {
+				step = usersetup.StepOne
+			}
+		}
 		updateQuery = setup.
 			Update().
-			SetWalletAddresses(request.Msg.GetStepThree().GetWalletAddresses())
+			SetWalletAddresses(request.Msg.GetStepThree().GetWalletAddresses()).
+			SetStep(step)
 	case *userpb.FinishStepRequest_StepFour:
+		step := usersetup.StepFive
+		if !request.Msg.GetGoToNextStep() {
+			step = usersetup.StepThree
+		}
 		notifyGovChainIds := sf.Map(request.Msg.GetStepFour().GetNotifyGovChainIds(), func(id int64) int { return int(id) })
 		updateQuery = setup.
 			Update().
@@ -181,17 +216,27 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 			SetNotifyGovNewProposal(request.Msg.GetStepFour().GetNotifyGovNewProposal()).
 			SetNotifyGovVotingEnd(request.Msg.GetStepFour().GetNotifyGovVotingEnd()).
 			SetNotifyGovVotingReminder(request.Msg.GetStepFour().GetNotifyGovVotingReminder()).
-			AddSelectedChainIDs(notifyGovChainIds...)
+			AddSelectedChainIDs(notifyGovChainIds...).
+			SetStep(step)
 	case *userpb.FinishStepRequest_StepFive:
+		step := usersetup.StepFive
+		if !request.Msg.GetGoToNextStep() {
+			step = usersetup.StepFour
+		} else {
+			isCompleted = true
+		}
+		updateQuery = setup.
+			Update().
+			SetStep(step)
 		// TODO: update user setup
 	}
-	setup, err = u.userManager.UpdateSetup(ctx, updateQuery)
+	setup, err = u.userManager.UpdateSetup(ctx, user, updateQuery, isCompleted)
 	if err != nil {
 		log.Sugar.Errorf("failed to update setup", "error", err)
 		return nil, types.UnknownErr
 	}
 
-	response := u.createStepResponse(ctx, setup)
+	response := u.createStepResponse(ctx, setup, setup.Step)
 
 	return connect.NewResponse(response), nil
 }

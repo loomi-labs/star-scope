@@ -8,8 +8,20 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/user/usersetuppb";
 
 
 service UserSetupService {
-  rpc GetCurrentStep(google.protobuf.Empty) returns (StepResponse);
+  rpc GetStep(GetStepRequest) returns (StepResponse);
   rpc FinishStep(FinishStepRequest) returns (StepResponse);
+}
+
+message GetStepRequest {
+  enum Step {
+    CURRENT_STEP = 0;
+    STEP_ONE = 1;
+    STEP_TWO = 2;
+    STEP_THREE = 3;
+    STEP_FOUR = 4;
+    STEP_FIVE = 5;
+  }
+  Step step = 1;
 }
 
 message StepOneResponse {
@@ -98,4 +110,5 @@ message FinishStepRequest {
       StepFourRequest step_four = 4;
       StepFiveRequest step_five = 5;
   }
+  bool go_to_next_step = 6;
 }

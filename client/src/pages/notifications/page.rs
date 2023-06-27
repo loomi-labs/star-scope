@@ -461,8 +461,8 @@ pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     };
 
     let options = View::new_fragment(
-        all::<ReadStatusFilter>().map(|f| {
-            let cloned_f = f.clone();
+        all::<ReadStatusFilter>().map(|f: ReadStatusFilter| {
+            let cloned_f: ReadStatusFilter = f.clone();
             view! { cx, option(value=cloned_f.to_string(), class="capitalize") { (f.to_string()) } }
         }).collect()
     );

@@ -9,7 +9,7 @@ package userpb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	_ "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 )
@@ -20,6 +20,111 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type GetStepRequest_Step int32
+
+const (
+	GetStepRequest_CURRENT_STEP GetStepRequest_Step = 0
+	GetStepRequest_STEP_ONE     GetStepRequest_Step = 1
+	GetStepRequest_STEP_TWO     GetStepRequest_Step = 2
+	GetStepRequest_STEP_THREE   GetStepRequest_Step = 3
+	GetStepRequest_STEP_FOUR    GetStepRequest_Step = 4
+	GetStepRequest_STEP_FIVE    GetStepRequest_Step = 5
+)
+
+// Enum value maps for GetStepRequest_Step.
+var (
+	GetStepRequest_Step_name = map[int32]string{
+		0: "CURRENT_STEP",
+		1: "STEP_ONE",
+		2: "STEP_TWO",
+		3: "STEP_THREE",
+		4: "STEP_FOUR",
+		5: "STEP_FIVE",
+	}
+	GetStepRequest_Step_value = map[string]int32{
+		"CURRENT_STEP": 0,
+		"STEP_ONE":     1,
+		"STEP_TWO":     2,
+		"STEP_THREE":   3,
+		"STEP_FOUR":    4,
+		"STEP_FIVE":    5,
+	}
+)
+
+func (x GetStepRequest_Step) Enum() *GetStepRequest_Step {
+	p := new(GetStepRequest_Step)
+	*p = x
+	return p
+}
+
+func (x GetStepRequest_Step) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GetStepRequest_Step) Descriptor() protoreflect.EnumDescriptor {
+	return file_grpc_user_userpb_user_setup_service_proto_enumTypes[0].Descriptor()
+}
+
+func (GetStepRequest_Step) Type() protoreflect.EnumType {
+	return &file_grpc_user_userpb_user_setup_service_proto_enumTypes[0]
+}
+
+func (x GetStepRequest_Step) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GetStepRequest_Step.Descriptor instead.
+func (GetStepRequest_Step) EnumDescriptor() ([]byte, []int) {
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{0, 0}
+}
+
+type GetStepRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Step GetStepRequest_Step `protobuf:"varint,1,opt,name=step,proto3,enum=starscope.grpc.GetStepRequest_Step" json:"step,omitempty"`
+}
+
+func (x *GetStepRequest) Reset() {
+	*x = GetStepRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetStepRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStepRequest) ProtoMessage() {}
+
+func (x *GetStepRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStepRequest.ProtoReflect.Descriptor instead.
+func (*GetStepRequest) Descriptor() ([]byte, []int) {
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetStepRequest) GetStep() GetStepRequest_Step {
+	if x != nil {
+		return x.Step
+	}
+	return GetStepRequest_CURRENT_STEP
+}
 
 type StepOneResponse struct {
 	state         protoimpl.MessageState
@@ -32,7 +137,7 @@ type StepOneResponse struct {
 func (x *StepOneResponse) Reset() {
 	*x = StepOneResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[0]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -45,7 +150,7 @@ func (x *StepOneResponse) String() string {
 func (*StepOneResponse) ProtoMessage() {}
 
 func (x *StepOneResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[0]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +163,7 @@ func (x *StepOneResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepOneResponse.ProtoReflect.Descriptor instead.
 func (*StepOneResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{0}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *StepOneResponse) GetIsValidator() bool {
@@ -80,7 +185,7 @@ type Validator struct {
 func (x *Validator) Reset() {
 	*x = Validator{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[1]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -93,7 +198,7 @@ func (x *Validator) String() string {
 func (*Validator) ProtoMessage() {}
 
 func (x *Validator) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[1]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -106,7 +211,7 @@ func (x *Validator) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Validator.ProtoReflect.Descriptor instead.
 func (*Validator) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{1}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Validator) GetIds() []int64 {
@@ -135,7 +240,7 @@ type StepTwoResponse struct {
 func (x *StepTwoResponse) Reset() {
 	*x = StepTwoResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[2]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -148,7 +253,7 @@ func (x *StepTwoResponse) String() string {
 func (*StepTwoResponse) ProtoMessage() {}
 
 func (x *StepTwoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[2]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -161,7 +266,7 @@ func (x *StepTwoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepTwoResponse.ProtoReflect.Descriptor instead.
 func (*StepTwoResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{2}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StepTwoResponse) GetAvailableValidators() []*Validator {
@@ -190,7 +295,7 @@ type Wallet struct {
 func (x *Wallet) Reset() {
 	*x = Wallet{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[3]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -203,7 +308,7 @@ func (x *Wallet) String() string {
 func (*Wallet) ProtoMessage() {}
 
 func (x *Wallet) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[3]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +321,7 @@ func (x *Wallet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Wallet.ProtoReflect.Descriptor instead.
 func (*Wallet) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{3}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Wallet) GetAddress() string {
@@ -244,7 +349,7 @@ type StepThreeResponse struct {
 func (x *StepThreeResponse) Reset() {
 	*x = StepThreeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[4]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -257,7 +362,7 @@ func (x *StepThreeResponse) String() string {
 func (*StepThreeResponse) ProtoMessage() {}
 
 func (x *StepThreeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[4]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,7 +375,7 @@ func (x *StepThreeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepThreeResponse.ProtoReflect.Descriptor instead.
 func (*StepThreeResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{4}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StepThreeResponse) GetWallets() []*Wallet {
@@ -293,7 +398,7 @@ type GovChain struct {
 func (x *GovChain) Reset() {
 	*x = GovChain{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[5]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -306,7 +411,7 @@ func (x *GovChain) String() string {
 func (*GovChain) ProtoMessage() {}
 
 func (x *GovChain) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[5]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +424,7 @@ func (x *GovChain) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GovChain.ProtoReflect.Descriptor instead.
 func (*GovChain) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{5}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GovChain) GetId() int64 {
@@ -360,7 +465,7 @@ type StepFourResponse struct {
 func (x *StepFourResponse) Reset() {
 	*x = StepFourResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[6]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -373,7 +478,7 @@ func (x *StepFourResponse) String() string {
 func (*StepFourResponse) ProtoMessage() {}
 
 func (x *StepFourResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[6]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -386,7 +491,7 @@ func (x *StepFourResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepFourResponse.ProtoReflect.Descriptor instead.
 func (*StepFourResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{6}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StepFourResponse) GetNotifyFunding() bool {
@@ -447,7 +552,7 @@ type StepFiveResponse struct {
 func (x *StepFiveResponse) Reset() {
 	*x = StepFiveResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[7]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -460,7 +565,7 @@ func (x *StepFiveResponse) String() string {
 func (*StepFiveResponse) ProtoMessage() {}
 
 func (x *StepFiveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[7]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +578,7 @@ func (x *StepFiveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepFiveResponse.ProtoReflect.Descriptor instead.
 func (*StepFiveResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{7}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{8}
 }
 
 type StepResponse struct {
@@ -494,7 +599,7 @@ type StepResponse struct {
 func (x *StepResponse) Reset() {
 	*x = StepResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[8]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -507,7 +612,7 @@ func (x *StepResponse) String() string {
 func (*StepResponse) ProtoMessage() {}
 
 func (x *StepResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[8]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -520,7 +625,7 @@ func (x *StepResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepResponse.ProtoReflect.Descriptor instead.
 func (*StepResponse) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{8}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (m *StepResponse) GetStep() isStepResponse_Step {
@@ -610,7 +715,7 @@ type StepOneRequest struct {
 func (x *StepOneRequest) Reset() {
 	*x = StepOneRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[9]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -623,7 +728,7 @@ func (x *StepOneRequest) String() string {
 func (*StepOneRequest) ProtoMessage() {}
 
 func (x *StepOneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[9]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +741,7 @@ func (x *StepOneRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepOneRequest.ProtoReflect.Descriptor instead.
 func (*StepOneRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{9}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *StepOneRequest) GetIsValidator() bool {
@@ -657,7 +762,7 @@ type StepTwoRequest struct {
 func (x *StepTwoRequest) Reset() {
 	*x = StepTwoRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[10]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -670,7 +775,7 @@ func (x *StepTwoRequest) String() string {
 func (*StepTwoRequest) ProtoMessage() {}
 
 func (x *StepTwoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[10]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -683,7 +788,7 @@ func (x *StepTwoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepTwoRequest.ProtoReflect.Descriptor instead.
 func (*StepTwoRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{10}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *StepTwoRequest) GetValidatorIds() []int64 {
@@ -704,7 +809,7 @@ type StepThreeRequest struct {
 func (x *StepThreeRequest) Reset() {
 	*x = StepThreeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[11]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -717,7 +822,7 @@ func (x *StepThreeRequest) String() string {
 func (*StepThreeRequest) ProtoMessage() {}
 
 func (x *StepThreeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[11]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -730,7 +835,7 @@ func (x *StepThreeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepThreeRequest.ProtoReflect.Descriptor instead.
 func (*StepThreeRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{11}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *StepThreeRequest) GetWalletAddresses() []string {
@@ -756,7 +861,7 @@ type StepFourRequest struct {
 func (x *StepFourRequest) Reset() {
 	*x = StepFourRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[12]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -769,7 +874,7 @@ func (x *StepFourRequest) String() string {
 func (*StepFourRequest) ProtoMessage() {}
 
 func (x *StepFourRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[12]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +887,7 @@ func (x *StepFourRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepFourRequest.ProtoReflect.Descriptor instead.
 func (*StepFourRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{12}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *StepFourRequest) GetNotifyFunding() bool {
@@ -836,7 +941,7 @@ type StepFiveRequest struct {
 func (x *StepFiveRequest) Reset() {
 	*x = StepFiveRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[13]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -849,7 +954,7 @@ func (x *StepFiveRequest) String() string {
 func (*StepFiveRequest) ProtoMessage() {}
 
 func (x *StepFiveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[13]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -862,7 +967,7 @@ func (x *StepFiveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepFiveRequest.ProtoReflect.Descriptor instead.
 func (*StepFiveRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{13}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{14}
 }
 
 type FinishStepRequest struct {
@@ -877,13 +982,14 @@ type FinishStepRequest struct {
 	//	*FinishStepRequest_StepThree
 	//	*FinishStepRequest_StepFour
 	//	*FinishStepRequest_StepFive
-	Step isFinishStepRequest_Step `protobuf_oneof:"step"`
+	Step         isFinishStepRequest_Step `protobuf_oneof:"step"`
+	GoToNextStep bool                     `protobuf:"varint,6,opt,name=go_to_next_step,json=goToNextStep,proto3" json:"go_to_next_step,omitempty"`
 }
 
 func (x *FinishStepRequest) Reset() {
 	*x = FinishStepRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[14]
+		mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -896,7 +1002,7 @@ func (x *FinishStepRequest) String() string {
 func (*FinishStepRequest) ProtoMessage() {}
 
 func (x *FinishStepRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[14]
+	mi := &file_grpc_user_userpb_user_setup_service_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -909,7 +1015,7 @@ func (x *FinishStepRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinishStepRequest.ProtoReflect.Descriptor instead.
 func (*FinishStepRequest) Descriptor() ([]byte, []int) {
-	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{14}
+	return file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (m *FinishStepRequest) GetStep() isFinishStepRequest_Step {
@@ -954,6 +1060,13 @@ func (x *FinishStepRequest) GetStepFive() *StepFiveRequest {
 	return nil
 }
 
+func (x *FinishStepRequest) GetGoToNextStep() bool {
+	if x != nil {
+		return x.GoToNextStep
+	}
+	return false
+}
+
 type isFinishStepRequest_Step interface {
 	isFinishStepRequest_Step()
 }
@@ -996,7 +1109,18 @@ var file_grpc_user_userpb_user_setup_service_proto_rawDesc = []byte{
 	0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0e, 0x73, 0x74, 0x61,
 	0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x1a, 0x1b, 0x67, 0x6f, 0x6f,
 	0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x65, 0x6d, 0x70,
-	0x74, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x34, 0x0a, 0x0f, 0x53, 0x74, 0x65, 0x70,
+	0x74, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xad, 0x01, 0x0a, 0x0e, 0x47, 0x65, 0x74,
+	0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x37, 0x0a, 0x04, 0x73,
+	0x74, 0x65, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x23, 0x2e, 0x73, 0x74, 0x61, 0x72,
+	0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x74,
+	0x65, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x53, 0x74, 0x65, 0x70, 0x52, 0x04,
+	0x73, 0x74, 0x65, 0x70, 0x22, 0x62, 0x0a, 0x04, 0x53, 0x74, 0x65, 0x70, 0x12, 0x10, 0x0a, 0x0c,
+	0x43, 0x55, 0x52, 0x52, 0x45, 0x4e, 0x54, 0x5f, 0x53, 0x54, 0x45, 0x50, 0x10, 0x00, 0x12, 0x0c,
+	0x0a, 0x08, 0x53, 0x54, 0x45, 0x50, 0x5f, 0x4f, 0x4e, 0x45, 0x10, 0x01, 0x12, 0x0c, 0x0a, 0x08,
+	0x53, 0x54, 0x45, 0x50, 0x5f, 0x54, 0x57, 0x4f, 0x10, 0x02, 0x12, 0x0e, 0x0a, 0x0a, 0x53, 0x54,
+	0x45, 0x50, 0x5f, 0x54, 0x48, 0x52, 0x45, 0x45, 0x10, 0x03, 0x12, 0x0d, 0x0a, 0x09, 0x53, 0x54,
+	0x45, 0x50, 0x5f, 0x46, 0x4f, 0x55, 0x52, 0x10, 0x04, 0x12, 0x0d, 0x0a, 0x09, 0x53, 0x54, 0x45,
+	0x50, 0x5f, 0x46, 0x49, 0x56, 0x45, 0x10, 0x05, 0x22, 0x34, 0x0a, 0x0f, 0x53, 0x74, 0x65, 0x70,
 	0x4f, 0x6e, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x69,
 	0x73, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x08, 0x52, 0x0b, 0x69, 0x73, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x37,
@@ -1104,7 +1228,7 @@ var file_grpc_user_userpb_user_setup_service_proto_rawDesc = []byte{
 	0x76, 0x5f, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28,
 	0x03, 0x52, 0x11, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x79, 0x47, 0x6f, 0x76, 0x43, 0x68, 0x61, 0x69,
 	0x6e, 0x49, 0x64, 0x73, 0x22, 0x11, 0x0a, 0x0f, 0x53, 0x74, 0x65, 0x70, 0x46, 0x69, 0x76, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0xd8, 0x02, 0x0a, 0x11, 0x46, 0x69, 0x6e, 0x69,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0xff, 0x02, 0x0a, 0x11, 0x46, 0x69, 0x6e, 0x69,
 	0x73, 0x68, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x3b, 0x0a,
 	0x08, 0x73, 0x74, 0x65, 0x70, 0x5f, 0x6f, 0x6e, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
 	0x1e, 0x2e, 0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63,
@@ -1125,30 +1249,33 @@ var file_grpc_user_userpb_user_setup_service_proto_rawDesc = []byte{
 	0x65, 0x70, 0x5f, 0x66, 0x69, 0x76, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e,
 	0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x53,
 	0x74, 0x65, 0x70, 0x46, 0x69, 0x76, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x48, 0x00,
-	0x52, 0x08, 0x73, 0x74, 0x65, 0x70, 0x46, 0x69, 0x76, 0x65, 0x42, 0x06, 0x0a, 0x04, 0x73, 0x74,
-	0x65, 0x70, 0x32, 0xa9, 0x01, 0x0a, 0x10, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x75, 0x70,
-	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x46, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x43, 0x75,
-	0x72, 0x72, 0x65, 0x6e, 0x74, 0x53, 0x74, 0x65, 0x70, 0x12, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
-	0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74,
-	0x79, 0x1a, 0x1c, 0x2e, 0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72,
-	0x70, 0x63, 0x2e, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x4d, 0x0a, 0x0a, 0x46, 0x69, 0x6e, 0x69, 0x73, 0x68, 0x53, 0x74, 0x65, 0x70, 0x12, 0x21, 0x2e,
-	0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x46,
-	0x69, 0x6e, 0x69, 0x73, 0x68, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1c, 0x2e, 0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70,
-	0x63, 0x2e, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0xb7,
-	0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65,
-	0x2e, 0x67, 0x72, 0x70, 0x63, 0x42, 0x15, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x75, 0x70,
-	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x31,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6c, 0x6f, 0x6f, 0x6d, 0x69,
-	0x2d, 0x6c, 0x61, 0x62, 0x73, 0x2f, 0x73, 0x74, 0x61, 0x72, 0x2d, 0x73, 0x63, 0x6f, 0x70, 0x65,
-	0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x70,
-	0x62, 0xa2, 0x02, 0x03, 0x53, 0x47, 0x58, 0xaa, 0x02, 0x0e, 0x53, 0x74, 0x61, 0x72, 0x73, 0x63,
-	0x6f, 0x70, 0x65, 0x2e, 0x47, 0x72, 0x70, 0x63, 0xca, 0x02, 0x0e, 0x53, 0x74, 0x61, 0x72, 0x73,
-	0x63, 0x6f, 0x70, 0x65, 0x5c, 0x47, 0x72, 0x70, 0x63, 0xe2, 0x02, 0x1a, 0x53, 0x74, 0x61, 0x72,
-	0x73, 0x63, 0x6f, 0x70, 0x65, 0x5c, 0x47, 0x72, 0x70, 0x63, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0f, 0x53, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f,
-	0x70, 0x65, 0x3a, 0x3a, 0x47, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x08, 0x73, 0x74, 0x65, 0x70, 0x46, 0x69, 0x76, 0x65, 0x12, 0x25, 0x0a, 0x0f, 0x67, 0x6f,
+	0x5f, 0x74, 0x6f, 0x5f, 0x6e, 0x65, 0x78, 0x74, 0x5f, 0x73, 0x74, 0x65, 0x70, 0x18, 0x06, 0x20,
+	0x01, 0x28, 0x08, 0x52, 0x0c, 0x67, 0x6f, 0x54, 0x6f, 0x4e, 0x65, 0x78, 0x74, 0x53, 0x74, 0x65,
+	0x70, 0x42, 0x06, 0x0a, 0x04, 0x73, 0x74, 0x65, 0x70, 0x32, 0xaa, 0x01, 0x0a, 0x10, 0x55, 0x73,
+	0x65, 0x72, 0x53, 0x65, 0x74, 0x75, 0x70, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x47,
+	0x0a, 0x07, 0x47, 0x65, 0x74, 0x53, 0x74, 0x65, 0x70, 0x12, 0x1e, 0x2e, 0x73, 0x74, 0x61, 0x72,
+	0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x74,
+	0x65, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x73, 0x74, 0x61, 0x72,
+	0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x65, 0x70, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4d, 0x0a, 0x0a, 0x46, 0x69, 0x6e, 0x69, 0x73,
+	0x68, 0x53, 0x74, 0x65, 0x70, 0x12, 0x21, 0x2e, 0x73, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70,
+	0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x46, 0x69, 0x6e, 0x69, 0x73, 0x68, 0x53, 0x74, 0x65,
+	0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x73, 0x74, 0x61, 0x72, 0x73,
+	0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0xb7, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x73,
+	0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x42, 0x15, 0x55,
+	0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x75, 0x70, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x50,
+	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x31, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x6c, 0x6f, 0x6f, 0x6d, 0x69, 0x2d, 0x6c, 0x61, 0x62, 0x73, 0x2f, 0x73, 0x74,
+	0x61, 0x72, 0x2d, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x75, 0x73,
+	0x65, 0x72, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x70, 0x62, 0xa2, 0x02, 0x03, 0x53, 0x47, 0x58, 0xaa,
+	0x02, 0x0e, 0x53, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x2e, 0x47, 0x72, 0x70, 0x63,
+	0xca, 0x02, 0x0e, 0x53, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x5c, 0x47, 0x72, 0x70,
+	0x63, 0xe2, 0x02, 0x1a, 0x53, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x5c, 0x47, 0x72,
+	0x70, 0x63, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02,
+	0x0f, 0x53, 0x74, 0x61, 0x72, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x3a, 0x3a, 0x47, 0x72, 0x70, 0x63,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1163,48 +1290,51 @@ func file_grpc_user_userpb_user_setup_service_proto_rawDescGZIP() []byte {
 	return file_grpc_user_userpb_user_setup_service_proto_rawDescData
 }
 
-var file_grpc_user_userpb_user_setup_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_grpc_user_userpb_user_setup_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_grpc_user_userpb_user_setup_service_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_grpc_user_userpb_user_setup_service_proto_goTypes = []interface{}{
-	(*StepOneResponse)(nil),   // 0: starscope.grpc.StepOneResponse
-	(*Validator)(nil),         // 1: starscope.grpc.Validator
-	(*StepTwoResponse)(nil),   // 2: starscope.grpc.StepTwoResponse
-	(*Wallet)(nil),            // 3: starscope.grpc.Wallet
-	(*StepThreeResponse)(nil), // 4: starscope.grpc.StepThreeResponse
-	(*GovChain)(nil),          // 5: starscope.grpc.GovChain
-	(*StepFourResponse)(nil),  // 6: starscope.grpc.StepFourResponse
-	(*StepFiveResponse)(nil),  // 7: starscope.grpc.StepFiveResponse
-	(*StepResponse)(nil),      // 8: starscope.grpc.StepResponse
-	(*StepOneRequest)(nil),    // 9: starscope.grpc.StepOneRequest
-	(*StepTwoRequest)(nil),    // 10: starscope.grpc.StepTwoRequest
-	(*StepThreeRequest)(nil),  // 11: starscope.grpc.StepThreeRequest
-	(*StepFourRequest)(nil),   // 12: starscope.grpc.StepFourRequest
-	(*StepFiveRequest)(nil),   // 13: starscope.grpc.StepFiveRequest
-	(*FinishStepRequest)(nil), // 14: starscope.grpc.FinishStepRequest
-	(*emptypb.Empty)(nil),     // 15: google.protobuf.Empty
+	(GetStepRequest_Step)(0),  // 0: starscope.grpc.GetStepRequest.Step
+	(*GetStepRequest)(nil),    // 1: starscope.grpc.GetStepRequest
+	(*StepOneResponse)(nil),   // 2: starscope.grpc.StepOneResponse
+	(*Validator)(nil),         // 3: starscope.grpc.Validator
+	(*StepTwoResponse)(nil),   // 4: starscope.grpc.StepTwoResponse
+	(*Wallet)(nil),            // 5: starscope.grpc.Wallet
+	(*StepThreeResponse)(nil), // 6: starscope.grpc.StepThreeResponse
+	(*GovChain)(nil),          // 7: starscope.grpc.GovChain
+	(*StepFourResponse)(nil),  // 8: starscope.grpc.StepFourResponse
+	(*StepFiveResponse)(nil),  // 9: starscope.grpc.StepFiveResponse
+	(*StepResponse)(nil),      // 10: starscope.grpc.StepResponse
+	(*StepOneRequest)(nil),    // 11: starscope.grpc.StepOneRequest
+	(*StepTwoRequest)(nil),    // 12: starscope.grpc.StepTwoRequest
+	(*StepThreeRequest)(nil),  // 13: starscope.grpc.StepThreeRequest
+	(*StepFourRequest)(nil),   // 14: starscope.grpc.StepFourRequest
+	(*StepFiveRequest)(nil),   // 15: starscope.grpc.StepFiveRequest
+	(*FinishStepRequest)(nil), // 16: starscope.grpc.FinishStepRequest
 }
 var file_grpc_user_userpb_user_setup_service_proto_depIdxs = []int32{
-	1,  // 0: starscope.grpc.StepTwoResponse.available_validators:type_name -> starscope.grpc.Validator
-	3,  // 1: starscope.grpc.StepThreeResponse.wallets:type_name -> starscope.grpc.Wallet
-	5,  // 2: starscope.grpc.StepFourResponse.available_chains:type_name -> starscope.grpc.GovChain
-	0,  // 3: starscope.grpc.StepResponse.step_one:type_name -> starscope.grpc.StepOneResponse
-	2,  // 4: starscope.grpc.StepResponse.step_two:type_name -> starscope.grpc.StepTwoResponse
-	4,  // 5: starscope.grpc.StepResponse.step_three:type_name -> starscope.grpc.StepThreeResponse
-	6,  // 6: starscope.grpc.StepResponse.step_four:type_name -> starscope.grpc.StepFourResponse
-	7,  // 7: starscope.grpc.StepResponse.step_five:type_name -> starscope.grpc.StepFiveResponse
-	9,  // 8: starscope.grpc.FinishStepRequest.step_one:type_name -> starscope.grpc.StepOneRequest
-	10, // 9: starscope.grpc.FinishStepRequest.step_two:type_name -> starscope.grpc.StepTwoRequest
-	11, // 10: starscope.grpc.FinishStepRequest.step_three:type_name -> starscope.grpc.StepThreeRequest
-	12, // 11: starscope.grpc.FinishStepRequest.step_four:type_name -> starscope.grpc.StepFourRequest
-	13, // 12: starscope.grpc.FinishStepRequest.step_five:type_name -> starscope.grpc.StepFiveRequest
-	15, // 13: starscope.grpc.UserSetupService.GetCurrentStep:input_type -> google.protobuf.Empty
-	14, // 14: starscope.grpc.UserSetupService.FinishStep:input_type -> starscope.grpc.FinishStepRequest
-	8,  // 15: starscope.grpc.UserSetupService.GetCurrentStep:output_type -> starscope.grpc.StepResponse
-	8,  // 16: starscope.grpc.UserSetupService.FinishStep:output_type -> starscope.grpc.StepResponse
-	15, // [15:17] is the sub-list for method output_type
-	13, // [13:15] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	0,  // 0: starscope.grpc.GetStepRequest.step:type_name -> starscope.grpc.GetStepRequest.Step
+	3,  // 1: starscope.grpc.StepTwoResponse.available_validators:type_name -> starscope.grpc.Validator
+	5,  // 2: starscope.grpc.StepThreeResponse.wallets:type_name -> starscope.grpc.Wallet
+	7,  // 3: starscope.grpc.StepFourResponse.available_chains:type_name -> starscope.grpc.GovChain
+	2,  // 4: starscope.grpc.StepResponse.step_one:type_name -> starscope.grpc.StepOneResponse
+	4,  // 5: starscope.grpc.StepResponse.step_two:type_name -> starscope.grpc.StepTwoResponse
+	6,  // 6: starscope.grpc.StepResponse.step_three:type_name -> starscope.grpc.StepThreeResponse
+	8,  // 7: starscope.grpc.StepResponse.step_four:type_name -> starscope.grpc.StepFourResponse
+	9,  // 8: starscope.grpc.StepResponse.step_five:type_name -> starscope.grpc.StepFiveResponse
+	11, // 9: starscope.grpc.FinishStepRequest.step_one:type_name -> starscope.grpc.StepOneRequest
+	12, // 10: starscope.grpc.FinishStepRequest.step_two:type_name -> starscope.grpc.StepTwoRequest
+	13, // 11: starscope.grpc.FinishStepRequest.step_three:type_name -> starscope.grpc.StepThreeRequest
+	14, // 12: starscope.grpc.FinishStepRequest.step_four:type_name -> starscope.grpc.StepFourRequest
+	15, // 13: starscope.grpc.FinishStepRequest.step_five:type_name -> starscope.grpc.StepFiveRequest
+	1,  // 14: starscope.grpc.UserSetupService.GetStep:input_type -> starscope.grpc.GetStepRequest
+	16, // 15: starscope.grpc.UserSetupService.FinishStep:input_type -> starscope.grpc.FinishStepRequest
+	10, // 16: starscope.grpc.UserSetupService.GetStep:output_type -> starscope.grpc.StepResponse
+	10, // 17: starscope.grpc.UserSetupService.FinishStep:output_type -> starscope.grpc.StepResponse
+	16, // [16:18] is the sub-list for method output_type
+	14, // [14:16] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_grpc_user_userpb_user_setup_service_proto_init() }
@@ -1214,7 +1344,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepOneResponse); i {
+			switch v := v.(*GetStepRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1226,7 +1356,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Validator); i {
+			switch v := v.(*StepOneResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1238,7 +1368,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepTwoResponse); i {
+			switch v := v.(*Validator); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1250,7 +1380,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Wallet); i {
+			switch v := v.(*StepTwoResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1262,7 +1392,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepThreeResponse); i {
+			switch v := v.(*Wallet); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1274,7 +1404,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GovChain); i {
+			switch v := v.(*StepThreeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1286,7 +1416,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepFourResponse); i {
+			switch v := v.(*GovChain); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1298,7 +1428,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepFiveResponse); i {
+			switch v := v.(*StepFourResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1310,7 +1440,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepResponse); i {
+			switch v := v.(*StepFiveResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1322,7 +1452,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepOneRequest); i {
+			switch v := v.(*StepResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1334,7 +1464,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepTwoRequest); i {
+			switch v := v.(*StepOneRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1346,7 +1476,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepThreeRequest); i {
+			switch v := v.(*StepTwoRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1358,7 +1488,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepFourRequest); i {
+			switch v := v.(*StepThreeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1370,7 +1500,7 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StepFiveRequest); i {
+			switch v := v.(*StepFourRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1382,6 +1512,18 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 		file_grpc_user_userpb_user_setup_service_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StepFiveRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_grpc_user_userpb_user_setup_service_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FinishStepRequest); i {
 			case 0:
 				return &v.state
@@ -1394,14 +1536,14 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 			}
 		}
 	}
-	file_grpc_user_userpb_user_setup_service_proto_msgTypes[8].OneofWrappers = []interface{}{
+	file_grpc_user_userpb_user_setup_service_proto_msgTypes[9].OneofWrappers = []interface{}{
 		(*StepResponse_StepOne)(nil),
 		(*StepResponse_StepTwo)(nil),
 		(*StepResponse_StepThree)(nil),
 		(*StepResponse_StepFour)(nil),
 		(*StepResponse_StepFive)(nil),
 	}
-	file_grpc_user_userpb_user_setup_service_proto_msgTypes[14].OneofWrappers = []interface{}{
+	file_grpc_user_userpb_user_setup_service_proto_msgTypes[15].OneofWrappers = []interface{}{
 		(*FinishStepRequest_StepOne)(nil),
 		(*FinishStepRequest_StepTwo)(nil),
 		(*FinishStepRequest_StepThree)(nil),
@@ -1413,13 +1555,14 @@ func file_grpc_user_userpb_user_setup_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_grpc_user_userpb_user_setup_service_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   15,
+			NumEnums:      1,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_grpc_user_userpb_user_setup_service_proto_goTypes,
 		DependencyIndexes: file_grpc_user_userpb_user_setup_service_proto_depIdxs,
+		EnumInfos:         file_grpc_user_userpb_user_setup_service_proto_enumTypes,
 		MessageInfos:      file_grpc_user_userpb_user_setup_service_proto_msgTypes,
 	}.Build()
 	File_grpc_user_userpb_user_setup_service_proto = out.File

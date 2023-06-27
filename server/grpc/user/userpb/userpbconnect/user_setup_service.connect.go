@@ -9,7 +9,6 @@ import (
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
 	userpb "github.com/loomi-labs/star-scope/grpc/user/userpb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
 )
@@ -34,9 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// UserSetupServiceGetCurrentStepProcedure is the fully-qualified name of the UserSetupService's
-	// GetCurrentStep RPC.
-	UserSetupServiceGetCurrentStepProcedure = "/starscope.grpc.UserSetupService/GetCurrentStep"
+	// UserSetupServiceGetStepProcedure is the fully-qualified name of the UserSetupService's GetStep
+	// RPC.
+	UserSetupServiceGetStepProcedure = "/starscope.grpc.UserSetupService/GetStep"
 	// UserSetupServiceFinishStepProcedure is the fully-qualified name of the UserSetupService's
 	// FinishStep RPC.
 	UserSetupServiceFinishStepProcedure = "/starscope.grpc.UserSetupService/FinishStep"
@@ -44,7 +43,7 @@ const (
 
 // UserSetupServiceClient is a client for the starscope.grpc.UserSetupService service.
 type UserSetupServiceClient interface {
-	GetCurrentStep(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.StepResponse], error)
+	GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 	FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 }
 
@@ -58,9 +57,9 @@ type UserSetupServiceClient interface {
 func NewUserSetupServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) UserSetupServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &userSetupServiceClient{
-		getCurrentStep: connect_go.NewClient[emptypb.Empty, userpb.StepResponse](
+		getStep: connect_go.NewClient[userpb.GetStepRequest, userpb.StepResponse](
 			httpClient,
-			baseURL+UserSetupServiceGetCurrentStepProcedure,
+			baseURL+UserSetupServiceGetStepProcedure,
 			opts...,
 		),
 		finishStep: connect_go.NewClient[userpb.FinishStepRequest, userpb.StepResponse](
@@ -73,13 +72,13 @@ func NewUserSetupServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 
 // userSetupServiceClient implements UserSetupServiceClient.
 type userSetupServiceClient struct {
-	getCurrentStep *connect_go.Client[emptypb.Empty, userpb.StepResponse]
-	finishStep     *connect_go.Client[userpb.FinishStepRequest, userpb.StepResponse]
+	getStep    *connect_go.Client[userpb.GetStepRequest, userpb.StepResponse]
+	finishStep *connect_go.Client[userpb.FinishStepRequest, userpb.StepResponse]
 }
 
-// GetCurrentStep calls starscope.grpc.UserSetupService.GetCurrentStep.
-func (c *userSetupServiceClient) GetCurrentStep(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.StepResponse], error) {
-	return c.getCurrentStep.CallUnary(ctx, req)
+// GetStep calls starscope.grpc.UserSetupService.GetStep.
+func (c *userSetupServiceClient) GetStep(ctx context.Context, req *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
+	return c.getStep.CallUnary(ctx, req)
 }
 
 // FinishStep calls starscope.grpc.UserSetupService.FinishStep.
@@ -89,7 +88,7 @@ func (c *userSetupServiceClient) FinishStep(ctx context.Context, req *connect_go
 
 // UserSetupServiceHandler is an implementation of the starscope.grpc.UserSetupService service.
 type UserSetupServiceHandler interface {
-	GetCurrentStep(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.StepResponse], error)
+	GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 	FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 }
 
@@ -100,9 +99,9 @@ type UserSetupServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewUserSetupServiceHandler(svc UserSetupServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle(UserSetupServiceGetCurrentStepProcedure, connect_go.NewUnaryHandler(
-		UserSetupServiceGetCurrentStepProcedure,
-		svc.GetCurrentStep,
+	mux.Handle(UserSetupServiceGetStepProcedure, connect_go.NewUnaryHandler(
+		UserSetupServiceGetStepProcedure,
+		svc.GetStep,
 		opts...,
 	))
 	mux.Handle(UserSetupServiceFinishStepProcedure, connect_go.NewUnaryHandler(
@@ -116,8 +115,8 @@ func NewUserSetupServiceHandler(svc UserSetupServiceHandler, opts ...connect_go.
 // UnimplementedUserSetupServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUserSetupServiceHandler struct{}
 
-func (UnimplementedUserSetupServiceHandler) GetCurrentStep(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[userpb.StepResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.GetCurrentStep is not implemented"))
+func (UnimplementedUserSetupServiceHandler) GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.GetStep is not implemented"))
 }
 
 func (UnimplementedUserSetupServiceHandler) FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {

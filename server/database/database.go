@@ -255,6 +255,16 @@ func InitDb() {
 				ExecX(ctx)
 		}
 	}
+
+	for _, u := range client.User.Query().WithSetup().AllX(ctx) {
+		if u.Edges.Setup == nil {
+			client.UserSetup.
+				Create().
+				SetUser(u).
+				SaveX(ctx)
+		}
+	}
+
 	log.Sugar.Info("database successfully initialized")
 }
 

@@ -25,7 +25,7 @@ use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
 use crate::types::protobuf::event::EventType;
 use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
-use crate::utils::url::safe_navigate;
+use crate::utils::url::{safe_navigate, navigate_launch_app};
 
 mod components;
 mod config;
@@ -513,12 +513,8 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
                 if user.is_setup_complete {
                     query_events_count(cx).await;
                     subscribe_to_events(cx);
-                    debug!("Redirect to notifications");
-                    safe_navigate(cx, AppRoutes::Notifications)
-                } else {
-                    debug!("Redirect to setup");
-                    safe_navigate(cx, AppRoutes::Setup)
                 }
+                navigate_launch_app(cx);
             } else {
                 create_message(cx, "User not found", "User status unknown", InfoLevel::Error);
             }

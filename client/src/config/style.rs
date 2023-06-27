@@ -1,0 +1,2 @@
+pub const PRIMARY_TRANSIENT_COLOR: &str = "transition-all bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to hover:from-primary-gradient-to hover:to-primary-gradient-from";
+pub const PRIMARY_TRANSIENT_BORDER_COLOR: &str = "transition-all border-gradient-to-r from-primary-gradient-from to-primary-gradient-to hover:from-primary-gradient-to hover:to-primary-gradient-from";

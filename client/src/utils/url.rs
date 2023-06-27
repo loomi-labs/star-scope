@@ -1,5 +1,7 @@
+use crate::components::messages::create_message;
 use crate::types::protobuf::grpc::{DiscordLoginRequest, TelegramLoginRequest};
-use crate::{AppRoutes, AppState};
+use crate::{AppRoutes, AppState, AuthState, InfoLevel};
+use log::debug;
 use sycamore::prelude::{use_context, Scope};
 use sycamore_router::navigate;
 use urlencoding::decode;
@@ -111,5 +113,24 @@ pub fn safe_navigate(cx: Scope, route: AppRoutes) {
     let app_state = use_context::<AppState>(cx);
     if app_state.route.get_untracked().is_some_and(|r| r != route) {
         navigate(route.to_string().as_str());
+    }
+}
+
+pub fn navigate_launch_app(cx: Scope) {
+    let app_state = use_context::<AppState>(cx);
+    if *app_state.auth_state.get_untracked() == AuthState::LoggedIn {
+        if let Some(user) = app_state.user.get_untracked().as_ref() {
+            if user.is_setup_complete {
+                debug!("Redirect to notifications");
+                safe_navigate(cx, AppRoutes::Notifications)
+            } else {
+                debug!("Redirect to setup");
+                safe_navigate(cx, AppRoutes::Setup)
+            }
+        } else {
+            create_message(cx, "User not found", "User status unknown", InfoLevel::Error);
+        }
+    } else {
+        safe_navigate(cx, AppRoutes::Login)
     }
 }
