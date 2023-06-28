@@ -251,3 +251,27 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 
 	return connect.NewResponse(response), nil
 }
+
+func (u *UserSetupService) ValidateWallet(ctx context.Context, request *connect.Request[userpb.ValidateWalletRequest]) (*connect.Response[userpb.ValidateWalletResponse], error) {
+	err := common.ValidateBech32Address(request.Msg.GetAddress())
+	isValid := err == nil
+
+	var wallet = &userpb.Wallet{
+		Address: request.Msg.GetAddress(),
+		LogoUrl: "",
+	}
+	var isSupported = false
+	for _, chain := range u.chainManager.QueryEnabled(ctx) {
+		if common.IsBech32AddressFromChain(request.Msg.GetAddress(), chain.Bech32Prefix) {
+			wallet.LogoUrl = chain.Image
+			isSupported = true
+			break
+		}
+	}
+
+	return connect.NewResponse(&userpb.ValidateWalletResponse{
+		IsValid:     isValid,
+		IsSupported: isSupported,
+		Wallet:      wallet,
+	}), nil
+}

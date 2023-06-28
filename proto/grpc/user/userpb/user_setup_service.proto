@@ -10,6 +10,7 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/user/usersetuppb";
 service UserSetupService {
   rpc GetStep(GetStepRequest) returns (StepResponse);
   rpc FinishStep(FinishStepRequest) returns (StepResponse);
+  rpc ValidateWallet(ValidateWalletRequest) returns (ValidateWalletResponse);
 }
 
 message GetStepRequest {
@@ -112,4 +113,14 @@ message FinishStepRequest {
       StepFiveRequest step_five = 5;
   }
   bool go_to_next_step = 6;
+}
+
+message ValidateWalletRequest {
+  string address = 1;
+}
+
+message ValidateWalletResponse {
+  bool is_valid = 1;
+  bool is_supported = 2;
+  Wallet wallet = 3;
 }

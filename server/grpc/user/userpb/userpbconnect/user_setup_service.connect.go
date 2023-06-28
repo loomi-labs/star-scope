@@ -39,12 +39,16 @@ const (
 	// UserSetupServiceFinishStepProcedure is the fully-qualified name of the UserSetupService's
 	// FinishStep RPC.
 	UserSetupServiceFinishStepProcedure = "/starscope.grpc.UserSetupService/FinishStep"
+	// UserSetupServiceValidateWalletProcedure is the fully-qualified name of the UserSetupService's
+	// ValidateWallet RPC.
+	UserSetupServiceValidateWalletProcedure = "/starscope.grpc.UserSetupService/ValidateWallet"
 )
 
 // UserSetupServiceClient is a client for the starscope.grpc.UserSetupService service.
 type UserSetupServiceClient interface {
 	GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 	FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
+	ValidateWallet(context.Context, *connect_go.Request[userpb.ValidateWalletRequest]) (*connect_go.Response[userpb.ValidateWalletResponse], error)
 }
 
 // NewUserSetupServiceClient constructs a client for the starscope.grpc.UserSetupService service. By
@@ -67,13 +71,19 @@ func NewUserSetupServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+UserSetupServiceFinishStepProcedure,
 			opts...,
 		),
+		validateWallet: connect_go.NewClient[userpb.ValidateWalletRequest, userpb.ValidateWalletResponse](
+			httpClient,
+			baseURL+UserSetupServiceValidateWalletProcedure,
+			opts...,
+		),
 	}
 }
 
 // userSetupServiceClient implements UserSetupServiceClient.
 type userSetupServiceClient struct {
-	getStep    *connect_go.Client[userpb.GetStepRequest, userpb.StepResponse]
-	finishStep *connect_go.Client[userpb.FinishStepRequest, userpb.StepResponse]
+	getStep        *connect_go.Client[userpb.GetStepRequest, userpb.StepResponse]
+	finishStep     *connect_go.Client[userpb.FinishStepRequest, userpb.StepResponse]
+	validateWallet *connect_go.Client[userpb.ValidateWalletRequest, userpb.ValidateWalletResponse]
 }
 
 // GetStep calls starscope.grpc.UserSetupService.GetStep.
@@ -86,10 +96,16 @@ func (c *userSetupServiceClient) FinishStep(ctx context.Context, req *connect_go
 	return c.finishStep.CallUnary(ctx, req)
 }
 
+// ValidateWallet calls starscope.grpc.UserSetupService.ValidateWallet.
+func (c *userSetupServiceClient) ValidateWallet(ctx context.Context, req *connect_go.Request[userpb.ValidateWalletRequest]) (*connect_go.Response[userpb.ValidateWalletResponse], error) {
+	return c.validateWallet.CallUnary(ctx, req)
+}
+
 // UserSetupServiceHandler is an implementation of the starscope.grpc.UserSetupService service.
 type UserSetupServiceHandler interface {
 	GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 	FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
+	ValidateWallet(context.Context, *connect_go.Request[userpb.ValidateWalletRequest]) (*connect_go.Response[userpb.ValidateWalletResponse], error)
 }
 
 // NewUserSetupServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -109,6 +125,11 @@ func NewUserSetupServiceHandler(svc UserSetupServiceHandler, opts ...connect_go.
 		svc.FinishStep,
 		opts...,
 	))
+	mux.Handle(UserSetupServiceValidateWalletProcedure, connect_go.NewUnaryHandler(
+		UserSetupServiceValidateWalletProcedure,
+		svc.ValidateWallet,
+		opts...,
+	))
 	return "/starscope.grpc.UserSetupService/", mux
 }
 
@@ -121,4 +142,8 @@ func (UnimplementedUserSetupServiceHandler) GetStep(context.Context, *connect_go
 
 func (UnimplementedUserSetupServiceHandler) FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.FinishStep is not implemented"))
+}
+
+func (UnimplementedUserSetupServiceHandler) ValidateWallet(context.Context, *connect_go.Request[userpb.ValidateWalletRequest]) (*connect_go.Response[userpb.ValidateWalletResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.ValidateWallet is not implemented"))
 }

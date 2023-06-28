@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
+use log::debug;
+use serde::__private::de;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
@@ -12,15 +14,11 @@ use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{
     StepFive, StepFour, StepOne, StepThree, StepTwo,
 };
-use crate::types::protobuf::grpc::{
-    finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest,
-    StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse,
-    StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator,
-};
+use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest};
 use crate::{Services, InfoLevel};
 
 #[derive(Debug, Clone)]
-pub struct SetupState {
+struct SetupState {
     pub step: RcSignal<Option<Step>>,
     pub num_steps: RcSignal<Option<usize>>,
 }
@@ -40,7 +38,7 @@ const DESCRIPTION_CLASS: &str = "dark:text-purple-600";
 const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-4";
 
 #[component(inline_props)]
-pub fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
+fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
     let handle_click = move |is_validator| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
@@ -151,7 +149,7 @@ struct ValidatorRow<'a> {
 }
 
 #[component(inline_props)]
-pub fn SearchValidator<'a, G: Html>(
+fn SearchValidator<'a, G: Html>(
     cx: Scope<'a>,
     validator_rows: Vec<ValidatorRow<'a>>,
     selected_validator_ids: &'a Signal<HashSet<i64>>,
@@ -306,7 +304,7 @@ pub fn SearchValidator<'a, G: Html>(
 }
 
 #[component(inline_props)]
-pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
+fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     let validator_rows = step
         .available_validators
         .iter()
@@ -352,7 +350,7 @@ pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
 
     view! {cx,
         ProgressBar(step=StepTwo(step))
-        h2(class=TITLE_CLASS) {"Choose your validator (s)"}
+        h2(class=TITLE_CLASS) {"Choose your validator(s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
         SearchValidator(validator_rows=validator_rows.clone(), selected_validator_ids=selected_validator_ids.clone())
         div(class=BUTTON_ROW_CLASS) {
@@ -363,13 +361,126 @@ pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
 }
 
 #[component(inline_props)]
-pub fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
+fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
+    view! {cx,
+        div(class="flex flex-col") {
+            Indexed(
+                iterable=wallets,
+                view=move |cx, wallet| {
+                    view! {cx,
+                        div(class="flex flex-row justify-between items-center") {
+                            div(class="flex flex-col") {
+                                // span(class="text-xl font-semibold") {(i + 1)}
+                                span(class="text-sm") {(wallet.address.clone())}
+                            }
+                            span(class="w-6 h-6 bg-primary icon-[tabler--trash] cursor-pointer")
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum WalletValidation {
+    PartiallyValid,
+    Valid(Wallet),
+    Invalid(String),
+}
+
+async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidation {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(ValidateWalletRequest {
+        address,
+    });
+    let response = services
+        .grpc_client
+        .get_user_setup_service()
+        .validate_wallet(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(response) = response {
+        if response.is_valid {
+            if response.is_supported {
+                if let Some(wallet) = response.wallet {
+                    return WalletValidation::Valid(wallet);
+                }
+                create_message(cx, "Error", "Wallet not found", InfoLevel::Error);
+                return WalletValidation::Invalid("Wallet not found".to_string());
+            } else {
+                return WalletValidation::Invalid("Chain is currently not supported".to_string())
+            }
+        } else {
+            WalletValidation::Invalid("Invalid wallet address".to_string())
+        }
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        WalletValidation::Invalid("Error".to_string())
+    }
+}
+
+#[component(inline_props)]
+fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
+    let new_wallet_address = create_signal(cx, String::new());
+
+    let validation = create_signal(cx, None::<WalletValidation>);
+
+    let handle_add_wallet = move || {
+        let address = new_wallet_address.get().as_ref().clone();
+        if wallets.get().iter().map(|w| w.address.clone()).collect::<Vec<String>>().contains(&new_wallet_address.get().as_ref().clone()) {
+            validation.set(Some(WalletValidation::Invalid("Wallet already added".to_string())));
+        } else if address.is_empty() {
+            validation.set(Some(WalletValidation::Invalid("Wallet address cannot be empty".to_string())));
+        } else if address.len() < 30 {
+            validation.set(Some(WalletValidation::Invalid("Wallet address is too short".to_string())));
+        } else {
+            spawn_local_scoped(cx, async move {
+                let result = query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
+                validation.set(Some(result.clone()));
+                match result {
+                    WalletValidation::Valid(wallet) => {
+                        debug!("Adding wallet: {:?}", wallet.address);
+                        wallets.modify().push(wallet);
+                    }
+                    _ => {}
+                }
+            });
+        }
+    };
+
+    view! {cx,
+        div(class="flex flex-col") {
+            div(class="flex") {
+                input(
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 mr-4 text-black focus:outline-none focus:ring-2 focus:ring-primary",
+                    placeholder="Wallet address",
+                    type="text",
+                    bind:value=new_wallet_address,
+                )
+                SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
+            }
+            (if let WalletValidation::Invalid(msg) = validation.get().as_ref().clone().unwrap_or(WalletValidation::PartiallyValid) {
+                view! {cx, 
+                    span(class="text-red-500 text-left") {(msg)}
+                }
+            } else {
+                view! {cx, }
+            })
+        }
+    }
+}
+
+#[component(inline_props)]
+fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
+    let wallets = create_signal(cx, step.wallets.clone());
+
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
                 step: Some(finish_step_request::Step::StepThree(StepThreeRequest {
-                    wallet_addresses: vec![],
+                    wallet_addresses: wallets.get().iter().map(|w| w.address.clone()).collect(),
                 })),
             };
             update_step(cx, finish_step).await;
@@ -378,7 +489,10 @@ pub fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G
 
     view! {cx,
         ProgressBar(step=StepThree(step))
-        p(class=DESCRIPTION_CLASS) {"Add your wallet(s)"}
+        h2(class=TITLE_CLASS) {"Add your wallet(s)"}
+        p(class=DESCRIPTION_CLASS) {"You will receive notifications about important updates and events directly related to your wallet."}
+        WalletList(wallets=wallets.clone())
+        AddWallet(wallets=wallets.clone())
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
@@ -387,7 +501,7 @@ pub fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G
 }
 
 #[component(inline_props)]
-pub fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
+fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
@@ -412,7 +526,7 @@ pub fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> 
 }
 
 #[component(inline_props)]
-pub fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
+fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
