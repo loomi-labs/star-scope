@@ -362,18 +362,25 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
 
 #[component(inline_props)]
 fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
+    let handle_delete_wallet = move |wallet: &Wallet| {
+        wallets.modify().retain(|w| w.address != wallet.address);
+    };
+
     view! {cx,
         div(class="flex flex-col") {
             Indexed(
                 iterable=wallets,
                 view=move |cx, wallet| {
+                    let wallet_ref = create_ref(cx, wallet.clone());
                     view! {cx,
-                        div(class="flex flex-row justify-between items-center") {
-                            div(class="flex flex-col") {
-                                // span(class="text-xl font-semibold") {(i + 1)}
-                                span(class="text-sm") {(wallet.address.clone())}
+                        div(class="flex justify-between items-center space-x-4") {
+                            div(class="px-4 py-2 rounded-full dark:bg-purple-700") {
+                                span(class="text-sm") {(wallet_ref.address)}
                             }
-                            span(class="w-6 h-6 bg-primary icon-[tabler--trash] cursor-pointer")
+                            button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary", 
+                                    on:click=move |_| handle_delete_wallet(wallet_ref)) {
+                                span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
+                            }
                         }
                     }
                 }
@@ -384,7 +391,6 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> V
 
 #[derive(Debug, Clone, PartialEq)]
 enum WalletValidation {
-    PartiallyValid,
     Valid(Wallet),
     Invalid(String),
 }
@@ -460,7 +466,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                 )
                 SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
             }
-            (if let WalletValidation::Invalid(msg) = validation.get().as_ref().clone().unwrap_or(WalletValidation::PartiallyValid) {
+            (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
                 view! {cx, 
                     span(class="text-red-500 text-left") {(msg)}
                 }

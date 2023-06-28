@@ -62,8 +62,17 @@ pub fn OutlineButton<'a, G: Html, F>(cx: Scope<'a>, props: ButtonProps<'a, G, F>
 where
     F: Fn() + 'a,
 {
+    let color_class = match props.color {
+        ColorScheme::PrimaryGradient => "border-primary-gradient-from transition-all hover:bg-primary-gradient-from",
+        ColorScheme::Subtle => "border-purple-700 hover:border-purple-800",
+        ColorScheme::Custom(class) => class,
+    };
     view!(
         cx,
-        Button(children=props.children, on_click=props.on_click, class=format!("border border-primary-gradient-from transition-all hover:bg-primary-gradient-from {}", BUTTON_BASE_CLASS))
+        Button(
+            children=props.children,
+            on_click=props.on_click, 
+            class=format!("border {} {}", BUTTON_BASE_CLASS, color_class)
+        )
     )
 }
