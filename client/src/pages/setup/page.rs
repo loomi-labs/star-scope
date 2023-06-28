@@ -136,7 +136,7 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
     view! {cx,
         div(class="flex flex-col justify-center items-center w-full space-y-2") {
             h2(class="text-xl dark:text-purple-600") { "Account setup" }
-            div(class="flex justify-center items-center w-3/5") {
+            div(class="flex justify-center items-center w-4/5 md:w-2/5") {
                 (progress_bar_views)
             }
             div(class="w-full h-10")
