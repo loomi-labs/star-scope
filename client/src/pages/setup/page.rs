@@ -1,12 +1,9 @@
-use std::borrow::Borrow;
 use std::collections::HashSet;
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
-use log::debug;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
-use web_sys::Event;
 
 use crate::components::loading::LoadingSpinner;
 use crate::components::messages::{create_error_msg_from_status, create_message};
@@ -20,17 +17,19 @@ use crate::types::protobuf::grpc::{
     StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse,
     StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator,
 };
-use crate::Services;
+use crate::{Services, InfoLevel};
 
 #[derive(Debug, Clone)]
 pub struct SetupState {
     pub step: RcSignal<Option<Step>>,
+    pub num_steps: RcSignal<Option<usize>>,
 }
 
 impl SetupState {
     pub fn new() -> Self {
         Self {
             step: create_rc_signal(None),
+            num_steps: create_rc_signal(None),
         }
     }
 }
@@ -61,6 +60,86 @@ pub fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
         div(class=BUTTON_ROW_CLASS) {
             SolidButton(on_click=move || handle_click(true), color=ColorScheme::Subtle) {"Yes"}
             SolidButton(on_click=move || handle_click(false), color=ColorScheme::Subtle) {"No"}
+        }
+    }
+}
+
+#[component(inline_props)]
+fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
+    let setup_state: &SetupState = use_context::<SetupState>(cx);
+    let num_steps_option = *setup_state.num_steps.get();
+    if num_steps_option.is_none() {
+        create_message(cx, "Invalid state", "Number of setup was not found", InfoLevel::Error);
+        return view! {cx,};
+    }
+    let num_steps = num_steps_option.unwrap() - 1;
+    let current_step = match step {
+        StepOne(_) => 0,
+        StepTwo(_) => 0,
+        StepThree(_) => num_steps - 3,
+        StepFour(_) => num_steps - 2,
+        StepFive(_) => num_steps - 1,
+    };
+
+    let current_name = match step {
+        StepOne(_) => "",
+        StepTwo(_) => "Validators",
+        StepThree(_) => "Wallets",
+        StepFour(_) => "Notifications",
+        StepFive(_) => "Communication",
+    };
+
+    let progress_bar_views = View::new_fragment(
+        (0..num_steps).map(|i|{
+            let is_cicle_colored = i <= current_step;
+            let has_line = i < num_steps - 1;
+            let is_line_colored = current_step > i;
+            let is_name_shown = i == current_step;
+            view! { cx,
+                (if is_cicle_colored {
+                    view! {cx,
+                        div(class="w-4 h-4 rounded-full bg-primary relative flex flex-col items-center") {
+                          (if is_name_shown {
+                            view! {cx,
+                              p(class="absolute w-full flex-grow flex items-center justify-center -bottom-6 dark:text-purple-500") {
+                                (current_name)
+                              }
+                            }
+                          } else {
+                            view! {cx,}
+                          })
+                        }
+                      }
+                } else {
+                    view! {cx, 
+                        div(class="w-4 h-4 rounded-full bg-slate-300")
+                    }
+                })
+                (if has_line {
+                    view! {cx, 
+                        (if is_line_colored {
+                            view! {cx, 
+                                hr(class="w-1/8 flex-grow border border-primary")
+                            }
+                        } else {
+                            view! {cx, 
+                                hr(class="w-1/8 flex-grow border border-gray-500")
+                            }
+                        })
+                    }
+                } else {
+                    view! {cx,}
+                })
+            }
+        }).collect()
+    );
+    view! {cx,
+        div(class="flex flex-col justify-center items-center w-full space-y-2") {
+            h2(class="text-xl dark:text-purple-600") { "Account setup" }
+            div(class="flex justify-center items-center w-3/5") {
+                (progress_bar_views)
+            }
+            div(class="w-full h-10")
         }
     }
 }
@@ -272,6 +351,7 @@ pub fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     };
 
     view! {cx,
+        ProgressBar(step=StepTwo(step))
         h2(class=TITLE_CLASS) {"Choose your validator (s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
         SearchValidator(validator_rows=validator_rows.clone(), selected_validator_ids=selected_validator_ids.clone())
@@ -297,6 +377,7 @@ pub fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G
     };
 
     view! {cx,
+        ProgressBar(step=StepThree(step))
         p(class=DESCRIPTION_CLASS) {"Add your wallet(s)"}
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
@@ -321,6 +402,7 @@ pub fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> 
     };
 
     view! {cx,
+        ProgressBar(step=StepFour(step))
         p(class=DESCRIPTION_CLASS) {"Choose your Notifications"}
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
@@ -344,6 +426,7 @@ pub fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> 
     };
 
     view! {cx,
+        ProgressBar(step=StepFive(step))
         p(class=DESCRIPTION_CLASS) {"Choose where to receive notifications"}
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
@@ -369,6 +452,10 @@ fn handle_setup_step_response(cx: Scope, response: Result<StepResponse, Status>)
         let setup_state = use_context::<SetupState>(cx);
         match response.step {
             Some(step) => {
+                match response.num_steps.try_into() {
+                    Ok(num_steps) => setup_state.num_steps.set(Some(num_steps)),
+                    Err(err) => create_message(cx, "Error", err.to_string(), InfoLevel::Error),
+                }
                 setup_state.step.set(Some(step));
             }
             None => create_message(

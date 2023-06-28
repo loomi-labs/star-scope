@@ -92,8 +92,17 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 	case usersetup.StepFive:
 		response.Step = &userpb.StepResponse_StepFive{StepFive: &userpb.StepFiveResponse{}}
 	}
+	response.NumSteps = u.getNumSteps(setup)
 
 	return response
+}
+
+func (u *UserSetupService) getNumSteps(setup *ent.UserSetup) uint32 {
+	if setup.IsValidator {
+		return 5
+	} else {
+		return 4
+	}
 }
 
 func (u *UserSetupService) GetStep(ctx context.Context, request *connect.Request[userpb.GetStepRequest]) (*connect.Response[userpb.StepResponse], error) {

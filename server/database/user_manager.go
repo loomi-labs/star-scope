@@ -137,10 +137,17 @@ func (m *UserManager) UpdateSetLoginDate(ctx context.Context, userId int) error 
 
 func (m *UserManager) CreateByWalletAddress(ctx context.Context, tx *ent.Tx, walletAddress string) (*ent.User, error) {
 	log.Sugar.Debugf("CreateByWalletAddress: %s", walletAddress)
-	return tx.User.
+	u, err := tx.User.
 		Create().
 		SetWalletAddress(walletAddress).
 		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.UserSetup.Create().SetUser(u).Exec(ctx); err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *ent.Tx, u *ent.User, chatId int64, chatName string, isGroup bool) error {
@@ -185,6 +192,9 @@ func (m *UserManager) CreateOrUpdateByTelegramUser(ctx context.Context, userId i
 				Save(ctx)
 			if err != nil {
 				return u, err
+			}
+			if err := tx.UserSetup.Create().SetUser(u).Exec(ctx); err != nil {
+				return nil, err
 			}
 		}
 		if chatId == nil {
@@ -236,6 +246,9 @@ func (m *UserManager) CreateOrUpdateByDiscordUser(ctx context.Context, userId in
 				Save(ctx)
 			if err != nil {
 				return u, err
+			}
+			if err := tx.UserSetup.Create().SetUser(u).Exec(ctx); err != nil {
+				return nil, err
 			}
 		}
 		if channelId == nil {

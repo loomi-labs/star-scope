@@ -75,6 +75,7 @@ message StepResponse {
       StepFourResponse step_four = 4;
       StepFiveResponse step_five = 5;
   }
+  uint32 num_steps = 6;
 }
 
 message StepOneRequest {
