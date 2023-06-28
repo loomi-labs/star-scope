@@ -16,6 +16,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -30,7 +31,7 @@ type ChainQuery struct {
 	withProposals         *ProposalQuery
 	withContractProposals *ContractProposalQuery
 	withValidators        *ValidatorQuery
-	withFKs               bool
+	withSelectedBySetups  *UserSetupQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -148,6 +149,28 @@ func (cq *ChainQuery) QueryValidators() *ValidatorQuery {
 			sqlgraph.From(chain.Table, chain.FieldID, selector),
 			sqlgraph.To(validator.Table, validator.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chain.ValidatorsTable, chain.ValidatorsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySelectedBySetups chains the current query on the "selected_by_setups" edge.
+func (cq *ChainQuery) QuerySelectedBySetups() *UserSetupQuery {
+	query := (&UserSetupClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, selector),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, chain.SelectedBySetupsTable, chain.SelectedBySetupsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -351,6 +374,7 @@ func (cq *ChainQuery) Clone() *ChainQuery {
 		withProposals:         cq.withProposals.Clone(),
 		withContractProposals: cq.withContractProposals.Clone(),
 		withValidators:        cq.withValidators.Clone(),
+		withSelectedBySetups:  cq.withSelectedBySetups.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -398,6 +422,17 @@ func (cq *ChainQuery) WithValidators(opts ...func(*ValidatorQuery)) *ChainQuery 
 		opt(query)
 	}
 	cq.withValidators = query
+	return cq
+}
+
+// WithSelectedBySetups tells the query-builder to eager-load the nodes that are connected to
+// the "selected_by_setups" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *ChainQuery) WithSelectedBySetups(opts ...func(*UserSetupQuery)) *ChainQuery {
+	query := (&UserSetupClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withSelectedBySetups = query
 	return cq
 }
 
@@ -478,18 +513,15 @@ func (cq *ChainQuery) prepareQuery(ctx context.Context) error {
 func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain, error) {
 	var (
 		nodes       = []*Chain{}
-		withFKs     = cq.withFKs
 		_spec       = cq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			cq.withEventListeners != nil,
 			cq.withProposals != nil,
 			cq.withContractProposals != nil,
 			cq.withValidators != nil,
+			cq.withSelectedBySetups != nil,
 		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, chain.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Chain).scanValues(nil, columns)
 	}
@@ -533,6 +565,13 @@ func (cq *ChainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Chain,
 		if err := cq.loadValidators(ctx, query, nodes,
 			func(n *Chain) { n.Edges.Validators = []*Validator{} },
 			func(n *Chain, e *Validator) { n.Edges.Validators = append(n.Edges.Validators, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withSelectedBySetups; query != nil {
+		if err := cq.loadSelectedBySetups(ctx, query, nodes,
+			func(n *Chain) { n.Edges.SelectedBySetups = []*UserSetup{} },
+			func(n *Chain, e *UserSetup) { n.Edges.SelectedBySetups = append(n.Edges.SelectedBySetups, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -660,6 +699,67 @@ func (cq *ChainQuery) loadValidators(ctx context.Context, query *ValidatorQuery,
 			return fmt.Errorf(`unexpected referenced foreign-key "chain_validators" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (cq *ChainQuery) loadSelectedBySetups(ctx context.Context, query *UserSetupQuery, nodes []*Chain, init func(*Chain), assign func(*Chain, *UserSetup)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Chain)
+	nids := make(map[int]map[*Chain]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(chain.SelectedBySetupsTable)
+		s.Join(joinT).On(s.C(usersetup.FieldID), joinT.C(chain.SelectedBySetupsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(chain.SelectedBySetupsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(chain.SelectedBySetupsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Chain]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*UserSetup](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "selected_by_setups" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

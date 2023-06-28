@@ -380,10 +380,10 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if usu.mutation.SelectedValidatorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -393,10 +393,10 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := usu.mutation.RemovedSelectedValidatorsIDs(); len(nodes) > 0 && !usu.mutation.SelectedValidatorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -409,10 +409,10 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := usu.mutation.SelectedValidatorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -425,10 +425,10 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if usu.mutation.SelectedChainsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),
@@ -438,10 +438,10 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := usu.mutation.RemovedSelectedChainsIDs(); len(nodes) > 0 && !usu.mutation.SelectedChainsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),
@@ -454,10 +454,10 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := usu.mutation.SelectedChainsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),
@@ -866,10 +866,10 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if usuo.mutation.SelectedValidatorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -879,10 +879,10 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if nodes := usuo.mutation.RemovedSelectedValidatorsIDs(); len(nodes) > 0 && !usuo.mutation.SelectedValidatorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -895,10 +895,10 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if nodes := usuo.mutation.SelectedValidatorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -911,10 +911,10 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if usuo.mutation.SelectedChainsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),
@@ -924,10 +924,10 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if nodes := usuo.mutation.RemovedSelectedChainsIDs(); len(nodes) > 0 && !usuo.mutation.SelectedChainsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),
@@ -940,10 +940,10 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if nodes := usuo.mutation.SelectedChainsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),

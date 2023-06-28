@@ -79,6 +79,9 @@ type ChainMutation struct {
 	validators                map[int]struct{}
 	removedvalidators         map[int]struct{}
 	clearedvalidators         bool
+	selected_by_setups        map[int]struct{}
+	removedselected_by_setups map[int]struct{}
+	clearedselected_by_setups bool
 	done                      bool
 	oldValue                  func(context.Context) (*Chain, error)
 	predicates                []predicate.Chain
@@ -922,6 +925,60 @@ func (m *ChainMutation) ResetValidators() {
 	m.removedvalidators = nil
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by ids.
+func (m *ChainMutation) AddSelectedBySetupIDs(ids ...int) {
+	if m.selected_by_setups == nil {
+		m.selected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.selected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSelectedBySetups clears the "selected_by_setups" edge to the UserSetup entity.
+func (m *ChainMutation) ClearSelectedBySetups() {
+	m.clearedselected_by_setups = true
+}
+
+// SelectedBySetupsCleared reports if the "selected_by_setups" edge to the UserSetup entity was cleared.
+func (m *ChainMutation) SelectedBySetupsCleared() bool {
+	return m.clearedselected_by_setups
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (m *ChainMutation) RemoveSelectedBySetupIDs(ids ...int) {
+	if m.removedselected_by_setups == nil {
+		m.removedselected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.selected_by_setups, ids[i])
+		m.removedselected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSelectedBySetups returns the removed IDs of the "selected_by_setups" edge to the UserSetup entity.
+func (m *ChainMutation) RemovedSelectedBySetupsIDs() (ids []int) {
+	for id := range m.removedselected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SelectedBySetupsIDs returns the "selected_by_setups" edge IDs in the mutation.
+func (m *ChainMutation) SelectedBySetupsIDs() (ids []int) {
+	for id := range m.selected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSelectedBySetups resets all changes to the "selected_by_setups" edge.
+func (m *ChainMutation) ResetSelectedBySetups() {
+	m.selected_by_setups = nil
+	m.clearedselected_by_setups = false
+	m.removedselected_by_setups = nil
+}
+
 // Where appends a list predicates to the ChainMutation builder.
 func (m *ChainMutation) Where(ps ...predicate.Chain) {
 	m.predicates = append(m.predicates, ps...)
@@ -1291,7 +1348,7 @@ func (m *ChainMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ChainMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.event_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1303,6 +1360,9 @@ func (m *ChainMutation) AddedEdges() []string {
 	}
 	if m.validators != nil {
 		edges = append(edges, chain.EdgeValidators)
+	}
+	if m.selected_by_setups != nil {
+		edges = append(edges, chain.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -1335,13 +1395,19 @@ func (m *ChainMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.selected_by_setups))
+		for id := range m.selected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ChainMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedevent_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1353,6 +1419,9 @@ func (m *ChainMutation) RemovedEdges() []string {
 	}
 	if m.removedvalidators != nil {
 		edges = append(edges, chain.EdgeValidators)
+	}
+	if m.removedselected_by_setups != nil {
+		edges = append(edges, chain.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -1385,13 +1454,19 @@ func (m *ChainMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.removedselected_by_setups))
+		for id := range m.removedselected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ChainMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedevent_listeners {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1403,6 +1478,9 @@ func (m *ChainMutation) ClearedEdges() []string {
 	}
 	if m.clearedvalidators {
 		edges = append(edges, chain.EdgeValidators)
+	}
+	if m.clearedselected_by_setups {
+		edges = append(edges, chain.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -1419,6 +1497,8 @@ func (m *ChainMutation) EdgeCleared(name string) bool {
 		return m.clearedcontract_proposals
 	case chain.EdgeValidators:
 		return m.clearedvalidators
+	case chain.EdgeSelectedBySetups:
+		return m.clearedselected_by_setups
 	}
 	return false
 }
@@ -1446,6 +1526,9 @@ func (m *ChainMutation) ResetEdge(name string) error {
 		return nil
 	case chain.EdgeValidators:
 		m.ResetValidators()
+		return nil
+	case chain.EdgeSelectedBySetups:
+		m.ResetSelectedBySetups()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain edge %s", name)
@@ -8168,6 +8251,9 @@ type ValidatorMutation struct {
 	clearedFields                  map[string]struct{}
 	chain                          *int
 	clearedchain                   bool
+	selected_by_setups             map[int]struct{}
+	removedselected_by_setups      map[int]struct{}
+	clearedselected_by_setups      bool
 	done                           bool
 	oldValue                       func(context.Context) (*Validator, error)
 	predicates                     []predicate.Validator
@@ -8609,6 +8695,60 @@ func (m *ValidatorMutation) ResetChain() {
 	m.clearedchain = false
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by ids.
+func (m *ValidatorMutation) AddSelectedBySetupIDs(ids ...int) {
+	if m.selected_by_setups == nil {
+		m.selected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.selected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSelectedBySetups clears the "selected_by_setups" edge to the UserSetup entity.
+func (m *ValidatorMutation) ClearSelectedBySetups() {
+	m.clearedselected_by_setups = true
+}
+
+// SelectedBySetupsCleared reports if the "selected_by_setups" edge to the UserSetup entity was cleared.
+func (m *ValidatorMutation) SelectedBySetupsCleared() bool {
+	return m.clearedselected_by_setups
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (m *ValidatorMutation) RemoveSelectedBySetupIDs(ids ...int) {
+	if m.removedselected_by_setups == nil {
+		m.removedselected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.selected_by_setups, ids[i])
+		m.removedselected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSelectedBySetups returns the removed IDs of the "selected_by_setups" edge to the UserSetup entity.
+func (m *ValidatorMutation) RemovedSelectedBySetupsIDs() (ids []int) {
+	for id := range m.removedselected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SelectedBySetupsIDs returns the "selected_by_setups" edge IDs in the mutation.
+func (m *ValidatorMutation) SelectedBySetupsIDs() (ids []int) {
+	for id := range m.selected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSelectedBySetups resets all changes to the "selected_by_setups" edge.
+func (m *ValidatorMutation) ResetSelectedBySetups() {
+	m.selected_by_setups = nil
+	m.clearedselected_by_setups = false
+	m.removedselected_by_setups = nil
+}
+
 // Where appends a list predicates to the ValidatorMutation builder.
 func (m *ValidatorMutation) Where(ps ...predicate.Validator) {
 	m.predicates = append(m.predicates, ps...)
@@ -8874,9 +9014,12 @@ func (m *ValidatorMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ValidatorMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.chain != nil {
 		edges = append(edges, validator.EdgeChain)
+	}
+	if m.selected_by_setups != nil {
+		edges = append(edges, validator.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -8889,27 +9032,47 @@ func (m *ValidatorMutation) AddedIDs(name string) []ent.Value {
 		if id := m.chain; id != nil {
 			return []ent.Value{*id}
 		}
+	case validator.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.selected_by_setups))
+		for id := range m.selected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ValidatorMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removedselected_by_setups != nil {
+		edges = append(edges, validator.EdgeSelectedBySetups)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ValidatorMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case validator.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.removedselected_by_setups))
+		for id := range m.removedselected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ValidatorMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedchain {
 		edges = append(edges, validator.EdgeChain)
+	}
+	if m.clearedselected_by_setups {
+		edges = append(edges, validator.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -8920,6 +9083,8 @@ func (m *ValidatorMutation) EdgeCleared(name string) bool {
 	switch name {
 	case validator.EdgeChain:
 		return m.clearedchain
+	case validator.EdgeSelectedBySetups:
+		return m.clearedselected_by_setups
 	}
 	return false
 }
@@ -8941,6 +9106,9 @@ func (m *ValidatorMutation) ResetEdge(name string) error {
 	switch name {
 	case validator.EdgeChain:
 		m.ResetChain()
+		return nil
+	case validator.EdgeSelectedBySetups:
+		m.ResetSelectedBySetups()
 		return nil
 	}
 	return fmt.Errorf("unknown Validator edge %s", name)

@@ -101,7 +101,7 @@ func (usq *UserSetupQuery) QuerySelectedValidators() *ValidatorQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usersetup.Table, usersetup.FieldID, selector),
 			sqlgraph.To(validator.Table, validator.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, usersetup.SelectedValidatorsTable, usersetup.SelectedValidatorsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, usersetup.SelectedValidatorsTable, usersetup.SelectedValidatorsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(usq.driver.Dialect(), step)
 		return fromU, nil
@@ -123,7 +123,7 @@ func (usq *UserSetupQuery) QuerySelectedChains() *ChainQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usersetup.Table, usersetup.FieldID, selector),
 			sqlgraph.To(chain.Table, chain.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, usersetup.SelectedChainsTable, usersetup.SelectedChainsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, usersetup.SelectedChainsTable, usersetup.SelectedChainsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(usq.driver.Dialect(), step)
 		return fromU, nil
@@ -530,64 +530,124 @@ func (usq *UserSetupQuery) loadUser(ctx context.Context, query *UserQuery, nodes
 	return nil
 }
 func (usq *UserSetupQuery) loadSelectedValidators(ctx context.Context, query *ValidatorQuery, nodes []*UserSetup, init func(*UserSetup), assign func(*UserSetup, *Validator)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*UserSetup)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*UserSetup)
+	nids := make(map[int]map[*UserSetup]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
 		if init != nil {
-			init(nodes[i])
+			init(node)
 		}
 	}
-	query.withFKs = true
-	query.Where(predicate.Validator(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(usersetup.SelectedValidatorsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(usersetup.SelectedValidatorsTable)
+		s.Join(joinT).On(s.C(validator.FieldID), joinT.C(usersetup.SelectedValidatorsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(usersetup.SelectedValidatorsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(usersetup.SelectedValidatorsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*UserSetup]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Validator](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_setup_selected_validators
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_setup_selected_validators" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_setup_selected_validators" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected "selected_validators" node returned %v`, n.ID)
 		}
-		assign(node, n)
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }
 func (usq *UserSetupQuery) loadSelectedChains(ctx context.Context, query *ChainQuery, nodes []*UserSetup, init func(*UserSetup), assign func(*UserSetup, *Chain)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*UserSetup)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*UserSetup)
+	nids := make(map[int]map[*UserSetup]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
 		if init != nil {
-			init(nodes[i])
+			init(node)
 		}
 	}
-	query.withFKs = true
-	query.Where(predicate.Chain(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(usersetup.SelectedChainsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(usersetup.SelectedChainsTable)
+		s.Join(joinT).On(s.C(chain.FieldID), joinT.C(usersetup.SelectedChainsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(usersetup.SelectedChainsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(usersetup.SelectedChainsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*UserSetup]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Chain](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_setup_selected_chains
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_setup_selected_chains" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_setup_selected_chains" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected "selected_chains" node returned %v`, n.ID)
 		}
-		assign(node, n)
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

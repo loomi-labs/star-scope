@@ -47,9 +47,8 @@ type Chain struct {
 	IsEnabled bool `json:"is_enabled,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
-	Edges                      ChainEdges `json:"edges"`
-	user_setup_selected_chains *int
-	selectValues               sql.SelectValues
+	Edges        ChainEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ChainEdges holds the relations/edges for other nodes in the graph.
@@ -62,9 +61,11 @@ type ChainEdges struct {
 	ContractProposals []*ContractProposal `json:"contract_proposals,omitempty"`
 	// Validators holds the value of the validators edge.
 	Validators []*Validator `json:"validators,omitempty"`
+	// SelectedBySetups holds the value of the selected_by_setups edge.
+	SelectedBySetups []*UserSetup `json:"selected_by_setups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // EventListenersOrErr returns the EventListeners value or an error if the edge
@@ -103,6 +104,15 @@ func (e ChainEdges) ValidatorsOrErr() ([]*Validator, error) {
 	return nil, &NotLoadedError{edge: "validators"}
 }
 
+// SelectedBySetupsOrErr returns the SelectedBySetups value or an error if the edge
+// was not loaded in eager-loading.
+func (e ChainEdges) SelectedBySetupsOrErr() ([]*UserSetup, error) {
+	if e.loadedTypes[4] {
+		return e.SelectedBySetups, nil
+	}
+	return nil, &NotLoadedError{edge: "selected_by_setups"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Chain) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -116,8 +126,6 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case chain.FieldCreateTime, chain.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
-		case chain.ForeignKeys[0]: // user_setup_selected_chains
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -223,13 +231,6 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.IsEnabled = value.Bool
 			}
-		case chain.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_setup_selected_chains", value)
-			} else if value.Valid {
-				c.user_setup_selected_chains = new(int)
-				*c.user_setup_selected_chains = int(value.Int64)
-			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
 		}
@@ -261,6 +262,11 @@ func (c *Chain) QueryContractProposals() *ContractProposalQuery {
 // QueryValidators queries the "validators" edge of the Chain entity.
 func (c *Chain) QueryValidators() *ValidatorQuery {
 	return NewChainClient(c.config).QueryValidators(c)
+}
+
+// QuerySelectedBySetups queries the "selected_by_setups" edge of the Chain entity.
+func (c *Chain) QuerySelectedBySetups() *UserSetupQuery {
+	return NewChainClient(c.config).QuerySelectedBySetups(c)
 }
 
 // Update returns a builder for updating this Chain.

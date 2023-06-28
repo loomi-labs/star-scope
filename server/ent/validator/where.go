@@ -488,6 +488,29 @@ func HasChainWith(preds ...predicate.Chain) predicate.Validator {
 	})
 }
 
+// HasSelectedBySetups applies the HasEdge predicate on the "selected_by_setups" edge.
+func HasSelectedBySetups() predicate.Validator {
+	return predicate.Validator(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, SelectedBySetupsTable, SelectedBySetupsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSelectedBySetupsWith applies the HasEdge predicate on the "selected_by_setups" edge with a given conditions (other predicates).
+func HasSelectedBySetupsWith(preds ...predicate.UserSetup) predicate.Validator {
+	return predicate.Validator(func(s *sql.Selector) {
+		step := newSelectedBySetupsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Validator) predicate.Validator {
 	return predicate.Validator(func(s *sql.Selector) {

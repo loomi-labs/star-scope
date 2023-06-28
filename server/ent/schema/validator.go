@@ -50,6 +50,7 @@ func (Validator) Edges() []ent.Edge {
 			Ref("validators").
 			Unique().
 			Required(),
+		edge.To("selected_by_setups", UserSetup.Type),
 	}
 }
 

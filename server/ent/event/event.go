@@ -107,10 +107,10 @@ type EventType string
 
 // EventType values.
 const (
+	EventTypeGOVERNANCE EventType = "GOVERNANCE"
 	EventTypeFUNDING    EventType = "FUNDING"
 	EventTypeSTAKING    EventType = "STAKING"
 	EventTypeDEX        EventType = "DEX"
-	EventTypeGOVERNANCE EventType = "GOVERNANCE"
 )
 
 func (et EventType) String() string {
@@ -120,7 +120,7 @@ func (et EventType) String() string {
 // EventTypeValidator is a validator for the "event_type" field enum values. It is called by the builders before save.
 func EventTypeValidator(et EventType) error {
 	switch et {
-	case EventTypeFUNDING, EventTypeSTAKING, EventTypeDEX, EventTypeGOVERNANCE:
+	case EventTypeGOVERNANCE, EventTypeFUNDING, EventTypeSTAKING, EventTypeDEX:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for event_type field: %q", et)

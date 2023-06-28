@@ -396,10 +396,10 @@ func (usc *UserSetupCreate) createSpec() (*UserSetup, *sqlgraph.CreateSpec) {
 	}
 	if nodes := usc.mutation.SelectedValidatorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedValidatorsTable,
-			Columns: []string{usersetup.SelectedValidatorsColumn},
+			Columns: usersetup.SelectedValidatorsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
@@ -412,10 +412,10 @@ func (usc *UserSetupCreate) createSpec() (*UserSetup, *sqlgraph.CreateSpec) {
 	}
 	if nodes := usc.mutation.SelectedChainsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
 			Table:   usersetup.SelectedChainsTable,
-			Columns: []string{usersetup.SelectedChainsColumn},
+			Columns: usersetup.SelectedChainsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),

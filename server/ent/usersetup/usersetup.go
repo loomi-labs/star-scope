@@ -50,20 +50,16 @@ const (
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "user_setup"
-	// SelectedValidatorsTable is the table that holds the selected_validators relation/edge.
-	SelectedValidatorsTable = "validators"
+	// SelectedValidatorsTable is the table that holds the selected_validators relation/edge. The primary key declared below.
+	SelectedValidatorsTable = "validator_selected_by_setups"
 	// SelectedValidatorsInverseTable is the table name for the Validator entity.
 	// It exists in this package in order to avoid circular dependency with the "validator" package.
 	SelectedValidatorsInverseTable = "validators"
-	// SelectedValidatorsColumn is the table column denoting the selected_validators relation/edge.
-	SelectedValidatorsColumn = "user_setup_selected_validators"
-	// SelectedChainsTable is the table that holds the selected_chains relation/edge.
-	SelectedChainsTable = "chains"
+	// SelectedChainsTable is the table that holds the selected_chains relation/edge. The primary key declared below.
+	SelectedChainsTable = "chain_selected_by_setups"
 	// SelectedChainsInverseTable is the table name for the Chain entity.
 	// It exists in this package in order to avoid circular dependency with the "chain" package.
 	SelectedChainsInverseTable = "chains"
-	// SelectedChainsColumn is the table column denoting the selected_chains relation/edge.
-	SelectedChainsColumn = "user_setup_selected_chains"
 )
 
 // Columns holds all SQL columns for usersetup fields.
@@ -86,6 +82,15 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"user_setup",
 }
+
+var (
+	// SelectedValidatorsPrimaryKey and SelectedValidatorsColumn2 are the table columns denoting the
+	// primary key for the selected_validators relation (M2M).
+	SelectedValidatorsPrimaryKey = []string{"validator_id", "user_setup_id"}
+	// SelectedChainsPrimaryKey and SelectedChainsColumn2 are the table columns denoting the
+	// primary key for the selected_chains relation (M2M).
+	SelectedChainsPrimaryKey = []string{"chain_id", "user_setup_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -250,13 +255,13 @@ func newSelectedValidatorsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SelectedValidatorsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, SelectedValidatorsTable, SelectedValidatorsColumn),
+		sqlgraph.Edge(sqlgraph.M2M, true, SelectedValidatorsTable, SelectedValidatorsPrimaryKey...),
 	)
 }
 func newSelectedChainsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SelectedChainsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, SelectedChainsTable, SelectedChainsColumn),
+		sqlgraph.Edge(sqlgraph.M2M, true, SelectedChainsTable, SelectedChainsPrimaryKey...),
 	)
 }

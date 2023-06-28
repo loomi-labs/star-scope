@@ -30,6 +30,8 @@ const (
 	FieldLastSlashValidatorPeriod = "last_slash_validator_period"
 	// EdgeChain holds the string denoting the chain edge name in mutations.
 	EdgeChain = "chain"
+	// EdgeSelectedBySetups holds the string denoting the selected_by_setups edge name in mutations.
+	EdgeSelectedBySetups = "selected_by_setups"
 	// Table holds the table name of the validator in the database.
 	Table = "validators"
 	// ChainTable is the table that holds the chain relation/edge.
@@ -39,6 +41,11 @@ const (
 	ChainInverseTable = "chains"
 	// ChainColumn is the table column denoting the chain relation/edge.
 	ChainColumn = "chain_validators"
+	// SelectedBySetupsTable is the table that holds the selected_by_setups relation/edge. The primary key declared below.
+	SelectedBySetupsTable = "validator_selected_by_setups"
+	// SelectedBySetupsInverseTable is the table name for the UserSetup entity.
+	// It exists in this package in order to avoid circular dependency with the "usersetup" package.
+	SelectedBySetupsInverseTable = "user_setups"
 )
 
 // Columns holds all SQL columns for validator fields.
@@ -57,8 +64,13 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"chain_validators",
-	"user_setup_selected_validators",
 }
+
+var (
+	// SelectedBySetupsPrimaryKey and SelectedBySetupsColumn2 are the table columns denoting the
+	// primary key for the selected_by_setups relation (M2M).
+	SelectedBySetupsPrimaryKey = []string{"validator_id", "user_setup_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -137,10 +149,31 @@ func ByChainField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newChainStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// BySelectedBySetupsCount orders the results by selected_by_setups count.
+func BySelectedBySetupsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSelectedBySetupsStep(), opts...)
+	}
+}
+
+// BySelectedBySetups orders the results by selected_by_setups terms.
+func BySelectedBySetups(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSelectedBySetupsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newChainStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ChainInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, ChainTable, ChainColumn),
+	)
+}
+func newSelectedBySetupsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SelectedBySetupsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, SelectedBySetupsTable, SelectedBySetupsPrimaryKey...),
 	)
 }

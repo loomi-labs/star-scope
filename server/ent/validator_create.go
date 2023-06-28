@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -104,6 +105,21 @@ func (vc *ValidatorCreate) SetChainID(id int) *ValidatorCreate {
 // SetChain sets the "chain" edge to the Chain entity.
 func (vc *ValidatorCreate) SetChain(c *Chain) *ValidatorCreate {
 	return vc.SetChainID(c.ID)
+}
+
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (vc *ValidatorCreate) AddSelectedBySetupIDs(ids ...int) *ValidatorCreate {
+	vc.mutation.AddSelectedBySetupIDs(ids...)
+	return vc
+}
+
+// AddSelectedBySetups adds the "selected_by_setups" edges to the UserSetup entity.
+func (vc *ValidatorCreate) AddSelectedBySetups(u ...*UserSetup) *ValidatorCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return vc.AddSelectedBySetupIDs(ids...)
 }
 
 // Mutation returns the ValidatorMutation object of the builder.
@@ -250,6 +266,22 @@ func (vc *ValidatorCreate) createSpec() (*Validator, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.chain_validators = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := vc.mutation.SelectedBySetupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

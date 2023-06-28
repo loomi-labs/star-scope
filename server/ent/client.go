@@ -420,6 +420,22 @@ func (c *ChainClient) QueryValidators(ch *Chain) *ValidatorQuery {
 	return query
 }
 
+// QuerySelectedBySetups queries the selected_by_setups edge of a Chain.
+func (c *ChainClient) QuerySelectedBySetups(ch *Chain) *UserSetupQuery {
+	query := (&UserSetupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, id),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, chain.SelectedBySetupsTable, chain.SelectedBySetupsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ChainClient) Hooks() []Hook {
 	return c.hooks.Chain
@@ -1462,7 +1478,7 @@ func (c *UserSetupClient) QuerySelectedValidators(us *UserSetup) *ValidatorQuery
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usersetup.Table, usersetup.FieldID, id),
 			sqlgraph.To(validator.Table, validator.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, usersetup.SelectedValidatorsTable, usersetup.SelectedValidatorsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, usersetup.SelectedValidatorsTable, usersetup.SelectedValidatorsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(us.driver.Dialect(), step)
 		return fromV, nil
@@ -1478,7 +1494,7 @@ func (c *UserSetupClient) QuerySelectedChains(us *UserSetup) *ChainQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usersetup.Table, usersetup.FieldID, id),
 			sqlgraph.To(chain.Table, chain.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, usersetup.SelectedChainsTable, usersetup.SelectedChainsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, usersetup.SelectedChainsTable, usersetup.SelectedChainsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(us.driver.Dialect(), step)
 		return fromV, nil
@@ -1613,6 +1629,22 @@ func (c *ValidatorClient) QueryChain(v *Validator) *ChainQuery {
 			sqlgraph.From(validator.Table, validator.FieldID, id),
 			sqlgraph.To(chain.Table, chain.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, validator.ChainTable, validator.ChainColumn),
+		)
+		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySelectedBySetups queries the selected_by_setups edge of a Validator.
+func (c *ValidatorClient) QuerySelectedBySetups(v *Validator) *UserSetupQuery {
+	query := (&UserSetupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := v.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(validator.Table, validator.FieldID, id),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, validator.SelectedBySetupsTable, validator.SelectedBySetupsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
 		return fromV, nil

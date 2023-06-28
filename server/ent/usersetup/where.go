@@ -293,7 +293,7 @@ func HasSelectedValidators() predicate.UserSetup {
 	return predicate.UserSetup(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, SelectedValidatorsTable, SelectedValidatorsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, SelectedValidatorsTable, SelectedValidatorsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -316,7 +316,7 @@ func HasSelectedChains() predicate.UserSetup {
 	return predicate.UserSetup(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, SelectedChainsTable, SelectedChainsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, SelectedChainsTable, SelectedChainsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

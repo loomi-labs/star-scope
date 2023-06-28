@@ -51,7 +51,9 @@ func (UserSetup) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
-		edge.To("selected_validators", Validator.Type),
-		edge.To("selected_chains", Chain.Type),
+		edge.From("selected_validators", Validator.Type).
+			Ref("selected_by_setups"),
+		edge.From("selected_chains", Chain.Type).
+			Ref("selected_by_setups"),
 	}
 }

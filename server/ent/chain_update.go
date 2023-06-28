@@ -16,6 +16,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -219,6 +220,21 @@ func (cu *ChainUpdate) AddValidators(v ...*Validator) *ChainUpdate {
 	return cu.AddValidatorIDs(ids...)
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (cu *ChainUpdate) AddSelectedBySetupIDs(ids ...int) *ChainUpdate {
+	cu.mutation.AddSelectedBySetupIDs(ids...)
+	return cu
+}
+
+// AddSelectedBySetups adds the "selected_by_setups" edges to the UserSetup entity.
+func (cu *ChainUpdate) AddSelectedBySetups(u ...*UserSetup) *ChainUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return cu.AddSelectedBySetupIDs(ids...)
+}
+
 // Mutation returns the ChainMutation object of the builder.
 func (cu *ChainUpdate) Mutation() *ChainMutation {
 	return cu.mutation
@@ -306,6 +322,27 @@ func (cu *ChainUpdate) RemoveValidators(v ...*Validator) *ChainUpdate {
 		ids[i] = v[i].ID
 	}
 	return cu.RemoveValidatorIDs(ids...)
+}
+
+// ClearSelectedBySetups clears all "selected_by_setups" edges to the UserSetup entity.
+func (cu *ChainUpdate) ClearSelectedBySetups() *ChainUpdate {
+	cu.mutation.ClearSelectedBySetups()
+	return cu
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to UserSetup entities by IDs.
+func (cu *ChainUpdate) RemoveSelectedBySetupIDs(ids ...int) *ChainUpdate {
+	cu.mutation.RemoveSelectedBySetupIDs(ids...)
+	return cu
+}
+
+// RemoveSelectedBySetups removes "selected_by_setups" edges to UserSetup entities.
+func (cu *ChainUpdate) RemoveSelectedBySetups(u ...*UserSetup) *ChainUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return cu.RemoveSelectedBySetupIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -572,6 +609,51 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if cu.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedSelectedBySetupsIDs(); len(nodes) > 0 && !cu.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.SelectedBySetupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chain.Label}
@@ -779,6 +861,21 @@ func (cuo *ChainUpdateOne) AddValidators(v ...*Validator) *ChainUpdateOne {
 	return cuo.AddValidatorIDs(ids...)
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (cuo *ChainUpdateOne) AddSelectedBySetupIDs(ids ...int) *ChainUpdateOne {
+	cuo.mutation.AddSelectedBySetupIDs(ids...)
+	return cuo
+}
+
+// AddSelectedBySetups adds the "selected_by_setups" edges to the UserSetup entity.
+func (cuo *ChainUpdateOne) AddSelectedBySetups(u ...*UserSetup) *ChainUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return cuo.AddSelectedBySetupIDs(ids...)
+}
+
 // Mutation returns the ChainMutation object of the builder.
 func (cuo *ChainUpdateOne) Mutation() *ChainMutation {
 	return cuo.mutation
@@ -866,6 +963,27 @@ func (cuo *ChainUpdateOne) RemoveValidators(v ...*Validator) *ChainUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return cuo.RemoveValidatorIDs(ids...)
+}
+
+// ClearSelectedBySetups clears all "selected_by_setups" edges to the UserSetup entity.
+func (cuo *ChainUpdateOne) ClearSelectedBySetups() *ChainUpdateOne {
+	cuo.mutation.ClearSelectedBySetups()
+	return cuo
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to UserSetup entities by IDs.
+func (cuo *ChainUpdateOne) RemoveSelectedBySetupIDs(ids ...int) *ChainUpdateOne {
+	cuo.mutation.RemoveSelectedBySetupIDs(ids...)
+	return cuo
+}
+
+// RemoveSelectedBySetups removes "selected_by_setups" edges to UserSetup entities.
+func (cuo *ChainUpdateOne) RemoveSelectedBySetups(u ...*UserSetup) *ChainUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return cuo.RemoveSelectedBySetupIDs(ids...)
 }
 
 // Where appends a list predicates to the ChainUpdate builder.
@@ -1155,6 +1273,51 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedSelectedBySetupsIDs(); len(nodes) > 0 && !cuo.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.SelectedBySetupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
