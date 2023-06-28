@@ -35,6 +35,7 @@ impl SetupState {
 const TITLE_CLASS: &str = "text-4xl font-bold my-4";
 const SUBTITLE_CLASS: &str = "text-2xl font-semibold my-2";
 const DESCRIPTION_CLASS: &str = "dark:text-purple-600";
+const DESCRIPTION_PROMINENT_CLASS: &str = "dark:text-white";
 const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-4";
 
 #[component(inline_props)]
@@ -525,9 +526,57 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
         });
     };
 
+    let notify_funding = create_signal(cx, step.notify_funding);
+    let notify_staking = create_signal(cx, step.notify_staking);
+
+    let section_class = "flex flex-col items-center w-full md:w-1/3 p-2 rounded-xl hover:dark:bg-purple-700";
+    let section_selected_class = "w-6 h-6 bg-primary icon-[icon-park-solid--check-one]";
+    let section_unselected_class = "w-6 h-6 rounded-full border border-primary";
+    let centered_row_class = "flex justify-center items-center space-x-4";
+    let starting_row_class = "flex items-center space-x-4";
+    let check_mark_class = "w-6 h-6 bg-primary icon-[ph--check-bold]";
+
     view! {cx,
         ProgressBar(step=StepFour(step))
-        p(class=DESCRIPTION_CLASS) {"Choose your Notifications"}
+        h2(class=TITLE_CLASS) {"Choose your Notifications"}
+        div(class="flex flex-wrap rounded-xl dark:bg-purple-800") {
+            div(class=section_class, on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
+                div(class=centered_row_class) {
+                    (if *notify_funding.get() {
+                        view!{cx, span(class=section_selected_class)}
+                    } else{
+                        view!{cx, span(class=section_unselected_class)} 
+                    })
+                    h3(class=SUBTITLE_CLASS) {"Funding"}
+                }
+                p(class=DESCRIPTION_PROMINENT_CLASS) {"Whenever someone sends you tokens, we'll make sure you know"}
+            }
+            div(class=section_class, on:click=move |_| notify_staking.set(!notify_staking.get().as_ref())) {
+                div(class=centered_row_class) {
+                    (if *notify_staking.get() {
+                        view!{cx, span(class=section_selected_class)}
+                    } else{
+                        view!{cx, span(class=section_unselected_class)} 
+                    })
+                    h3(class=SUBTITLE_CLASS) {"Staking"}
+                }
+                div(class="flex flex-col space-y-2 ") {
+                    div(class=starting_row_class) {
+                        span(class=check_mark_class)
+                        span() {"When unbonding period is over"}
+                    }
+                    div(class=starting_row_class) {
+                        span(class=check_mark_class)
+                        span() {"When a validator gets slashed"}
+                    }
+                    div(class=starting_row_class) {
+                        span(class=check_mark_class)
+                        span() {"When a validator falls out of the active set"}
+                    }
+                }
+            }
+            div(class=section_class) {}
+        }
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
