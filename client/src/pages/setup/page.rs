@@ -367,15 +367,19 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> V
     };
 
     view! {cx,
-        div(class="flex flex-col") {
+        div(class="flex flex-col space-y-4") {
             Indexed(
                 iterable=wallets,
                 view=move |cx, wallet| {
                     let wallet_ref = create_ref(cx, wallet.clone());
+                    let prefix = wallet_ref.address[..8].to_owned();
+                    let suffix = wallet_ref.address[wallet_ref.address.len() - 4..].to_owned();
+                    let shortened_address = format!("{}...{}", prefix, suffix);
                     view! {cx,
-                        div(class="flex justify-between items-center space-x-4") {
-                            div(class="px-4 py-2 rounded-full dark:bg-purple-700") {
-                                span(class="text-sm") {(wallet_ref.address)}
+                        div(class="flex justify-between items-center space-x-8") {
+                            div(class="flex flex-grow items-center justify-center space-x-2 px-4 py-2 rounded-full dark:bg-purple-700") {
+                                img(src=wallet_ref.logo_url, alt="Chain logo", class="h-6 w-6")
+                                span(class="text-sm") {(shortened_address)}
                             }
                             button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary", 
                                     on:click=move |_| handle_delete_wallet(wallet_ref)) {
@@ -385,6 +389,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> V
                     }
                 }
             )
+            AddWallet(wallets=wallets.clone())
         }
     }
 }
@@ -498,7 +503,6 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
         h2(class=TITLE_CLASS) {"Add your wallet(s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive notifications about important updates and events directly related to your wallet."}
         WalletList(wallets=wallets.clone())
-        AddWallet(wallets=wallets.clone())
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
