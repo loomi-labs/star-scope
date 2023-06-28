@@ -513,51 +513,52 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
 
 #[component(inline_props)]
 fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
+    let notify_funding = create_signal(cx, step.notify_funding);
+    let notify_staking = create_signal(cx, step.notify_staking);
+    let notify_gov_new_proposal = create_signal(cx, step.notify_gov_new_proposal);
+    let notify_gov_voting_end = create_signal(cx, step.notify_gov_voting_end);
+    let notify_gov_voting_reminder = create_signal(cx, step.notify_gov_voting_reminder);
+
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
                 step: Some(finish_step_request::Step::StepFour(StepFourRequest {
-                    notify_funding: false,
-                    ..Default::default()
+                    notify_funding: *notify_funding.get(),
+                    notify_staking: *notify_staking.get(),
+                    notify_gov_new_proposal: *notify_gov_new_proposal.get(),
+                    notify_gov_voting_end: *notify_gov_voting_end.get(),
+                    notify_gov_voting_reminder: *notify_gov_voting_reminder.get(),
+                    notify_gov_chain_ids: vec![],
                 })),
             };
             update_step(cx, finish_step).await;
         });
     };
 
-    let notify_funding = create_signal(cx, step.notify_funding);
-    let notify_staking = create_signal(cx, step.notify_staking);
-
-    let section_class = "flex flex-col items-center w-full md:w-1/3 p-2 rounded-xl hover:dark:bg-purple-700";
+    let section_class = "flex flex-col items-center w-full md:w-1/3 p-2 rounded-xl";
+    let section_selectable_class = format!("{} hover:dark:bg-purple-700", section_class);
     let section_selected_class = "w-6 h-6 bg-primary icon-[icon-park-solid--check-one]";
-    let section_unselected_class = "w-6 h-6 rounded-full border border-primary";
+    let section_unselected_class = "w-6 h-6 rounded-full border-2 border-primary";
     let centered_row_class = "flex justify-center items-center space-x-4";
     let starting_row_class = "flex items-center space-x-4";
+    let starting_row_selectable_class = create_ref(cx, format!("{} p-2 rounded-lg hover:dark:bg-purple-700", starting_row_class));
     let check_mark_class = "w-6 h-6 bg-primary icon-[ph--check-bold]";
 
     view! {cx,
         ProgressBar(step=StepFour(step))
         h2(class=TITLE_CLASS) {"Choose your Notifications"}
         div(class="flex flex-wrap rounded-xl dark:bg-purple-800") {
-            div(class=section_class, on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
+            div(class=section_selectable_class, on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
                 div(class=centered_row_class) {
-                    (if *notify_funding.get() {
-                        view!{cx, span(class=section_selected_class)}
-                    } else{
-                        view!{cx, span(class=section_unselected_class)} 
-                    })
+                    span(class=(if *notify_funding.get() {section_selected_class} else {section_unselected_class})) {}
                     h3(class=SUBTITLE_CLASS) {"Funding"}
                 }
                 p(class=DESCRIPTION_PROMINENT_CLASS) {"Whenever someone sends you tokens, we'll make sure you know"}
             }
             div(class=section_class, on:click=move |_| notify_staking.set(!notify_staking.get().as_ref())) {
                 div(class=centered_row_class) {
-                    (if *notify_staking.get() {
-                        view!{cx, span(class=section_selected_class)}
-                    } else{
-                        view!{cx, span(class=section_unselected_class)} 
-                    })
+                    span(class=(if *notify_staking.get() {section_selected_class} else {section_unselected_class})) {}
                     h3(class=SUBTITLE_CLASS) {"Staking"}
                 }
                 div(class="flex flex-col space-y-2 ") {
@@ -575,7 +576,23 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                     }
                 }
             }
-            div(class=section_class) {}
+            div(class=section_class) {
+                h3(class=SUBTITLE_CLASS) {"Governance"}
+                div(class="flex flex-col space-y-2 ") {
+                    div(class=starting_row_selectable_class, on:click=move |_| notify_gov_new_proposal.set(!notify_gov_new_proposal.get().as_ref())) {
+                        span(class=(if *notify_gov_new_proposal.get() {section_selected_class} else {section_unselected_class})) {}
+                        span() {"New proposal in voting period"}
+                    }
+                    div(class=starting_row_selectable_class, on:click=move |_| notify_gov_voting_end.set(!notify_gov_voting_end.get().as_ref())) {
+                        span(class=(if *notify_gov_voting_end.get() {section_selected_class} else {section_unselected_class})) {}
+                        span() {"Proposal passed/failed"}
+                    }
+                    div(class=starting_row_selectable_class, on:click=move |_| notify_gov_voting_reminder.set(!notify_gov_voting_reminder.get().as_ref())) {
+                        span(class=(if *notify_gov_voting_reminder.get() {section_selected_class} else {section_unselected_class})) {}
+                        span() {"Voting reminders"}
+                    }
+                }
+            }
         }
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
