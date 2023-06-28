@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
+use crate::components::search::Search;
 use log::debug;
 use serde::__private::de;
 use sycamore::futures::spawn_local_scoped;
@@ -14,7 +15,7 @@ use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{
     StepFive, StepFour, StepOne, StepThree, StepTwo,
 };
-use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest};
+use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest, GovChain};
 use crate::{Services, InfoLevel};
 
 #[derive(Debug, Clone)]
@@ -204,24 +205,10 @@ fn SearchValidator<'a, G: Html>(
     });
 
     let has_results = create_selector(cx, move || search_results.get().len() > 0);
-
+    
     view! {cx,
         div(class="relative flex items-center text-gray-500") {
-            input(
-                class="w-full placeholder:italic placeholder:text-slate-400 block border border-slate-300 rounded-full px-4 py-2
-                    shadow-sm focus:outline-none focus:border-primary focus:ring-primary focus:ring-1 sm:text-sm",
-                placeholder="Search validator",
-                type="text",
-                bind:value=search_term,
-                on:focusin=move |_| has_input_focus.set(true),
-                on:blur=move |_| {
-                    // this has to be delayed because otherwise the blur event will fire before the focusin event on the dialog
-                    spawn_local_scoped(cx, async move {
-                        gloo_timers::future::TimeoutFuture::new(100).await;
-                        has_input_focus.set(false)
-                    });
-                },
-            )
+            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder="Search validator")
             span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
             dialog(class="absolute z-20 top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
                     open=*show_dialog.get(),
@@ -511,6 +498,153 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+struct ChainRow<'a> {
+    pub chain: GovChain,
+    pub is_selected: &'a Signal<bool>,
+}
+
+#[component(inline_props)]
+fn SearchChain<'a, G: Html>(
+    cx: Scope<'a>,
+    chain_rows: Vec<ChainRow<'a>>,
+    selected_chain_ids: &'a Signal<HashSet<i64>>,
+) -> View<G> {
+    let search_term = create_signal(cx, String::new());
+
+    let validator_rows_ref = create_ref(cx, chain_rows);
+    let search_results = create_selector(cx, move || {
+        let search = search_term.get().to_lowercase();
+        let mut results = vec![];
+        if !search.is_empty() {
+            for row in validator_rows_ref.iter() {
+                if row.chain.name.to_lowercase().contains(&search) {
+                    results.push(row.clone());
+                }
+                if results.len() >= 10 {
+                    break;
+                }
+            }
+        }
+        results
+    });
+
+    let selected_validators = create_selector(cx, move || {
+        let mut selected_validators = vec![];
+        for row in validator_rows_ref.iter() {
+            if *row.is_selected.get() {
+                selected_validators.push(row.clone());
+            }
+        }
+        selected_validators
+    });
+
+    validator_rows_ref.iter().for_each(|row| {
+        create_effect(cx, move || {
+            let id = row.chain.id.clone();
+            let is_selected = *row.is_selected.get();
+            if is_selected {
+                selected_chain_ids.modify().insert(id);
+            } else {
+                selected_chain_ids.modify().retain(|current| *current != id);
+            }
+        });
+    });
+
+    let has_input_focus = create_signal(cx, false);
+    let has_dialog_focus = create_signal(cx, false);
+
+    let show_dialog = create_selector(cx, move || {
+        *has_input_focus.get() || *has_dialog_focus.get()
+    });
+
+    let has_results = create_selector(cx, move || search_results.get().len() > 0);
+
+    view! {cx,
+        div(class="relative flex items-center text-gray-500") {
+            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder="Search chain")
+            span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
+            dialog(class="absolute z-20 top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
+                    open=*show_dialog.get(),
+                    on:focusin= move |_| has_dialog_focus.set(true),
+                    on:blur= move |_| has_dialog_focus.set(false),
+                ) {
+                (if *has_results.get() {
+                    view! {cx,
+                        ul(class="py-2 px-4 max-h-56 overflow-y-auto overflow-x-hidden divide-y") {
+                            Indexed(
+                                iterable=search_results,
+                                view=move |cx, row| {
+                                    let moniker = create_selector(cx, move || {
+                                        let search = search_term.get().to_ascii_lowercase();
+                                        if let Some(index) = row.chain.name.to_ascii_lowercase().find(&search) {
+                                            let size = index + search.len();
+                                            let moniker = row.chain.name.to_owned();
+
+                                            let prefix = moniker[..index].to_owned();
+                                            let middle = moniker[index..size].to_owned();
+                                            let suffix = moniker[size..].to_owned();
+                                            (prefix, middle, suffix)
+                                        } else {
+                                            (row.chain.name.clone(), "".to_string(), "".to_string())
+                                        }
+                                    });
+
+                                    view! {cx,
+                                        li(class="flex flex-col rounded hover:bg-gray-100 hover:dark:bg-purple-600 cursor-pointer",
+                                            on:click=move |_| row.is_selected.set(!*row.is_selected.get())) {
+                                            div(class="flex items-center justify-between my-2") {
+                                                div(class="flex items-center") {
+                                                    (moniker.get().0)
+                                                    span(class="font-bold") {
+                                                        (moniker.get().1)
+                                                    }
+                                                    (moniker.get().2)
+                                                }
+                                                (if *row.is_selected.get() {
+                                                    view! {cx,
+                                                        span(class="w-6 h-6 bg-primary icon-[icon-park-solid--check-one]")
+                                                    }
+                                                } else {
+                                                    view! {cx,
+                                                        span(class="w-6 h-6 rounded-full border border-gray-300")
+                                                    }
+                                                })
+                                            }
+                                            hr(class="h-0.5 border-t-0 bg-neutral-100 opacity-100 dark:opacity-50 last:bg-transparent last:border-0")
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    }
+                } else {
+                    view! {cx,
+                        p(class="text-center") {
+                            "No results"
+                        }
+                    }
+                })
+            }
+        }
+        div(class="flex flex-wrap justify-center items-center") {
+            Indexed(
+                iterable= selected_validators,
+                view=move |cx, val| {
+                    view!{cx, 
+                        div(class="flex items-center justify-center m-1 px-4 py-2 dark:bg-purple-700 rounded-full") {
+                            (val.chain.name.clone())
+                            span(class="w-4 h-4 ml-2 z-10 bg-white icon-[material-symbols--close] cursor-pointer",
+                                on:click=move |_| val.is_selected.set(false)
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
 #[component(inline_props)]
 fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
     let notify_funding = create_signal(cx, step.notify_funding);
@@ -518,6 +652,29 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
     let notify_gov_new_proposal = create_signal(cx, step.notify_gov_new_proposal);
     let notify_gov_voting_end = create_signal(cx, step.notify_gov_voting_end);
     let notify_gov_voting_reminder = create_signal(cx, step.notify_gov_voting_reminder);
+
+    let chain_rows = step
+        .available_chains
+        .iter()
+        .map(|chain| {
+            let is_selected = create_signal(
+                cx,
+                step.notify_gov_chain_ids.contains(&chain.id)
+            );
+            ChainRow {
+                chain: chain.clone(),
+                is_selected,
+            }
+        })
+        .collect::<Vec<ChainRow>>();
+
+    let selected_chain_ids = create_signal(cx, {
+        chain_rows
+            .iter()
+            .filter(|row| *row.is_selected.get_untracked())
+            .map(|row| row.chain.id.clone())
+            .collect::<HashSet<i64>>()
+    });
 
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
@@ -529,7 +686,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                     notify_gov_new_proposal: *notify_gov_new_proposal.get(),
                     notify_gov_voting_end: *notify_gov_voting_end.get(),
                     notify_gov_voting_reminder: *notify_gov_voting_reminder.get(),
-                    notify_gov_chain_ids: vec![],
+                    notify_gov_chain_ids: selected_chain_ids.get().as_ref().clone().into_iter().collect(),
                 })),
             };
             update_step(cx, finish_step).await;
@@ -592,6 +749,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                         span() {"Voting reminders"}
                     }
                 }
+                SearchChain(chain_rows=chain_rows, selected_chain_ids=selected_chain_ids)
             }
         }
         div(class=BUTTON_ROW_CLASS) {

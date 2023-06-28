@@ -1,4 +1,3 @@
-use log::debug;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
