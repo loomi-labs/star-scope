@@ -439,8 +439,8 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                 validation.set(Some(result.clone()));
                 match result {
                     WalletValidation::Valid(wallet) => {
-                        debug!("Adding wallet: {:?}", wallet.address);
                         wallets.modify().push(wallet);
+                        new_wallet_address.set(String::new());
                     }
                     _ => {}
                 }
