@@ -1,9 +1,9 @@
 use std::collections::HashSet;
+use std::fmt::Display;
+use std::hash::{Hash, Hasher};
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
-use crate::components::search::Search;
-use log::debug;
-use serde::__private::de;
+use crate::components::search::{SearchEntity, Searchable};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
@@ -144,156 +144,34 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-struct ValidatorRow<'a> {
+#[derive(Debug, Clone)]
+struct SearchableValidator {
     pub validator: Validator,
-    pub is_selected: &'a Signal<bool>,
 }
 
-#[component(inline_props)]
-fn SearchValidator<'a, G: Html>(
-    cx: Scope<'a>,
-    validator_rows: Vec<ValidatorRow<'a>>,
-    selected_validator_ids: &'a Signal<HashSet<i64>>,
-) -> View<G> {
-    let search_term = create_signal(cx, String::new());
-
-    let validator_rows_ref = create_ref(cx, validator_rows);
-    let search_results = create_selector(cx, move || {
-        let search = search_term.get().to_lowercase();
-        let mut results = vec![];
-        if !search.is_empty() {
-            for row in validator_rows_ref.iter() {
-                if row.validator.moniker.to_lowercase().contains(&search) {
-                    results.push(row.clone());
-                }
-                if results.len() >= 10 {
-                    break;
-                }
-            }
-        }
-        results
-    });
-
-    let selected_validators = create_selector(cx, move || {
-        let mut selected_validators = vec![];
-        for row in validator_rows_ref.iter() {
-            if *row.is_selected.get() {
-                selected_validators.push(row.clone());
-            }
-        }
-        selected_validators
-    });
-
-    validator_rows_ref.iter().for_each(|row| {
-        create_effect(cx, move || {
-            let ids = row.validator.ids.clone();
-            let is_selected = *row.is_selected.get();
-            if is_selected {
-                selected_validator_ids.modify().extend(ids);
-            } else {
-                selected_validator_ids.modify().retain(|id| !ids.contains(id));
-            }
-        });
-    });
-
-    let has_input_focus = create_signal(cx, false);
-    let has_dialog_focus = create_signal(cx, false);
-
-    let show_dialog = create_selector(cx, move || {
-        *has_input_focus.get() || *has_dialog_focus.get()
-    });
-
-    let has_results = create_selector(cx, move || search_results.get().len() > 0);
-    
-    view! {cx,
-        div(class="relative flex items-center text-gray-500") {
-            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder="Search validator")
-            span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
-            dialog(class="absolute z-20 top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
-                    open=*show_dialog.get(),
-                    on:focusin= move |_| has_dialog_focus.set(true),
-                    on:blur= move |_| has_dialog_focus.set(false),
-                ) {
-                (if *has_results.get() {
-                    view! {cx,
-                        ul(class="py-2 px-4 max-h-56 overflow-y-auto overflow-x-hidden divide-y") {
-                            Indexed(
-                                iterable=search_results,
-                                view=move |cx, row| {
-                                    let moniker = create_selector(cx, move || {
-                                        let search = search_term.get().to_ascii_lowercase();
-                                        if let Some(index) = row.validator.moniker.to_ascii_lowercase().find(&search) {
-                                            let size = index + search.len();
-                                            let moniker = row.validator.moniker.to_owned();
-
-                                            let prefix = moniker[..index].to_owned();
-                                            let middle = moniker[index..size].to_owned();
-                                            let suffix = moniker[size..].to_owned();
-                                            (prefix, middle, suffix)
-                                        } else {
-                                            (row.validator.moniker.clone(), "".to_string(), "".to_string())
-                                        }
-                                    });
-
-                                    view! {cx,
-                                        li(class="flex flex-col rounded hover:bg-gray-100 hover:dark:bg-purple-600 cursor-pointer",
-                                            on:click=move |_| row.is_selected.set(!*row.is_selected.get())) {
-                                            div(class="flex items-center justify-between my-2") {
-                                                div(class="flex items-center") {
-                                                    (moniker.get().0)
-                                                    span(class="font-bold") {
-                                                        (moniker.get().1)
-                                                    }
-                                                    (moniker.get().2)
-                                                }
-                                                (if *row.is_selected.get() {
-                                                    view! {cx,
-                                                        span(class="w-6 h-6 bg-primary icon-[icon-park-solid--check-one]")
-                                                    }
-                                                } else {
-                                                    view! {cx,
-                                                        span(class="w-6 h-6 rounded-full border border-gray-300")
-                                                    }
-                                                })
-                                            }
-                                            hr(class="h-0.5 border-t-0 bg-neutral-100 opacity-100 dark:opacity-50 last:bg-transparent last:border-0")
-                                        }
-                                    }
-                                },
-                            )
-                        }
-                    }
-                } else {
-                    view! {cx,
-                        p(class="text-center") {
-                            "No results"
-                        }
-                    }
-                })
-            }
-        }
-        div(class="flex flex-wrap justify-center items-center") {
-            Indexed(
-                iterable= selected_validators,
-                view=move |cx, val| {
-                    view!{cx, 
-                        div(class="flex items-center justify-center m-1 px-4 py-2 dark:bg-purple-700 rounded-full") {
-                            (val.validator.moniker.clone())
-                            span(class="w-4 h-4 ml-2 z-10 bg-white icon-[material-symbols--close] cursor-pointer",
-                                on:click=move |_| val.is_selected.set(false)
-                            )
-                        }
-                    }
-                }
-            )
-        }
+impl Display for SearchableValidator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.validator.moniker.fmt(f)
     }
 }
 
+impl Hash for SearchableValidator {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.validator.ids.hash(state);
+    }
+}
+
+impl PartialEq for SearchableValidator {
+    fn eq(&self, other: &Self) -> bool {
+        self.validator.ids == other.validator.ids
+    }
+}
+
+impl Eq for SearchableValidator {}
+
 #[component(inline_props)]
 fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
-    let validator_rows = step
+    let validators = step
         .available_validators
         .iter()
         .map(|val| {
@@ -303,20 +181,21 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
                     .iter()
                     .all(|id| step.selected_validator_ids.contains(id)),
             );
-            ValidatorRow {
-                validator: val.clone(),
+            Searchable {
+                entity: SearchableValidator {
+                    validator: val.clone(),
+                },
                 is_selected,
             }
         })
-        .collect::<Vec<ValidatorRow>>();
+        .collect::<Vec<Searchable<SearchableValidator>>>();
 
-    let selected_validator_ids = create_signal(cx, {
-        validator_rows
+    let selected_validators = create_signal(cx, {
+        validators
             .iter()
             .filter(|row| *row.is_selected.get_untracked())
-            .map(|row| row.validator.ids.clone())
-            .flatten()
-            .collect::<HashSet<i64>>()
+            .map(|row| row.entity.clone())
+            .collect::<HashSet<SearchableValidator>>()
     });
 
     let handle_click = move |go_to_next_step| {
@@ -324,11 +203,13 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
                 step: Some(finish_step_request::Step::StepTwo(StepTwoRequest {
-                    validator_ids: selected_validator_ids
+                    validator_ids: selected_validators
                         .get()
                         .as_ref()
                         .clone()
                         .into_iter()
+                        .map(|val| val.validator.ids)
+                        .flatten()
                         .collect(),
                 })),
             };
@@ -340,7 +221,7 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
         ProgressBar(step=StepTwo(step))
         h2(class=TITLE_CLASS) {"Choose your validator(s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
-        SearchValidator(validator_rows=validator_rows.clone(), selected_validator_ids=selected_validator_ids.clone())
+        SearchEntity(searchables=validators.clone(), selected_entities=selected_validators.clone(), placeholder="Search validators")
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
@@ -498,152 +379,31 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-struct ChainRow<'a> {
+#[derive(Debug, Clone)]
+struct SearchableChain {
     pub chain: GovChain,
-    pub is_selected: &'a Signal<bool>,
 }
 
-#[component(inline_props)]
-fn SearchChain<'a, G: Html>(
-    cx: Scope<'a>,
-    chain_rows: Vec<ChainRow<'a>>,
-    selected_chain_ids: &'a Signal<HashSet<i64>>,
-) -> View<G> {
-    let search_term = create_signal(cx, String::new());
-
-    let validator_rows_ref = create_ref(cx, chain_rows);
-    let search_results = create_selector(cx, move || {
-        let search = search_term.get().to_lowercase();
-        let mut results = vec![];
-        if !search.is_empty() {
-            for row in validator_rows_ref.iter() {
-                if row.chain.name.to_lowercase().contains(&search) {
-                    results.push(row.clone());
-                }
-                if results.len() >= 10 {
-                    break;
-                }
-            }
-        }
-        results
-    });
-
-    let selected_validators = create_selector(cx, move || {
-        let mut selected_validators = vec![];
-        for row in validator_rows_ref.iter() {
-            if *row.is_selected.get() {
-                selected_validators.push(row.clone());
-            }
-        }
-        selected_validators
-    });
-
-    validator_rows_ref.iter().for_each(|row| {
-        create_effect(cx, move || {
-            let id = row.chain.id.clone();
-            let is_selected = *row.is_selected.get();
-            if is_selected {
-                selected_chain_ids.modify().insert(id);
-            } else {
-                selected_chain_ids.modify().retain(|current| *current != id);
-            }
-        });
-    });
-
-    let has_input_focus = create_signal(cx, false);
-    let has_dialog_focus = create_signal(cx, false);
-
-    let show_dialog = create_selector(cx, move || {
-        *has_input_focus.get() || *has_dialog_focus.get()
-    });
-
-    let has_results = create_selector(cx, move || search_results.get().len() > 0);
-
-    view! {cx,
-        div(class="relative flex items-center text-gray-500") {
-            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder="Search chain")
-            span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
-            dialog(class="absolute z-20 top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
-                    open=*show_dialog.get(),
-                    on:focusin= move |_| has_dialog_focus.set(true),
-                    on:blur= move |_| has_dialog_focus.set(false),
-                ) {
-                (if *has_results.get() {
-                    view! {cx,
-                        ul(class="py-2 px-4 max-h-56 overflow-y-auto overflow-x-hidden divide-y") {
-                            Indexed(
-                                iterable=search_results,
-                                view=move |cx, row| {
-                                    let moniker = create_selector(cx, move || {
-                                        let search = search_term.get().to_ascii_lowercase();
-                                        if let Some(index) = row.chain.name.to_ascii_lowercase().find(&search) {
-                                            let size = index + search.len();
-                                            let moniker = row.chain.name.to_owned();
-
-                                            let prefix = moniker[..index].to_owned();
-                                            let middle = moniker[index..size].to_owned();
-                                            let suffix = moniker[size..].to_owned();
-                                            (prefix, middle, suffix)
-                                        } else {
-                                            (row.chain.name.clone(), "".to_string(), "".to_string())
-                                        }
-                                    });
-
-                                    view! {cx,
-                                        li(class="flex flex-col rounded hover:bg-gray-100 hover:dark:bg-purple-600 cursor-pointer",
-                                            on:click=move |_| row.is_selected.set(!*row.is_selected.get())) {
-                                            div(class="flex items-center justify-between my-2") {
-                                                div(class="flex items-center") {
-                                                    (moniker.get().0)
-                                                    span(class="font-bold") {
-                                                        (moniker.get().1)
-                                                    }
-                                                    (moniker.get().2)
-                                                }
-                                                (if *row.is_selected.get() {
-                                                    view! {cx,
-                                                        span(class="w-6 h-6 bg-primary icon-[icon-park-solid--check-one]")
-                                                    }
-                                                } else {
-                                                    view! {cx,
-                                                        span(class="w-6 h-6 rounded-full border border-gray-300")
-                                                    }
-                                                })
-                                            }
-                                            hr(class="h-0.5 border-t-0 bg-neutral-100 opacity-100 dark:opacity-50 last:bg-transparent last:border-0")
-                                        }
-                                    }
-                                },
-                            )
-                        }
-                    }
-                } else {
-                    view! {cx,
-                        p(class="text-center") {
-                            "No results"
-                        }
-                    }
-                })
-            }
-        }
-        div(class="flex flex-wrap justify-center items-center") {
-            Indexed(
-                iterable= selected_validators,
-                view=move |cx, val| {
-                    view!{cx, 
-                        div(class="flex items-center justify-center m-1 px-4 py-2 dark:bg-purple-700 rounded-full") {
-                            (val.chain.name.clone())
-                            span(class="w-4 h-4 ml-2 z-10 bg-white icon-[material-symbols--close] cursor-pointer",
-                                on:click=move |_| val.is_selected.set(false)
-                            )
-                        }
-                    }
-                }
-            )
-        }
+impl Display for SearchableChain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.chain.name.fmt(f)
     }
 }
+
+
+impl Hash for SearchableChain {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.chain.id.hash(state);
+    }
+}
+
+impl PartialEq for SearchableChain {
+    fn eq(&self, other: &Self) -> bool {
+        self.chain.id == other.chain.id
+    }
+}
+
+impl Eq for SearchableChain {}
 
 #[component(inline_props)]
 fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
@@ -661,20 +421,23 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                 cx,
                 step.notify_gov_chain_ids.contains(&chain.id)
             );
-            ChainRow {
-                chain: chain.clone(),
+            Searchable {
+                entity: SearchableChain {
+                    chain: chain.clone(),
+                },
                 is_selected,
             }
         })
-        .collect::<Vec<ChainRow>>();
+        .collect::<Vec<Searchable<SearchableChain>>>();
 
-    let selected_chain_ids = create_signal(cx, {
+    let selected_chains = create_signal(cx, {
         chain_rows
             .iter()
             .filter(|row| *row.is_selected.get_untracked())
-            .map(|row| row.chain.id.clone())
-            .collect::<HashSet<i64>>()
+            .map(|row| row.entity.clone())
+            .collect::<HashSet<SearchableChain>>()
     });
+
 
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
@@ -686,7 +449,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                     notify_gov_new_proposal: *notify_gov_new_proposal.get(),
                     notify_gov_voting_end: *notify_gov_voting_end.get(),
                     notify_gov_voting_reminder: *notify_gov_voting_reminder.get(),
-                    notify_gov_chain_ids: selected_chain_ids.get().as_ref().clone().into_iter().collect(),
+                    notify_gov_chain_ids: selected_chains.get().as_ref().clone().into_iter().map(|chain| chain.chain.id).collect(),
                 })),
             };
             update_step(cx, finish_step).await;
@@ -749,7 +512,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                         span() {"Voting reminders"}
                     }
                 }
-                SearchChain(chain_rows=chain_rows, selected_chain_ids=selected_chain_ids)
+                SearchEntity(searchables=chain_rows, selected_entities=selected_chains, placeholder="Search chains")
             }
         }
         div(class=BUTTON_ROW_CLASS) {
