@@ -162,14 +162,14 @@ where T: Clone + Hash + Eq + PartialEq + Display + 'a,
                 })
             }
         }
-        div(class="flex flex-wrap justify-center items-center") {
+        div(class="flex flex-wrap justify-center items-center mt-4") {
             Indexed(
                 iterable= selected_searchables,
                 view=move |cx, searchable| {
                     view!{cx, 
-                        div(class="flex items-center justify-center m-1 px-4 py-2 dark:bg-purple-700 rounded-full") {
+                        div(class="flex items-center justify-center m-1 px-4 py-1 border-2 border-primary text-primary rounded-full") {
                             (searchable.entity.to_string())
-                            span(class="w-4 h-4 ml-2 z-10 bg-white icon-[material-symbols--close] cursor-pointer",
+                            span(class="w-4 h-4 ml-2 z-10 bg-primary icon-[material-symbols--close] cursor-pointer",
                                 on:click=move |_| searchable.is_selected.set(false)
                             )
                         }

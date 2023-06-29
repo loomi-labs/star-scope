@@ -33,11 +33,11 @@ impl SetupState {
     }
 }
 
-const TITLE_CLASS: &str = "text-4xl font-bold my-4";
-const SUBTITLE_CLASS: &str = "text-2xl font-semibold my-2";
-const DESCRIPTION_CLASS: &str = "dark:text-purple-600";
+const TITLE_CLASS: &str = "text-4xl font-bold m-4";
+const SUBTITLE_CLASS: &str = "text-2xl font-semibold m-4";
+const DESCRIPTION_CLASS: &str = "dark:text-purple-600 mb-8";
 const DESCRIPTION_PROMINENT_CLASS: &str = "dark:text-white";
-const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-4";
+const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-8 mt-8";
 
 #[component(inline_props)]
 fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
@@ -57,7 +57,7 @@ fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
         h1(class=TITLE_CLASS) {"Welcome to Star Scope!"}
         p(class=DESCRIPTION_CLASS) {"We deliver quick and effortless notifications about your Cosmos ecosystem activities."}
         h2(class=SUBTITLE_CLASS) {"Are you a validator?"}
-        div(class=BUTTON_ROW_CLASS) {
+        div(class="flex justify-center space-x-4") {
             SolidButton(on_click=move || handle_click(true), color=ColorScheme::Subtle) {"Yes"}
             SolidButton(on_click=move || handle_click(false), color=ColorScheme::Subtle) {"No"}
         }
@@ -112,7 +112,7 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
                       }
                 } else {
                     view! {cx, 
-                        div(class="w-4 h-4 rounded-full bg-slate-300")
+                        div(class="w-4 h-4 rounded-full dark:bg-purple-700")
                     }
                 })
                 (if has_line {
@@ -123,7 +123,7 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
                             }
                         } else {
                             view! {cx, 
-                                hr(class="w-1/8 flex-grow border border-gray-500")
+                                hr(class="w-1/8 flex-grow border dark:border-purple-700")
                             }
                         })
                     }
@@ -456,49 +456,57 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
         });
     };
 
-    let section_class = "flex flex-col items-center w-full md:w-1/3 p-2 rounded-xl";
-    let section_selectable_class = format!("{} hover:dark:bg-purple-700", section_class);
     let section_selected_class = "w-6 h-6 bg-primary icon-[icon-park-solid--check-one]";
     let section_unselected_class = "w-6 h-6 rounded-full border-2 border-primary";
     let centered_row_class = "flex justify-center items-center space-x-4";
-    let starting_row_class = "flex items-center space-x-4";
-    let starting_row_selectable_class = create_ref(cx, format!("{} p-2 rounded-lg hover:dark:bg-purple-700", starting_row_class));
+    let starting_row_class = "flex items-center space-x-4 p-2";
+    let starting_row_selectable_class = create_ref(cx, format!("{} rounded-lg hover:dark:bg-purple-700", starting_row_class));
     let check_mark_class = "w-6 h-6 bg-primary icon-[ph--check-bold]";
 
     view! {cx,
         ProgressBar(step=StepFour(step))
-        h2(class=TITLE_CLASS) {"Choose your Notifications"}
-        div(class="flex flex-wrap rounded-xl dark:bg-purple-800") {
-            div(class=section_selectable_class, on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
+        h2(class=TITLE_CLASS) {"Choose your notifications"}
+        div(class="flex flex-wrap rounded-xl mt-4 text-sm md:text-base dark:bg-purple-800") {
+            div(class="flex flex-col items-center w-full md:w-1/3 px-6 py-10 md:py-6 rounded-xl hover:dark:bg-purple-700", on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
                 div(class=centered_row_class) {
                     span(class=(if *notify_funding.get() {section_selected_class} else {section_unselected_class})) {}
                     h3(class=SUBTITLE_CLASS) {"Funding"}
                 }
                 p(class=DESCRIPTION_PROMINENT_CLASS) {"Whenever someone sends you tokens, we'll make sure you know"}
             }
-            div(class=section_class, on:click=move |_| notify_staking.set(!notify_staking.get().as_ref())) {
-                div(class=centered_row_class) {
-                    span(class=(if *notify_staking.get() {section_selected_class} else {section_unselected_class})) {}
-                    h3(class=SUBTITLE_CLASS) {"Staking"}
-                }
-                div(class="flex flex-col space-y-2 ") {
-                    div(class=starting_row_class) {
-                        span(class=check_mark_class)
-                        span() {"When unbonding period is over"}
+            div(class="flex w-full md:w-1/3 rounded-xl hover:dark:bg-purple-700", on:click=move |_| notify_staking.set(!notify_staking.get().as_ref())) {
+                div(class="flex flex-col md:flex-row w-full h-full") {
+                    div(class="flex flex-col md:flex-row items-center w-full md:w-0") {
+                        div(class="border border-purple-500 w-4/5 md:w-0 md:h-4/5") {}
                     }
-                    div(class=starting_row_class) {
-                        span(class=check_mark_class)
-                        span() {"When a validator gets slashed"}
+                    div(class="flex flex-col flex-grow items-center p-6") {
+                        div(class=centered_row_class) {
+                            span(class=(if *notify_staking.get() {section_selected_class} else {section_unselected_class})) {}
+                            h3(class=SUBTITLE_CLASS) {"Staking"}
+                        }
+                        div(class="flex flex-col") {
+                            div(class=starting_row_class) {
+                                span(class=check_mark_class)
+                                span() {"When unbonding period is over"}
+                            }
+                            div(class=starting_row_class) {
+                                span(class=check_mark_class)
+                                span() {"When a validator gets slashed"}
+                            }
+                            div(class=starting_row_class) {
+                                span(class=check_mark_class)
+                                span() {"When a validator falls out of the active set"}
+                            }
+                        }
                     }
-                    div(class=starting_row_class) {
-                        span(class=check_mark_class)
-                        span() {"When a validator falls out of the active set"}
+                    div(class="flex flex-col md:flex-row items-center w-full md:w-0") {
+                        div(class="border border-purple-500 w-4/5 md:w-0 md:h-4/5") {}
                     }
                 }
             }
-            div(class=section_class) {
+            div(class="flex flex-col items-center w-full md:w-1/3 p-2 rounded-xl p-6") {
                 h3(class=SUBTITLE_CLASS) {"Governance"}
-                div(class="flex flex-col space-y-2 ") {
+                div(class="flex flex-col mb-4") {
                     div(class=starting_row_selectable_class, on:click=move |_| notify_gov_new_proposal.set(!notify_gov_new_proposal.get().as_ref())) {
                         span(class=(if *notify_gov_new_proposal.get() {section_selected_class} else {section_unselected_class})) {}
                         span() {"New proposal in voting period"}
@@ -512,7 +520,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                         span() {"Voting reminders"}
                     }
                 }
-                SearchEntity(searchables=chain_rows, selected_entities=selected_chains, placeholder="Search chains")
+                SearchEntity(searchables=chain_rows, selected_entities=selected_chains, placeholder="Select chains")
             }
         }
         div(class=BUTTON_ROW_CLASS) {
@@ -619,7 +627,7 @@ pub fn Setup<G: Html>(cx: Scope) -> View<G> {
                     div(class="min-h-[100svh] flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
                         Header{}
                         div(class="w-full h-full flex flex-col flex-auto justify-center text-center p-4") {
-                            div(class="flex flex-col justify-center items-center space-y-4") {
+                            div(class="flex flex-col justify-center items-center") {
                                 (child)
                             }
                         }
