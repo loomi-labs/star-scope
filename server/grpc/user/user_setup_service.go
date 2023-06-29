@@ -209,9 +209,21 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 				step = usersetup.StepOne
 			}
 		}
+		var chainIds []int
+		var chains = u.chainManager.QueryEnabled(ctx)
+		for _, address := range request.Msg.GetStepThree().GetWalletAddresses() {
+			for _, chain := range chains {
+				if common.IsBech32AddressFromChain(address, chain.Bech32Prefix) {
+					chainIds = append(chainIds, chain.ID)
+					break
+				}
+			}
+		}
 		updateQuery = setup.
 			Update().
 			SetWalletAddresses(request.Msg.GetStepThree().GetWalletAddresses()).
+			ClearSelectedChains().
+			AddSelectedChainIDs(sf.Unique(chainIds)...).
 			SetStep(step)
 	case *userpb.FinishStepRequest_StepFour:
 		step := usersetup.StepFive
