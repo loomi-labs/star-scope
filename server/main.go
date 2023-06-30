@@ -20,5 +20,3 @@ func main() {
 
 	cmd.Execute()
 }
-
-// trigger build
