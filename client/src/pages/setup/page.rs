@@ -307,12 +307,12 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
 
     let validation = create_signal(cx, None::<WalletValidation>);
 
-    let handle_add_wallet = move || {
+    create_effect(cx, move || {
         let address = new_wallet_address.get().as_ref().clone();
         if wallets.get().iter().map(|w| w.address.clone()).collect::<Vec<String>>().contains(&new_wallet_address.get().as_ref().clone()) {
             validation.set(Some(WalletValidation::Invalid("Wallet already added".to_string())));
         } else if address.is_empty() {
-            validation.set(Some(WalletValidation::Invalid("Wallet address cannot be empty".to_string())));
+            validation.set(None);
         } else if address.len() < 30 {
             validation.set(Some(WalletValidation::Invalid("Wallet address is too short".to_string())));
         } else {
@@ -328,18 +328,18 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                 }
             });
         }
-    };
+    });
 
     view! {cx,
         div(class="flex flex-col") {
             div(class="flex") {
                 input(
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 mr-4 text-black focus:outline-none focus:ring-2 focus:ring-primary",
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
                     placeholder="Wallet address",
                     type="text",
                     bind:value=new_wallet_address,
                 )
-                SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
+                // SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
             }
             (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
                 view! {cx, 
