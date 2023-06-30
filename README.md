@@ -1,6 +1,6 @@
 # Star Scope
 
-[Star Scope](https://star-scope.decrypto.online) brings clarity to the Cosmos ecosystem.
+[Star Scope](https://starscope.network) brings clarity to the Cosmos ecosystem.
 
 It is a webapp that gives Cosmonauts personalized notifications about their on-chain activity.
 

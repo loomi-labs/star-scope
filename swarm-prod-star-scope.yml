@@ -226,7 +226,7 @@ services:
       - caddy
     deploy:
       labels:
-        caddy: star-scope.decrypto.online
+        caddy: starscope.network
         caddy.reverse_proxy: "client:80"
       placement:
         constraints:
@@ -238,7 +238,7 @@ services:
       - caddy
     deploy:
       labels:
-        caddy: kafdrop.star-scope.decrypto.online
+        caddy: kafdrop.starscope.network
         caddy.reverse_proxy: "kafdrop:9000"
       placement:
         constraints:
@@ -250,7 +250,7 @@ services:
       - caddy
     deploy:
       labels:
-        caddy: pgadmin.star-scope.decrypto.online
+        caddy: pgadmin.starscope.network
         caddy.reverse_proxy: "pgadmin-ss:80"
       placement:
         constraints:

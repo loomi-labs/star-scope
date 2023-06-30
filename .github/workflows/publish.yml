@@ -93,8 +93,8 @@ jobs:
           labels: ${{ steps.meta-client.outputs.labels }}
           build-args: |
             DEBUG=true
-            GRPC_WEB_ENDPOINT_URL=https://star-scope.decrypto.online
-            WEB_APP_URL=https://star-scope.decrypto.online
+            GRPC_WEB_ENDPOINT_URL=https://starscope.network
+            WEB_APP_URL=https://starscope.network
             TELEGRAM_BOT_NAME=StarScopeTestBot
             DISCORD_CLIENT_ID=1120308547142549565
 

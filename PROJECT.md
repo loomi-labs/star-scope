@@ -8,7 +8,7 @@ This led me to the idea of creating a tool that gives Cosmonauts personalized no
 
 ## What it does
 
-You can log in with your Keplr wallet into the [Star Scope webapp](https://star-scope.decrypto.online).
+You can log in with your Keplr wallet into the [Star Scope webapp](https://starscope.network).
 You are then notified about relevant events related to your wallet.
 
 **Events** are triggered by an **action** of **you** or a **third party** (validator, another wallet, DAO, etc.).
