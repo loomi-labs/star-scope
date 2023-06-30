@@ -20,6 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/ravener/discord-oauth2 v0.0.0-20230514095040-ae65713199b3
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/sa-/slicefunk v0.1.4
 	github.com/segmentio/kafka-go v0.4.40
 	github.com/shifty11/go-logger v0.0.0-20230427145303-ff4524109957
 	github.com/spf13/cobra v1.7.0
@@ -115,7 +116,6 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/sa-/slicefunk v0.1.4 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
