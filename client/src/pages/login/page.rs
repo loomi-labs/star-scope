@@ -4,7 +4,7 @@ use sycamore::prelude::*;
 use wasm_bindgen::prelude::*;
 
 use crate::components::messages::{create_error_msg_from_status, create_message};
-use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
+use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton, CosmosLoginButton};
 use crate::config::keys;
 use crate::{AppState, AuthState, InfoLevel, Services};
 
@@ -195,8 +195,9 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                     "Login to Star Scope"
                 }
             }
-            div(class="mt-8 sm:mx-auto sm:w-full sm:max-w-md") {
-                div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow sm:rounded-lg sm:px-10") {
+            // div(class="mt-8 mx-auto w-full h-full") {
+            div(class="mt-8 mx-auto w-full max-w-md") {
+                div(class="h-full bg-white dark:bg-purple-700 py-8 px-4 shadow rounded-lg px-10") {
                     div(class="flex items-center justify-center space-y-6") {
                         button(on:click=move |_| spawn_local_scoped(cx, async move {
                             try_login_with_keplr(cx).await;
@@ -212,6 +213,9 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
                         TelegramLoginButton(web_app_url=keys::WEB_APP_URL.to_string())
+                    }
+                    div(class="h-full flex items-center justify-center space-y-6 mt-6") {
+                        CosmosLoginButton()
                     }
                 }
             }

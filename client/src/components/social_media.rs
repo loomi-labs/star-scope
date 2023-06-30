@@ -1,6 +1,12 @@
+use log::debug;
+use serde::__private::de;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::{wasm_bindgen, Closure};
+use web_sys::{Event, MessageEvent, Window};
+use web_sys::console::debug;
 
 use crate::config::keys;
 
@@ -90,5 +96,50 @@ pub fn DiscordLoginButton<G: Html>(cx: Scope, props: DiscordLoginButtonProps) ->
                             span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
                             (props.text)
         }
+    )
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+    #[wasm_bindgen(js_namespace = window)]
+    fn window() -> Window;
+}
+
+#[wasm_bindgen]
+pub fn setup_message_listener() {
+    debug!("setting up message listener");
+    let window = web_sys::window().expect("Missing Window");
+    let location = window.location();
+    let host = location.hostname().unwrap();
+    let closure = Closure::wrap(Box::new(move |event: Event| {
+        debug!("received event");
+        if let Some(message_event) = event.dyn_ref::<MessageEvent>() {
+            if message_event.origin().contains(host.as_str()) {
+                let data = message_event.data();
+                debug!("data is {:?}", data);
+            }
+        }
+    }) as Box<dyn FnMut(_)>);
+
+    window
+        .add_event_listener_with_callback("message", closure.as_ref().unchecked_ref())
+        .unwrap();
+
+    closure.forget();
+}
+
+#[component]
+pub fn CosmosLoginButton<G: Html>(cx: Scope) -> View<G> {
+    setup_message_listener();
+
+    view!(
+        cx,
+        iframe(
+            id="iframe", 
+            class="w-full h-full", src="http://localhost:3000",  on:message=move |_| {
+            debug!("received message from iframe");
+        }) {}
     )
 }

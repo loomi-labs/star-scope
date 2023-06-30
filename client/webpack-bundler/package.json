@@ -5,16 +5,47 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack"
+    "build": "webpack",
+    "run": "webpack serve"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "webpack": "^5.83.1",
-    "webpack-cli": "^5.1.1"
+    "@babel/core": "^7.22.5",
+    "@babel/preset-env": "^7.22.5",
+    "@babel/preset-react": "^7.22.5",
+    "@types/node": "18.11.9",
+    "@types/react": "18.0.25",
+    "@types/react-dom": "18.0.9",
+    "babel-loader": "^9.1.2",
+    "eslint": "8.28.0",
+    "eslint-config-next": "13.0.5",
+    "ts-loader": "^9.4.4",
+    "typescript": "4.9.3",
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
   },
   "dependencies": {
+    "@chakra-ui/icons": "2.0.12",
+    "@chakra-ui/react": "2.5.1",
+    "@cosmjs/cosmwasm-stargate": "0.29.5",
+    "@cosmjs/stargate": "0.29.5",
+    "@cosmos-kit/core": "1.3.0",
+    "@cosmos-kit/cosmostation": "0.15.13",
+    "@cosmos-kit/keplr": "0.33.13",
+    "@cosmos-kit/leap": "0.14.12",
+    "@cosmos-kit/react": "1.3.11",
+    "@emotion/react": "11.10.6",
+    "@emotion/styled": "11.10.6",
     "@walletconnect/browser-utils": "^1.8.0",
+    "chain-registry": "1.14.0",
+    "framer-motion": "9.0.7",
+    "next": "12.2.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-icons": "4.6.0",
+    "typescript": "^5.1.6"
   }
 }
