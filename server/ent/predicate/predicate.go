@@ -27,5 +27,8 @@ type Proposal func(*sql.Selector)
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
+// UserSetup is the predicate function for usersetup builders.
+type UserSetup func(*sql.Selector)
+
 // Validator is the predicate function for validator builders.
 type Validator func(*sql.Selector)

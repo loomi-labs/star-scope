@@ -19,6 +19,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -87,6 +88,7 @@ func checkColumn(table, column string) error {
 			eventlistener.Table:    eventlistener.ValidColumn,
 			proposal.Table:         proposal.ValidColumn,
 			user.Table:             user.ValidColumn,
+			usersetup.Table:        usersetup.ValidColumn,
 			validator.Table:        validator.ValidColumn,
 		})
 	})

@@ -13,18 +13,19 @@ use sycamore::suspense::Suspense;
 use sycamore_router::{HistoryIntegration, Route, Router};
 use uuid::Uuid;
 
-use crate::components::layout::LayoutWrapper;
 use crate::components::messages::{create_error_msg_from_status, create_message, MessageOverlay};
+use crate::components::navigation::Navigation;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
 use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
+use crate::pages::setup::page::Setup;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
 use crate::types::protobuf::event::EventType;
 use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
-use crate::utils::url::safe_navigate;
+use crate::utils::url::{navigate_launch_app, safe_navigate};
 
 mod components;
 mod config;
@@ -37,6 +38,8 @@ mod utils;
 pub enum AppRoutes {
     #[to("/")]
     Home,
+    #[to("/setup")]
+    Setup,
     #[to("/notifications")]
     Notifications,
     #[to("/communication")]
@@ -53,6 +56,19 @@ impl AppRoutes {
     fn needs_login(&self) -> bool {
         match self {
             AppRoutes::Home => false,
+            AppRoutes::Setup => true,
+            AppRoutes::Notifications => true,
+            AppRoutes::Communication => true,
+            AppRoutes::Settings => true,
+            AppRoutes::Login => false,
+            AppRoutes::NotFound => false,
+        }
+    }
+
+    fn has_navigation(&self) -> bool {
+        match self {
+            AppRoutes::Home => false,
+            AppRoutes::Setup => false,
             AppRoutes::Notifications => true,
             AppRoutes::Communication => true,
             AppRoutes::Settings => true,
@@ -66,6 +82,7 @@ impl ToString for AppRoutes {
     fn to_string(&self) -> String {
         match self {
             AppRoutes::Home => "/".to_string(),
+            AppRoutes::Setup => "/setup".to_string(),
             AppRoutes::Notifications => "/notifications".to_string(),
             AppRoutes::Communication => "/communication".to_string(),
             AppRoutes::Settings => "/settings".to_string(),
@@ -291,6 +308,7 @@ fn has_access_permission(auth_service: &AuthService, route: &AppRoutes) -> bool 
     let is_user = auth_service.is_user();
     match route {
         AppRoutes::Home => true,
+        AppRoutes::Setup => is_user || is_admin,
         AppRoutes::Notifications => is_user || is_admin,
         AppRoutes::Communication => is_user || is_admin,
         AppRoutes::Settings => is_user || is_admin,
@@ -307,6 +325,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
         app_state.route.set(Some(*route));
         match route {
             AppRoutes::Home => view!(cx, Home {}),
+            AppRoutes::Setup => view!(cx, Setup {}),
             AppRoutes::Notifications => view!(cx, Notifications {}),
             AppRoutes::Communication => view!(cx, Communication {}),
             AppRoutes::Settings => view!(cx, Settings {}),
@@ -483,19 +502,32 @@ fn execute_logged_in_fns(cx: Scope<'_>) {
     event_state.reset();
     notifications_state.reset();
     spawn_local_scoped(cx, async move {
+        query_user_info(cx).await;
+
         let app_state = use_context::<AppState>(cx);
-        if app_state
+
+        // redirect to notifications/setup if user is logged in and route does not need login (e.g. login page, home page, etc.)
+        let is_redirect = app_state
             .route
             .get_untracked()
             .as_ref()
-            .is_some_and(|route| !route.needs_login())
-        {
-            debug!("Redirect to notifications");
-            safe_navigate(cx, AppRoutes::Notifications)
+            .is_some_and(|route| !route.needs_login());
+        if is_redirect {
+            if let Some(user) = app_state.user.get_untracked().as_ref() {
+                if user.is_setup_complete {
+                    query_events_count(cx).await;
+                    subscribe_to_events(cx);
+                }
+                navigate_launch_app(cx);
+            } else {
+                create_message(
+                    cx,
+                    "User not found",
+                    "User status unknown",
+                    InfoLevel::Error,
+                );
+            }
         }
-        query_user_info(cx).await;
-        query_events_count(cx).await;
-        subscribe_to_events(cx);
     });
 }
 
@@ -536,11 +568,11 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                                 AuthState::LoggingIn => {}
                             }
                         });
-                        let has_layout_wrapper = create_selector(cx, move || route.get().as_ref().needs_login());
+                        let has_navigation = create_selector(cx, move || route.get().as_ref().has_navigation());
                         view! {cx,
-                            (if *has_layout_wrapper.get() {
+                            (if *has_navigation.get() {
                                 view! {cx,
-                                    LayoutWrapper{ (activate_view(cx, route.get().as_ref())) }
+                                    Navigation{ (activate_view(cx, route.get().as_ref())) }
                                 }
                             } else {
                                 activate_view(cx, route.get().as_ref())
@@ -561,6 +593,7 @@ fn main() {
     sycamore::render(|cx| {
         view! { cx,
             Suspense(fallback=components::loading::LoadingSpinner(cx)) {
+                // lottie-player(src="https://assets1.lottiefiles.com/datafiles/HN7OcWNnoqje6iXIiZdWzKxvLIbfeCGTmvXmEm1h/data.json", background="transparent", speed="1", style="width: 300px; height: 300px;", loop=true, autoplay=true) {}
                 App {}
             }
         }

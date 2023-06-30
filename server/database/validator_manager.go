@@ -82,8 +82,39 @@ func (m *ValidatorManager) QueryActive(ctx context.Context) []*ent.Validator {
 			validator.FirstInactiveTimeGT(time.Now().Add(-timeUntilConsideredInactive)),
 		)).
 		WithChain().
-		Order(ent.Asc(validator.FieldMoniker)). // order by moniker so that the chain is random -> avoid spamming the same chain
+		Order(ent.Asc(validator.FieldMoniker)). // order by moniker so that the chain is random -> avoid spamming the same chain when querying validators
 		AllX(ctx)
+}
+
+type ValidatorBundle struct {
+	Validators []*ent.Validator
+	Moniker    string
+	LogoUrl    string
+}
+
+func (m *ValidatorManager) QueryActiveBundledByMoniker(ctx context.Context) []*ValidatorBundle {
+	vals := m.client.Validator.
+		Query().
+		Where(validator.Or(
+			validator.FirstInactiveTimeIsNil(),
+			validator.FirstInactiveTimeGT(time.Now().Add(-timeUntilConsideredInactive)),
+		)).
+		Order(ent.Asc(validator.FieldMoniker)).
+		AllX(ctx)
+	var bundles []*ValidatorBundle
+	var currentMoniker string
+	for _, val := range vals {
+		if currentMoniker != val.Moniker {
+			currentMoniker = val.Moniker
+			bundles = append(bundles, &ValidatorBundle{
+				Validators: []*ent.Validator{val},
+				Moniker:    val.Moniker,
+			})
+		} else {
+			bundles[len(bundles)-1].Validators = append(bundles[len(bundles)-1].Validators, val)
+		}
+	}
+	return bundles
 }
 
 func (m *ValidatorManager) UpdateSetSlashed(ctx context.Context, val *ent.Validator, period uint64) error {

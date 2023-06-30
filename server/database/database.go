@@ -14,7 +14,6 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/migrate"
 	"github.com/loomi-labs/star-scope/kafka_internal"
-	"github.com/loomi-labs/star-scope/types"
 	"github.com/pkg/errors"
 	"github.com/shifty11/go-logger/log"
 	"os"
@@ -237,22 +236,6 @@ func InitDb() {
 	ctx := context.Background()
 
 	chainManager := NewDbManagersWithoutKafka().ChainManager
-	neutron, err := chainManager.QueryByName(ctx, "neutron")
-	if err == nil {
-		_, err := chainManager.QueryByName(ctx, "neutron-pion")
-		if ent.IsNotFound(err) {
-			chainManager.Create(ctx, &types.ChainData{
-				ChainId:      "neutron-pion",
-				Name:         "neutron-pion",
-				PrettyName:   "Neutron Testnet",
-				Path:         "neutron-pion",
-				Display:      "neutron-pion",
-				NetworkType:  "testnet",
-				Image:        neutron.Image,
-				Bech32Prefix: neutron.Bech32Prefix,
-			})
-		}
-	}
 	for _, chain := range chainManager.QueryAll(ctx) {
 		if chain.RestEndpoint == "" {
 			var restEndpoint = fmt.Sprintf("https://rest.cosmos.directory/%s", chain.Path)
@@ -272,6 +255,16 @@ func InitDb() {
 				ExecX(ctx)
 		}
 	}
+
+	for _, u := range client.User.Query().WithSetup().AllX(ctx) {
+		if u.Edges.Setup == nil {
+			client.UserSetup.
+				Create().
+				SetUser(u).
+				SaveX(ctx)
+		}
+	}
+
 	log.Sugar.Info("database successfully initialized")
 }
 

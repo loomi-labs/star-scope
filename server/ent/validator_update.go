@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -99,6 +100,21 @@ func (vu *ValidatorUpdate) SetChain(c *Chain) *ValidatorUpdate {
 	return vu.SetChainID(c.ID)
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (vu *ValidatorUpdate) AddSelectedBySetupIDs(ids ...int) *ValidatorUpdate {
+	vu.mutation.AddSelectedBySetupIDs(ids...)
+	return vu
+}
+
+// AddSelectedBySetups adds the "selected_by_setups" edges to the UserSetup entity.
+func (vu *ValidatorUpdate) AddSelectedBySetups(u ...*UserSetup) *ValidatorUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return vu.AddSelectedBySetupIDs(ids...)
+}
+
 // Mutation returns the ValidatorMutation object of the builder.
 func (vu *ValidatorUpdate) Mutation() *ValidatorMutation {
 	return vu.mutation
@@ -108,6 +124,27 @@ func (vu *ValidatorUpdate) Mutation() *ValidatorMutation {
 func (vu *ValidatorUpdate) ClearChain() *ValidatorUpdate {
 	vu.mutation.ClearChain()
 	return vu
+}
+
+// ClearSelectedBySetups clears all "selected_by_setups" edges to the UserSetup entity.
+func (vu *ValidatorUpdate) ClearSelectedBySetups() *ValidatorUpdate {
+	vu.mutation.ClearSelectedBySetups()
+	return vu
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to UserSetup entities by IDs.
+func (vu *ValidatorUpdate) RemoveSelectedBySetupIDs(ids ...int) *ValidatorUpdate {
+	vu.mutation.RemoveSelectedBySetupIDs(ids...)
+	return vu
+}
+
+// RemoveSelectedBySetups removes "selected_by_setups" edges to UserSetup entities.
+func (vu *ValidatorUpdate) RemoveSelectedBySetups(u ...*UserSetup) *ValidatorUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return vu.RemoveSelectedBySetupIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -216,6 +253,51 @@ func (vu *ValidatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if vu.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vu.mutation.RemovedSelectedBySetupsIDs(); len(nodes) > 0 && !vu.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vu.mutation.SelectedBySetupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, vu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{validator.Label}
@@ -306,6 +388,21 @@ func (vuo *ValidatorUpdateOne) SetChain(c *Chain) *ValidatorUpdateOne {
 	return vuo.SetChainID(c.ID)
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (vuo *ValidatorUpdateOne) AddSelectedBySetupIDs(ids ...int) *ValidatorUpdateOne {
+	vuo.mutation.AddSelectedBySetupIDs(ids...)
+	return vuo
+}
+
+// AddSelectedBySetups adds the "selected_by_setups" edges to the UserSetup entity.
+func (vuo *ValidatorUpdateOne) AddSelectedBySetups(u ...*UserSetup) *ValidatorUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return vuo.AddSelectedBySetupIDs(ids...)
+}
+
 // Mutation returns the ValidatorMutation object of the builder.
 func (vuo *ValidatorUpdateOne) Mutation() *ValidatorMutation {
 	return vuo.mutation
@@ -315,6 +412,27 @@ func (vuo *ValidatorUpdateOne) Mutation() *ValidatorMutation {
 func (vuo *ValidatorUpdateOne) ClearChain() *ValidatorUpdateOne {
 	vuo.mutation.ClearChain()
 	return vuo
+}
+
+// ClearSelectedBySetups clears all "selected_by_setups" edges to the UserSetup entity.
+func (vuo *ValidatorUpdateOne) ClearSelectedBySetups() *ValidatorUpdateOne {
+	vuo.mutation.ClearSelectedBySetups()
+	return vuo
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to UserSetup entities by IDs.
+func (vuo *ValidatorUpdateOne) RemoveSelectedBySetupIDs(ids ...int) *ValidatorUpdateOne {
+	vuo.mutation.RemoveSelectedBySetupIDs(ids...)
+	return vuo
+}
+
+// RemoveSelectedBySetups removes "selected_by_setups" edges to UserSetup entities.
+func (vuo *ValidatorUpdateOne) RemoveSelectedBySetups(u ...*UserSetup) *ValidatorUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return vuo.RemoveSelectedBySetupIDs(ids...)
 }
 
 // Where appends a list predicates to the ValidatorUpdate builder.
@@ -446,6 +564,51 @@ func (vuo *ValidatorUpdateOne) sqlSave(ctx context.Context) (_node *Validator, e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chain.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if vuo.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vuo.mutation.RemovedSelectedBySetupsIDs(); len(nodes) > 0 && !vuo.mutation.SelectedBySetupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := vuo.mutation.SelectedBySetupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   validator.SelectedBySetupsTable,
+			Columns: validator.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -161,19 +161,7 @@ func (s *AuthService) KeplrLogin(ctx context.Context, request *connect.Request[a
 
 	user, err := s.userManager.QueryByWalletAddress(ctx, walletAddress)
 	if err != nil && ent.IsNotFound(err) {
-		err := s.userManager.WithTx(ctx, func(tx *ent.Tx) error {
-			user, err = s.userManager.CreateByWalletAddress(ctx, tx, walletAddress)
-			if err != nil {
-				return err
-			}
-			chains := s.chainManager.QueryEnabled(ctx)
-			els, err := s.eventListenerManager.CreateBulk(ctx, tx, user, chains, walletAddress)
-			if err != nil {
-				return err
-			}
-			go NewSetupCrawler(s.kafkaInternal).fetchUnstakingEvents(els)
-			return nil
-		})
+		user, err = s.userManager.CreateByWalletAddress(ctx, walletAddress)
 		if err != nil {
 			log.Sugar.Errorf("error while creating user by wallet address: %v", err)
 			return nil, ErrorLoginFailed

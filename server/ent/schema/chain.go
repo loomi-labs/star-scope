@@ -72,6 +72,7 @@ func (Chain) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
+		edge.To("selected_by_setups", UserSetup.Type),
 	}
 }
 

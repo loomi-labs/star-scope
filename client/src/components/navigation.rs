@@ -10,7 +10,7 @@ use crate::{AppRoutes, AppState, EventsState};
 pub fn Header<G: Html>(cx: Scope) -> View<G> {
     let app_state = use_context::<AppState>(cx);
     view!(cx,
-        div(class="flex items-center justify-between h-14 text-white dark:text-purple-600 dark:bg-purple-800") {
+        div(class="flex items-center justify-between h-14 text-white dark:text-purple-600") {
             div(class="flex flex-grow items-center justify-start pl-3 h-14") {
                 button(on:click=move |_| safe_navigate(cx, AppRoutes::Home), class="relative") {
                         img(src=keys::LOGO_WITH_TEXT_WHITE_IMG, class="h-auto w-44 transition-transform duration-300 transform")
@@ -20,7 +20,7 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
             div(class="flex justify-between items-center h-14 pr-8") {
                 ul(class="flex items-center") {
                     li {
-                        button(class="flex items-center p-2 rounded dark:bg-purple-800 hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
+                        button(class="flex items-center p-2 rounded hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
                             span(class="inline-flex mr-1") {
                                 i(class="fas fa-sign-out-alt text-xl") {}
                             }
@@ -207,15 +207,15 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 }
 
 #[component(inline_props)]
-pub fn LayoutWrapper<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
+pub fn Navigation<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
     let children = children.call(cx);
     view! { cx,
         div(class="min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {
-            div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
+            div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full dark:bg-purple-800") {
                 Header{}
-                div(class="flex flex-row h-full w-full") {
+                div(class="flex flex-row h-full w-full dark:bg-d-bg") {
                     Sidebar{}
-                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto overflow-x-visible") {
+                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto overflow-x-visible") {    // TODO: fix the 100vh-theme(space.16) hack
                         (children)
                     }
                 }

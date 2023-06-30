@@ -162,38 +162,54 @@ type AuthServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(AuthServiceKeplrLoginProcedure, connect_go.NewUnaryHandler(
+	authServiceKeplrLoginHandler := connect_go.NewUnaryHandler(
 		AuthServiceKeplrLoginProcedure,
 		svc.KeplrLogin,
 		opts...,
-	))
-	mux.Handle(AuthServiceTelegramLoginProcedure, connect_go.NewUnaryHandler(
+	)
+	authServiceTelegramLoginHandler := connect_go.NewUnaryHandler(
 		AuthServiceTelegramLoginProcedure,
 		svc.TelegramLogin,
 		opts...,
-	))
-	mux.Handle(AuthServiceDiscordLoginProcedure, connect_go.NewUnaryHandler(
+	)
+	authServiceDiscordLoginHandler := connect_go.NewUnaryHandler(
 		AuthServiceDiscordLoginProcedure,
 		svc.DiscordLogin,
 		opts...,
-	))
-	mux.Handle(AuthServiceRefreshAccessTokenProcedure, connect_go.NewUnaryHandler(
+	)
+	authServiceRefreshAccessTokenHandler := connect_go.NewUnaryHandler(
 		AuthServiceRefreshAccessTokenProcedure,
 		svc.RefreshAccessToken,
 		opts...,
-	))
-	mux.Handle(AuthServiceConnectDiscordProcedure, connect_go.NewUnaryHandler(
+	)
+	authServiceConnectDiscordHandler := connect_go.NewUnaryHandler(
 		AuthServiceConnectDiscordProcedure,
 		svc.ConnectDiscord,
 		opts...,
-	))
-	mux.Handle(AuthServiceConnectTelegramProcedure, connect_go.NewUnaryHandler(
+	)
+	authServiceConnectTelegramHandler := connect_go.NewUnaryHandler(
 		AuthServiceConnectTelegramProcedure,
 		svc.ConnectTelegram,
 		opts...,
-	))
-	return "/starscope.grpc.AuthService/", mux
+	)
+	return "/starscope.grpc.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case AuthServiceKeplrLoginProcedure:
+			authServiceKeplrLoginHandler.ServeHTTP(w, r)
+		case AuthServiceTelegramLoginProcedure:
+			authServiceTelegramLoginHandler.ServeHTTP(w, r)
+		case AuthServiceDiscordLoginProcedure:
+			authServiceDiscordLoginHandler.ServeHTTP(w, r)
+		case AuthServiceRefreshAccessTokenProcedure:
+			authServiceRefreshAccessTokenHandler.ServeHTTP(w, r)
+		case AuthServiceConnectDiscordProcedure:
+			authServiceConnectDiscordHandler.ServeHTTP(w, r)
+		case AuthServiceConnectTelegramProcedure:
+			authServiceConnectTelegramHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedAuthServiceHandler returns CodeUnimplemented from all methods.

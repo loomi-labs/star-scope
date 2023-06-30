@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package starscope.grpc;
+
+option go_package = "github.com/loomi-labs/star-scope/grpc/user/usersetuppb";
+
+
+service UserSetupService {
+  rpc GetStep(GetStepRequest) returns (StepResponse);
+  rpc FinishStep(FinishStepRequest) returns (StepResponse);
+  rpc ValidateWallet(ValidateWalletRequest) returns (ValidateWalletResponse);
+}
+
+message GetStepRequest {
+  enum Step {
+    CURRENT_STEP = 0;
+    STEP_ONE = 1;
+    STEP_TWO = 2;
+    STEP_THREE = 3;
+    STEP_FOUR = 4;
+    STEP_FIVE = 5;
+  }
+  Step step = 1;
+}
+
+message StepOneResponse {
+  bool is_validator = 1;
+}
+
+message Validator {
+  repeated int64 ids = 1;
+  string moniker = 2;
+}
+
+message StepTwoResponse {
+  repeated Validator available_validators = 1;
+  repeated int64 selected_validator_ids = 2;
+}
+
+message Wallet {
+  string address = 1;
+  string logo_url = 2;
+}
+
+message StepThreeResponse {
+  repeated Wallet wallets = 1;
+}
+
+message GovChain {
+  int64 id = 1;
+  string name = 2;
+  string logo_url = 3;
+}
+
+message StepFourResponse {
+  bool notify_funding = 1;
+  bool notify_staking = 2;
+  bool notify_gov_new_proposal = 3;
+  bool notify_gov_voting_end = 4;
+  bool notify_gov_voting_reminder = 5;
+  repeated int64 notify_gov_chain_ids = 6;
+  repeated GovChain available_chains = 7;
+}
+
+message StepFiveResponse {
+
+}
+
+message StepResponse {
+  oneof step {
+    StepOneResponse step_one = 1;
+    StepTwoResponse step_two = 2;
+    StepThreeResponse step_three = 3;
+    StepFourResponse step_four = 4;
+    StepFiveResponse step_five = 5;
+  }
+  uint32 num_steps = 6;
+  bool is_complete = 7;
+}
+
+message StepOneRequest {
+  bool is_validator = 1;
+}
+
+message StepTwoRequest {
+  repeated int64 validator_ids = 1;
+}
+
+message StepThreeRequest {
+  repeated string wallet_addresses = 1;
+}
+
+message StepFourRequest {
+  bool notify_funding = 1;
+  bool notify_staking = 2;
+  bool notify_gov_new_proposal = 3;
+  bool notify_gov_voting_end = 4;
+  bool notify_gov_voting_reminder = 5;
+  repeated int64 notify_gov_chain_ids = 6;
+}
+
+message SetupWebappChannel {
+}
+
+message SetupTelegramChannel {
+  int64 chat_id = 1;
+}
+
+message SetupDiscordChannel {
+  int64 channel_id = 1;
+}
+
+message StepFiveRequest {
+  oneof channel {
+    SetupWebappChannel webapp = 1;
+    SetupTelegramChannel telegram = 2;
+    SetupDiscordChannel discord = 3;
+  }
+}
+
+message FinishStepRequest {
+  oneof step {
+    StepOneRequest step_one = 1;
+    StepTwoRequest step_two = 2;
+    StepThreeRequest step_three = 3;
+    StepFourRequest step_four = 4;
+    StepFiveRequest step_five = 5;
+  }
+  bool go_to_next_step = 6;
+}
+
+message ValidateWalletRequest {
+  string address = 1;
+}
+
+message ValidateWalletResponse {
+  bool is_valid = 1;
+  bool is_supported = 2;
+  Wallet wallet = 3;
+}

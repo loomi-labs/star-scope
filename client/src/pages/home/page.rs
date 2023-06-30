@@ -1,15 +1,17 @@
 use sycamore::prelude::*;
 
 use crate::config::keys;
-use crate::utils::url::safe_navigate;
-use crate::AppRoutes;
+use crate::utils::url::navigate_launch_app;
+use crate::{AuthState};
 
 #[component]
 pub fn LaunchButton<G: Html>(cx: Scope) -> View<G> {
     view!(cx,
         button(class="rounded-full flex items-center justify-center text-sm lg:text-2xl px-4 py-2 h-10 lg:h-12 w-36 lg:w-64 hover:text-black \
                 transition-all bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to hover:from-primary-gradient-to hover:to-primary-gradient-from",
-                on:click=move |_| safe_navigate(cx, AppRoutes::Login)) {
+                on:click=move |_| {
+                    navigate_launch_app(cx)
+                }) {
             span(class="") {
                 "Launch App"
             }

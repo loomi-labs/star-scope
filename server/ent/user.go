@@ -35,6 +35,8 @@ type User struct {
 	WalletAddress string `json:"wallet_address,omitempty"`
 	// LastLoginTime holds the value of the "last_login_time" field.
 	LastLoginTime *time.Time `json:"last_login_time,omitempty"`
+	// IsSetupComplete holds the value of the "is_setup_complete" field.
+	IsSetupComplete bool `json:"is_setup_complete,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -47,9 +49,11 @@ type UserEdges struct {
 	EventListeners []*EventListener `json:"event_listeners,omitempty"`
 	// CommChannels holds the value of the comm_channels edge.
 	CommChannels []*CommChannel `json:"comm_channels,omitempty"`
+	// Setup holds the value of the setup edge.
+	Setup []*UserSetup `json:"setup,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // EventListenersOrErr returns the EventListeners value or an error if the edge
@@ -70,11 +74,22 @@ func (e UserEdges) CommChannelsOrErr() ([]*CommChannel, error) {
 	return nil, &NotLoadedError{edge: "comm_channels"}
 }
 
+// SetupOrErr returns the Setup value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SetupOrErr() ([]*UserSetup, error) {
+	if e.loadedTypes[2] {
+		return e.Setup, nil
+	}
+	return nil, &NotLoadedError{edge: "setup"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldIsSetupComplete:
+			values[i] = new(sql.NullBool)
 		case user.FieldID, user.FieldTelegramUserID, user.FieldDiscordUserID:
 			values[i] = new(sql.NullInt64)
 		case user.FieldRole, user.FieldTelegramUsername, user.FieldDiscordUsername, user.FieldWalletAddress:
@@ -157,6 +172,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				u.LastLoginTime = new(time.Time)
 				*u.LastLoginTime = value.Time
 			}
+		case user.FieldIsSetupComplete:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_setup_complete", values[i])
+			} else if value.Valid {
+				u.IsSetupComplete = value.Bool
+			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -178,6 +199,11 @@ func (u *User) QueryEventListeners() *EventListenerQuery {
 // QueryCommChannels queries the "comm_channels" edge of the User entity.
 func (u *User) QueryCommChannels() *CommChannelQuery {
 	return NewUserClient(u.config).QueryCommChannels(u)
+}
+
+// QuerySetup queries the "setup" edge of the User entity.
+func (u *User) QuerySetup() *UserSetupQuery {
+	return NewUserClient(u.config).QuerySetup(u)
 }
 
 // Update returns a builder for updating this User.
@@ -231,6 +257,9 @@ func (u *User) String() string {
 		builder.WriteString("last_login_time=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("is_setup_complete=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsSetupComplete))
 	builder.WriteByte(')')
 	return builder.String()
 }

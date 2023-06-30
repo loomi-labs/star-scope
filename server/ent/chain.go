@@ -61,9 +61,11 @@ type ChainEdges struct {
 	ContractProposals []*ContractProposal `json:"contract_proposals,omitempty"`
 	// Validators holds the value of the validators edge.
 	Validators []*Validator `json:"validators,omitempty"`
+	// SelectedBySetups holds the value of the selected_by_setups edge.
+	SelectedBySetups []*UserSetup `json:"selected_by_setups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // EventListenersOrErr returns the EventListeners value or an error if the edge
@@ -100,6 +102,15 @@ func (e ChainEdges) ValidatorsOrErr() ([]*Validator, error) {
 		return e.Validators, nil
 	}
 	return nil, &NotLoadedError{edge: "validators"}
+}
+
+// SelectedBySetupsOrErr returns the SelectedBySetups value or an error if the edge
+// was not loaded in eager-loading.
+func (e ChainEdges) SelectedBySetupsOrErr() ([]*UserSetup, error) {
+	if e.loadedTypes[4] {
+		return e.SelectedBySetups, nil
+	}
+	return nil, &NotLoadedError{edge: "selected_by_setups"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -251,6 +262,11 @@ func (c *Chain) QueryContractProposals() *ContractProposalQuery {
 // QueryValidators queries the "validators" edge of the Chain entity.
 func (c *Chain) QueryValidators() *ValidatorQuery {
 	return NewChainClient(c.config).QueryValidators(c)
+}
+
+// QuerySelectedBySetups queries the "selected_by_setups" edge of the Chain entity.
+func (c *Chain) QuerySelectedBySetups() *UserSetupQuery {
+	return NewChainClient(c.config).QuerySelectedBySetups(c)
 }
 
 // Update returns a builder for updating this Chain.

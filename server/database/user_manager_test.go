@@ -19,7 +19,7 @@ func TestUserManager_UpdateConnectDiscord(t *testing.T) {
 
 	ctx := context.Background()
 	user1, err := withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.User, error) {
-		return m.CreateByWalletAddress(ctx, tx, "cosmos15tp8np2adn47620394wm0jt4sjpw95t8um08xe")
+		return m.CreateByWalletAddress(ctx, "cosmos15tp8np2adn47620394wm0jt4sjpw95t8um08xe")
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +63,7 @@ func TestUserManager_UpdateConnectTelegram(t *testing.T) {
 
 	ctx := context.Background()
 	user1, err := withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.User, error) {
-		return m.CreateByWalletAddress(ctx, tx, "cosmos15tp8np2adn47620394wm0jt4sjpw95t8um08xe")
+		return m.CreateByWalletAddress(ctx, "cosmos15tp8np2adn47620394wm0jt4sjpw95t8um08xe")
 	})
 	if err != nil {
 		t.Fatal(err)

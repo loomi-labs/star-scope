@@ -22,6 +22,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -44,6 +45,8 @@ type Client struct {
 	Proposal *ProposalClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserSetup is the client for interacting with the UserSetup builders.
+	UserSetup *UserSetupClient
 	// Validator is the client for interacting with the Validator builders.
 	Validator *ValidatorClient
 }
@@ -66,6 +69,7 @@ func (c *Client) init() {
 	c.EventListener = NewEventListenerClient(c.config)
 	c.Proposal = NewProposalClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.UserSetup = NewUserSetupClient(c.config)
 	c.Validator = NewValidatorClient(c.config)
 }
 
@@ -156,6 +160,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		EventListener:    NewEventListenerClient(cfg),
 		Proposal:         NewProposalClient(cfg),
 		User:             NewUserClient(cfg),
+		UserSetup:        NewUserSetupClient(cfg),
 		Validator:        NewValidatorClient(cfg),
 	}, nil
 }
@@ -183,6 +188,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		EventListener:    NewEventListenerClient(cfg),
 		Proposal:         NewProposalClient(cfg),
 		User:             NewUserClient(cfg),
+		UserSetup:        NewUserSetupClient(cfg),
 		Validator:        NewValidatorClient(cfg),
 	}, nil
 }
@@ -214,7 +220,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Chain, c.CommChannel, c.ContractProposal, c.Event, c.EventListener,
-		c.Proposal, c.User, c.Validator,
+		c.Proposal, c.User, c.UserSetup, c.Validator,
 	} {
 		n.Use(hooks...)
 	}
@@ -225,7 +231,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Chain, c.CommChannel, c.ContractProposal, c.Event, c.EventListener,
-		c.Proposal, c.User, c.Validator,
+		c.Proposal, c.User, c.UserSetup, c.Validator,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -248,6 +254,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Proposal.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *UserSetupMutation:
+		return c.UserSetup.mutate(ctx, m)
 	case *ValidatorMutation:
 		return c.Validator.mutate(ctx, m)
 	default:
@@ -405,6 +413,22 @@ func (c *ChainClient) QueryValidators(ch *Chain) *ValidatorQuery {
 			sqlgraph.From(chain.Table, chain.FieldID, id),
 			sqlgraph.To(validator.Table, validator.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chain.ValidatorsTable, chain.ValidatorsColumn),
+		)
+		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySelectedBySetups queries the selected_by_setups edge of a Chain.
+func (c *ChainClient) QuerySelectedBySetups(ch *Chain) *UserSetupQuery {
+	query := (&UserSetupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ch.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chain.Table, chain.FieldID, id),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, chain.SelectedBySetupsTable, chain.SelectedBySetupsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(ch.driver.Dialect(), step)
 		return fromV, nil
@@ -1296,6 +1320,22 @@ func (c *UserClient) QueryCommChannels(u *User) *CommChannelQuery {
 	return query
 }
 
+// QuerySetup queries the setup edge of a User.
+func (c *UserClient) QuerySetup(u *User) *UserSetupQuery {
+	query := (&UserSetupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SetupTable, user.SetupColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1318,6 +1358,172 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 		return (&UserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown User mutation op: %q", m.Op())
+	}
+}
+
+// UserSetupClient is a client for the UserSetup schema.
+type UserSetupClient struct {
+	config
+}
+
+// NewUserSetupClient returns a client for the UserSetup from the given config.
+func NewUserSetupClient(c config) *UserSetupClient {
+	return &UserSetupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `usersetup.Hooks(f(g(h())))`.
+func (c *UserSetupClient) Use(hooks ...Hook) {
+	c.hooks.UserSetup = append(c.hooks.UserSetup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `usersetup.Intercept(f(g(h())))`.
+func (c *UserSetupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserSetup = append(c.inters.UserSetup, interceptors...)
+}
+
+// Create returns a builder for creating a UserSetup entity.
+func (c *UserSetupClient) Create() *UserSetupCreate {
+	mutation := newUserSetupMutation(c.config, OpCreate)
+	return &UserSetupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserSetup entities.
+func (c *UserSetupClient) CreateBulk(builders ...*UserSetupCreate) *UserSetupCreateBulk {
+	return &UserSetupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserSetup.
+func (c *UserSetupClient) Update() *UserSetupUpdate {
+	mutation := newUserSetupMutation(c.config, OpUpdate)
+	return &UserSetupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserSetupClient) UpdateOne(us *UserSetup) *UserSetupUpdateOne {
+	mutation := newUserSetupMutation(c.config, OpUpdateOne, withUserSetup(us))
+	return &UserSetupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserSetupClient) UpdateOneID(id int) *UserSetupUpdateOne {
+	mutation := newUserSetupMutation(c.config, OpUpdateOne, withUserSetupID(id))
+	return &UserSetupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserSetup.
+func (c *UserSetupClient) Delete() *UserSetupDelete {
+	mutation := newUserSetupMutation(c.config, OpDelete)
+	return &UserSetupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserSetupClient) DeleteOne(us *UserSetup) *UserSetupDeleteOne {
+	return c.DeleteOneID(us.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserSetupClient) DeleteOneID(id int) *UserSetupDeleteOne {
+	builder := c.Delete().Where(usersetup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserSetupDeleteOne{builder}
+}
+
+// Query returns a query builder for UserSetup.
+func (c *UserSetupClient) Query() *UserSetupQuery {
+	return &UserSetupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserSetup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserSetup entity by its id.
+func (c *UserSetupClient) Get(ctx context.Context, id int) (*UserSetup, error) {
+	return c.Query().Where(usersetup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserSetupClient) GetX(ctx context.Context, id int) *UserSetup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a UserSetup.
+func (c *UserSetupClient) QueryUser(us *UserSetup) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := us.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usersetup.Table, usersetup.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, usersetup.UserTable, usersetup.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(us.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySelectedValidators queries the selected_validators edge of a UserSetup.
+func (c *UserSetupClient) QuerySelectedValidators(us *UserSetup) *ValidatorQuery {
+	query := (&ValidatorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := us.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usersetup.Table, usersetup.FieldID, id),
+			sqlgraph.To(validator.Table, validator.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, usersetup.SelectedValidatorsTable, usersetup.SelectedValidatorsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(us.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySelectedChains queries the selected_chains edge of a UserSetup.
+func (c *UserSetupClient) QuerySelectedChains(us *UserSetup) *ChainQuery {
+	query := (&ChainClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := us.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usersetup.Table, usersetup.FieldID, id),
+			sqlgraph.To(chain.Table, chain.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, usersetup.SelectedChainsTable, usersetup.SelectedChainsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(us.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserSetupClient) Hooks() []Hook {
+	return c.hooks.UserSetup
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserSetupClient) Interceptors() []Interceptor {
+	return c.inters.UserSetup
+}
+
+func (c *UserSetupClient) mutate(ctx context.Context, m *UserSetupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserSetupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserSetupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserSetupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserSetupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserSetup mutation op: %q", m.Op())
 	}
 }
 
@@ -1430,6 +1636,22 @@ func (c *ValidatorClient) QueryChain(v *Validator) *ChainQuery {
 	return query
 }
 
+// QuerySelectedBySetups queries the selected_by_setups edge of a Validator.
+func (c *ValidatorClient) QuerySelectedBySetups(v *Validator) *UserSetupQuery {
+	query := (&UserSetupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := v.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(validator.Table, validator.FieldID, id),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, validator.SelectedBySetupsTable, validator.SelectedBySetupsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ValidatorClient) Hooks() []Hook {
 	return c.hooks.Validator
@@ -1459,10 +1681,10 @@ func (c *ValidatorClient) mutate(ctx context.Context, m *ValidatorMutation) (Val
 type (
 	hooks struct {
 		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, User,
-		Validator []ent.Hook
+		UserSetup, Validator []ent.Hook
 	}
 	inters struct {
 		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, User,
-		Validator []ent.Interceptor
+		UserSetup, Validator []ent.Interceptor
 	}
 )

@@ -101,7 +101,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"FUNDING", "STAKING", "DEX", "GOVERNANCE"}},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"DEX", "GOVERNANCE", "FUNDING", "STAKING"}},
 		{Name: "chain_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "contract_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "wallet_event", Type: field.TypeBytes, Nullable: true},
@@ -158,7 +158,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -187,6 +187,7 @@ var (
 		{Name: "discord_username", Type: field.TypeString, Nullable: true},
 		{Name: "wallet_address", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "last_login_time", Type: field.TypeTime, Nullable: true},
+		{Name: "is_setup_complete", Type: field.TypeBool, Default: false},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -208,6 +209,35 @@ var (
 				Name:    "user_wallet_address",
 				Unique:  false,
 				Columns: []*schema.Column{UsersColumns[8]},
+			},
+		},
+	}
+	// UserSetupsColumns holds the columns for the "user_setups" table.
+	UserSetupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "step", Type: field.TypeEnum, Enums: []string{"one", "two", "three", "four", "five"}, Default: "one"},
+		{Name: "is_validator", Type: field.TypeBool, Default: false},
+		{Name: "wallet_addresses", Type: field.TypeJSON, Nullable: true},
+		{Name: "notify_funding", Type: field.TypeBool, Default: true},
+		{Name: "notify_staking", Type: field.TypeBool, Default: true},
+		{Name: "notify_gov_new_proposal", Type: field.TypeBool, Default: true},
+		{Name: "notify_gov_voting_end", Type: field.TypeBool, Default: false},
+		{Name: "notify_gov_voting_reminder", Type: field.TypeBool, Default: false},
+		{Name: "user_setup", Type: field.TypeInt, Nullable: true},
+	}
+	// UserSetupsTable holds the schema information for the "user_setups" table.
+	UserSetupsTable = &schema.Table{
+		Name:       "user_setups",
+		Columns:    UserSetupsColumns,
+		PrimaryKey: []*schema.Column{UserSetupsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_setups_users_setup",
+				Columns:    []*schema.Column{UserSetupsColumns[11]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -271,6 +301,31 @@ var (
 				Name:    "validator_operator_address_chain_validators",
 				Unique:  true,
 				Columns: []*schema.Column{ValidatorsColumns[3], ValidatorsColumns[8]},
+			},
+		},
+	}
+	// ChainSelectedBySetupsColumns holds the columns for the "chain_selected_by_setups" table.
+	ChainSelectedBySetupsColumns = []*schema.Column{
+		{Name: "chain_id", Type: field.TypeInt},
+		{Name: "user_setup_id", Type: field.TypeInt},
+	}
+	// ChainSelectedBySetupsTable holds the schema information for the "chain_selected_by_setups" table.
+	ChainSelectedBySetupsTable = &schema.Table{
+		Name:       "chain_selected_by_setups",
+		Columns:    ChainSelectedBySetupsColumns,
+		PrimaryKey: []*schema.Column{ChainSelectedBySetupsColumns[0], ChainSelectedBySetupsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "chain_selected_by_setups_chain_id",
+				Columns:    []*schema.Column{ChainSelectedBySetupsColumns[0]},
+				RefColumns: []*schema.Column{ChainsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "chain_selected_by_setups_user_setup_id",
+				Columns:    []*schema.Column{ChainSelectedBySetupsColumns[1]},
+				RefColumns: []*schema.Column{UserSetupsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -349,6 +404,31 @@ var (
 			},
 		},
 	}
+	// ValidatorSelectedBySetupsColumns holds the columns for the "validator_selected_by_setups" table.
+	ValidatorSelectedBySetupsColumns = []*schema.Column{
+		{Name: "validator_id", Type: field.TypeInt},
+		{Name: "user_setup_id", Type: field.TypeInt},
+	}
+	// ValidatorSelectedBySetupsTable holds the schema information for the "validator_selected_by_setups" table.
+	ValidatorSelectedBySetupsTable = &schema.Table{
+		Name:       "validator_selected_by_setups",
+		Columns:    ValidatorSelectedBySetupsColumns,
+		PrimaryKey: []*schema.Column{ValidatorSelectedBySetupsColumns[0], ValidatorSelectedBySetupsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "validator_selected_by_setups_validator_id",
+				Columns:    []*schema.Column{ValidatorSelectedBySetupsColumns[0]},
+				RefColumns: []*schema.Column{ValidatorsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "validator_selected_by_setups_user_setup_id",
+				Columns:    []*schema.Column{ValidatorSelectedBySetupsColumns[1]},
+				RefColumns: []*schema.Column{UserSetupsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ChainsTable,
@@ -358,10 +438,13 @@ var (
 		EventListenersTable,
 		ProposalsTable,
 		UsersTable,
+		UserSetupsTable,
 		ValidatorsTable,
+		ChainSelectedBySetupsTable,
 		CommChannelEventListenersTable,
 		UserEventListenersTable,
 		UserCommChannelsTable,
+		ValidatorSelectedBySetupsTable,
 	}
 )
 
@@ -370,11 +453,16 @@ func init() {
 	EventsTable.ForeignKeys[0].RefTable = EventListenersTable
 	EventListenersTable.ForeignKeys[0].RefTable = ChainsTable
 	ProposalsTable.ForeignKeys[0].RefTable = ChainsTable
+	UserSetupsTable.ForeignKeys[0].RefTable = UsersTable
 	ValidatorsTable.ForeignKeys[0].RefTable = ChainsTable
+	ChainSelectedBySetupsTable.ForeignKeys[0].RefTable = ChainsTable
+	ChainSelectedBySetupsTable.ForeignKeys[1].RefTable = UserSetupsTable
 	CommChannelEventListenersTable.ForeignKeys[0].RefTable = CommChannelsTable
 	CommChannelEventListenersTable.ForeignKeys[1].RefTable = EventListenersTable
 	UserEventListenersTable.ForeignKeys[0].RefTable = UsersTable
 	UserEventListenersTable.ForeignKeys[1].RefTable = EventListenersTable
 	UserCommChannelsTable.ForeignKeys[0].RefTable = UsersTable
 	UserCommChannelsTable.ForeignKeys[1].RefTable = CommChannelsTable
+	ValidatorSelectedBySetupsTable.ForeignKeys[0].RefTable = ValidatorsTable
+	ValidatorSelectedBySetupsTable.ForeignKeys[1].RefTable = UserSetupsTable
 }

@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/commchannel"
@@ -18,7 +17,6 @@ import (
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"strings"
 	"time"
 )
 
@@ -220,89 +218,6 @@ func (m *EventListenerManager) QuerySubscriptionsCountForDiscordChannel(ctx cont
 		log.Sugar.Errorf("Could not count subscriptions for discord channel: %v", err)
 	}
 	return cnt
-}
-
-func getWalletEvents(entChain *ent.Chain) []eventlistener.DataType {
-	dt := []eventlistener.DataType{
-		eventlistener.DataTypeWalletEvent_CoinReceived,
-	}
-	if strings.Contains(entChain.Path, "neutron") {
-		dt = append(dt, eventlistener.DataTypeWalletEvent_NeutronTokenVesting)
-	} else {
-		dt = append(dt, eventlistener.DataTypeWalletEvent_Unstake)
-		dt = append(dt, eventlistener.DataTypeWalletEvent_Voted)
-		dt = append(dt, eventlistener.DataTypeWalletEvent_VoteReminder)
-	}
-	if strings.Contains(entChain.Path, "osmosis") {
-		dt = append(dt, eventlistener.DataTypeWalletEvent_OsmosisPoolUnlock)
-	}
-	return dt
-}
-
-func getChainEvents(entChain *ent.Chain) []eventlistener.DataType {
-	var dt []eventlistener.DataType
-	if strings.Contains(entChain.Path, "neutron") {
-	} else {
-		dt = append(dt, eventlistener.DataTypeChainEvent_GovernanceProposal_Ongoing)
-		dt = append(dt, eventlistener.DataTypeChainEvent_GovernanceProposal_Finished)
-		dt = append(dt, eventlistener.DataTypeChainEvent_ValidatorOutOfActiveSet)
-	}
-	return dt
-}
-
-func getContractEvents(entChain *ent.Chain) []eventlistener.DataType {
-	var dt []eventlistener.DataType
-	if strings.Contains(entChain.Path, "neutron") {
-		dt = append(dt, eventlistener.DataTypeContractEvent_ContractGovernanceProposal_Ongoing)
-		dt = append(dt, eventlistener.DataTypeContractEvent_ContractGovernanceProposal_Finished)
-	}
-	return dt
-}
-
-func (m *EventListenerManager) CreateBulk(
-	ctx context.Context,
-	tx *ent.Tx,
-	entUser *ent.User,
-	entChains []*ent.Chain,
-	mainAddress string,
-) ([]*ent.EventListener, error) {
-	var bulk []*ent.EventListenerCreate
-	for _, entChain := range entChains {
-		walletAddress, err := common.ConvertWithOtherPrefix(mainAddress, entChain.Bech32Prefix)
-		if err != nil {
-			return nil, err
-		}
-		for _, dt := range getWalletEvents(entChain) {
-			bulk = append(bulk, tx.EventListener.
-				Create().
-				SetChain(entChain).
-				AddUsers(entUser).
-				SetWalletAddress(walletAddress).
-				SetDataType(dt))
-		}
-		for _, dt := range getChainEvents(entChain) {
-			bulk = append(bulk, tx.EventListener.
-				Create().
-				SetChain(entChain).
-				AddUsers(entUser).
-				SetDataType(dt))
-		}
-		for _, dt := range getContractEvents(entChain) {
-			bulk = append(bulk, tx.EventListener.
-				Create().
-				SetChain(entChain).
-				AddUsers(entUser).
-				SetDataType(dt))
-		}
-	}
-	el, err := tx.EventListener.
-		CreateBulk(bulk...).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerCreated)
-	return el, nil
 }
 
 func (m *EventListenerManager) UpdateAddChainEvent(

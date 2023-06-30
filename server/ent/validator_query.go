@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,18 +13,20 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/predicate"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
 // ValidatorQuery is the builder for querying Validator entities.
 type ValidatorQuery struct {
 	config
-	ctx        *QueryContext
-	order      []validator.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Validator
-	withChain  *ChainQuery
-	withFKs    bool
+	ctx                  *QueryContext
+	order                []validator.OrderOption
+	inters               []Interceptor
+	predicates           []predicate.Validator
+	withChain            *ChainQuery
+	withSelectedBySetups *UserSetupQuery
+	withFKs              bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +78,28 @@ func (vq *ValidatorQuery) QueryChain() *ChainQuery {
 			sqlgraph.From(validator.Table, validator.FieldID, selector),
 			sqlgraph.To(chain.Table, chain.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, validator.ChainTable, validator.ChainColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(vq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySelectedBySetups chains the current query on the "selected_by_setups" edge.
+func (vq *ValidatorQuery) QuerySelectedBySetups() *UserSetupQuery {
+	query := (&UserSetupClient{config: vq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := vq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := vq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(validator.Table, validator.FieldID, selector),
+			sqlgraph.To(usersetup.Table, usersetup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, validator.SelectedBySetupsTable, validator.SelectedBySetupsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(vq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +294,13 @@ func (vq *ValidatorQuery) Clone() *ValidatorQuery {
 		return nil
 	}
 	return &ValidatorQuery{
-		config:     vq.config,
-		ctx:        vq.ctx.Clone(),
-		order:      append([]validator.OrderOption{}, vq.order...),
-		inters:     append([]Interceptor{}, vq.inters...),
-		predicates: append([]predicate.Validator{}, vq.predicates...),
-		withChain:  vq.withChain.Clone(),
+		config:               vq.config,
+		ctx:                  vq.ctx.Clone(),
+		order:                append([]validator.OrderOption{}, vq.order...),
+		inters:               append([]Interceptor{}, vq.inters...),
+		predicates:           append([]predicate.Validator{}, vq.predicates...),
+		withChain:            vq.withChain.Clone(),
+		withSelectedBySetups: vq.withSelectedBySetups.Clone(),
 		// clone intermediate query.
 		sql:  vq.sql.Clone(),
 		path: vq.path,
@@ -289,6 +315,17 @@ func (vq *ValidatorQuery) WithChain(opts ...func(*ChainQuery)) *ValidatorQuery {
 		opt(query)
 	}
 	vq.withChain = query
+	return vq
+}
+
+// WithSelectedBySetups tells the query-builder to eager-load the nodes that are connected to
+// the "selected_by_setups" edge. The optional arguments are used to configure the query builder of the edge.
+func (vq *ValidatorQuery) WithSelectedBySetups(opts ...func(*UserSetupQuery)) *ValidatorQuery {
+	query := (&UserSetupClient{config: vq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	vq.withSelectedBySetups = query
 	return vq
 }
 
@@ -371,8 +408,9 @@ func (vq *ValidatorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Va
 		nodes       = []*Validator{}
 		withFKs     = vq.withFKs
 		_spec       = vq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			vq.withChain != nil,
+			vq.withSelectedBySetups != nil,
 		}
 	)
 	if vq.withChain != nil {
@@ -402,6 +440,13 @@ func (vq *ValidatorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Va
 	if query := vq.withChain; query != nil {
 		if err := vq.loadChain(ctx, query, nodes, nil,
 			func(n *Validator, e *Chain) { n.Edges.Chain = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := vq.withSelectedBySetups; query != nil {
+		if err := vq.loadSelectedBySetups(ctx, query, nodes,
+			func(n *Validator) { n.Edges.SelectedBySetups = []*UserSetup{} },
+			func(n *Validator, e *UserSetup) { n.Edges.SelectedBySetups = append(n.Edges.SelectedBySetups, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -436,6 +481,67 @@ func (vq *ValidatorQuery) loadChain(ctx context.Context, query *ChainQuery, node
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (vq *ValidatorQuery) loadSelectedBySetups(ctx context.Context, query *UserSetupQuery, nodes []*Validator, init func(*Validator), assign func(*Validator, *UserSetup)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Validator)
+	nids := make(map[int]map[*Validator]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(validator.SelectedBySetupsTable)
+		s.Join(joinT).On(s.C(usersetup.FieldID), joinT.C(validator.SelectedBySetupsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(validator.SelectedBySetupsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(validator.SelectedBySetupsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Validator]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*UserSetup](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "selected_by_setups" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
 		}
 	}
 	return nil

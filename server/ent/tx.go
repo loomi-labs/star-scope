@@ -26,6 +26,8 @@ type Tx struct {
 	Proposal *ProposalClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserSetup is the client for interacting with the UserSetup builders.
+	UserSetup *UserSetupClient
 	// Validator is the client for interacting with the Validator builders.
 	Validator *ValidatorClient
 
@@ -166,6 +168,7 @@ func (tx *Tx) init() {
 	tx.EventListener = NewEventListenerClient(tx.config)
 	tx.Proposal = NewProposalClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.UserSetup = NewUserSetupClient(tx.config)
 	tx.Validator = NewValidatorClient(tx.config)
 }
 

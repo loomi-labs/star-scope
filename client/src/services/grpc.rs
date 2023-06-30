@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use crate::config::keys;
+use crate::types::protobuf::grpc::user_setup_service_client::UserSetupServiceClient;
 use grpc_web_client::Client;
 use tonic::metadata::MetadataValue;
 use tonic::Request;
@@ -48,6 +49,10 @@ impl GrpcClient {
 
     pub fn get_user_service(&self) -> UserServiceClient<Client> {
         UserServiceClient::new(Client::new(self.endpoint_url.clone()))
+    }
+
+    pub fn get_user_setup_service(&self) -> UserSetupServiceClient<Client> {
+        UserSetupServiceClient::new(Client::new(self.endpoint_url.clone()))
     }
 
     pub fn get_event_service(&self) -> EventServiceClient<Client> {

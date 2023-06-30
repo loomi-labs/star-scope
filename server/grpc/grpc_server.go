@@ -89,6 +89,10 @@ func (s GRPCServer) Run() {
 		user.NewUserServiceHandler(s.dbManagers),
 		interceptors,
 	))
+	mux.Handle(userpbconnect.NewUserSetupServiceHandler(
+		user.NewUserSetupServiceHandler(s.dbManagers),
+		interceptors,
+	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
 		event.NewEventServiceHandler(s.dbManagers, kafka.NewKafka(s.dbManagers, kafkaBrokers)),
 		interceptors,

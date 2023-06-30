@@ -51,7 +51,7 @@ pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String) -> View<G> {
                 p(class="text-sm text-black") { (msg.message) }
             }
             button(
-                class="top-0 right-0 self-start",
+                class="top-0 right-0 self-start pointer-events-auto",
                 on:click=move |_| {
                     spawn_local_scoped(cx, async move {
                         stop();

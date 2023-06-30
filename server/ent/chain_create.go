@@ -14,6 +14,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -230,6 +231,21 @@ func (cc *ChainCreate) AddValidators(v ...*Validator) *ChainCreate {
 		ids[i] = v[i].ID
 	}
 	return cc.AddValidatorIDs(ids...)
+}
+
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (cc *ChainCreate) AddSelectedBySetupIDs(ids ...int) *ChainCreate {
+	cc.mutation.AddSelectedBySetupIDs(ids...)
+	return cc
+}
+
+// AddSelectedBySetups adds the "selected_by_setups" edges to the UserSetup entity.
+func (cc *ChainCreate) AddSelectedBySetups(u ...*UserSetup) *ChainCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return cc.AddSelectedBySetupIDs(ids...)
 }
 
 // Mutation returns the ChainMutation object of the builder.
@@ -484,6 +500,22 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(validator.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.SelectedBySetupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   chain.SelectedBySetupsTable,
+			Columns: chain.SelectedBySetupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

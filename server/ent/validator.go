@@ -43,9 +43,11 @@ type Validator struct {
 type ValidatorEdges struct {
 	// Chain holds the value of the chain edge.
 	Chain *Chain `json:"chain,omitempty"`
+	// SelectedBySetups holds the value of the selected_by_setups edge.
+	SelectedBySetups []*UserSetup `json:"selected_by_setups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // ChainOrErr returns the Chain value or an error if the edge
@@ -59,6 +61,15 @@ func (e ValidatorEdges) ChainOrErr() (*Chain, error) {
 		return e.Chain, nil
 	}
 	return nil, &NotLoadedError{edge: "chain"}
+}
+
+// SelectedBySetupsOrErr returns the SelectedBySetups value or an error if the edge
+// was not loaded in eager-loading.
+func (e ValidatorEdges) SelectedBySetupsOrErr() ([]*UserSetup, error) {
+	if e.loadedTypes[1] {
+		return e.SelectedBySetups, nil
+	}
+	return nil, &NotLoadedError{edge: "selected_by_setups"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -162,6 +173,11 @@ func (v *Validator) Value(name string) (ent.Value, error) {
 // QueryChain queries the "chain" edge of the Validator entity.
 func (v *Validator) QueryChain() *ChainQuery {
 	return NewValidatorClient(v.config).QueryChain(v)
+}
+
+// QuerySelectedBySetups queries the "selected_by_setups" edge of the Validator entity.
+func (v *Validator) QuerySelectedBySetups() *UserSetupQuery {
+	return NewValidatorClient(v.config).QuerySelectedBySetups(v)
 }
 
 // Update returns a builder for updating this Validator.

@@ -6,6 +6,7 @@ import (
 )
 
 var (
-	UnknownErr      = status.Error(codes.Unknown, "Unknown error occurred")
-	UserNotFoundErr = status.Errorf(codes.NotFound, "user not found")
+	UnknownErr         = status.Error(codes.Unknown, "Unknown error occurred")
+	InvalidArgumentErr = status.Error(codes.InvalidArgument, "Invalid argument")
+	UserNotFoundErr    = status.Errorf(codes.NotFound, "user not found")
 )

@@ -21,6 +21,7 @@ message User {
   string name = 2;
   bool has_discord = 3;
   bool has_telegram = 4;
+  bool is_setup_complete = 5;
 }
 
 message DiscordChannel {

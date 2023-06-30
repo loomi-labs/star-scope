@@ -162,38 +162,54 @@ type UserServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(UserServiceGetUserProcedure, connect_go.NewUnaryHandler(
+	userServiceGetUserHandler := connect_go.NewUnaryHandler(
 		UserServiceGetUserProcedure,
 		svc.GetUser,
 		opts...,
-	))
-	mux.Handle(UserServiceDeleteAccountProcedure, connect_go.NewUnaryHandler(
+	)
+	userServiceDeleteAccountHandler := connect_go.NewUnaryHandler(
 		UserServiceDeleteAccountProcedure,
 		svc.DeleteAccount,
 		opts...,
-	))
-	mux.Handle(UserServiceListDiscordChannelsProcedure, connect_go.NewUnaryHandler(
+	)
+	userServiceListDiscordChannelsHandler := connect_go.NewUnaryHandler(
 		UserServiceListDiscordChannelsProcedure,
 		svc.ListDiscordChannels,
 		opts...,
-	))
-	mux.Handle(UserServiceDeleteDiscordChannelProcedure, connect_go.NewUnaryHandler(
+	)
+	userServiceDeleteDiscordChannelHandler := connect_go.NewUnaryHandler(
 		UserServiceDeleteDiscordChannelProcedure,
 		svc.DeleteDiscordChannel,
 		opts...,
-	))
-	mux.Handle(UserServiceListTelegramChatsProcedure, connect_go.NewUnaryHandler(
+	)
+	userServiceListTelegramChatsHandler := connect_go.NewUnaryHandler(
 		UserServiceListTelegramChatsProcedure,
 		svc.ListTelegramChats,
 		opts...,
-	))
-	mux.Handle(UserServiceDeleteTelegramChatProcedure, connect_go.NewUnaryHandler(
+	)
+	userServiceDeleteTelegramChatHandler := connect_go.NewUnaryHandler(
 		UserServiceDeleteTelegramChatProcedure,
 		svc.DeleteTelegramChat,
 		opts...,
-	))
-	return "/starscope.grpc.UserService/", mux
+	)
+	return "/starscope.grpc.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case UserServiceGetUserProcedure:
+			userServiceGetUserHandler.ServeHTTP(w, r)
+		case UserServiceDeleteAccountProcedure:
+			userServiceDeleteAccountHandler.ServeHTTP(w, r)
+		case UserServiceListDiscordChannelsProcedure:
+			userServiceListDiscordChannelsHandler.ServeHTTP(w, r)
+		case UserServiceDeleteDiscordChannelProcedure:
+			userServiceDeleteDiscordChannelHandler.ServeHTTP(w, r)
+		case UserServiceListTelegramChatsProcedure:
+			userServiceListTelegramChatsHandler.ServeHTTP(w, r)
+		case UserServiceDeleteTelegramChatProcedure:
+			userServiceDeleteTelegramChatHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedUserServiceHandler returns CodeUnimplemented from all methods.

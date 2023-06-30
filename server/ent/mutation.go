@@ -21,6 +21,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/schema"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
 )
 
@@ -40,6 +41,7 @@ const (
 	TypeEventListener    = "EventListener"
 	TypeProposal         = "Proposal"
 	TypeUser             = "User"
+	TypeUserSetup        = "UserSetup"
 	TypeValidator        = "Validator"
 )
 
@@ -77,6 +79,9 @@ type ChainMutation struct {
 	validators                map[int]struct{}
 	removedvalidators         map[int]struct{}
 	clearedvalidators         bool
+	selected_by_setups        map[int]struct{}
+	removedselected_by_setups map[int]struct{}
+	clearedselected_by_setups bool
 	done                      bool
 	oldValue                  func(context.Context) (*Chain, error)
 	predicates                []predicate.Chain
@@ -920,6 +925,60 @@ func (m *ChainMutation) ResetValidators() {
 	m.removedvalidators = nil
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by ids.
+func (m *ChainMutation) AddSelectedBySetupIDs(ids ...int) {
+	if m.selected_by_setups == nil {
+		m.selected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.selected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSelectedBySetups clears the "selected_by_setups" edge to the UserSetup entity.
+func (m *ChainMutation) ClearSelectedBySetups() {
+	m.clearedselected_by_setups = true
+}
+
+// SelectedBySetupsCleared reports if the "selected_by_setups" edge to the UserSetup entity was cleared.
+func (m *ChainMutation) SelectedBySetupsCleared() bool {
+	return m.clearedselected_by_setups
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (m *ChainMutation) RemoveSelectedBySetupIDs(ids ...int) {
+	if m.removedselected_by_setups == nil {
+		m.removedselected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.selected_by_setups, ids[i])
+		m.removedselected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSelectedBySetups returns the removed IDs of the "selected_by_setups" edge to the UserSetup entity.
+func (m *ChainMutation) RemovedSelectedBySetupsIDs() (ids []int) {
+	for id := range m.removedselected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SelectedBySetupsIDs returns the "selected_by_setups" edge IDs in the mutation.
+func (m *ChainMutation) SelectedBySetupsIDs() (ids []int) {
+	for id := range m.selected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSelectedBySetups resets all changes to the "selected_by_setups" edge.
+func (m *ChainMutation) ResetSelectedBySetups() {
+	m.selected_by_setups = nil
+	m.clearedselected_by_setups = false
+	m.removedselected_by_setups = nil
+}
+
 // Where appends a list predicates to the ChainMutation builder.
 func (m *ChainMutation) Where(ps ...predicate.Chain) {
 	m.predicates = append(m.predicates, ps...)
@@ -1289,7 +1348,7 @@ func (m *ChainMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ChainMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.event_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1301,6 +1360,9 @@ func (m *ChainMutation) AddedEdges() []string {
 	}
 	if m.validators != nil {
 		edges = append(edges, chain.EdgeValidators)
+	}
+	if m.selected_by_setups != nil {
+		edges = append(edges, chain.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -1333,13 +1395,19 @@ func (m *ChainMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.selected_by_setups))
+		for id := range m.selected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ChainMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedevent_listeners != nil {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1351,6 +1419,9 @@ func (m *ChainMutation) RemovedEdges() []string {
 	}
 	if m.removedvalidators != nil {
 		edges = append(edges, chain.EdgeValidators)
+	}
+	if m.removedselected_by_setups != nil {
+		edges = append(edges, chain.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -1383,13 +1454,19 @@ func (m *ChainMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case chain.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.removedselected_by_setups))
+		for id := range m.removedselected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ChainMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedevent_listeners {
 		edges = append(edges, chain.EdgeEventListeners)
 	}
@@ -1401,6 +1478,9 @@ func (m *ChainMutation) ClearedEdges() []string {
 	}
 	if m.clearedvalidators {
 		edges = append(edges, chain.EdgeValidators)
+	}
+	if m.clearedselected_by_setups {
+		edges = append(edges, chain.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -1417,6 +1497,8 @@ func (m *ChainMutation) EdgeCleared(name string) bool {
 		return m.clearedcontract_proposals
 	case chain.EdgeValidators:
 		return m.clearedvalidators
+	case chain.EdgeSelectedBySetups:
+		return m.clearedselected_by_setups
 	}
 	return false
 }
@@ -1444,6 +1526,9 @@ func (m *ChainMutation) ResetEdge(name string) error {
 		return nil
 	case chain.EdgeValidators:
 		m.ResetValidators()
+		return nil
+	case chain.EdgeSelectedBySetups:
+		m.ResetSelectedBySetups()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain edge %s", name)
@@ -5845,6 +5930,7 @@ type UserMutation struct {
 	discord_username       *string
 	wallet_address         *string
 	last_login_time        *time.Time
+	is_setup_complete      *bool
 	clearedFields          map[string]struct{}
 	event_listeners        map[int]struct{}
 	removedevent_listeners map[int]struct{}
@@ -5852,6 +5938,9 @@ type UserMutation struct {
 	comm_channels          map[int]struct{}
 	removedcomm_channels   map[int]struct{}
 	clearedcomm_channels   bool
+	setup                  map[int]struct{}
+	removedsetup           map[int]struct{}
+	clearedsetup           bool
 	done                   bool
 	oldValue               func(context.Context) (*User, error)
 	predicates             []predicate.User
@@ -6399,6 +6488,42 @@ func (m *UserMutation) ResetLastLoginTime() {
 	delete(m.clearedFields, user.FieldLastLoginTime)
 }
 
+// SetIsSetupComplete sets the "is_setup_complete" field.
+func (m *UserMutation) SetIsSetupComplete(b bool) {
+	m.is_setup_complete = &b
+}
+
+// IsSetupComplete returns the value of the "is_setup_complete" field in the mutation.
+func (m *UserMutation) IsSetupComplete() (r bool, exists bool) {
+	v := m.is_setup_complete
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsSetupComplete returns the old "is_setup_complete" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldIsSetupComplete(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsSetupComplete is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsSetupComplete requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsSetupComplete: %w", err)
+	}
+	return oldValue.IsSetupComplete, nil
+}
+
+// ResetIsSetupComplete resets all changes to the "is_setup_complete" field.
+func (m *UserMutation) ResetIsSetupComplete() {
+	m.is_setup_complete = nil
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
 func (m *UserMutation) AddEventListenerIDs(ids ...int) {
 	if m.event_listeners == nil {
@@ -6507,6 +6632,60 @@ func (m *UserMutation) ResetCommChannels() {
 	m.removedcomm_channels = nil
 }
 
+// AddSetupIDs adds the "setup" edge to the UserSetup entity by ids.
+func (m *UserMutation) AddSetupIDs(ids ...int) {
+	if m.setup == nil {
+		m.setup = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.setup[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSetup clears the "setup" edge to the UserSetup entity.
+func (m *UserMutation) ClearSetup() {
+	m.clearedsetup = true
+}
+
+// SetupCleared reports if the "setup" edge to the UserSetup entity was cleared.
+func (m *UserMutation) SetupCleared() bool {
+	return m.clearedsetup
+}
+
+// RemoveSetupIDs removes the "setup" edge to the UserSetup entity by IDs.
+func (m *UserMutation) RemoveSetupIDs(ids ...int) {
+	if m.removedsetup == nil {
+		m.removedsetup = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.setup, ids[i])
+		m.removedsetup[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSetup returns the removed IDs of the "setup" edge to the UserSetup entity.
+func (m *UserMutation) RemovedSetupIDs() (ids []int) {
+	for id := range m.removedsetup {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SetupIDs returns the "setup" edge IDs in the mutation.
+func (m *UserMutation) SetupIDs() (ids []int) {
+	for id := range m.setup {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSetup resets all changes to the "setup" edge.
+func (m *UserMutation) ResetSetup() {
+	m.setup = nil
+	m.clearedsetup = false
+	m.removedsetup = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -6541,7 +6720,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.create_time != nil {
 		fields = append(fields, user.FieldCreateTime)
 	}
@@ -6569,6 +6748,9 @@ func (m *UserMutation) Fields() []string {
 	if m.last_login_time != nil {
 		fields = append(fields, user.FieldLastLoginTime)
 	}
+	if m.is_setup_complete != nil {
+		fields = append(fields, user.FieldIsSetupComplete)
+	}
 	return fields
 }
 
@@ -6595,6 +6777,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.WalletAddress()
 	case user.FieldLastLoginTime:
 		return m.LastLoginTime()
+	case user.FieldIsSetupComplete:
+		return m.IsSetupComplete()
 	}
 	return nil, false
 }
@@ -6622,6 +6806,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldWalletAddress(ctx)
 	case user.FieldLastLoginTime:
 		return m.OldLastLoginTime(ctx)
+	case user.FieldIsSetupComplete:
+		return m.OldIsSetupComplete(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -6693,6 +6879,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastLoginTime(v)
+		return nil
+	case user.FieldIsSetupComplete:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsSetupComplete(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -6836,18 +7029,24 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldLastLoginTime:
 		m.ResetLastLoginTime()
 		return nil
+	case user.FieldIsSetupComplete:
+		m.ResetIsSetupComplete()
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.event_listeners != nil {
 		edges = append(edges, user.EdgeEventListeners)
 	}
 	if m.comm_channels != nil {
 		edges = append(edges, user.EdgeCommChannels)
+	}
+	if m.setup != nil {
+		edges = append(edges, user.EdgeSetup)
 	}
 	return edges
 }
@@ -6868,18 +7067,27 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeSetup:
+		ids := make([]ent.Value, 0, len(m.setup))
+		for id := range m.setup {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedevent_listeners != nil {
 		edges = append(edges, user.EdgeEventListeners)
 	}
 	if m.removedcomm_channels != nil {
 		edges = append(edges, user.EdgeCommChannels)
+	}
+	if m.removedsetup != nil {
+		edges = append(edges, user.EdgeSetup)
 	}
 	return edges
 }
@@ -6900,18 +7108,27 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeSetup:
+		ids := make([]ent.Value, 0, len(m.removedsetup))
+		for id := range m.removedsetup {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedevent_listeners {
 		edges = append(edges, user.EdgeEventListeners)
 	}
 	if m.clearedcomm_channels {
 		edges = append(edges, user.EdgeCommChannels)
+	}
+	if m.clearedsetup {
+		edges = append(edges, user.EdgeSetup)
 	}
 	return edges
 }
@@ -6924,6 +7141,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedevent_listeners
 	case user.EdgeCommChannels:
 		return m.clearedcomm_channels
+	case user.EdgeSetup:
+		return m.clearedsetup
 	}
 	return false
 }
@@ -6946,8 +7165,1097 @@ func (m *UserMutation) ResetEdge(name string) error {
 	case user.EdgeCommChannels:
 		m.ResetCommChannels()
 		return nil
+	case user.EdgeSetup:
+		m.ResetSetup()
+		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// UserSetupMutation represents an operation that mutates the UserSetup nodes in the graph.
+type UserSetupMutation struct {
+	config
+	op                         Op
+	typ                        string
+	id                         *int
+	create_time                *time.Time
+	update_time                *time.Time
+	step                       *usersetup.Step
+	is_validator               *bool
+	wallet_addresses           *[]string
+	appendwallet_addresses     []string
+	notify_funding             *bool
+	notify_staking             *bool
+	notify_gov_new_proposal    *bool
+	notify_gov_voting_end      *bool
+	notify_gov_voting_reminder *bool
+	clearedFields              map[string]struct{}
+	user                       *int
+	cleareduser                bool
+	selected_validators        map[int]struct{}
+	removedselected_validators map[int]struct{}
+	clearedselected_validators bool
+	selected_chains            map[int]struct{}
+	removedselected_chains     map[int]struct{}
+	clearedselected_chains     bool
+	done                       bool
+	oldValue                   func(context.Context) (*UserSetup, error)
+	predicates                 []predicate.UserSetup
+}
+
+var _ ent.Mutation = (*UserSetupMutation)(nil)
+
+// usersetupOption allows management of the mutation configuration using functional options.
+type usersetupOption func(*UserSetupMutation)
+
+// newUserSetupMutation creates new mutation for the UserSetup entity.
+func newUserSetupMutation(c config, op Op, opts ...usersetupOption) *UserSetupMutation {
+	m := &UserSetupMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUserSetup,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserSetupID sets the ID field of the mutation.
+func withUserSetupID(id int) usersetupOption {
+	return func(m *UserSetupMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UserSetup
+		)
+		m.oldValue = func(ctx context.Context) (*UserSetup, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UserSetup.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUserSetup sets the old UserSetup of the mutation.
+func withUserSetup(node *UserSetup) usersetupOption {
+	return func(m *UserSetupMutation) {
+		m.oldValue = func(context.Context) (*UserSetup, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserSetupMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserSetupMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserSetupMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserSetupMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UserSetup.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *UserSetupMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *UserSetupMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *UserSetupMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *UserSetupMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *UserSetupMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *UserSetupMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetStep sets the "step" field.
+func (m *UserSetupMutation) SetStep(u usersetup.Step) {
+	m.step = &u
+}
+
+// Step returns the value of the "step" field in the mutation.
+func (m *UserSetupMutation) Step() (r usersetup.Step, exists bool) {
+	v := m.step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStep returns the old "step" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldStep(ctx context.Context) (v usersetup.Step, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStep is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStep requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStep: %w", err)
+	}
+	return oldValue.Step, nil
+}
+
+// ResetStep resets all changes to the "step" field.
+func (m *UserSetupMutation) ResetStep() {
+	m.step = nil
+}
+
+// SetIsValidator sets the "is_validator" field.
+func (m *UserSetupMutation) SetIsValidator(b bool) {
+	m.is_validator = &b
+}
+
+// IsValidator returns the value of the "is_validator" field in the mutation.
+func (m *UserSetupMutation) IsValidator() (r bool, exists bool) {
+	v := m.is_validator
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsValidator returns the old "is_validator" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldIsValidator(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsValidator is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsValidator requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsValidator: %w", err)
+	}
+	return oldValue.IsValidator, nil
+}
+
+// ResetIsValidator resets all changes to the "is_validator" field.
+func (m *UserSetupMutation) ResetIsValidator() {
+	m.is_validator = nil
+}
+
+// SetWalletAddresses sets the "wallet_addresses" field.
+func (m *UserSetupMutation) SetWalletAddresses(s []string) {
+	m.wallet_addresses = &s
+	m.appendwallet_addresses = nil
+}
+
+// WalletAddresses returns the value of the "wallet_addresses" field in the mutation.
+func (m *UserSetupMutation) WalletAddresses() (r []string, exists bool) {
+	v := m.wallet_addresses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWalletAddresses returns the old "wallet_addresses" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldWalletAddresses(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWalletAddresses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWalletAddresses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWalletAddresses: %w", err)
+	}
+	return oldValue.WalletAddresses, nil
+}
+
+// AppendWalletAddresses adds s to the "wallet_addresses" field.
+func (m *UserSetupMutation) AppendWalletAddresses(s []string) {
+	m.appendwallet_addresses = append(m.appendwallet_addresses, s...)
+}
+
+// AppendedWalletAddresses returns the list of values that were appended to the "wallet_addresses" field in this mutation.
+func (m *UserSetupMutation) AppendedWalletAddresses() ([]string, bool) {
+	if len(m.appendwallet_addresses) == 0 {
+		return nil, false
+	}
+	return m.appendwallet_addresses, true
+}
+
+// ClearWalletAddresses clears the value of the "wallet_addresses" field.
+func (m *UserSetupMutation) ClearWalletAddresses() {
+	m.wallet_addresses = nil
+	m.appendwallet_addresses = nil
+	m.clearedFields[usersetup.FieldWalletAddresses] = struct{}{}
+}
+
+// WalletAddressesCleared returns if the "wallet_addresses" field was cleared in this mutation.
+func (m *UserSetupMutation) WalletAddressesCleared() bool {
+	_, ok := m.clearedFields[usersetup.FieldWalletAddresses]
+	return ok
+}
+
+// ResetWalletAddresses resets all changes to the "wallet_addresses" field.
+func (m *UserSetupMutation) ResetWalletAddresses() {
+	m.wallet_addresses = nil
+	m.appendwallet_addresses = nil
+	delete(m.clearedFields, usersetup.FieldWalletAddresses)
+}
+
+// SetNotifyFunding sets the "notify_funding" field.
+func (m *UserSetupMutation) SetNotifyFunding(b bool) {
+	m.notify_funding = &b
+}
+
+// NotifyFunding returns the value of the "notify_funding" field in the mutation.
+func (m *UserSetupMutation) NotifyFunding() (r bool, exists bool) {
+	v := m.notify_funding
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotifyFunding returns the old "notify_funding" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldNotifyFunding(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotifyFunding is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotifyFunding requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotifyFunding: %w", err)
+	}
+	return oldValue.NotifyFunding, nil
+}
+
+// ResetNotifyFunding resets all changes to the "notify_funding" field.
+func (m *UserSetupMutation) ResetNotifyFunding() {
+	m.notify_funding = nil
+}
+
+// SetNotifyStaking sets the "notify_staking" field.
+func (m *UserSetupMutation) SetNotifyStaking(b bool) {
+	m.notify_staking = &b
+}
+
+// NotifyStaking returns the value of the "notify_staking" field in the mutation.
+func (m *UserSetupMutation) NotifyStaking() (r bool, exists bool) {
+	v := m.notify_staking
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotifyStaking returns the old "notify_staking" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldNotifyStaking(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotifyStaking is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotifyStaking requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotifyStaking: %w", err)
+	}
+	return oldValue.NotifyStaking, nil
+}
+
+// ResetNotifyStaking resets all changes to the "notify_staking" field.
+func (m *UserSetupMutation) ResetNotifyStaking() {
+	m.notify_staking = nil
+}
+
+// SetNotifyGovNewProposal sets the "notify_gov_new_proposal" field.
+func (m *UserSetupMutation) SetNotifyGovNewProposal(b bool) {
+	m.notify_gov_new_proposal = &b
+}
+
+// NotifyGovNewProposal returns the value of the "notify_gov_new_proposal" field in the mutation.
+func (m *UserSetupMutation) NotifyGovNewProposal() (r bool, exists bool) {
+	v := m.notify_gov_new_proposal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotifyGovNewProposal returns the old "notify_gov_new_proposal" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldNotifyGovNewProposal(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotifyGovNewProposal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotifyGovNewProposal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotifyGovNewProposal: %w", err)
+	}
+	return oldValue.NotifyGovNewProposal, nil
+}
+
+// ResetNotifyGovNewProposal resets all changes to the "notify_gov_new_proposal" field.
+func (m *UserSetupMutation) ResetNotifyGovNewProposal() {
+	m.notify_gov_new_proposal = nil
+}
+
+// SetNotifyGovVotingEnd sets the "notify_gov_voting_end" field.
+func (m *UserSetupMutation) SetNotifyGovVotingEnd(b bool) {
+	m.notify_gov_voting_end = &b
+}
+
+// NotifyGovVotingEnd returns the value of the "notify_gov_voting_end" field in the mutation.
+func (m *UserSetupMutation) NotifyGovVotingEnd() (r bool, exists bool) {
+	v := m.notify_gov_voting_end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotifyGovVotingEnd returns the old "notify_gov_voting_end" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldNotifyGovVotingEnd(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotifyGovVotingEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotifyGovVotingEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotifyGovVotingEnd: %w", err)
+	}
+	return oldValue.NotifyGovVotingEnd, nil
+}
+
+// ResetNotifyGovVotingEnd resets all changes to the "notify_gov_voting_end" field.
+func (m *UserSetupMutation) ResetNotifyGovVotingEnd() {
+	m.notify_gov_voting_end = nil
+}
+
+// SetNotifyGovVotingReminder sets the "notify_gov_voting_reminder" field.
+func (m *UserSetupMutation) SetNotifyGovVotingReminder(b bool) {
+	m.notify_gov_voting_reminder = &b
+}
+
+// NotifyGovVotingReminder returns the value of the "notify_gov_voting_reminder" field in the mutation.
+func (m *UserSetupMutation) NotifyGovVotingReminder() (r bool, exists bool) {
+	v := m.notify_gov_voting_reminder
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotifyGovVotingReminder returns the old "notify_gov_voting_reminder" field's value of the UserSetup entity.
+// If the UserSetup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSetupMutation) OldNotifyGovVotingReminder(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotifyGovVotingReminder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotifyGovVotingReminder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotifyGovVotingReminder: %w", err)
+	}
+	return oldValue.NotifyGovVotingReminder, nil
+}
+
+// ResetNotifyGovVotingReminder resets all changes to the "notify_gov_voting_reminder" field.
+func (m *UserSetupMutation) ResetNotifyGovVotingReminder() {
+	m.notify_gov_voting_reminder = nil
+}
+
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *UserSetupMutation) SetUserID(id int) {
+	m.user = &id
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *UserSetupMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *UserSetupMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserID returns the "user" edge ID in the mutation.
+func (m *UserSetupMutation) UserID() (id int, exists bool) {
+	if m.user != nil {
+		return *m.user, true
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *UserSetupMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *UserSetupMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// AddSelectedValidatorIDs adds the "selected_validators" edge to the Validator entity by ids.
+func (m *UserSetupMutation) AddSelectedValidatorIDs(ids ...int) {
+	if m.selected_validators == nil {
+		m.selected_validators = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.selected_validators[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSelectedValidators clears the "selected_validators" edge to the Validator entity.
+func (m *UserSetupMutation) ClearSelectedValidators() {
+	m.clearedselected_validators = true
+}
+
+// SelectedValidatorsCleared reports if the "selected_validators" edge to the Validator entity was cleared.
+func (m *UserSetupMutation) SelectedValidatorsCleared() bool {
+	return m.clearedselected_validators
+}
+
+// RemoveSelectedValidatorIDs removes the "selected_validators" edge to the Validator entity by IDs.
+func (m *UserSetupMutation) RemoveSelectedValidatorIDs(ids ...int) {
+	if m.removedselected_validators == nil {
+		m.removedselected_validators = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.selected_validators, ids[i])
+		m.removedselected_validators[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSelectedValidators returns the removed IDs of the "selected_validators" edge to the Validator entity.
+func (m *UserSetupMutation) RemovedSelectedValidatorsIDs() (ids []int) {
+	for id := range m.removedselected_validators {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SelectedValidatorsIDs returns the "selected_validators" edge IDs in the mutation.
+func (m *UserSetupMutation) SelectedValidatorsIDs() (ids []int) {
+	for id := range m.selected_validators {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSelectedValidators resets all changes to the "selected_validators" edge.
+func (m *UserSetupMutation) ResetSelectedValidators() {
+	m.selected_validators = nil
+	m.clearedselected_validators = false
+	m.removedselected_validators = nil
+}
+
+// AddSelectedChainIDs adds the "selected_chains" edge to the Chain entity by ids.
+func (m *UserSetupMutation) AddSelectedChainIDs(ids ...int) {
+	if m.selected_chains == nil {
+		m.selected_chains = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.selected_chains[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSelectedChains clears the "selected_chains" edge to the Chain entity.
+func (m *UserSetupMutation) ClearSelectedChains() {
+	m.clearedselected_chains = true
+}
+
+// SelectedChainsCleared reports if the "selected_chains" edge to the Chain entity was cleared.
+func (m *UserSetupMutation) SelectedChainsCleared() bool {
+	return m.clearedselected_chains
+}
+
+// RemoveSelectedChainIDs removes the "selected_chains" edge to the Chain entity by IDs.
+func (m *UserSetupMutation) RemoveSelectedChainIDs(ids ...int) {
+	if m.removedselected_chains == nil {
+		m.removedselected_chains = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.selected_chains, ids[i])
+		m.removedselected_chains[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSelectedChains returns the removed IDs of the "selected_chains" edge to the Chain entity.
+func (m *UserSetupMutation) RemovedSelectedChainsIDs() (ids []int) {
+	for id := range m.removedselected_chains {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SelectedChainsIDs returns the "selected_chains" edge IDs in the mutation.
+func (m *UserSetupMutation) SelectedChainsIDs() (ids []int) {
+	for id := range m.selected_chains {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSelectedChains resets all changes to the "selected_chains" edge.
+func (m *UserSetupMutation) ResetSelectedChains() {
+	m.selected_chains = nil
+	m.clearedselected_chains = false
+	m.removedselected_chains = nil
+}
+
+// Where appends a list predicates to the UserSetupMutation builder.
+func (m *UserSetupMutation) Where(ps ...predicate.UserSetup) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserSetupMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserSetupMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserSetup, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserSetupMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserSetupMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UserSetup).
+func (m *UserSetupMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserSetupMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.create_time != nil {
+		fields = append(fields, usersetup.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, usersetup.FieldUpdateTime)
+	}
+	if m.step != nil {
+		fields = append(fields, usersetup.FieldStep)
+	}
+	if m.is_validator != nil {
+		fields = append(fields, usersetup.FieldIsValidator)
+	}
+	if m.wallet_addresses != nil {
+		fields = append(fields, usersetup.FieldWalletAddresses)
+	}
+	if m.notify_funding != nil {
+		fields = append(fields, usersetup.FieldNotifyFunding)
+	}
+	if m.notify_staking != nil {
+		fields = append(fields, usersetup.FieldNotifyStaking)
+	}
+	if m.notify_gov_new_proposal != nil {
+		fields = append(fields, usersetup.FieldNotifyGovNewProposal)
+	}
+	if m.notify_gov_voting_end != nil {
+		fields = append(fields, usersetup.FieldNotifyGovVotingEnd)
+	}
+	if m.notify_gov_voting_reminder != nil {
+		fields = append(fields, usersetup.FieldNotifyGovVotingReminder)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserSetupMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case usersetup.FieldCreateTime:
+		return m.CreateTime()
+	case usersetup.FieldUpdateTime:
+		return m.UpdateTime()
+	case usersetup.FieldStep:
+		return m.Step()
+	case usersetup.FieldIsValidator:
+		return m.IsValidator()
+	case usersetup.FieldWalletAddresses:
+		return m.WalletAddresses()
+	case usersetup.FieldNotifyFunding:
+		return m.NotifyFunding()
+	case usersetup.FieldNotifyStaking:
+		return m.NotifyStaking()
+	case usersetup.FieldNotifyGovNewProposal:
+		return m.NotifyGovNewProposal()
+	case usersetup.FieldNotifyGovVotingEnd:
+		return m.NotifyGovVotingEnd()
+	case usersetup.FieldNotifyGovVotingReminder:
+		return m.NotifyGovVotingReminder()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserSetupMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case usersetup.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case usersetup.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case usersetup.FieldStep:
+		return m.OldStep(ctx)
+	case usersetup.FieldIsValidator:
+		return m.OldIsValidator(ctx)
+	case usersetup.FieldWalletAddresses:
+		return m.OldWalletAddresses(ctx)
+	case usersetup.FieldNotifyFunding:
+		return m.OldNotifyFunding(ctx)
+	case usersetup.FieldNotifyStaking:
+		return m.OldNotifyStaking(ctx)
+	case usersetup.FieldNotifyGovNewProposal:
+		return m.OldNotifyGovNewProposal(ctx)
+	case usersetup.FieldNotifyGovVotingEnd:
+		return m.OldNotifyGovVotingEnd(ctx)
+	case usersetup.FieldNotifyGovVotingReminder:
+		return m.OldNotifyGovVotingReminder(ctx)
+	}
+	return nil, fmt.Errorf("unknown UserSetup field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserSetupMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case usersetup.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case usersetup.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case usersetup.FieldStep:
+		v, ok := value.(usersetup.Step)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStep(v)
+		return nil
+	case usersetup.FieldIsValidator:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsValidator(v)
+		return nil
+	case usersetup.FieldWalletAddresses:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWalletAddresses(v)
+		return nil
+	case usersetup.FieldNotifyFunding:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotifyFunding(v)
+		return nil
+	case usersetup.FieldNotifyStaking:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotifyStaking(v)
+		return nil
+	case usersetup.FieldNotifyGovNewProposal:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotifyGovNewProposal(v)
+		return nil
+	case usersetup.FieldNotifyGovVotingEnd:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotifyGovVotingEnd(v)
+		return nil
+	case usersetup.FieldNotifyGovVotingReminder:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotifyGovVotingReminder(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserSetup field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserSetupMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserSetupMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserSetupMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown UserSetup numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserSetupMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(usersetup.FieldWalletAddresses) {
+		fields = append(fields, usersetup.FieldWalletAddresses)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserSetupMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserSetupMutation) ClearField(name string) error {
+	switch name {
+	case usersetup.FieldWalletAddresses:
+		m.ClearWalletAddresses()
+		return nil
+	}
+	return fmt.Errorf("unknown UserSetup nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserSetupMutation) ResetField(name string) error {
+	switch name {
+	case usersetup.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case usersetup.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case usersetup.FieldStep:
+		m.ResetStep()
+		return nil
+	case usersetup.FieldIsValidator:
+		m.ResetIsValidator()
+		return nil
+	case usersetup.FieldWalletAddresses:
+		m.ResetWalletAddresses()
+		return nil
+	case usersetup.FieldNotifyFunding:
+		m.ResetNotifyFunding()
+		return nil
+	case usersetup.FieldNotifyStaking:
+		m.ResetNotifyStaking()
+		return nil
+	case usersetup.FieldNotifyGovNewProposal:
+		m.ResetNotifyGovNewProposal()
+		return nil
+	case usersetup.FieldNotifyGovVotingEnd:
+		m.ResetNotifyGovVotingEnd()
+		return nil
+	case usersetup.FieldNotifyGovVotingReminder:
+		m.ResetNotifyGovVotingReminder()
+		return nil
+	}
+	return fmt.Errorf("unknown UserSetup field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserSetupMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.user != nil {
+		edges = append(edges, usersetup.EdgeUser)
+	}
+	if m.selected_validators != nil {
+		edges = append(edges, usersetup.EdgeSelectedValidators)
+	}
+	if m.selected_chains != nil {
+		edges = append(edges, usersetup.EdgeSelectedChains)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserSetupMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case usersetup.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case usersetup.EdgeSelectedValidators:
+		ids := make([]ent.Value, 0, len(m.selected_validators))
+		for id := range m.selected_validators {
+			ids = append(ids, id)
+		}
+		return ids
+	case usersetup.EdgeSelectedChains:
+		ids := make([]ent.Value, 0, len(m.selected_chains))
+		for id := range m.selected_chains {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserSetupMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.removedselected_validators != nil {
+		edges = append(edges, usersetup.EdgeSelectedValidators)
+	}
+	if m.removedselected_chains != nil {
+		edges = append(edges, usersetup.EdgeSelectedChains)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserSetupMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case usersetup.EdgeSelectedValidators:
+		ids := make([]ent.Value, 0, len(m.removedselected_validators))
+		for id := range m.removedselected_validators {
+			ids = append(ids, id)
+		}
+		return ids
+	case usersetup.EdgeSelectedChains:
+		ids := make([]ent.Value, 0, len(m.removedselected_chains))
+		for id := range m.removedselected_chains {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserSetupMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.cleareduser {
+		edges = append(edges, usersetup.EdgeUser)
+	}
+	if m.clearedselected_validators {
+		edges = append(edges, usersetup.EdgeSelectedValidators)
+	}
+	if m.clearedselected_chains {
+		edges = append(edges, usersetup.EdgeSelectedChains)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserSetupMutation) EdgeCleared(name string) bool {
+	switch name {
+	case usersetup.EdgeUser:
+		return m.cleareduser
+	case usersetup.EdgeSelectedValidators:
+		return m.clearedselected_validators
+	case usersetup.EdgeSelectedChains:
+		return m.clearedselected_chains
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserSetupMutation) ClearEdge(name string) error {
+	switch name {
+	case usersetup.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserSetup unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserSetupMutation) ResetEdge(name string) error {
+	switch name {
+	case usersetup.EdgeUser:
+		m.ResetUser()
+		return nil
+	case usersetup.EdgeSelectedValidators:
+		m.ResetSelectedValidators()
+		return nil
+	case usersetup.EdgeSelectedChains:
+		m.ResetSelectedChains()
+		return nil
+	}
+	return fmt.Errorf("unknown UserSetup edge %s", name)
 }
 
 // ValidatorMutation represents an operation that mutates the Validator nodes in the graph.
@@ -6967,6 +8275,9 @@ type ValidatorMutation struct {
 	clearedFields                  map[string]struct{}
 	chain                          *int
 	clearedchain                   bool
+	selected_by_setups             map[int]struct{}
+	removedselected_by_setups      map[int]struct{}
+	clearedselected_by_setups      bool
 	done                           bool
 	oldValue                       func(context.Context) (*Validator, error)
 	predicates                     []predicate.Validator
@@ -7408,6 +8719,60 @@ func (m *ValidatorMutation) ResetChain() {
 	m.clearedchain = false
 }
 
+// AddSelectedBySetupIDs adds the "selected_by_setups" edge to the UserSetup entity by ids.
+func (m *ValidatorMutation) AddSelectedBySetupIDs(ids ...int) {
+	if m.selected_by_setups == nil {
+		m.selected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.selected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSelectedBySetups clears the "selected_by_setups" edge to the UserSetup entity.
+func (m *ValidatorMutation) ClearSelectedBySetups() {
+	m.clearedselected_by_setups = true
+}
+
+// SelectedBySetupsCleared reports if the "selected_by_setups" edge to the UserSetup entity was cleared.
+func (m *ValidatorMutation) SelectedBySetupsCleared() bool {
+	return m.clearedselected_by_setups
+}
+
+// RemoveSelectedBySetupIDs removes the "selected_by_setups" edge to the UserSetup entity by IDs.
+func (m *ValidatorMutation) RemoveSelectedBySetupIDs(ids ...int) {
+	if m.removedselected_by_setups == nil {
+		m.removedselected_by_setups = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.selected_by_setups, ids[i])
+		m.removedselected_by_setups[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSelectedBySetups returns the removed IDs of the "selected_by_setups" edge to the UserSetup entity.
+func (m *ValidatorMutation) RemovedSelectedBySetupsIDs() (ids []int) {
+	for id := range m.removedselected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SelectedBySetupsIDs returns the "selected_by_setups" edge IDs in the mutation.
+func (m *ValidatorMutation) SelectedBySetupsIDs() (ids []int) {
+	for id := range m.selected_by_setups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSelectedBySetups resets all changes to the "selected_by_setups" edge.
+func (m *ValidatorMutation) ResetSelectedBySetups() {
+	m.selected_by_setups = nil
+	m.clearedselected_by_setups = false
+	m.removedselected_by_setups = nil
+}
+
 // Where appends a list predicates to the ValidatorMutation builder.
 func (m *ValidatorMutation) Where(ps ...predicate.Validator) {
 	m.predicates = append(m.predicates, ps...)
@@ -7673,9 +9038,12 @@ func (m *ValidatorMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ValidatorMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.chain != nil {
 		edges = append(edges, validator.EdgeChain)
+	}
+	if m.selected_by_setups != nil {
+		edges = append(edges, validator.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -7688,27 +9056,47 @@ func (m *ValidatorMutation) AddedIDs(name string) []ent.Value {
 		if id := m.chain; id != nil {
 			return []ent.Value{*id}
 		}
+	case validator.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.selected_by_setups))
+		for id := range m.selected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ValidatorMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removedselected_by_setups != nil {
+		edges = append(edges, validator.EdgeSelectedBySetups)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ValidatorMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case validator.EdgeSelectedBySetups:
+		ids := make([]ent.Value, 0, len(m.removedselected_by_setups))
+		for id := range m.removedselected_by_setups {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ValidatorMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedchain {
 		edges = append(edges, validator.EdgeChain)
+	}
+	if m.clearedselected_by_setups {
+		edges = append(edges, validator.EdgeSelectedBySetups)
 	}
 	return edges
 }
@@ -7719,6 +9107,8 @@ func (m *ValidatorMutation) EdgeCleared(name string) bool {
 	switch name {
 	case validator.EdgeChain:
 		return m.clearedchain
+	case validator.EdgeSelectedBySetups:
+		return m.clearedselected_by_setups
 	}
 	return false
 }
@@ -7740,6 +9130,9 @@ func (m *ValidatorMutation) ResetEdge(name string) error {
 	switch name {
 	case validator.EdgeChain:
 		m.ResetChain()
+		return nil
+	case validator.EdgeSelectedBySetups:
+		m.ResetSelectedBySetups()
 		return nil
 	}
 	return fmt.Errorf("unknown Validator edge %s", name)
