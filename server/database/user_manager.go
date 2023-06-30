@@ -3,13 +3,16 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/commchannel"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
+	"strings"
 	"time"
 )
 
@@ -135,19 +138,26 @@ func (m *UserManager) UpdateSetLoginDate(ctx context.Context, userId int) error 
 		Exec(ctx)
 }
 
-func (m *UserManager) CreateByWalletAddress(ctx context.Context, tx *ent.Tx, walletAddress string) (*ent.User, error) {
+func (m *UserManager) CreateByWalletAddress(ctx context.Context, walletAddress string) (*ent.User, error) {
 	log.Sugar.Debugf("CreateByWalletAddress: %s", walletAddress)
-	u, err := tx.User.
-		Create().
-		SetWalletAddress(walletAddress).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := tx.UserSetup.Create().SetUser(u).Exec(ctx); err != nil {
-		return nil, err
-	}
-	return u, nil
+	return withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.User, error) {
+		u, err := tx.User.
+			Create().
+			SetWalletAddress(walletAddress).
+			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+		err = tx.UserSetup.
+			Create().
+			SetUser(u).
+			SetWalletAddresses([]string{walletAddress}).
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return u, nil
+	})
 }
 
 func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *ent.Tx, u *ent.User, chatId int64, chatName string, isGroup bool) error {
@@ -570,17 +580,134 @@ func (m *UserManager) UpdateConnectTelegram(ctx context.Context, u *ent.User, da
 	return nil
 }
 
-func (m *UserManager) UpdateSetup(ctx context.Context, u *ent.User, query *ent.UserSetupUpdateOne, isCompleted bool) (*ent.UserSetup, error) {
+func getWalletEvents(entChain *ent.Chain, setup *ent.UserSetup) []eventlistener.DataType {
+	var dt []eventlistener.DataType
+	if setup.NotifyFunding {
+		dt = append(dt, eventlistener.DataTypeWalletEvent_CoinReceived)
+		if strings.Contains(entChain.Path, "neutron") {
+			dt = append(dt, eventlistener.DataTypeWalletEvent_NeutronTokenVesting)
+		}
+		if strings.Contains(entChain.Path, "osmosis") {
+			dt = append(dt, eventlistener.DataTypeWalletEvent_OsmosisPoolUnlock)
+		}
+	}
+	if setup.NotifyStaking {
+		if !strings.Contains(entChain.Path, "neutron") {
+			dt = append(dt, eventlistener.DataTypeWalletEvent_Unstake)
+		}
+	}
+	if setup.NotifyGovVotingReminder {
+		dt = append(dt, eventlistener.DataTypeWalletEvent_Voted)
+		dt = append(dt, eventlistener.DataTypeWalletEvent_VoteReminder)
+	}
+	return dt
+}
+
+func getChainEvents(entChain *ent.Chain, setup *ent.UserSetup) []eventlistener.DataType {
+	var dt []eventlistener.DataType
+	if strings.Contains(entChain.Path, "neutron") {
+		return dt
+	}
+	if setup.NotifyGovNewProposal {
+		dt = append(dt, eventlistener.DataTypeChainEvent_GovernanceProposal_Ongoing)
+	}
+	if setup.NotifyGovVotingEnd {
+		dt = append(dt, eventlistener.DataTypeChainEvent_GovernanceProposal_Finished)
+	}
+	if setup.NotifyStaking {
+		dt = append(dt, eventlistener.DataTypeChainEvent_ValidatorOutOfActiveSet)
+	}
+	return dt
+}
+
+func getContractEvents(entChain *ent.Chain) []eventlistener.DataType {
+	var dt []eventlistener.DataType
+	if strings.Contains(entChain.Path, "neutron") {
+		dt = append(dt, eventlistener.DataTypeContractEvent_ContractGovernanceProposal_Ongoing)
+		dt = append(dt, eventlistener.DataTypeContractEvent_ContractGovernanceProposal_Finished)
+	}
+	return dt
+}
+
+func (m *UserManager) createEventListeners(
+	ctx context.Context,
+	tx *ent.Tx,
+	setup *ent.UserSetup,
+	entUser *ent.User,
+	chains []*ent.Chain,
+	selectedChains []*ent.Chain,
+) error {
+	var bulk []*ent.EventListenerCreate
+	for _, entChain := range chains {
+		for _, address := range setup.WalletAddresses {
+			if common.IsBech32AddressFromChain(address, entChain.Bech32Prefix) {
+				for _, dt := range getWalletEvents(entChain, setup) {
+					bulk = append(bulk, tx.EventListener.
+						Create().
+						SetChain(entChain).
+						AddUsers(entUser).
+						SetWalletAddress(address).
+						SetDataType(dt))
+				}
+				break
+			}
+		}
+	}
+	for _, entChain := range selectedChains {
+		for _, dt := range getChainEvents(entChain, setup) {
+			bulk = append(bulk, tx.EventListener.
+				Create().
+				SetChain(entChain).
+				AddUsers(entUser).
+				SetDataType(dt))
+		}
+		for _, dt := range getContractEvents(entChain) {
+			bulk = append(bulk, tx.EventListener.
+				Create().
+				SetChain(entChain).
+				AddUsers(entUser).
+				SetDataType(dt))
+		}
+	}
+	return tx.EventListener.
+		CreateBulk(bulk...).
+		Exec(ctx)
+}
+
+func (m *UserManager) UpdateSetup(ctx context.Context, u *ent.User, query *ent.UserSetupUpdateOne, isCompleted bool, availableChains []*ent.Chain) (*ent.UserSetup, error) {
 	if isCompleted {
-		return withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.UserSetup, error) {
-			err := tx.User.UpdateOne(u).
+		result, err := withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.UserSetup, error) {
+			err := tx.User.
+				UpdateOne(u).
 				SetIsSetupComplete(true).
 				Exec(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return query.Save(ctx)
+
+			setup, err := query.Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			selectedChains, err := setup.
+				QuerySelectedChains().
+				All(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			err = m.createEventListeners(ctx, tx, setup, u, availableChains, selectedChains)
+			if err != nil {
+				return nil, err
+			}
+			return setup, nil
 		})
+		if err != nil {
+			return nil, err
+		}
+		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerCreated)
+		return result, nil
 	}
 	return query.Save(ctx)
 }

@@ -114,23 +114,33 @@ type UserSetupServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewUserSetupServiceHandler(svc UserSetupServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(UserSetupServiceGetStepProcedure, connect_go.NewUnaryHandler(
+	userSetupServiceGetStepHandler := connect_go.NewUnaryHandler(
 		UserSetupServiceGetStepProcedure,
 		svc.GetStep,
 		opts...,
-	))
-	mux.Handle(UserSetupServiceFinishStepProcedure, connect_go.NewUnaryHandler(
+	)
+	userSetupServiceFinishStepHandler := connect_go.NewUnaryHandler(
 		UserSetupServiceFinishStepProcedure,
 		svc.FinishStep,
 		opts...,
-	))
-	mux.Handle(UserSetupServiceValidateWalletProcedure, connect_go.NewUnaryHandler(
+	)
+	userSetupServiceValidateWalletHandler := connect_go.NewUnaryHandler(
 		UserSetupServiceValidateWalletProcedure,
 		svc.ValidateWallet,
 		opts...,
-	))
-	return "/starscope.grpc.UserSetupService/", mux
+	)
+	return "/starscope.grpc.UserSetupService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case UserSetupServiceGetStepProcedure:
+			userSetupServiceGetStepHandler.ServeHTTP(w, r)
+		case UserSetupServiceFinishStepProcedure:
+			userSetupServiceFinishStepHandler.ServeHTTP(w, r)
+		case UserSetupServiceValidateWalletProcedure:
+			userSetupServiceValidateWalletHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedUserSetupServiceHandler returns CodeUnimplemented from all methods.

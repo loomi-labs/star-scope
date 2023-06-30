@@ -30,11 +30,11 @@ func (UserSetup) Fields() []ent.Field {
 		field.Strings("wallet_addresses").
 			Optional(),
 		field.Bool("notify_funding").
-			Default(false),
+			Default(true),
 		field.Bool("notify_staking").
-			Default(false),
+			Default(true),
 		field.Bool("notify_gov_new_proposal").
-			Default(false),
+			Default(true),
 		field.Bool("notify_gov_voting_end").
 			Default(false),
 		field.Bool("notify_gov_voting_reminder").

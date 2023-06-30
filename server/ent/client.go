@@ -1328,7 +1328,7 @@ func (c *UserClient) QuerySetup(u *User) *UserSetupQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(usersetup.Table, usersetup.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, user.SetupTable, user.SetupColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SetupTable, user.SetupColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -1462,7 +1462,7 @@ func (c *UserSetupClient) QueryUser(us *UserSetup) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usersetup.Table, usersetup.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, usersetup.UserTable, usersetup.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, usersetup.UserTable, usersetup.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(us.driver.Dialect(), step)
 		return fromV, nil

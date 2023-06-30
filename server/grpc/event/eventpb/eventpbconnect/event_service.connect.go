@@ -161,38 +161,54 @@ type EventServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewEventServiceHandler(svc EventServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(EventServiceEventStreamProcedure, connect_go.NewServerStreamHandler(
+	eventServiceEventStreamHandler := connect_go.NewServerStreamHandler(
 		EventServiceEventStreamProcedure,
 		svc.EventStream,
 		opts...,
-	))
-	mux.Handle(EventServiceListEventsProcedure, connect_go.NewUnaryHandler(
+	)
+	eventServiceListEventsHandler := connect_go.NewUnaryHandler(
 		EventServiceListEventsProcedure,
 		svc.ListEvents,
 		opts...,
-	))
-	mux.Handle(EventServiceListChainsProcedure, connect_go.NewUnaryHandler(
+	)
+	eventServiceListChainsHandler := connect_go.NewUnaryHandler(
 		EventServiceListChainsProcedure,
 		svc.ListChains,
 		opts...,
-	))
-	mux.Handle(EventServiceListEventsCountProcedure, connect_go.NewUnaryHandler(
+	)
+	eventServiceListEventsCountHandler := connect_go.NewUnaryHandler(
 		EventServiceListEventsCountProcedure,
 		svc.ListEventsCount,
 		opts...,
-	))
-	mux.Handle(EventServiceMarkEventReadProcedure, connect_go.NewUnaryHandler(
+	)
+	eventServiceMarkEventReadHandler := connect_go.NewUnaryHandler(
 		EventServiceMarkEventReadProcedure,
 		svc.MarkEventRead,
 		opts...,
-	))
-	mux.Handle(EventServiceGetWelcomeMessageProcedure, connect_go.NewUnaryHandler(
+	)
+	eventServiceGetWelcomeMessageHandler := connect_go.NewUnaryHandler(
 		EventServiceGetWelcomeMessageProcedure,
 		svc.GetWelcomeMessage,
 		opts...,
-	))
-	return "/starscope.grpc.EventService/", mux
+	)
+	return "/starscope.grpc.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case EventServiceEventStreamProcedure:
+			eventServiceEventStreamHandler.ServeHTTP(w, r)
+		case EventServiceListEventsProcedure:
+			eventServiceListEventsHandler.ServeHTTP(w, r)
+		case EventServiceListChainsProcedure:
+			eventServiceListChainsHandler.ServeHTTP(w, r)
+		case EventServiceListEventsCountProcedure:
+			eventServiceListEventsCountHandler.ServeHTTP(w, r)
+		case EventServiceMarkEventReadProcedure:
+			eventServiceMarkEventReadHandler.ServeHTTP(w, r)
+		case EventServiceGetWelcomeMessageProcedure:
+			eventServiceGetWelcomeMessageHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedEventServiceHandler returns CodeUnimplemented from all methods.

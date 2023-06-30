@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -52,7 +53,9 @@ func (User) Edges() []ent.Edge {
 		edge.To("event_listeners", EventListener.Type),
 		edge.To("comm_channels", CommChannel.Type),
 		edge.To("setup", UserSetup.Type).
-			Unique(),
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }
 

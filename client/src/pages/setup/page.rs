@@ -4,6 +4,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
 use crate::components::search::{SearchEntity, Searchable};
+use crate::utils::url::{safe_navigate, navigate_launch_app};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
@@ -15,8 +16,8 @@ use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{
     StepFive, StepFour, StepOne, StepThree, StepTwo,
 };
-use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest, GovChain};
-use crate::{Services, InfoLevel};
+use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest, GovChain, User};
+use crate::{Services, InfoLevel, AppState};
 
 #[derive(Debug, Clone)]
 struct SetupState {
@@ -546,7 +547,7 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
 
     view! {cx,
         ProgressBar(step=StepFive(step))
-        p(class=DESCRIPTION_CLASS) {"Choose where to receive notifications"}
+        p(class=DESCRIPTION_CLASS) {"Choose your notification channel"}
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Finish"}
@@ -574,6 +575,24 @@ fn handle_setup_step_response(cx: Scope, response: Result<StepResponse, Status>)
                 match response.num_steps.try_into() {
                     Ok(num_steps) => setup_state.num_steps.set(Some(num_steps)),
                     Err(err) => create_message(cx, "Error", err.to_string(), InfoLevel::Error),
+                }
+                if response.is_complete {
+                    let app_state = use_context::<AppState>(cx);
+                    if let Some(user) = app_state.user.get_untracked().as_ref().clone() {
+                        let new_user = User {
+                            is_setup_complete: true,
+                            ..user
+                        };
+                        app_state.user.set(Some(new_user));
+                        navigate_launch_app(cx)
+                    } else {
+                        create_message(
+                            cx,
+                            "User not found",
+                            "User status unknown",
+                            InfoLevel::Error,
+                        );
+                    }
                 }
                 setup_state.step.set(Some(step));
             }

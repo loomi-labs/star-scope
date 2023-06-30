@@ -10,7 +10,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/loomi-labs/star-scope/ent/user"
-	"github.com/loomi-labs/star-scope/ent/usersetup"
 )
 
 // User is the model entity for the User schema.
@@ -51,7 +50,7 @@ type UserEdges struct {
 	// CommChannels holds the value of the comm_channels edge.
 	CommChannels []*CommChannel `json:"comm_channels,omitempty"`
 	// Setup holds the value of the setup edge.
-	Setup *UserSetup `json:"setup,omitempty"`
+	Setup []*UserSetup `json:"setup,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
@@ -76,13 +75,9 @@ func (e UserEdges) CommChannelsOrErr() ([]*CommChannel, error) {
 }
 
 // SetupOrErr returns the Setup value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e UserEdges) SetupOrErr() (*UserSetup, error) {
+// was not loaded in eager-loading.
+func (e UserEdges) SetupOrErr() ([]*UserSetup, error) {
 	if e.loadedTypes[2] {
-		if e.Setup == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: usersetup.Label}
-		}
 		return e.Setup, nil
 	}
 	return nil, &NotLoadedError{edge: "setup"}

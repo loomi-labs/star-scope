@@ -219,10 +219,17 @@ func ByCommChannels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// BySetupField orders the results by setup field.
-func BySetupField(field string, opts ...sql.OrderTermOption) OrderOption {
+// BySetupCount orders the results by setup count.
+func BySetupCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newSetupStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newSetupStep(), opts...)
+	}
+}
+
+// BySetup orders the results by setup terms.
+func BySetup(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSetupStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newEventListenersStep() *sqlgraph.Step {
@@ -243,6 +250,6 @@ func newSetupStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SetupInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, SetupTable, SetupColumn),
+		sqlgraph.Edge(sqlgraph.O2M, false, SetupTable, SetupColumn),
 	)
 }

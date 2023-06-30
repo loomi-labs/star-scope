@@ -193,23 +193,19 @@ func (uc *UserCreate) AddCommChannels(c ...*CommChannel) *UserCreate {
 	return uc.AddCommChannelIDs(ids...)
 }
 
-// SetSetupID sets the "setup" edge to the UserSetup entity by ID.
-func (uc *UserCreate) SetSetupID(id int) *UserCreate {
-	uc.mutation.SetSetupID(id)
+// AddSetupIDs adds the "setup" edge to the UserSetup entity by IDs.
+func (uc *UserCreate) AddSetupIDs(ids ...int) *UserCreate {
+	uc.mutation.AddSetupIDs(ids...)
 	return uc
 }
 
-// SetNillableSetupID sets the "setup" edge to the UserSetup entity by ID if the given value is not nil.
-func (uc *UserCreate) SetNillableSetupID(id *int) *UserCreate {
-	if id != nil {
-		uc = uc.SetSetupID(*id)
+// AddSetup adds the "setup" edges to the UserSetup entity.
+func (uc *UserCreate) AddSetup(u ...*UserSetup) *UserCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uc
-}
-
-// SetSetup sets the "setup" edge to the UserSetup entity.
-func (uc *UserCreate) SetSetup(u *UserSetup) *UserCreate {
-	return uc.SetSetupID(u.ID)
+	return uc.AddSetupIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -384,7 +380,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if nodes := uc.mutation.SetupIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.SetupTable,
 			Columns: []string{user.SetupColumn},

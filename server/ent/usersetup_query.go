@@ -79,7 +79,7 @@ func (usq *UserSetupQuery) QueryUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usersetup.Table, usersetup.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, usersetup.UserTable, usersetup.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, usersetup.UserTable, usersetup.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(usq.driver.Dialect(), step)
 		return fromU, nil

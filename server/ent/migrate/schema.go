@@ -101,7 +101,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"GOVERNANCE", "FUNDING", "STAKING", "DEX"}},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"DEX", "GOVERNANCE", "FUNDING", "STAKING"}},
 		{Name: "chain_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "contract_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "wallet_event", Type: field.TypeBytes, Nullable: true},
@@ -158,7 +158,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -220,12 +220,12 @@ var (
 		{Name: "step", Type: field.TypeEnum, Enums: []string{"one", "two", "three", "four", "five"}, Default: "one"},
 		{Name: "is_validator", Type: field.TypeBool, Default: false},
 		{Name: "wallet_addresses", Type: field.TypeJSON, Nullable: true},
-		{Name: "notify_funding", Type: field.TypeBool, Default: false},
-		{Name: "notify_staking", Type: field.TypeBool, Default: false},
-		{Name: "notify_gov_new_proposal", Type: field.TypeBool, Default: false},
+		{Name: "notify_funding", Type: field.TypeBool, Default: true},
+		{Name: "notify_staking", Type: field.TypeBool, Default: true},
+		{Name: "notify_gov_new_proposal", Type: field.TypeBool, Default: true},
 		{Name: "notify_gov_voting_end", Type: field.TypeBool, Default: false},
 		{Name: "notify_gov_voting_reminder", Type: field.TypeBool, Default: false},
-		{Name: "user_setup", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "user_setup", Type: field.TypeInt, Nullable: true},
 	}
 	// UserSetupsTable holds the schema information for the "user_setups" table.
 	UserSetupsTable = &schema.Table{
@@ -237,7 +237,7 @@ var (
 				Symbol:     "user_setups_users_setup",
 				Columns:    []*schema.Column{UserSetupsColumns[11]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}

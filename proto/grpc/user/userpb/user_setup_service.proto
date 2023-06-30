@@ -70,13 +70,14 @@ message StepFiveResponse {
 
 message StepResponse {
   oneof step {
-      StepOneResponse step_one = 1;
-      StepTwoResponse step_two = 2;
-      StepThreeResponse step_three = 3;
-      StepFourResponse step_four = 4;
-      StepFiveResponse step_five = 5;
+    StepOneResponse step_one = 1;
+    StepTwoResponse step_two = 2;
+    StepThreeResponse step_three = 3;
+    StepFourResponse step_four = 4;
+    StepFiveResponse step_five = 5;
   }
   uint32 num_steps = 6;
+  bool is_complete = 7;
 }
 
 message StepOneRequest {
@@ -100,17 +101,32 @@ message StepFourRequest {
   repeated int64 notify_gov_chain_ids = 6;
 }
 
-message StepFiveRequest {
+message SetupWebappChannel {
+}
 
+message SetupTelegramChannel {
+  int64 chat_id = 1;
+}
+
+message SetupDiscordChannel {
+  int64 channel_id = 1;
+}
+
+message StepFiveRequest {
+  oneof channel {
+    SetupWebappChannel webapp = 1;
+    SetupTelegramChannel telegram = 2;
+    SetupDiscordChannel discord = 3;
+  }
 }
 
 message FinishStepRequest {
   oneof step {
-      StepOneRequest step_one = 1;
-      StepTwoRequest step_two = 2;
-      StepThreeRequest step_three = 3;
-      StepFourRequest step_four = 4;
-      StepFiveRequest step_five = 5;
+    StepOneRequest step_one = 1;
+    StepTwoRequest step_two = 2;
+    StepThreeRequest step_three = 3;
+    StepFourRequest step_four = 4;
+    StepFiveRequest step_five = 5;
   }
   bool go_to_next_step = 6;
 }

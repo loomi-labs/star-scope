@@ -5938,7 +5938,8 @@ type UserMutation struct {
 	comm_channels          map[int]struct{}
 	removedcomm_channels   map[int]struct{}
 	clearedcomm_channels   bool
-	setup                  *int
+	setup                  map[int]struct{}
+	removedsetup           map[int]struct{}
 	clearedsetup           bool
 	done                   bool
 	oldValue               func(context.Context) (*User, error)
@@ -6631,9 +6632,14 @@ func (m *UserMutation) ResetCommChannels() {
 	m.removedcomm_channels = nil
 }
 
-// SetSetupID sets the "setup" edge to the UserSetup entity by id.
-func (m *UserMutation) SetSetupID(id int) {
-	m.setup = &id
+// AddSetupIDs adds the "setup" edge to the UserSetup entity by ids.
+func (m *UserMutation) AddSetupIDs(ids ...int) {
+	if m.setup == nil {
+		m.setup = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.setup[ids[i]] = struct{}{}
+	}
 }
 
 // ClearSetup clears the "setup" edge to the UserSetup entity.
@@ -6646,20 +6652,29 @@ func (m *UserMutation) SetupCleared() bool {
 	return m.clearedsetup
 }
 
-// SetupID returns the "setup" edge ID in the mutation.
-func (m *UserMutation) SetupID() (id int, exists bool) {
-	if m.setup != nil {
-		return *m.setup, true
+// RemoveSetupIDs removes the "setup" edge to the UserSetup entity by IDs.
+func (m *UserMutation) RemoveSetupIDs(ids ...int) {
+	if m.removedsetup == nil {
+		m.removedsetup = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.setup, ids[i])
+		m.removedsetup[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSetup returns the removed IDs of the "setup" edge to the UserSetup entity.
+func (m *UserMutation) RemovedSetupIDs() (ids []int) {
+	for id := range m.removedsetup {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // SetupIDs returns the "setup" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// SetupID instead. It exists only for internal usage by the builders.
 func (m *UserMutation) SetupIDs() (ids []int) {
-	if id := m.setup; id != nil {
-		ids = append(ids, *id)
+	for id := range m.setup {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -6668,6 +6683,7 @@ func (m *UserMutation) SetupIDs() (ids []int) {
 func (m *UserMutation) ResetSetup() {
 	m.setup = nil
 	m.clearedsetup = false
+	m.removedsetup = nil
 }
 
 // Where appends a list predicates to the UserMutation builder.
@@ -7052,9 +7068,11 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case user.EdgeSetup:
-		if id := m.setup; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.setup))
+		for id := range m.setup {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -7067,6 +7085,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedcomm_channels != nil {
 		edges = append(edges, user.EdgeCommChannels)
+	}
+	if m.removedsetup != nil {
+		edges = append(edges, user.EdgeSetup)
 	}
 	return edges
 }
@@ -7084,6 +7105,12 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	case user.EdgeCommChannels:
 		ids := make([]ent.Value, 0, len(m.removedcomm_channels))
 		for id := range m.removedcomm_channels {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeSetup:
+		ids := make([]ent.Value, 0, len(m.removedsetup))
+		for id := range m.removedsetup {
 			ids = append(ids, id)
 		}
 		return ids
@@ -7124,9 +7151,6 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
 	switch name {
-	case user.EdgeSetup:
-		m.ClearSetup()
-		return nil
 	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }

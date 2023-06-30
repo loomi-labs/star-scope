@@ -229,23 +229,19 @@ func (uu *UserUpdate) AddCommChannels(c ...*CommChannel) *UserUpdate {
 	return uu.AddCommChannelIDs(ids...)
 }
 
-// SetSetupID sets the "setup" edge to the UserSetup entity by ID.
-func (uu *UserUpdate) SetSetupID(id int) *UserUpdate {
-	uu.mutation.SetSetupID(id)
+// AddSetupIDs adds the "setup" edge to the UserSetup entity by IDs.
+func (uu *UserUpdate) AddSetupIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddSetupIDs(ids...)
 	return uu
 }
 
-// SetNillableSetupID sets the "setup" edge to the UserSetup entity by ID if the given value is not nil.
-func (uu *UserUpdate) SetNillableSetupID(id *int) *UserUpdate {
-	if id != nil {
-		uu = uu.SetSetupID(*id)
+// AddSetup adds the "setup" edges to the UserSetup entity.
+func (uu *UserUpdate) AddSetup(u ...*UserSetup) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uu
-}
-
-// SetSetup sets the "setup" edge to the UserSetup entity.
-func (uu *UserUpdate) SetSetup(u *UserSetup) *UserUpdate {
-	return uu.SetSetupID(u.ID)
+	return uu.AddSetupIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -295,10 +291,25 @@ func (uu *UserUpdate) RemoveCommChannels(c ...*CommChannel) *UserUpdate {
 	return uu.RemoveCommChannelIDs(ids...)
 }
 
-// ClearSetup clears the "setup" edge to the UserSetup entity.
+// ClearSetup clears all "setup" edges to the UserSetup entity.
 func (uu *UserUpdate) ClearSetup() *UserUpdate {
 	uu.mutation.ClearSetup()
 	return uu
+}
+
+// RemoveSetupIDs removes the "setup" edge to UserSetup entities by IDs.
+func (uu *UserUpdate) RemoveSetupIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveSetupIDs(ids...)
+	return uu
+}
+
+// RemoveSetup removes "setup" edges to UserSetup entities.
+func (uu *UserUpdate) RemoveSetup(u ...*UserSetup) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveSetupIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -502,7 +513,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.SetupCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.SetupTable,
 			Columns: []string{user.SetupColumn},
@@ -513,9 +524,25 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := uu.mutation.RemovedSetupIDs(); len(nodes) > 0 && !uu.mutation.SetupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := uu.mutation.SetupIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.SetupTable,
 			Columns: []string{user.SetupColumn},
@@ -747,23 +774,19 @@ func (uuo *UserUpdateOne) AddCommChannels(c ...*CommChannel) *UserUpdateOne {
 	return uuo.AddCommChannelIDs(ids...)
 }
 
-// SetSetupID sets the "setup" edge to the UserSetup entity by ID.
-func (uuo *UserUpdateOne) SetSetupID(id int) *UserUpdateOne {
-	uuo.mutation.SetSetupID(id)
+// AddSetupIDs adds the "setup" edge to the UserSetup entity by IDs.
+func (uuo *UserUpdateOne) AddSetupIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddSetupIDs(ids...)
 	return uuo
 }
 
-// SetNillableSetupID sets the "setup" edge to the UserSetup entity by ID if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableSetupID(id *int) *UserUpdateOne {
-	if id != nil {
-		uuo = uuo.SetSetupID(*id)
+// AddSetup adds the "setup" edges to the UserSetup entity.
+func (uuo *UserUpdateOne) AddSetup(u ...*UserSetup) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uuo
-}
-
-// SetSetup sets the "setup" edge to the UserSetup entity.
-func (uuo *UserUpdateOne) SetSetup(u *UserSetup) *UserUpdateOne {
-	return uuo.SetSetupID(u.ID)
+	return uuo.AddSetupIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -813,10 +836,25 @@ func (uuo *UserUpdateOne) RemoveCommChannels(c ...*CommChannel) *UserUpdateOne {
 	return uuo.RemoveCommChannelIDs(ids...)
 }
 
-// ClearSetup clears the "setup" edge to the UserSetup entity.
+// ClearSetup clears all "setup" edges to the UserSetup entity.
 func (uuo *UserUpdateOne) ClearSetup() *UserUpdateOne {
 	uuo.mutation.ClearSetup()
 	return uuo
+}
+
+// RemoveSetupIDs removes the "setup" edge to UserSetup entities by IDs.
+func (uuo *UserUpdateOne) RemoveSetupIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveSetupIDs(ids...)
+	return uuo
+}
+
+// RemoveSetup removes "setup" edges to UserSetup entities.
+func (uuo *UserUpdateOne) RemoveSetup(u ...*UserSetup) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveSetupIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -1050,7 +1088,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.SetupCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.SetupTable,
 			Columns: []string{user.SetupColumn},
@@ -1061,9 +1099,25 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := uuo.mutation.RemovedSetupIDs(); len(nodes) > 0 && !uuo.mutation.SetupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SetupTable,
+			Columns: []string{user.SetupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usersetup.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := uuo.mutation.SetupIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.SetupTable,
 			Columns: []string{user.SetupColumn},

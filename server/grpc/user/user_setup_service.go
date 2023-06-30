@@ -6,12 +6,15 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/grpc/user/userpb"
 	"github.com/loomi-labs/star-scope/grpc/user/userpb/userpbconnect"
 	sf "github.com/sa-/slicefunk"
 	"github.com/shifty11/go-logger/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -30,7 +33,7 @@ func NewUserSetupServiceHandler(dbManagers *database.DbManagers) userpbconnect.U
 	}
 }
 
-func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.UserSetup, requestedStep usersetup.Step) *userpb.StepResponse {
+func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.UserSetup, requestedStep usersetup.Step, isComplete bool) *userpb.StepResponse {
 	response := &userpb.StepResponse{}
 	switch requestedStep {
 	case usersetup.StepOne:
@@ -93,7 +96,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 		response.Step = &userpb.StepResponse_StepFive{StepFive: &userpb.StepFiveResponse{}}
 	}
 	response.NumSteps = u.getNumSteps(setup)
-
+	response.IsComplete = isComplete
 	return response
 }
 
@@ -135,7 +138,7 @@ func (u *UserSetupService) GetStep(ctx context.Context, request *connect.Request
 			step = usersetup.StepFive
 		}
 	}
-	response := u.createStepResponse(ctx, setup, step)
+	response := u.createStepResponse(ctx, setup, step, user.IsSetupComplete)
 
 	return connect.NewResponse(response), nil
 }
@@ -164,6 +167,11 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 	if !ok {
 		log.Sugar.Error("invalid user")
 		return nil, types.UserNotFoundErr
+	}
+
+	if user.IsSetupComplete {
+		log.Sugar.Errorf("user setup already completed", "user", user)
+		return nil, status.Error(codes.InvalidArgument, "Setup already completed")
 	}
 
 	if !isFinishStepRequestValid(request) {
@@ -248,18 +256,67 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 		} else {
 			isCompleted = true
 		}
+		switch request.Msg.GetStepFive().GetChannel().(type) {
+		case *userpb.StepFiveRequest_Webapp:
+		case *userpb.StepFiveRequest_Telegram:
+			if user.TelegramUserID == 0 {
+				log.Sugar.Errorf("invalid telegram user id: %v", user.TelegramUserID)
+				return nil, types.InvalidArgumentErr
+			}
+			t := commchannel.TypeTelegram
+			channels, err := u.userManager.QueryCommChannels(ctx, user, &t)
+			if err != nil {
+				log.Sugar.Errorf("failed to query comm channels: %v", err)
+				return nil, types.UnknownErr
+			}
+			var found = false
+			for _, channel := range channels {
+				if channel.TelegramChatID == request.Msg.GetStepFive().GetTelegram().GetChatId() {
+					found = true
+					break
+				}
+			}
+			if !found {
+				log.Sugar.Errorf("invalid telegram chat id: %v", request.Msg.GetStepFive().GetTelegram().GetChatId())
+				return nil, types.InvalidArgumentErr
+			}
+		case *userpb.StepFiveRequest_Discord:
+			if user.DiscordUserID == 0 {
+				return nil, types.InvalidArgumentErr
+			}
+			t := commchannel.TypeDiscord
+			channels, err := u.userManager.QueryCommChannels(ctx, user, &t)
+			if err != nil {
+				log.Sugar.Errorf("failed to query comm channels: %v", err)
+				return nil, types.UnknownErr
+			}
+			var found = false
+			for _, channel := range channels {
+				if channel.DiscordChannelID == request.Msg.GetStepFive().GetDiscord().GetChannelId() {
+					found = true
+					break
+				}
+			}
+			if !found {
+				log.Sugar.Errorf("invalid discord channel id: %v", request.Msg.GetStepFive().GetDiscord().GetChannelId())
+				return nil, types.InvalidArgumentErr
+			}
+		}
 		updateQuery = setup.
 			Update().
 			SetStep(step)
-		// TODO: update user setup
 	}
-	setup, err = u.userManager.UpdateSetup(ctx, user, updateQuery, isCompleted)
+	var chains []*ent.Chain
+	if isCompleted {
+		chains = u.chainManager.QueryEnabled(ctx)
+	}
+	setup, err = u.userManager.UpdateSetup(ctx, user, updateQuery, isCompleted, chains)
 	if err != nil {
 		log.Sugar.Errorf("failed to update setup", "error", err)
 		return nil, types.UnknownErr
 	}
 
-	response := u.createStepResponse(ctx, setup, setup.Step)
+	response := u.createStepResponse(ctx, setup, setup.Step, isCompleted)
 
 	return connect.NewResponse(response), nil
 }

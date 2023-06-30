@@ -351,7 +351,7 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if usu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   usersetup.UserTable,
 			Columns: []string{usersetup.UserColumn},
@@ -364,7 +364,7 @@ func (usu *UserSetupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := usu.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   usersetup.UserTable,
 			Columns: []string{usersetup.UserColumn},
@@ -837,7 +837,7 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if usuo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   usersetup.UserTable,
 			Columns: []string{usersetup.UserColumn},
@@ -850,7 +850,7 @@ func (usuo *UserSetupUpdateOne) sqlSave(ctx context.Context) (_node *UserSetup, 
 	}
 	if nodes := usuo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   usersetup.UserTable,
 			Columns: []string{usersetup.UserColumn},

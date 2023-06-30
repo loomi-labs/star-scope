@@ -104,18 +104,26 @@ type IndexerServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewIndexerServiceHandler(svc IndexerServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(IndexerServiceGetIndexingChainsProcedure, connect_go.NewUnaryHandler(
+	indexerServiceGetIndexingChainsHandler := connect_go.NewUnaryHandler(
 		IndexerServiceGetIndexingChainsProcedure,
 		svc.GetIndexingChains,
 		opts...,
-	))
-	mux.Handle(IndexerServiceUpdateIndexingChainsProcedure, connect_go.NewUnaryHandler(
+	)
+	indexerServiceUpdateIndexingChainsHandler := connect_go.NewUnaryHandler(
 		IndexerServiceUpdateIndexingChainsProcedure,
 		svc.UpdateIndexingChains,
 		opts...,
-	))
-	return "/starscope.grpc.IndexerService/", mux
+	)
+	return "/starscope.grpc.IndexerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case IndexerServiceGetIndexingChainsProcedure:
+			indexerServiceGetIndexingChainsHandler.ServeHTTP(w, r)
+		case IndexerServiceUpdateIndexingChainsProcedure:
+			indexerServiceUpdateIndexingChainsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedIndexerServiceHandler returns CodeUnimplemented from all methods.
@@ -173,13 +181,19 @@ type TxHandlerServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewTxHandlerServiceHandler(svc TxHandlerServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle(TxHandlerServiceHandleTxsProcedure, connect_go.NewUnaryHandler(
+	txHandlerServiceHandleTxsHandler := connect_go.NewUnaryHandler(
 		TxHandlerServiceHandleTxsProcedure,
 		svc.HandleTxs,
 		opts...,
-	))
-	return "/starscope.grpc.TxHandlerService/", mux
+	)
+	return "/starscope.grpc.TxHandlerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case TxHandlerServiceHandleTxsProcedure:
+			txHandlerServiceHandleTxsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedTxHandlerServiceHandler returns CodeUnimplemented from all methods.
