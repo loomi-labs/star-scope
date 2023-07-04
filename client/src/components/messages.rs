@@ -1,6 +1,5 @@
 use gloo_timers::future::TimeoutFuture;
 use js_sys;
-use log::debug;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::motion::create_raf;
 use sycamore::prelude::*;

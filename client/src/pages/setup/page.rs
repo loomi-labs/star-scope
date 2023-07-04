@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
 use crate::components::search::{SearchEntity, Searchable};
-use crate::utils::url::{safe_navigate, navigate_launch_app};
+use crate::utils::url::{navigate_launch_app};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
@@ -16,7 +16,7 @@ use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{
     StepFive, StepFour, StepOne, StepThree, StepTwo,
 };
-use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepOneResponse, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest, GovChain, User};
+use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest, GovChain, User};
 use crate::{Services, InfoLevel, AppState};
 
 #[derive(Debug, Clone)]
@@ -40,8 +40,8 @@ const DESCRIPTION_CLASS: &str = "dark:text-purple-600 mb-8";
 const DESCRIPTION_PROMINENT_CLASS: &str = "dark:text-white";
 const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-8 mt-8";
 
-#[component(inline_props)]
-fn StepOneComponent<G: Html>(cx: Scope, step: StepOneResponse) -> View<G> {
+#[component]
+fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
     let handle_click = move |is_validator| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
@@ -634,7 +634,7 @@ pub fn Setup<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
         (if let Some(step) = setup_state.step.get().as_ref() {
             let child = match step {
-                StepOne(s) => view! {cx, StepOneComponent(step=s.clone())},
+                StepOne(_) => view! {cx, StepOneComponent()},
                 StepTwo(s) => view! {cx, StepTwoComponent(step=s.clone())},
                 StepThree(s) => view! {cx, StepThreeComponent(step=s.clone())},
                 StepFour(s) => view! {cx, StepFourComponent(step=s.clone())},

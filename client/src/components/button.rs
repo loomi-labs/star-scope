@@ -28,6 +28,7 @@ const BUTTON_BASE_CLASS: &str = "font-bold py-2 px-4 rounded";
 pub enum ColorScheme<'a> {
     PrimaryGradient,
     Subtle,
+    #[allow(dead_code)]
     Custom(&'a str),
 }
 

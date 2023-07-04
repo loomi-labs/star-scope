@@ -1,10 +1,8 @@
-use log::debug;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
 use wasm_bindgen::{JsCast};
 use web_sys::{HtmlInputElement, MessageEvent};
-use config::keys;
 
 use crate::{AppState, AuthState, Services};
 use crate::components::messages::create_error_msg_from_status;
@@ -151,6 +149,13 @@ fn start_login_input_timer(cx: Scope) {
             .and_then(|input| input.dyn_into::<HtmlInputElement>().ok()).unwrap();
         let value = input_field.value();
         if !value.is_empty() {
+            // todo: check if value is a valid response
+            // Err(status) => create_message(
+            //     cx,
+            //     "Login failed",
+            //     format!("Login failed with status: {}", status),
+            //     InfoLevel::Error,
+            // ),
             spawn_local_scoped(cx.clone(), async move {
                 if login_with_wallet(cx, value).await.is_err(){
                     input_field.set_value("");
@@ -167,7 +172,6 @@ fn start_login_input_timer(cx: Scope) {
 pub fn CosmosLoginButton<G: Html>(cx: Scope) -> View<G> {
     setup_iframe_message_listener();
     start_login_input_timer(cx);
-
     view!(
         cx,
         input(id=IFRAME_INPUT_ID, class="text-black", type="text", value="", hidden=true) {}
