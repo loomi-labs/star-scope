@@ -1,10 +1,10 @@
 {
-  "name": "@cosmology/send-tokens",
-  "version": "1.8.1",
+  "name": "star-scope-cosmos-login",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build ",
     "start": "next start",
     "lint": "next lint"
   },

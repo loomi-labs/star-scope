@@ -77,7 +77,7 @@ export const WalletSection = ({handleSingMsg}: {handleSingMsg: () => void}) => {
     <WalletConnectComponent
       walletStatus={status}
       disconnect={
-        <Disconnected buttonText="Connect Wallet" onClick={onClickConnect} />
+        <Disconnected buttonText="Login with wallet" onClick={onClickConnect} />
       }
       connecting={<Connecting />}
       connected={
@@ -109,18 +109,8 @@ export const WalletSection = ({handleSingMsg}: {handleSingMsg: () => void}) => {
     />
   );
 
-  const userInfo = username && (
-    <ConnectedUserInfo username={username} icon={<Astronaut />} />
-  );
-  const addressBtn = (
-    <CopyAddressBtn
-      walletStatus={status}
-      connected={<ConnectedShowAddress address={address} isLoading={false} />}
-    />
-  );
-
   return (
-    <Center py={16}>
+    <Center>
       <Grid
         w="full"
         maxW="sm"

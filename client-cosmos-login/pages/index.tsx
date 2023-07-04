@@ -7,12 +7,6 @@ import {chainName,} from '../config';
 import {WalletSection,} from '../components';
 import {SignOptions} from "@cosmos-kit/core/types/types/wallet";
 
-const library = {
-  title: 'Interchain',
-  text: 'Interchain',
-  href: 'https://github.com/cosmology-tech/interchain',
-};
-
 const signMsg = (
   signAmino: (signer: string, signDoc: StdSignDoc, signOptions?: SignOptions) => Promise<AminoSignResponse>,
   setResp: (resp: string) => any,
@@ -43,11 +37,16 @@ const signMsg = (
       ],
       memo: "",
     }
-    const response = await signAmino(address, signMsg,
-      {preferNoSetFee: true, preferNoSetMemo: true, disableBalanceCheck: true});
-    const result = JSON.stringify(response, null, 2)
-    window.parent.postMessage(result, '*');
-    setResp(result);
+    try {
+      const response = await signAmino(address, signMsg,
+        {preferNoSetFee: true, preferNoSetMemo: true, disableBalanceCheck: true});
+      console.log(response)
+      const result = JSON.stringify(response, null, 2)
+      window.parent.postMessage(result, '*');
+      setResp(result);
+    } catch (e) {
+      window.parent.postMessage(e, '*');
+    }
   };
 };
 
@@ -58,7 +57,7 @@ export default function Home() {
   const [resp, setResp] = useState('');
 
   return (
-    <Container maxW="5xl" py={10} bg="#342335">
+    <Container maxW="5xl" bg="#342335">
       <WalletSection
         handleSingMsg={signMsg(
           signAmino as () => Promise<AminoSignResponse>,
