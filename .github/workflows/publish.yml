@@ -94,7 +94,7 @@ jobs:
           build-args: |
             DEBUG=true
             GRPC_WEB_ENDPOINT_URL=https://starscope.network
-            COSMOS_LOGIN_BUTTON_URL=https://starscope.network/cosmos-login
+            COSMOS_LOGIN_BUTTON_URL=https://cosmos-login.starscope.network
             WEB_APP_URL=https://starscope.network
             TELEGRAM_BOT_NAME=StarScopeTestBot
             DISCORD_CLIENT_ID=1120308547142549565

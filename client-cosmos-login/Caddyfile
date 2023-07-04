@@ -9,12 +9,8 @@
 # domain name.
 
 :80 {
-    handle /starscope.grpc* {
-        reverse_proxy envoy:8090
-    }
-
     handle {
-        root * /var/www/star-scope
+        root * /var/www/cosmos-login
         encode gzip
         file_server
         try_files {path} /

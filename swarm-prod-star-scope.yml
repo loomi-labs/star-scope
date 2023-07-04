@@ -199,6 +199,7 @@ services:
   client-cosmos-login:
     image: ghcr.io/loomi-labs/star-scope-client-cosmos-login:main
     networks:
+      - caddy
       - default
     deploy:
       placement:
@@ -237,6 +238,18 @@ services:
       labels:
         caddy: starscope.network
         caddy.reverse_proxy: "client:80"
+      placement:
+        constraints:
+          - node.role != manager
+
+  whoami-client-cosmos-login:
+    image: jwilder/whoami
+    networks:
+      - caddy
+    deploy:
+      labels:
+        caddy: cosmos-login.starscope.network
+        caddy.reverse_proxy: "client-cosmos-login:80"
       placement:
         constraints:
           - node.role != manager

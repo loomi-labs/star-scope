@@ -1,5 +1,5 @@
-# Builder stage
-FROM node:18-alpine AS builder
+# Stage 1 - Builder stage
+FROM node:18-alpine AS build-env
 
 # Install PNPM globally
 RUN npm install -g pnpm
@@ -18,30 +18,10 @@ COPY . .
 
 # Build the Next.js project
 RUN pnpm run build
+# Export the Next.js project
+RUN pnpm run export
 
-# Running stage
-FROM node:18-alpine
-
-# Install PNPM globally
-RUN npm install -g pnpm
-
-# Set the working directory inside the container
-WORKDIR /app
-
-# Copy built files from the builder stage
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-
-# Install only production dependencies using PNPM
-RUN pnpm install --frozen-lockfile --production
-
-# Set the environment variable
-ENV NODE_ENV production
-
-# Expose the desired port (adjust if necessary)
-# EXPOSE 3000
-
-# Start the Next.js application
-CMD ["pnpm", "start"]
+# Stage 2 - Create the run-time image
+FROM caddy:2.5.2-alpine
+COPY --from=build-env /app/out /var/www/cosmos-login
+COPY Caddyfile /etc/caddy/Caddyfile
