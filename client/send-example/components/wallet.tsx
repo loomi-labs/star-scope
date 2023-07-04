@@ -9,7 +9,7 @@ import {
   useColorModeValue,
   Text,
 } from '@chakra-ui/react';
-import { MouseEventHandler } from 'react';
+import {MouseEventHandler, useEffect, useState} from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
 import {
   Astronaut,
@@ -28,6 +28,7 @@ import {
   ChainCard,
 } from '../components';
 import { chainName } from '../config';
+import {WalletStatus} from "@cosmos-kit/core";
 
 export const WalletSection = ({handleSingMsg}: {handleSingMsg: () => void}) => {
   const {
@@ -49,17 +50,27 @@ export const WalletSection = ({handleSingMsg}: {handleSingMsg: () => void}) => {
     icon: logoUrl,
   };
 
+  const [userInteracted, setUserInteracted] = useState(false);
+
   // Events
   const onClickConnect: MouseEventHandler = async (e) => {
     e.preventDefault();
     await connect();
+    setUserInteracted(true);
   };
 
   const onClickOpenView: MouseEventHandler = (e) => {
     e.preventDefault();
     openView();
+    setUserInteracted(true);
     handleSingMsg();
   };
+
+  useEffect(() => {
+    if (status === WalletStatus.Connected && userInteracted) {
+      handleSingMsg();
+    }
+  }, [status, userInteracted]);
 
   // Components
   const connectWalletButton = (
@@ -70,7 +81,7 @@ export const WalletSection = ({handleSingMsg}: {handleSingMsg: () => void}) => {
       }
       connecting={<Connecting />}
       connected={
-        <Connected buttonText={'My Wallet'} onClick={onClickOpenView} />
+        <Connected buttonText={'Login with wallet'} onClick={onClickOpenView} />
       }
       rejected={<Rejected buttonText="Reconnect" onClick={onClickConnect} />}
       error={<Error buttonText="Change Wallet" onClick={onClickOpenView} />}
@@ -118,28 +129,11 @@ export const WalletSection = ({handleSingMsg}: {handleSingMsg: () => void}) => {
         alignItems="center"
         justifyContent="center"
       >
-        <GridItem marginBottom={'20px'}>
-          <ChainCard
-            prettyName={chain?.label || chainName}
-            icon={chain?.icon}
-          />
-        </GridItem>
         <GridItem px={6}>
           <Stack
             justifyContent="center"
             alignItems="center"
-            borderRadius="lg"
-            bg={useColorModeValue('white', 'blackAlpha.400')}
-            boxShadow={useColorModeValue(
-              '0 0 2px #dfdfdf, 0 0 6px -2px #d3d3d3',
-              '0 0 2px #363636, 0 0 8px -2px #4f4f4f'
-            )}
-            spacing={4}
-            px={4}
-            py={{ base: 6, md: 12 }}
           >
-            {userInfo}
-            {addressBtn}
             <Box w="full" maxW={{ base: 52, md: 64 }}>
               {connectWalletButton}
             </Box>
