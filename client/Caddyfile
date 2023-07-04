@@ -13,7 +13,7 @@
         reverse_proxy envoy:8090
     }
 
-    handle /cosmos-login {
+    handle /cosmos-login* {
         reverse_proxy client-cosmos-login:3000
     }
 

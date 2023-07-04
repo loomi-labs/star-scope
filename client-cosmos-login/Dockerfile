@@ -41,7 +41,7 @@ RUN pnpm install --frozen-lockfile --production
 ENV NODE_ENV production
 
 # Expose the desired port (adjust if necessary)
-EXPOSE 3000
+# EXPOSE 3000
 
 # Start the Next.js application
 CMD ["pnpm", "start"]
