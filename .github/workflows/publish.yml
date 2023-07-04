@@ -135,7 +135,6 @@ jobs:
         uses: docker/build-push-action@v4.0.0
         if: steps.changes.outputs.client-cosmos-login == 'true'
         with:
-          context: .
           file: client-cosmos-login/Dockerfile
           push: true
           tags: ${{ steps.meta-client-cosmos-login.outputs.tags }}
