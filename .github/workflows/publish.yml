@@ -265,7 +265,7 @@ jobs:
           labels: ${{ steps.meta-envoy.outputs.labels }}
 
   deploy-to-swarm:
-    needs: [build-and-push-server, build-and-push-client, build-and-push-base-indexer, build-and-push-osmosis-indexer, build-and-push-envoy]
+    needs: [build-and-push-server, build-and-push-client, build-and-push-client-cosmos-login, build-and-push-base-indexer, build-and-push-osmosis-indexer, build-and-push-envoy]
     runs-on: ubuntu-latest
     permissions:
       contents: read
