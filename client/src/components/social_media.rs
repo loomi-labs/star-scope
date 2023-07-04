@@ -2,9 +2,9 @@ use log::debug;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
-use wasm_bindgen::{JsCast, UnwrapThrowExt};
-use wasm_bindgen::prelude::wasm_bindgen;
-use web_sys::{HtmlInputElement, MessageEvent, Window};
+use wasm_bindgen::{JsCast};
+use web_sys::{HtmlInputElement, MessageEvent};
+use config::keys;
 
 use crate::{AppState, AuthState, Services};
 use crate::components::messages::create_error_msg_from_status;
@@ -173,6 +173,8 @@ pub fn CosmosLoginButton<G: Html>(cx: Scope) -> View<G> {
         input(id=IFRAME_INPUT_ID, class="text-black", type="text", value="", hidden=true) {}
         iframe(
             id="iframe", 
-            class="w-full h-full", src="http://localhost:3000") {}
+            height="470",
+            class="w-full rounded-lg", 
+            src=keys::COSMOS_LOGIN_BUTTON_URL) {}
     )
 }

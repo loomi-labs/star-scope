@@ -2,8 +2,7 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        // 'wallet_connect': './src/wallet_connect/index.js',
-        'cosmos_kit': './src/cosmos_kit/pages/index.tsx',
+        'wallet_connect': './src/wallet_connect/index.js',
         // 'cosmos_kit': './src/cosmos_kit/src/App.js',
     },
     module: {

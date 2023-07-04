@@ -195,26 +195,15 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                     "Login to Star Scope"
                 }
             }
-            // div(class="mt-8 mx-auto w-full h-full") {
-            div(class="mt-8 mx-auto w-full max-w-md") {
-                div(class="h-full bg-white dark:bg-purple-700 py-8 px-4 shadow rounded-lg px-10") {
-                    div(class="flex items-center justify-center space-y-6") {
-                        button(on:click=move |_| spawn_local_scoped(cx, async move {
-                            try_login_with_keplr(cx).await;
-                        }),
-                            class=format!("w-[219px] border-2 border-keplr-blue-500 hover:border-keplr-blue-600 {} {}", class_button, if is_mobile { "hidden" } else { "" })) {
-                            span(class="mr-2") {KeplrSvg{}}
-                            "Login with Keplr"
-                        }
-                        p(class=format!("bg-keplr-blue-500 hover:bg-keplr-blue-600 {}", if is_mobile { "" } else {"hidden"})) { "Mobile devices are not supported yet" }
-                    }
+            div(class="mt-8 mx-auto w-full h-full max-w-md") {
+                div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow rounded-lg px-10") {
                     div(class="flex items-center justify-center space-y-6 mt-6") {
                         DiscordLoginButton(text="Login with Discord".to_string())
                     }
                     div(class="flex items-center justify-center space-y-6 mt-6") {
                         TelegramLoginButton(web_app_url=keys::WEB_APP_URL.to_string())
                     }
-                    div(class="h-full flex items-center justify-center space-y-6 mt-6") {
+                    div(class="flex justify-center space-y-6 mt-6") {
                         CosmosLoginButton()
                     }
                 }
