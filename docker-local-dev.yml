@@ -83,6 +83,13 @@ services:
       - ./data/docker/envoy/envoy.yaml:/etc/envoy/envoy.yaml
     restart: unless-stopped
 
+  client-cosmos-login:
+    build:
+      context: client-cosmos-login
+    ports:
+      - "3000:80"
+    container_name: starscope_client_cosmos_login
+
 volumes:
   data:
     name: starscope_data

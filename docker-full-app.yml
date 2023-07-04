@@ -235,7 +235,9 @@ services:
 
   client-cosmos-login:
     build:
-      dockerfile: client-cosmos-login/Dockerfile
+      context: client-cosmos-login
+    ports:
+      - "3000:80"
     container_name: starscope_client_cosmos_login
 
   envoy:
