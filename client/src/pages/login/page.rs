@@ -1,6 +1,6 @@
 use sycamore::prelude::*;
 
-use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton, CosmosLoginButton};
+use crate::components::social_media::{CosmosLoginButton, DiscordLoginButton, TelegramLoginButton};
 use crate::config::keys;
 
 #[component]

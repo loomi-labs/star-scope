@@ -43,8 +43,9 @@ pub fn SearchEntity<'a, G: Html, T>(
     searchables: Vec<Searchable<'a, T>>,
     selected_entities: &'a Signal<HashSet<T>>,
     placeholder: &'a str,
-) -> View<G> 
-where T: Clone + Hash + Eq + PartialEq + Display + 'a,
+) -> View<G>
+where
+    T: Clone + Hash + Eq + PartialEq + Display + 'a,
 {
     let search_term = create_signal(cx, String::new());
 
@@ -54,7 +55,12 @@ where T: Clone + Hash + Eq + PartialEq + Display + 'a,
         let mut results = vec![];
         if !search.is_empty() {
             for searhable in searchables_ref.iter() {
-                if searhable.entity.to_string().to_ascii_lowercase().contains(&search) {
+                if searhable
+                    .entity
+                    .to_string()
+                    .to_ascii_lowercase()
+                    .contains(&search)
+                {
                     results.push(searhable.clone());
                 }
                 if results.len() >= 10 {
@@ -81,7 +87,9 @@ where T: Clone + Hash + Eq + PartialEq + Display + 'a,
             if is_selected {
                 selected_entities.modify().insert(searchable.entity.clone());
             } else {
-                selected_entities.modify().retain(|current| *current != searchable.entity);
+                selected_entities
+                    .modify()
+                    .retain(|current| *current != searchable.entity);
             }
         });
     });
@@ -115,7 +123,7 @@ where T: Clone + Hash + Eq + PartialEq + Display + 'a,
                                         let search = search_term.get().to_ascii_lowercase();
                                         if let Some(index) = name.to_ascii_lowercase().find(&search) {
                                             let size = index + search.len();
-                                
+
                                             let prefix = name[..index].to_owned();
                                             let middle = name[index..size].to_owned();
                                             let suffix = name[size..].to_owned();
@@ -166,7 +174,7 @@ where T: Clone + Hash + Eq + PartialEq + Display + 'a,
             Indexed(
                 iterable= selected_searchables,
                 view=move |cx, searchable| {
-                    view!{cx, 
+                    view!{cx,
                         div(class="flex items-center justify-center m-1 px-4 py-1 border-2 border-primary text-primary rounded-full") {
                             (searchable.entity.to_string())
                             span(class="w-4 h-4 ml-2 z-10 bg-primary icon-[material-symbols--close] cursor-pointer",

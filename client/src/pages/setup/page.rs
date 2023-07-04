@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
 use crate::components::search::{SearchEntity, Searchable};
-use crate::utils::url::{navigate_launch_app};
+use crate::utils::url::navigate_launch_app;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
@@ -16,8 +16,13 @@ use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{
     StepFive, StepFour, StepOne, StepThree, StepTwo,
 };
-use crate::types::protobuf::grpc::{finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, Validator, Wallet, ValidateWalletRequest, GovChain, User};
-use crate::{Services, InfoLevel, AppState};
+use crate::types::protobuf::grpc::{
+    finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, GovChain,
+    StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest,
+    StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, User,
+    ValidateWalletRequest, Validator, Wallet,
+};
+use crate::{AppState, InfoLevel, Services};
 
 #[derive(Debug, Clone)]
 struct SetupState {
@@ -70,7 +75,12 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
     let setup_state: &SetupState = use_context::<SetupState>(cx);
     let num_steps_option = *setup_state.num_steps.get();
     if num_steps_option.is_none() {
-        create_message(cx, "Invalid state", "Number of setup was not found", InfoLevel::Error);
+        create_message(
+            cx,
+            "Invalid state",
+            "Number of setup was not found",
+            InfoLevel::Error,
+        );
         return view! {cx,};
     }
     let num_steps = num_steps_option.unwrap() - 1;
@@ -251,7 +261,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> V
                                 img(src=wallet_ref.logo_url, alt="Chain logo", class="h-6 w-6")
                                 span(class="text-sm") {(shortened_address)}
                             }
-                            button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary", 
+                            button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary",
                                     on:click=move |_| handle_delete_wallet(wallet_ref)) {
                                 span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
                             }
@@ -272,9 +282,9 @@ enum WalletValidation {
 
 async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidation {
     let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(ValidateWalletRequest {
-        address,
-    });
+    let request = services
+        .grpc_client
+        .create_request(ValidateWalletRequest { address });
     let response = services
         .grpc_client
         .get_user_setup_service()
@@ -290,7 +300,7 @@ async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidati
                 create_message(cx, "Error", "Wallet not found", InfoLevel::Error);
                 return WalletValidation::Invalid("Wallet not found".to_string());
             } else {
-                return WalletValidation::Invalid("Chain is currently not supported".to_string())
+                return WalletValidation::Invalid("Chain is currently not supported".to_string());
             }
         } else {
             WalletValidation::Invalid("Invalid wallet address".to_string())
@@ -309,15 +319,26 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
 
     create_effect(cx, move || {
         let address = new_wallet_address.get().as_ref().clone();
-        if wallets.get().iter().map(|w| w.address.clone()).collect::<Vec<String>>().contains(&new_wallet_address.get().as_ref().clone()) {
-            validation.set(Some(WalletValidation::Invalid("Wallet already added".to_string())));
+        if wallets
+            .get()
+            .iter()
+            .map(|w| w.address.clone())
+            .collect::<Vec<String>>()
+            .contains(&new_wallet_address.get().as_ref().clone())
+        {
+            validation.set(Some(WalletValidation::Invalid(
+                "Wallet already added".to_string(),
+            )));
         } else if address.is_empty() {
             validation.set(None);
         } else if address.len() < 30 {
-            validation.set(Some(WalletValidation::Invalid("Wallet address is too short".to_string())));
+            validation.set(Some(WalletValidation::Invalid(
+                "Wallet address is too short".to_string(),
+            )));
         } else {
             spawn_local_scoped(cx, async move {
-                let result = query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
+                let result =
+                    query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
                 validation.set(Some(result.clone()));
                 match result {
                     WalletValidation::Valid(wallet) => {
@@ -342,7 +363,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                 // SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
             }
             (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
-                view! {cx, 
+                view! {cx,
                     span(class="text-red-500 text-left") {(msg)}
                 }
             } else {
@@ -391,7 +412,6 @@ impl Display for SearchableChain {
     }
 }
 
-
 impl Hash for SearchableChain {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.chain.id.hash(state);
@@ -418,10 +438,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
         .available_chains
         .iter()
         .map(|chain| {
-            let is_selected = create_signal(
-                cx,
-                step.notify_gov_chain_ids.contains(&chain.id)
-            );
+            let is_selected = create_signal(cx, step.notify_gov_chain_ids.contains(&chain.id));
             Searchable {
                 entity: SearchableChain {
                     chain: chain.clone(),
@@ -439,7 +456,6 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
             .collect::<HashSet<SearchableChain>>()
     });
 
-
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
@@ -450,7 +466,13 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                     notify_gov_new_proposal: *notify_gov_new_proposal.get(),
                     notify_gov_voting_end: *notify_gov_voting_end.get(),
                     notify_gov_voting_reminder: *notify_gov_voting_reminder.get(),
-                    notify_gov_chain_ids: selected_chains.get().as_ref().clone().into_iter().map(|chain| chain.chain.id).collect(),
+                    notify_gov_chain_ids: selected_chains
+                        .get()
+                        .as_ref()
+                        .clone()
+                        .into_iter()
+                        .map(|chain| chain.chain.id)
+                        .collect(),
                 })),
             };
             update_step(cx, finish_step).await;
@@ -461,7 +483,10 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
     let section_unselected_class = "w-6 h-6 rounded-full border-2 border-primary";
     let centered_row_class = "flex justify-center items-center space-x-4";
     let starting_row_class = "flex items-center space-x-4 p-2";
-    let starting_row_selectable_class = create_ref(cx, format!("{} rounded-lg hover:dark:bg-purple-700", starting_row_class));
+    let starting_row_selectable_class = create_ref(
+        cx,
+        format!("{} rounded-lg hover:dark:bg-purple-700", starting_row_class),
+    );
     let check_mark_class = "w-6 h-6 bg-primary icon-[ph--check-bold]";
 
     view! {cx,

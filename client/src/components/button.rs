@@ -64,16 +64,18 @@ where
     F: Fn() + 'a,
 {
     let color_class = match props.color {
-        ColorScheme::PrimaryGradient => "border-primary-gradient-from transition-all hover:bg-primary-gradient-from",
+        ColorScheme::PrimaryGradient => {
+            "border-primary-gradient-from transition-all hover:bg-primary-gradient-from"
+        }
         ColorScheme::Subtle => "border-purple-700 hover:border-purple-800",
         ColorScheme::Custom(class) => class,
     };
     view!(
         cx,
         Button(
-            children=props.children,
-            on_click=props.on_click, 
-            class=format!("border {} {}", BUTTON_BASE_CLASS, color_class)
+            children = props.children,
+            on_click = props.on_click,
+            class = format!("border {} {}", BUTTON_BASE_CLASS, color_class)
         )
     )
 }

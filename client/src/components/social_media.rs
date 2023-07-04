@@ -1,12 +1,12 @@
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
-use wasm_bindgen::{JsCast};
+use wasm_bindgen::JsCast;
 use web_sys::{HtmlInputElement, MessageEvent};
 
-use crate::{AppState, AuthState, Services};
 use crate::components::messages::create_error_msg_from_status;
 use crate::config::keys;
+use crate::{AppState, AuthState, Services};
 
 #[derive(Prop)]
 pub struct TelegramLoginButtonProps<'a> {
@@ -106,17 +106,22 @@ pub fn setup_iframe_message_listener() {
 
     gloo_events::EventListener::new(&window, "message", move |event| {
         if let Some(message_event) = event.dyn_ref::<MessageEvent>() {
-            if message_event.origin().contains(host.as_str()) || (message_event.origin().contains("localhost") && host == "127.0.0.1") {
+            if message_event.origin().contains(host.as_str())
+                || (message_event.origin().contains("localhost") && host == "127.0.0.1")
+            {
                 if let Some(data) = message_event.data().as_string() {
                     let window = web_sys::window().expect("Missing Window");
-                    let hidden_input = window.document()
+                    let hidden_input = window
+                        .document()
                         .and_then(|document| document.get_element_by_id(IFRAME_INPUT_ID))
-                        .and_then(|input| input.dyn_into::<web_sys::HtmlInputElement>().ok()).unwrap();
+                        .and_then(|input| input.dyn_into::<web_sys::HtmlInputElement>().ok())
+                        .unwrap();
                     hidden_input.set_value(data.as_str());
                 }
             }
         }
-    }).forget();
+    })
+    .forget();
 }
 
 async fn login_with_wallet(cx: Scope<'_>, login_str: String) -> Result<(), ()> {
@@ -135,7 +140,7 @@ async fn login_with_wallet(cx: Scope<'_>, login_str: String) -> Result<(), ()> {
         Err(status) => {
             create_error_msg_from_status(cx, status);
             Err(())
-        },
+        }
     }
 }
 
@@ -144,9 +149,11 @@ fn start_login_input_timer(cx: Scope) {
     spawn_local_scoped(cx, async move {
         gloo_timers::future::TimeoutFuture::new(200).await;
         let window = web_sys::window().expect("Missing Window");
-        let input_field = window.document()
+        let input_field = window
+            .document()
             .and_then(|document| document.get_element_by_id(IFRAME_INPUT_ID))
-            .and_then(|input| input.dyn_into::<HtmlInputElement>().ok()).unwrap();
+            .and_then(|input| input.dyn_into::<HtmlInputElement>().ok())
+            .unwrap();
         let value = input_field.value();
         if !value.is_empty() {
             // todo: check if value is a valid response
@@ -157,7 +164,7 @@ fn start_login_input_timer(cx: Scope) {
             //     InfoLevel::Error,
             // ),
             spawn_local_scoped(cx.clone(), async move {
-                if login_with_wallet(cx, value).await.is_err(){
+                if login_with_wallet(cx, value).await.is_err() {
                     input_field.set_value("");
                     start_login_input_timer(cx);
                 }
@@ -176,9 +183,9 @@ pub fn CosmosLoginButton<G: Html>(cx: Scope) -> View<G> {
         cx,
         input(id=IFRAME_INPUT_ID, class="text-black", type="text", value="", hidden=true) {}
         iframe(
-            id="iframe", 
+            id="iframe",
             height="470",
-            class="w-full rounded-lg", 
+            class="w-full rounded-lg",
             src=keys::COSMOS_LOGIN_BUTTON_URL) {}
     )
 }
