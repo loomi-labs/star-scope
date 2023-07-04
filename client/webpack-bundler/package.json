@@ -5,16 +5,19 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack"
+    "build": "webpack",
+    "run": "webpack serve"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "webpack": "^5.83.1",
-    "webpack-cli": "^5.1.1"
+    "@babel/core": "^7.22.5",
+    "babel-loader": "^9.1.2",
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@walletconnect/browser-utils": "^1.8.0",
+    "@walletconnect/browser-utils": "^1.8.0"
   }
 }

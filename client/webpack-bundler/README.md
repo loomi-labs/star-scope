@@ -8,7 +8,7 @@ npm install
 npm run build
 ```
 
-## Copy bundle to client
+## Copy bundles to client
 ```bash
-cp dist/wallet_connect.js ../assets/javascript/
+cp dist/*.js ../assets/javascript/
 ```
