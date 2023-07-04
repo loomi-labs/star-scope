@@ -37,7 +37,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 	response := &userpb.StepResponse{}
 	switch requestedStep {
 	case usersetup.StepOne:
-		response.Step = &userpb.StepResponse_StepOne{StepOne: &userpb.StepOneResponse{
+		response.Step = &userpb.StepResponse_One{One: &userpb.StepOneResponse{
 			IsValidator: setup.IsValidator,
 		}}
 	case usersetup.StepTwo:
@@ -50,7 +50,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 			}
 		})
 		selectedIds := sf.Map(setup.QuerySelectedValidators().IDsX(ctx), func(id int) int64 { return int64(id) })
-		response.Step = &userpb.StepResponse_StepTwo{StepTwo: &userpb.StepTwoResponse{
+		response.Step = &userpb.StepResponse_Two{Two: &userpb.StepTwoResponse{
 			AvailableValidators:  availableValidators,
 			SelectedValidatorIds: selectedIds,
 		}}
@@ -70,7 +70,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 				LogoUrl: logoUrl,
 			})
 		}
-		response.Step = &userpb.StepResponse_StepThree{StepThree: &userpb.StepThreeResponse{
+		response.Step = &userpb.StepResponse_Three{Three: &userpb.StepThreeResponse{
 			Wallets: wallets,
 		}}
 	case usersetup.StepFour:
@@ -83,7 +83,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 			}
 		})
 		selectedIds := sf.Map(setup.QuerySelectedChains().IDsX(ctx), func(id int) int64 { return int64(id) })
-		response.Step = &userpb.StepResponse_StepFour{StepFour: &userpb.StepFourResponse{
+		response.Step = &userpb.StepResponse_Four{Four: &userpb.StepFourResponse{
 			NotifyFunding:           setup.NotifyFunding,
 			NotifyStaking:           setup.NotifyStaking,
 			NotifyGovNewProposal:    setup.NotifyGovNewProposal,
@@ -93,7 +93,7 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 			AvailableChains:         availableChains,
 		}}
 	case usersetup.StepFive:
-		response.Step = &userpb.StepResponse_StepFive{StepFive: &userpb.StepFiveResponse{}}
+		response.Step = &userpb.StepResponse_Five{Five: &userpb.StepFiveResponse{}}
 	}
 	response.NumSteps = u.getNumSteps(setup)
 	response.IsComplete = isComplete
@@ -124,17 +124,17 @@ func (u *UserSetupService) GetStep(ctx context.Context, request *connect.Request
 	step := setup.Step
 	if request.Msg != nil {
 		switch request.Msg.GetStep() {
-		case userpb.GetStepRequest_CURRENT_STEP:
+		case userpb.GetStepRequest_CURRENT:
 			break
-		case userpb.GetStepRequest_STEP_ONE:
+		case userpb.GetStepRequest_ONE:
 			step = usersetup.StepOne
-		case userpb.GetStepRequest_STEP_TWO:
+		case userpb.GetStepRequest_TWO:
 			step = usersetup.StepTwo
-		case userpb.GetStepRequest_STEP_THREE:
+		case userpb.GetStepRequest_THREE:
 			step = usersetup.StepThree
-		case userpb.GetStepRequest_STEP_FOUR:
+		case userpb.GetStepRequest_FOUR:
 			step = usersetup.StepFour
-		case userpb.GetStepRequest_STEP_FIVE:
+		case userpb.GetStepRequest_FIVE:
 			step = usersetup.StepFive
 		}
 	}
@@ -148,16 +148,16 @@ func isFinishStepRequestValid(request *connect.Request[userpb.FinishStepRequest]
 		return false
 	}
 	switch request.Msg.Step.(type) {
-	case *userpb.FinishStepRequest_StepOne:
-		return request.Msg.GetStepOne() != nil
-	case *userpb.FinishStepRequest_StepTwo:
-		return request.Msg.GetStepTwo() != nil
-	case *userpb.FinishStepRequest_StepThree:
-		return request.Msg.GetStepThree() != nil
-	case *userpb.FinishStepRequest_StepFour:
-		return request.Msg.GetStepFour() != nil
-	case *userpb.FinishStepRequest_StepFive:
-		return request.Msg.GetStepFive() != nil
+	case *userpb.FinishStepRequest_One:
+		return request.Msg.GetOne() != nil
+	case *userpb.FinishStepRequest_Two:
+		return request.Msg.GetTwo() != nil
+	case *userpb.FinishStepRequest_Three:
+		return request.Msg.GetThree() != nil
+	case *userpb.FinishStepRequest_Four:
+		return request.Msg.GetFour() != nil
+	case *userpb.FinishStepRequest_Five:
+		return request.Msg.GetFive() != nil
 	}
 	return false
 }
@@ -188,27 +188,27 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 	var isCompleted = false
 	var updateQuery *ent.UserSetupUpdateOne
 	switch request.Msg.Step.(type) {
-	case *userpb.FinishStepRequest_StepOne:
+	case *userpb.FinishStepRequest_One:
 		var step = usersetup.StepThree
-		if request.Msg.GetStepOne().GetIsValidator() {
+		if request.Msg.GetOne().GetIsValidator() {
 			step = usersetup.StepTwo
 		}
 		updateQuery = setup.
 			Update().
-			SetIsValidator(request.Msg.GetStepOne().GetIsValidator()).
+			SetIsValidator(request.Msg.GetOne().GetIsValidator()).
 			SetStep(step)
-	case *userpb.FinishStepRequest_StepTwo:
+	case *userpb.FinishStepRequest_Two:
 		step := usersetup.StepThree
 		if !request.Msg.GetGoToNextStep() {
 			step = usersetup.StepOne
 		}
-		validatorIds := sf.Map(request.Msg.GetStepTwo().GetValidatorIds(), func(id int64) int { return int(id) })
+		validatorIds := sf.Map(request.Msg.GetTwo().GetValidatorIds(), func(id int64) int { return int(id) })
 		updateQuery = setup.
 			Update().
 			ClearSelectedValidators().
 			AddSelectedValidatorIDs(validatorIds...).
 			SetStep(step)
-	case *userpb.FinishStepRequest_StepThree:
+	case *userpb.FinishStepRequest_Three:
 		step := usersetup.StepFour
 		if !request.Msg.GetGoToNextStep() {
 			if setup.IsValidator {
@@ -219,7 +219,7 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 		}
 		var chainIds []int
 		var chains = u.chainManager.QueryEnabled(ctx)
-		for _, address := range request.Msg.GetStepThree().GetWalletAddresses() {
+		for _, address := range request.Msg.GetThree().GetWalletAddresses() {
 			for _, chain := range chains {
 				if common.IsBech32AddressFromChain(address, chain.Bech32Prefix) {
 					chainIds = append(chainIds, chain.ID)
@@ -229,34 +229,34 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 		}
 		updateQuery = setup.
 			Update().
-			SetWalletAddresses(request.Msg.GetStepThree().GetWalletAddresses()).
+			SetWalletAddresses(request.Msg.GetThree().GetWalletAddresses()).
 			ClearSelectedChains().
 			AddSelectedChainIDs(sf.Unique(chainIds)...).
 			SetStep(step)
-	case *userpb.FinishStepRequest_StepFour:
+	case *userpb.FinishStepRequest_Four:
 		step := usersetup.StepFive
 		if !request.Msg.GetGoToNextStep() {
 			step = usersetup.StepThree
 		}
-		notifyGovChainIds := sf.Map(request.Msg.GetStepFour().GetNotifyGovChainIds(), func(id int64) int { return int(id) })
+		notifyGovChainIds := sf.Map(request.Msg.GetFour().GetNotifyGovChainIds(), func(id int64) int { return int(id) })
 		updateQuery = setup.
 			Update().
-			SetNotifyFunding(request.Msg.GetStepFour().GetNotifyFunding()).
-			SetNotifyStaking(request.Msg.GetStepFour().GetNotifyStaking()).
-			SetNotifyGovNewProposal(request.Msg.GetStepFour().GetNotifyGovNewProposal()).
-			SetNotifyGovVotingEnd(request.Msg.GetStepFour().GetNotifyGovVotingEnd()).
-			SetNotifyGovVotingReminder(request.Msg.GetStepFour().GetNotifyGovVotingReminder()).
+			SetNotifyFunding(request.Msg.GetFour().GetNotifyFunding()).
+			SetNotifyStaking(request.Msg.GetFour().GetNotifyStaking()).
+			SetNotifyGovNewProposal(request.Msg.GetFour().GetNotifyGovNewProposal()).
+			SetNotifyGovVotingEnd(request.Msg.GetFour().GetNotifyGovVotingEnd()).
+			SetNotifyGovVotingReminder(request.Msg.GetFour().GetNotifyGovVotingReminder()).
 			ClearSelectedChains().
 			AddSelectedChainIDs(notifyGovChainIds...).
 			SetStep(step)
-	case *userpb.FinishStepRequest_StepFive:
+	case *userpb.FinishStepRequest_Five:
 		step := usersetup.StepFive
 		if !request.Msg.GetGoToNextStep() {
 			step = usersetup.StepFour
 		} else {
 			isCompleted = true
 		}
-		switch request.Msg.GetStepFive().GetChannel().(type) {
+		switch request.Msg.GetFive().GetChannel().(type) {
 		case *userpb.StepFiveRequest_Webapp:
 		case *userpb.StepFiveRequest_Telegram:
 			if user.TelegramUserID == 0 {
@@ -271,13 +271,13 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 			}
 			var found = false
 			for _, channel := range channels {
-				if channel.TelegramChatID == request.Msg.GetStepFive().GetTelegram().GetChatId() {
+				if channel.TelegramChatID == request.Msg.GetFive().GetTelegram().GetChatId() {
 					found = true
 					break
 				}
 			}
 			if !found {
-				log.Sugar.Errorf("invalid telegram chat id: %v", request.Msg.GetStepFive().GetTelegram().GetChatId())
+				log.Sugar.Errorf("invalid telegram chat id: %v", request.Msg.GetFive().GetTelegram().GetChatId())
 				return nil, types.InvalidArgumentErr
 			}
 		case *userpb.StepFiveRequest_Discord:
@@ -292,13 +292,13 @@ func (u *UserSetupService) FinishStep(ctx context.Context, request *connect.Requ
 			}
 			var found = false
 			for _, channel := range channels {
-				if channel.DiscordChannelID == request.Msg.GetStepFive().GetDiscord().GetChannelId() {
+				if channel.DiscordChannelID == request.Msg.GetFive().GetDiscord().GetChannelId() {
 					found = true
 					break
 				}
 			}
 			if !found {
-				log.Sugar.Errorf("invalid discord channel id: %v", request.Msg.GetStepFive().GetDiscord().GetChannelId())
+				log.Sugar.Errorf("invalid discord channel id: %v", request.Msg.GetFive().GetDiscord().GetChannelId())
 				return nil, types.InvalidArgumentErr
 			}
 		}

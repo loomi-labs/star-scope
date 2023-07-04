@@ -25,8 +25,8 @@ fn hide_telegram_login_button(cx: Scope) {
             .document()
             .unwrap()
             .get_element_by_id(element_id.as_str());
-        if element.is_some() {
-            let _ = element.unwrap().set_attribute("hidden", "");
+        if let Some(element) = element {
+            let _ = element.set_attribute("hidden", "");
         } else {
             hide_telegram_login_button(cx)
         }
@@ -42,7 +42,7 @@ pub fn TelegramLoginButton<'a, G: Html>(
         create_effect(cx, move || {
             if *is_hidden.get() {
                 // necessary because the telegram script inserts the button no matter what
-                hide_telegram_login_button(cx.clone());
+                hide_telegram_login_button(cx);
             }
         });
     }
@@ -114,7 +114,7 @@ pub fn setup_iframe_message_listener() {
                     let hidden_input = window
                         .document()
                         .and_then(|document| document.get_element_by_id(IFRAME_INPUT_ID))
-                        .and_then(|input| input.dyn_into::<web_sys::HtmlInputElement>().ok())
+                        .and_then(|input| input.dyn_into::<HtmlInputElement>().ok())
                         .unwrap();
                     hidden_input.set_value(data.as_str());
                 }
@@ -163,7 +163,7 @@ fn start_login_input_timer(cx: Scope) {
             //     format!("Login failed with status: {}", status),
             //     InfoLevel::Error,
             // ),
-            spawn_local_scoped(cx.clone(), async move {
+            spawn_local_scoped(cx, async move {
                 if login_with_wallet(cx, value).await.is_err() {
                     input_field.set_value("");
                     start_login_input_timer(cx);

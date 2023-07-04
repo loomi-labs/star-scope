@@ -14,7 +14,7 @@ use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::navigation::Header;
 use crate::types::protobuf::grpc::step_response::Step;
 use crate::types::protobuf::grpc::step_response::Step::{
-    StepFive, StepFour, StepOne, StepThree, StepTwo,
+    Five, Four, One, Three, Two,
 };
 use crate::types::protobuf::grpc::{
     finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, GovChain,
@@ -51,7 +51,7 @@ fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step: true,
-                step: Some(finish_step_request::Step::StepOne(StepOneRequest {
+                step: Some(finish_step_request::Step::One(StepOneRequest {
                     is_validator,
                 })),
             };
@@ -85,19 +85,19 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
     }
     let num_steps = num_steps_option.unwrap() - 1;
     let current_step = match step {
-        StepOne(_) => 0,
-        StepTwo(_) => 0,
-        StepThree(_) => num_steps - 3,
-        StepFour(_) => num_steps - 2,
-        StepFive(_) => num_steps - 1,
+        One(_) => 0,
+        Two(_) => 0,
+        Three(_) => num_steps - 3,
+        Four(_) => num_steps - 2,
+        Five(_) => num_steps - 1,
     };
 
     let current_name = match step {
-        StepOne(_) => "",
-        StepTwo(_) => "Validators",
-        StepThree(_) => "Wallets",
-        StepFour(_) => "Notifications",
-        StepFive(_) => "Communication",
+        One(_) => "",
+        Two(_) => "Validators",
+        Three(_) => "Wallets",
+        Four(_) => "Notifications",
+        Five(_) => "Communication",
     };
 
     let progress_bar_views = View::new_fragment(
@@ -213,14 +213,13 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
-                step: Some(finish_step_request::Step::StepTwo(StepTwoRequest {
+                step: Some(finish_step_request::Step::Two(StepTwoRequest {
                     validator_ids: selected_validators
                         .get()
                         .as_ref()
                         .clone()
                         .into_iter()
-                        .map(|val| val.validator.ids)
-                        .flatten()
+                        .flat_map(|val| val.validator.ids)
                         .collect(),
                 })),
             };
@@ -229,7 +228,7 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     };
 
     view! {cx,
-        ProgressBar(step=StepTwo(step))
+        ProgressBar(step=Two(step))
         h2(class=TITLE_CLASS) {"Choose your validator(s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
         SearchEntity(searchables=validators.clone(), selected_entities=selected_validators.clone(), placeholder="Search validators")
@@ -251,7 +250,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> V
             Indexed(
                 iterable=wallets,
                 view=move |cx, wallet| {
-                    let wallet_ref = create_ref(cx, wallet.clone());
+                    let wallet_ref = create_ref(cx, wallet);
                     let prefix = wallet_ref.address[..8].to_owned();
                     let suffix = wallet_ref.address[wallet_ref.address.len() - 4..].to_owned();
                     let shortened_address = format!("{}...{}", prefix, suffix);
@@ -298,9 +297,9 @@ async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidati
                     return WalletValidation::Valid(wallet);
                 }
                 create_message(cx, "Error", "Wallet not found", InfoLevel::Error);
-                return WalletValidation::Invalid("Wallet not found".to_string());
+                WalletValidation::Invalid("Wallet not found".to_string())
             } else {
-                return WalletValidation::Invalid("Chain is currently not supported".to_string());
+                WalletValidation::Invalid("Chain is currently not supported".to_string())
             }
         } else {
             WalletValidation::Invalid("Invalid wallet address".to_string())
@@ -340,12 +339,9 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                 let result =
                     query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
                 validation.set(Some(result.clone()));
-                match result {
-                    WalletValidation::Valid(wallet) => {
-                        wallets.modify().push(wallet);
-                        new_wallet_address.set(String::new());
-                    }
-                    _ => {}
+                if let WalletValidation::Valid(wallet) = result {
+                    wallets.modify().push(wallet);
+                    new_wallet_address.set(String::new());
                 }
             });
         }
@@ -381,7 +377,7 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
-                step: Some(finish_step_request::Step::StepThree(StepThreeRequest {
+                step: Some(finish_step_request::Step::Three(StepThreeRequest {
                     wallet_addresses: wallets.get().iter().map(|w| w.address.clone()).collect(),
                 })),
             };
@@ -390,7 +386,7 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
     };
 
     view! {cx,
-        ProgressBar(step=StepThree(step))
+        ProgressBar(step=Three(step))
         h2(class=TITLE_CLASS) {"Add your wallet(s)"}
         p(class=DESCRIPTION_CLASS) {"You will receive notifications about important updates and events directly related to your wallet."}
         WalletList(wallets=wallets.clone())
@@ -460,7 +456,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
-                step: Some(finish_step_request::Step::StepFour(StepFourRequest {
+                step: Some(finish_step_request::Step::Four(StepFourRequest {
                     notify_funding: *notify_funding.get(),
                     notify_staking: *notify_staking.get(),
                     notify_gov_new_proposal: *notify_gov_new_proposal.get(),
@@ -490,7 +486,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
     let check_mark_class = "w-6 h-6 bg-primary icon-[ph--check-bold]";
 
     view! {cx,
-        ProgressBar(step=StepFour(step))
+        ProgressBar(step=Four(step))
         h2(class=TITLE_CLASS) {"Choose your notifications"}
         div(class="flex flex-wrap rounded-xl mt-4 text-sm md:text-base dark:bg-purple-800") {
             div(class="flex flex-col items-center w-full md:w-1/3 px-6 py-10 md:py-6 rounded-xl hover:dark:bg-purple-700", on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
@@ -562,7 +558,7 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
-                step: Some(finish_step_request::Step::StepFive(StepFiveRequest {
+                step: Some(finish_step_request::Step::Five(StepFiveRequest {
                     ..Default::default()
                 })),
             };
@@ -571,7 +567,7 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
     };
 
     view! {cx,
-        ProgressBar(step=StepFive(step))
+        ProgressBar(step=Five(step))
         p(class=DESCRIPTION_CLASS) {"Choose your notification channel"}
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
@@ -636,7 +632,7 @@ fn handle_setup_step_response(cx: Scope, response: Result<StepResponse, Status>)
 async fn query_setup_step(cx: Scope<'_>, requestedStep: Option<get_step_request::Step>) {
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(GetStepRequest {
-        step: requestedStep.unwrap_or_else(|| get_step_request::Step::CurrentStep) as i32,
+        step: requestedStep.unwrap_or(get_step_request::Step::Current) as i32,
     });
     let response = services
         .grpc_client
@@ -659,11 +655,11 @@ pub fn Setup<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
         (if let Some(step) = setup_state.step.get().as_ref() {
             let child = match step {
-                StepOne(_) => view! {cx, StepOneComponent()},
-                StepTwo(s) => view! {cx, StepTwoComponent(step=s.clone())},
-                StepThree(s) => view! {cx, StepThreeComponent(step=s.clone())},
-                StepFour(s) => view! {cx, StepFourComponent(step=s.clone())},
-                StepFive(s) => view! {cx, StepFiveComponent(step=s.clone())},
+                One(_) => view! {cx, StepOneComponent()},
+                Two(s) => view! {cx, StepTwoComponent(step=s.clone())},
+                Three(s) => view! {cx, StepThreeComponent(step=s.clone())},
+                Four(s) => view! {cx, StepFourComponent(step=s.clone())},
+                Five(s) => view! {cx, StepFiveComponent(step=s.clone())},
             };
             view! {
                 cx,

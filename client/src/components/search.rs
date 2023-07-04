@@ -119,7 +119,7 @@ where
                                 iterable=search_results,
                                 view=move |cx, row| {
                                     let highlicht = create_selector(cx, move || {
-                                        let name = row.entity.to_string().to_owned();
+                                        let name = row.entity.to_string();
                                         let search = search_term.get().to_ascii_lowercase();
                                         if let Some(index) = name.to_ascii_lowercase().find(&search) {
                                             let size = index + search.len();

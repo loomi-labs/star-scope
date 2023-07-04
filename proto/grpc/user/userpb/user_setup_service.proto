@@ -15,12 +15,12 @@ service UserSetupService {
 
 message GetStepRequest {
   enum Step {
-    CURRENT_STEP = 0;
-    STEP_ONE = 1;
-    STEP_TWO = 2;
-    STEP_THREE = 3;
-    STEP_FOUR = 4;
-    STEP_FIVE = 5;
+    CURRENT = 0;
+    ONE = 1;
+    TWO = 2;
+    THREE = 3;
+    FOUR = 4;
+    FIVE = 5;
   }
   Step step = 1;
 }
@@ -70,11 +70,11 @@ message StepFiveResponse {
 
 message StepResponse {
   oneof step {
-    StepOneResponse step_one = 1;
-    StepTwoResponse step_two = 2;
-    StepThreeResponse step_three = 3;
-    StepFourResponse step_four = 4;
-    StepFiveResponse step_five = 5;
+    StepOneResponse one = 1;
+    StepTwoResponse two = 2;
+    StepThreeResponse three = 3;
+    StepFourResponse four = 4;
+    StepFiveResponse five = 5;
   }
   uint32 num_steps = 6;
   bool is_complete = 7;
@@ -122,11 +122,11 @@ message StepFiveRequest {
 
 message FinishStepRequest {
   oneof step {
-    StepOneRequest step_one = 1;
-    StepTwoRequest step_two = 2;
-    StepThreeRequest step_three = 3;
-    StepFourRequest step_four = 4;
-    StepFiveRequest step_five = 5;
+    StepOneRequest one = 1;
+    StepTwoRequest two = 2;
+    StepThreeRequest three = 3;
+    StepFourRequest four = 4;
+    StepFiveRequest five = 5;
   }
   bool go_to_next_step = 6;
 }
