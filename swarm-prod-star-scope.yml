@@ -196,6 +196,15 @@ services:
         constraints:
           - node.role != manager
 
+  client-cosmos-login:
+    image: ghcr.io/loomi-labs/star-scope-client-cosmos-login:main
+    networks:
+      - default
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+
   envoy:
     image: ghcr.io/loomi-labs/star-scope-envoy:main
     deploy:

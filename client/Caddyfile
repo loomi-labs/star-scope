@@ -13,6 +13,10 @@
         reverse_proxy envoy:8090
     }
 
+    handle /cosmos-login {
+        reverse_proxy client-cosmos-login:3000
+    }
+
     handle {
         root * /var/www/star-scope
         encode gzip

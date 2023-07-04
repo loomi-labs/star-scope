@@ -94,9 +94,52 @@ jobs:
           build-args: |
             DEBUG=true
             GRPC_WEB_ENDPOINT_URL=https://starscope.network
+            COSMOS_LOGIN_BUTTON_URL=https://starscope.network/cosmos-login
             WEB_APP_URL=https://starscope.network
             TELEGRAM_BOT_NAME=StarScopeTestBot
             DISCORD_CLIENT_ID=1120308547142549565
+
+  build-and-push-client-cosmos-login:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v2.11.1
+        with:
+          filters: |
+            client-cosmos-login:
+              - 'client-cosmos-login/**'
+
+      - name: Extract metadata (tags, labels) for client-cosmos-login image
+        id: meta-client-cosmos-login
+        uses: docker/metadata-action@v4.3.0
+        if: steps.changes.outputs.client-cosmos-login == 'true'
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client-cosmos-login
+
+      - name: Build and push client-cosmos-login Docker image
+        uses: docker/build-push-action@v4.0.0
+        if: steps.changes.outputs.client-cosmos-login == 'true'
+        with:
+          context: .
+          file: client-cosmos-login/Dockerfile
+          push: true
+          tags: ${{ steps.meta-client-cosmos-login.outputs.tags }}
+          labels: ${{ steps.meta-client-cosmos-login.outputs.labels }}
 
   build-and-push-base-indexer:
     runs-on: ubuntu-latest
