@@ -26,7 +26,8 @@ function CreateCosmosApp({Component, pageProps}: AppProps) {
         chains={chains}
         assetLists={assets}
         // @ts-ignore
-        wallets={[...keplrWallets, ...cosmostationWallets, ...leapWallets]}
+        // wallets={[...keplrWallets, ...cosmostationWallets, ...leapWallets]}
+        wallets={[keplrWallets[0], cosmostationWallets[0], ...leapWallets]}
         walletConnectOptions={{
           signClient: {
             projectId: 'a8510432ebb71e6948cfd6cde54b70f7',

@@ -31,7 +31,7 @@ const signMsg = (
           type: "sign/MsgSignData",
           value: {
             signer: address,
-            data: btoa("Hello".toLowerCase()),
+            data: btoa(""),
           },
         },
       ],
