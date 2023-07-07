@@ -11,6 +11,7 @@ service UserSetupService {
   rpc GetStep(GetStepRequest) returns (StepResponse);
   rpc FinishStep(FinishStepRequest) returns (StepResponse);
   rpc ValidateWallet(ValidateWalletRequest) returns (ValidateWalletResponse);
+  rpc SearchWallets(SearchWalletsRequest) returns (stream SearchWalletsResponse);
 }
 
 message GetStepRequest {
@@ -139,4 +140,13 @@ message ValidateWalletResponse {
   bool is_valid = 1;
   bool is_supported = 2;
   Wallet wallet = 3;
+}
+
+message SearchWalletsRequest {
+  string address = 1;
+  repeated string wallet_addresses = 2;
+}
+
+message SearchWalletsResponse {
+  Wallet wallet = 1;
 }

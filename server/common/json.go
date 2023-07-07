@@ -7,8 +7,9 @@ import (
 	"time"
 )
 
+var httpClient = &http.Client{Timeout: 20 * time.Second}
+
 func GetJson(url string, retries int, target interface{}) (int, error) {
-	var httpClient = &http.Client{Timeout: 20 * time.Second}
 	resp, err := httpClient.Get(url)
 	if err != nil {
 		if retries > 0 {
