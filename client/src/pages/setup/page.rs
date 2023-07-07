@@ -239,39 +239,6 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     }
 }
 
-#[component(inline_props)]
-fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
-    let handle_delete_wallet = move |wallet: &Wallet| {
-        wallets.modify().retain(|w| w.address != wallet.address);
-    };
-
-    view! {cx,
-        div(class="flex flex-col space-y-4") {
-            Indexed(
-                iterable=wallets,
-                view=move |cx, wallet| {
-                    let wallet_ref = create_ref(cx, wallet);
-                    let prefix = wallet_ref.address[..8].to_owned();
-                    let suffix = wallet_ref.address[wallet_ref.address.len() - 4..].to_owned();
-                    let shortened_address = format!("{}...{}", prefix, suffix);
-                    view! {cx,
-                        div(class="flex justify-between items-center space-x-8") {
-                            div(class="flex flex-grow items-center justify-center space-x-2 px-4 py-2 rounded-full dark:bg-purple-700") {
-                                img(src=wallet_ref.logo_url, alt="Chain logo", class="h-6 w-6")
-                                span(class="text-sm") {(shortened_address)}
-                            }
-                            button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary",
-                                    on:click=move |_| handle_delete_wallet(wallet_ref)) {
-                                span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
-                            }
-                        }
-                    }
-                }
-            )
-            AddWallet(wallets=wallets.clone())
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq)]
 enum WalletValidation {
@@ -309,6 +276,7 @@ async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidati
         WalletValidation::Invalid("Error".to_string())
     }
 }
+
 
 #[component(inline_props)]
 fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
@@ -356,7 +324,6 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                     type="text",
                     bind:value=new_wallet_address,
                 )
-                // SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
             }
             (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
                 view! {cx,
@@ -365,6 +332,40 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
             } else {
                 view! {cx, }
             })
+        }
+    }
+}
+
+#[component(inline_props)]
+fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
+    let handle_delete_wallet = move |wallet: &Wallet| {
+        wallets.modify().retain(|w| w.address != wallet.address);
+    };
+
+    view! {cx,
+        div(class="flex flex-col space-y-4") {
+            Indexed(
+                iterable=wallets,
+                view=move |cx, wallet| {
+                    let wallet_ref = create_ref(cx, wallet);
+                    let prefix = wallet_ref.address[..8].to_owned();
+                    let suffix = wallet_ref.address[wallet_ref.address.len() - 4..].to_owned();
+                    let shortened_address = format!("{}...{}", prefix, suffix);
+                    view! {cx,
+                        div(class="flex justify-between items-center space-x-8") {
+                            div(class="flex flex-grow items-center justify-center space-x-2 px-4 py-2 rounded-full dark:bg-purple-700") {
+                                img(src=wallet_ref.logo_url, alt="Chain logo", class="h-6 w-6")
+                                span(class="text-sm") {(shortened_address)}
+                            }
+                            button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary",
+                                    on:click=move |_| handle_delete_wallet(wallet_ref)) {
+                                span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
+                            }
+                        }
+                    }
+                }
+            )
+            AddWallet(wallets=wallets.clone())
         }
     }
 }
