@@ -1,11 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
 use crate::components::search::{SearchEntity, Searchable};
 use crate::utils::url::navigate_launch_app;
-use log::{debug};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
@@ -121,18 +120,18 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
                         }
                       }
                 } else {
-                    view! {cx, 
+                    view! {cx,
                         div(class="w-4 h-4 rounded-full dark:bg-purple-700")
                     }
                 })
                 (if has_line {
-                    view! {cx, 
+                    view! {cx,
                         (if is_line_colored {
-                            view! {cx, 
+                            view! {cx,
                                 hr(class="w-1/8 flex-grow border border-primary")
                             }
                         } else {
-                            view! {cx, 
+                            view! {cx,
                                 hr(class="w-1/8 flex-grow border dark:border-purple-700")
                             }
                         })
@@ -348,15 +347,17 @@ async fn query_search_wallets<'a>(
     cx: Scope<'a>,
     address: String,
     wallets: &Signal<Vec<NewWallet<'a>>>,
+    searched: Vec<String>,
 ) {
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(SearchWalletsRequest {
         address: address.clone(),
-        wallet_addresses: wallets
+        added_addresses: wallets
             .get()
             .iter()
             .map(|w| w.wallet.address.clone())
             .collect(),
+        searched_bech32_addresses: searched,
     });
     let result = services
         .grpc_client
@@ -398,7 +399,7 @@ async fn query_search_wallets<'a>(
 
 #[derive(Debug, Clone, PartialEq)]
 struct SearchQuery<'a> {
-    wallet_address: String,
+    bech32_address: String,
     is_searching: &'a Signal<bool>,
 }
 
@@ -417,32 +418,31 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
             .get_untracked()
             .iter()
             .cloned()
-            .map(|w| w.wallet_address.clone())
+            .map(|w| w.bech32_address.clone())
             .collect::<HashSet<String>>();
-        wallets
+
+        let unique_addresses: HashMap<String, NewWallet> = wallets
             .get()
             .iter()
-            .filter(|w| w.parent_wallet_address.is_none())
-            .filter_map(|w| {
-                if searched_addresses.contains(&w.wallet.address) {
-                    None
-                } else {
-                    Some(w.wallet.address.clone())
-                }
-            })
-            .map(|address| {
-                let search_wallet = SearchQuery {
-                    wallet_address: address.clone(),
+            .filter(|w| !searched_addresses.contains(&w.wallet.bech32_address))
+            .map(|w| (w.wallet.bech32_address.clone(), w.clone()))
+            .collect();
+
+        unique_addresses
+            .into_iter()
+            .for_each(|(bech32_address, w)| {
+                let search_wallet: SearchQuery<'_> = SearchQuery {
+                    bech32_address: bech32_address.clone(),
                     is_searching: create_signal(cx, true),
                 };
                 let cloned_search_wallet = search_wallet.clone();
                 search_wallets.modify().push(search_wallet);
+                let searched = searched_addresses.iter().cloned().collect::<Vec<String>>();
                 spawn_local_scoped(cx, async move {
-                    query_search_wallets(cx, address.clone(), wallets).await;
+                    query_search_wallets(cx, w.wallet.address.clone(), wallets, searched).await;
                     cloned_search_wallet.is_searching.set(false);
                 });
-            })
-            .for_each(drop);
+            });
     });
 
     let is_searching = create_selector(cx, {
@@ -451,6 +451,14 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
     });
 
     let cnt_wallets = create_signal(cx, wallets.get().len());
+    let cnt_non_added_wallets = create_signal(
+        cx,
+        wallets
+            .get()
+            .iter()
+            .filter(|w| !w.is_added.get().as_ref())
+            .count(),
+    );
 
     create_effect(cx, move || {
         if *is_searching.get() {
@@ -458,8 +466,15 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
         }
         let old_cnt = *cnt_wallets.get_untracked();
         let new_cnt = wallets.get_untracked().len();
+        let old_non_added_cnt = *cnt_non_added_wallets.get_untracked();
+        let new_non_added_cnt = wallets
+            .get_untracked()
+            .iter()
+            .filter(|w| !w.is_added.get().as_ref())
+            .count();
         cnt_wallets.set(new_cnt);
-        if old_cnt != new_cnt {
+        cnt_non_added_wallets.set(new_non_added_cnt);
+        if old_cnt < new_cnt && old_non_added_cnt != new_non_added_cnt {
             create_message(
                 cx,
                 "Wallets found",
@@ -468,7 +483,6 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
             );
         }
     });
-
 
     view! {cx,
         div(class="flex flex-col space-y-4") {

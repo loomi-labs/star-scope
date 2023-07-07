@@ -26,6 +26,5 @@ func doesWalletExist(restEndpoint string, address string, retries int) (bool, er
 }
 
 func DoesWalletExist(restEndpoint string, address string) (bool, error) {
-	log.Sugar.Debugf("Checking if wallet %v exists", address)
-	return doesWalletExist(restEndpoint, address, 5)
+	return doesWalletExist(restEndpoint, address, 2)
 }

@@ -68,9 +68,15 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 					break
 				}
 			}
+			bech32Address, err := common.ConvertWithOtherPrefix(wallet, "")
+			if err != nil {
+				log.Sugar.Errorf("Error converting address %v: %v", wallet, err)
+				return nil
+			}
 			wallets = append(wallets, &userpb.Wallet{
-				Address: wallet,
-				LogoUrl: logoUrl,
+				Address:       wallet,
+				Bech32Address: bech32Address,
+				LogoUrl:       logoUrl,
 			})
 		}
 		sort.Slice(wallets, func(i, j int) bool {
@@ -331,9 +337,16 @@ func (u *UserSetupService) ValidateWallet(ctx context.Context, request *connect.
 	err := common.ValidateBech32Address(request.Msg.GetAddress())
 	isValid := err == nil
 
+	bech32Address, err := common.ConvertWithOtherPrefix(request.Msg.GetAddress(), "")
+	if err != nil {
+		log.Sugar.Errorf("failed to convert address: %v", err)
+		return nil, types.UnknownErr
+	}
+
 	var wallet = &userpb.Wallet{
-		Address: request.Msg.GetAddress(),
-		LogoUrl: "",
+		Address:       request.Msg.GetAddress(),
+		Bech32Address: bech32Address,
+		LogoUrl:       "",
 	}
 	var isSupported = false
 	for _, chain := range u.chainManager.QueryEnabled(ctx) {
@@ -373,7 +386,19 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 				log.Sugar.Errorf("failed to convert address: %v", err)
 				return
 			}
-			for _, addr := range request.Msg.GetWalletAddresses() {
+
+			bech32Address, err := common.ConvertWithOtherPrefix(request.Msg.GetAddress(), "")
+			if err != nil {
+				log.Sugar.Errorf("failed to convert address: %v", err)
+				return
+			}
+
+			for _, addr := range request.Msg.GetSearchedBech32Addresses() {
+				if bech32Address == addr {
+					return
+				}
+			}
+			for _, addr := range request.Msg.GetAddedAddresses() {
 				if address == addr {
 					return
 				}

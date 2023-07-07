@@ -42,7 +42,8 @@ message StepTwoResponse {
 
 message Wallet {
   string address = 1;
-  string logo_url = 2;
+  string bech32_address = 2;
+  string logo_url = 3;
 }
 
 message StepThreeResponse {
@@ -144,7 +145,8 @@ message ValidateWalletResponse {
 
 message SearchWalletsRequest {
   string address = 1;
-  repeated string wallet_addresses = 2;
+  repeated string added_addresses = 2;
+  repeated string searched_bech32_addresses = 3;
 }
 
 message SearchWalletsResponse {
