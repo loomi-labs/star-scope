@@ -418,7 +418,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
             .get_untracked()
             .iter()
             .cloned()
-            .map(|w| w.bech32_address.clone())
+            .map(|w| w.bech32_address)
             .collect::<HashSet<String>>();
 
         let unique_addresses: HashMap<String, NewWallet> = wallets
@@ -432,7 +432,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
             .into_iter()
             .for_each(|(bech32_address, w)| {
                 let search_wallet: SearchQuery<'_> = SearchQuery {
-                    bech32_address: bech32_address.clone(),
+                    bech32_address,
                     is_searching: create_signal(cx, true),
                 };
                 let cloned_search_wallet = search_wallet.clone();
