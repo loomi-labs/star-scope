@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 
@@ -9,18 +9,16 @@ use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
 use tonic::Status;
 
-use crate::components::loading::LoadingSpinner;
+use crate::components::loading::{LoadingSpinner, LoadingSpinnerSmall};
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::navigation::Header;
 use crate::types::protobuf::grpc::step_response::Step;
-use crate::types::protobuf::grpc::step_response::Step::{
-    Five, Four, One, Three, Two,
-};
+use crate::types::protobuf::grpc::step_response::Step::{Five, Four, One, Three, Two};
 use crate::types::protobuf::grpc::{
     finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, GovChain,
-    StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse, StepOneRequest,
-    StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest, StepTwoResponse, User,
-    ValidateWalletRequest, Validator, Wallet,
+    SearchWalletsRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse,
+    StepOneRequest, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest,
+    StepTwoResponse, User, ValidateWalletRequest, Validator, Wallet,
 };
 use crate::{AppState, InfoLevel, Services};
 
@@ -122,18 +120,18 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
                         }
                       }
                 } else {
-                    view! {cx, 
+                    view! {cx,
                         div(class="w-4 h-4 rounded-full dark:bg-purple-700")
                     }
                 })
                 (if has_line {
-                    view! {cx, 
+                    view! {cx,
                         (if is_line_colored {
-                            view! {cx, 
+                            view! {cx,
                                 hr(class="w-1/8 flex-grow border border-primary")
                             }
                         } else {
-                            view! {cx, 
+                            view! {cx,
                                 hr(class="w-1/8 flex-grow border dark:border-purple-700")
                             }
                         })
@@ -239,40 +237,6 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     }
 }
 
-#[component(inline_props)]
-fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
-    let handle_delete_wallet = move |wallet: &Wallet| {
-        wallets.modify().retain(|w| w.address != wallet.address);
-    };
-
-    view! {cx,
-        div(class="flex flex-col space-y-4") {
-            Indexed(
-                iterable=wallets,
-                view=move |cx, wallet| {
-                    let wallet_ref = create_ref(cx, wallet);
-                    let prefix = wallet_ref.address[..8].to_owned();
-                    let suffix = wallet_ref.address[wallet_ref.address.len() - 4..].to_owned();
-                    let shortened_address = format!("{}...{}", prefix, suffix);
-                    view! {cx,
-                        div(class="flex justify-between items-center space-x-8") {
-                            div(class="flex flex-grow items-center justify-center space-x-2 px-4 py-2 rounded-full dark:bg-purple-700") {
-                                img(src=wallet_ref.logo_url, alt="Chain logo", class="h-6 w-6")
-                                span(class="text-sm") {(shortened_address)}
-                            }
-                            button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary",
-                                    on:click=move |_| handle_delete_wallet(wallet_ref)) {
-                                span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
-                            }
-                        }
-                    }
-                }
-            )
-            AddWallet(wallets=wallets.clone())
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 enum WalletValidation {
     Valid(Wallet),
@@ -310,8 +274,15 @@ async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidati
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+struct NewWallet<'a> {
+    wallet: Wallet,
+    parent_wallet_address: Option<String>,
+    is_added: &'a Signal<bool>,
+}
+
 #[component(inline_props)]
-fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> View<G> {
+fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>>) -> View<G> {
     let new_wallet_address = create_signal(cx, String::new());
 
     let validation = create_signal(cx, None::<WalletValidation>);
@@ -321,7 +292,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
         if wallets
             .get()
             .iter()
-            .map(|w| w.address.clone())
+            .map(|w| w.wallet.address.clone())
             .collect::<Vec<String>>()
             .contains(&new_wallet_address.get().as_ref().clone())
         {
@@ -340,7 +311,11 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                     query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
                 validation.set(Some(result.clone()));
                 if let WalletValidation::Valid(wallet) = result {
-                    wallets.modify().push(wallet);
+                    wallets.modify().push(NewWallet {
+                        wallet,
+                        parent_wallet_address: None,
+                        is_added: create_signal(cx, true),
+                    });
                     new_wallet_address.set(String::new());
                 }
             });
@@ -356,7 +331,6 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
                     type="text",
                     bind:value=new_wallet_address,
                 )
-                // SolidButton(color=ColorScheme::Subtle, on_click=handle_add_wallet) {"Add"}
             }
             (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
                 view! {cx,
@@ -369,16 +343,219 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<Wallet>>) -> Vi
     }
 }
 
+async fn query_search_wallets<'a>(
+    cx: Scope<'a>,
+    address: String,
+    wallets: &Signal<Vec<NewWallet<'a>>>,
+    searched: Vec<String>,
+) {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(SearchWalletsRequest {
+        address: address.clone(),
+        added_addresses: wallets
+            .get()
+            .iter()
+            .map(|w| w.wallet.address.clone())
+            .collect(),
+        searched_bech32_addresses: searched,
+    });
+    let result = services
+        .grpc_client
+        .get_user_setup_service()
+        .search_wallets(request)
+        .await
+        .map(|res| res.into_inner());
+    match result {
+        Ok(mut stream) => loop {
+            match stream.message().await {
+                Ok(Some(response)) => {
+                    if response.wallet.is_none() {
+                        create_message(cx, "Error", "No wallets found", InfoLevel::Error);
+                    } else {
+                        let is_already_added = wallets
+                            .get()
+                            .iter()
+                            .map(|w| w.wallet.address.clone())
+                            .collect::<Vec<String>>()
+                            .contains(&response.wallet.as_ref().unwrap().address.clone());
+                        if !is_already_added {
+                            wallets.modify().push(NewWallet {
+                                wallet: response.wallet.unwrap(),
+                                parent_wallet_address: Some(address.clone()),
+                                is_added: create_signal(cx, false),
+                            });
+                        }
+                    }
+                }
+                Ok(None) => break,
+                Err(err) => create_error_msg_from_status(cx, err),
+            }
+        },
+        Err(err) => {
+            create_error_msg_from_status(cx, err);
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct SearchQuery<'a> {
+    bech32_address: String,
+    is_searching: &'a Signal<bool>,
+}
+
+#[component(inline_props)]
+fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>>) -> View<G> {
+    let handle_delete_wallet = move |delete_wallet: &NewWallet| {
+        wallets
+            .modify()
+            .retain(|w| w.wallet.address != delete_wallet.wallet.address);
+    };
+
+    let search_wallets = create_signal(cx, Vec::<SearchQuery>::new());
+
+    create_effect(cx, move || {
+        let searched_addresses = search_wallets
+            .get_untracked()
+            .iter()
+            .cloned()
+            .map(|w| w.bech32_address)
+            .collect::<HashSet<String>>();
+
+        let unique_addresses: HashMap<String, NewWallet> = wallets
+            .get()
+            .iter()
+            .filter(|w| !searched_addresses.contains(&w.wallet.bech32_address))
+            .map(|w| (w.wallet.bech32_address.clone(), w.clone()))
+            .collect();
+
+        unique_addresses
+            .into_iter()
+            .for_each(|(bech32_address, w)| {
+                let search_wallet: SearchQuery<'_> = SearchQuery {
+                    bech32_address,
+                    is_searching: create_signal(cx, true),
+                };
+                let cloned_search_wallet = search_wallet.clone();
+                search_wallets.modify().push(search_wallet);
+                let searched = searched_addresses.iter().cloned().collect::<Vec<String>>();
+                spawn_local_scoped(cx, async move {
+                    query_search_wallets(cx, w.wallet.address.clone(), wallets, searched).await;
+                    cloned_search_wallet.is_searching.set(false);
+                });
+            });
+    });
+
+    let is_searching = create_selector(cx, {
+        let search_wallets = search_wallets.clone();
+        move || search_wallets.get().iter().any(|w| *w.is_searching.get())
+    });
+
+    let cnt_wallets = create_signal(cx, wallets.get().len());
+    let cnt_non_added_wallets = create_signal(
+        cx,
+        wallets
+            .get()
+            .iter()
+            .filter(|w| !w.is_added.get().as_ref())
+            .count(),
+    );
+
+    create_effect(cx, move || {
+        if *is_searching.get() {
+            return;
+        }
+        let old_cnt = *cnt_wallets.get_untracked();
+        let new_cnt = wallets.get_untracked().len();
+        let old_non_added_cnt = *cnt_non_added_wallets.get_untracked();
+        let new_non_added_cnt = wallets
+            .get_untracked()
+            .iter()
+            .filter(|w| !w.is_added.get().as_ref())
+            .count();
+        cnt_wallets.set(new_cnt);
+        cnt_non_added_wallets.set(new_non_added_cnt);
+        if old_cnt < new_cnt && old_non_added_cnt != new_non_added_cnt {
+            create_message(
+                cx,
+                "Wallets found",
+                format!("{} wallets found", new_cnt - old_cnt),
+                InfoLevel::Success,
+            );
+        }
+    });
+
+    view! {cx,
+        div(class="flex flex-col space-y-4") {
+            Indexed(
+                iterable=wallets,
+                view=move |cx, wallet| {
+                    let wallet_ref = create_ref(cx, wallet);
+                    let prefix = wallet_ref.wallet.address[..8].to_owned();
+                    let suffix = wallet_ref.wallet.address[wallet_ref.wallet.address.len() - 4..].to_owned();
+                    let shortened_address = format!("{}...{}", prefix, suffix);
+                    view! {cx,
+                        div(class="flex justify-between items-center space-x-8") {
+                            div(class=format!("flex flex-grow items-center justify-center space-x-2 px-4 py-2 rounded-full dark:bg-purple-700 {}", if *wallet_ref.is_added.get() { "" } else { "opacity-50" })) {
+                                img(src=wallet_ref.wallet.logo_url, alt="Chain logo", class="h-6 w-6")
+                                span(class="text-sm") {(shortened_address)}
+                            }
+                            (if *wallet_ref.is_added.get() {
+                                view!{cx,
+                                    button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary",
+                                            on:click=move |_| handle_delete_wallet(wallet_ref)) {
+                                        span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
+                                    }
+                                }
+                            } else {
+                                view!{cx,
+                                    button(class="flex justify-between items-center p-2 opacity-100 rounded-lg border-2 border-green-500 bg-green-500 hover:bg-green-600",
+                                            on:click=move |_| wallet_ref.is_added.set(true)) {
+                                        span(class="w-6 h-6 icon-[ic--round-add] cursor-pointer")
+                                    }
+                                }
+                            })
+                        }
+                    }
+                }
+            )
+            (if *is_searching.get() {
+                view! {cx,
+                    LoadingSpinnerSmall {}
+                }
+            } else {
+                view! {cx, }
+            })
+            AddWallet(wallets=wallets.clone())
+        }
+    }
+}
+
 #[component(inline_props)]
 fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
-    let wallets = create_signal(cx, step.wallets.clone());
+    let wallets: &Signal<Vec<NewWallet>> = create_signal(
+        cx,
+        step.wallets
+            .iter()
+            .cloned()
+            .map(|wallet| NewWallet {
+                wallet,
+                parent_wallet_address: None,
+                is_added: create_signal(cx, true),
+            })
+            .collect(),
+    );
 
     let handle_click = move |go_to_next_step| {
         spawn_local_scoped(cx, async move {
             let finish_step = FinishStepRequest {
                 go_to_next_step,
                 step: Some(finish_step_request::Step::Three(StepThreeRequest {
-                    wallet_addresses: wallets.get().iter().map(|w| w.address.clone()).collect(),
+                    wallet_addresses: wallets
+                        .get()
+                        .iter()
+                        .filter(|w| *w.is_added.get())
+                        .map(|w| w.wallet.address.clone())
+                        .collect(),
                 })),
             };
             update_step(cx, finish_step).await;

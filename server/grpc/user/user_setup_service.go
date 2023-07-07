@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bufbuild/connect-go"
 	"github.com/loomi-labs/star-scope/common"
+	"github.com/loomi-labs/star-scope/crawler/queries"
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/commchannel"
@@ -15,6 +16,8 @@ import (
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"sort"
+	"sync"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -65,11 +68,20 @@ func (u *UserSetupService) createStepResponse(ctx context.Context, setup *ent.Us
 					break
 				}
 			}
+			bech32Address, err := common.ConvertWithOtherPrefix(wallet, "")
+			if err != nil {
+				log.Sugar.Errorf("Error converting address %v: %v", wallet, err)
+				return nil
+			}
 			wallets = append(wallets, &userpb.Wallet{
-				Address: wallet,
-				LogoUrl: logoUrl,
+				Address:       wallet,
+				Bech32Address: bech32Address,
+				LogoUrl:       logoUrl,
 			})
 		}
+		sort.Slice(wallets, func(i, j int) bool {
+			return wallets[i].Address < wallets[j].Address
+		})
 		response.Step = &userpb.StepResponse_Three{Three: &userpb.StepThreeResponse{
 			Wallets: wallets,
 		}}
@@ -325,9 +337,16 @@ func (u *UserSetupService) ValidateWallet(ctx context.Context, request *connect.
 	err := common.ValidateBech32Address(request.Msg.GetAddress())
 	isValid := err == nil
 
+	bech32Address, err := common.ConvertWithOtherPrefix(request.Msg.GetAddress(), "")
+	if err != nil {
+		log.Sugar.Errorf("failed to convert address: %v", err)
+		return nil, types.UnknownErr
+	}
+
 	var wallet = &userpb.Wallet{
-		Address: request.Msg.GetAddress(),
-		LogoUrl: "",
+		Address:       request.Msg.GetAddress(),
+		Bech32Address: bech32Address,
+		LogoUrl:       "",
 	}
 	var isSupported = false
 	for _, chain := range u.chainManager.QueryEnabled(ctx) {
@@ -343,4 +362,69 @@ func (u *UserSetupService) ValidateWallet(ctx context.Context, request *connect.
 		IsSupported: isSupported,
 		Wallet:      wallet,
 	}), nil
+}
+
+func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.Request[userpb.SearchWalletsRequest], stream *connect.ServerStream[userpb.SearchWalletsResponse]) error {
+	err := common.ValidateBech32Address(request.Msg.GetAddress())
+	if err != nil {
+		log.Sugar.Errorf("invalid wallet address: %v", err)
+		return types.InvalidArgumentErr
+	}
+
+	wg := sync.WaitGroup{} // Create a WaitGroup to wait for all goroutines to finish
+
+	log.Sugar.Debugf("searching wallet %v", request.Msg.GetAddress())
+
+	for _, chain := range u.chainManager.QueryEnabled(ctx) {
+		wg.Add(1) // Increment the WaitGroup counter
+
+		go func(chain *ent.Chain) {
+			defer wg.Done() // Signal the completion of the goroutine
+
+			address, err := common.ConvertWithOtherPrefix(request.Msg.GetAddress(), chain.Bech32Prefix)
+			if err != nil {
+				log.Sugar.Errorf("failed to convert address: %v", err)
+				return
+			}
+
+			bech32Address, err := common.ConvertWithOtherPrefix(request.Msg.GetAddress(), "")
+			if err != nil {
+				log.Sugar.Errorf("failed to convert address: %v", err)
+				return
+			}
+
+			for _, addr := range request.Msg.GetSearchedBech32Addresses() {
+				if bech32Address == addr {
+					return
+				}
+			}
+			for _, addr := range request.Msg.GetAddedAddresses() {
+				if address == addr {
+					return
+				}
+			}
+
+			doesExist, err := queries.DoesWalletExist(chain.RestEndpoint, address)
+			if err != nil {
+				log.Sugar.Errorf("failed to check if wallet exists on chain %v: %v", chain.PrettyName, err)
+				return
+			}
+			if doesExist {
+				wallet := &userpb.Wallet{
+					Address: address,
+					LogoUrl: chain.Image,
+				}
+				err = stream.Send(&userpb.SearchWalletsResponse{
+					Wallet: wallet,
+				})
+				if err != nil {
+					log.Sugar.Errorf("failed to send response: %v", err)
+					return
+				}
+			}
+		}(chain)
+	}
+
+	wg.Wait() // Wait for all goroutines to finish
+	return nil
 }

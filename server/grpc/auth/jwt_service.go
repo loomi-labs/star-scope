@@ -61,6 +61,7 @@ func AccessibleRoles() map[string][]Role {
 		userSetupService + "GetStep":            {User, Admin},
 		userSetupService + "FinishStep":         {User, Admin},
 		userSetupService + "ValidateWallet":     {User, Admin},
+		userSetupService + "SearchWallets":      {User, Admin},
 		eventService + "EventStream":            {User, Admin},
 		eventService + "ListEvents":             {User, Admin},
 		eventService + "ListChains":             {User, Admin},

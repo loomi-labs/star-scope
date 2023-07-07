@@ -11,6 +11,7 @@ service UserSetupService {
   rpc GetStep(GetStepRequest) returns (StepResponse);
   rpc FinishStep(FinishStepRequest) returns (StepResponse);
   rpc ValidateWallet(ValidateWalletRequest) returns (ValidateWalletResponse);
+  rpc SearchWallets(SearchWalletsRequest) returns (stream SearchWalletsResponse);
 }
 
 message GetStepRequest {
@@ -41,7 +42,8 @@ message StepTwoResponse {
 
 message Wallet {
   string address = 1;
-  string logo_url = 2;
+  string bech32_address = 2;
+  string logo_url = 3;
 }
 
 message StepThreeResponse {
@@ -139,4 +141,14 @@ message ValidateWalletResponse {
   bool is_valid = 1;
   bool is_supported = 2;
   Wallet wallet = 3;
+}
+
+message SearchWalletsRequest {
+  string address = 1;
+  repeated string added_addresses = 2;
+  repeated string searched_bech32_addresses = 3;
+}
+
+message SearchWalletsResponse {
+  Wallet wallet = 1;
 }
