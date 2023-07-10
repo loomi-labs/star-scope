@@ -4,6 +4,8 @@ use std::hash::{Hash, Hasher};
 
 use crate::components::button::{ColorScheme, OutlineButton, SolidButton};
 use crate::components::search::{SearchEntity, Searchable};
+use crate::config::keys;
+use crate::pages::communication::page::{DiscordCard, TelegramCard};
 use crate::utils::url::navigate_launch_app;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::{prelude::*, view};
@@ -20,7 +22,7 @@ use crate::types::protobuf::grpc::{
     StepOneRequest, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest,
     StepTwoResponse, User, ValidateWalletRequest, Validator, Wallet,
 };
-use crate::{AppState, InfoLevel, Services};
+use crate::{AppRoutes, AppState, InfoLevel, Services};
 
 #[derive(Debug, Clone)]
 struct SetupState {
@@ -749,10 +751,19 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
             update_step(cx, finish_step).await;
         });
     };
+    let web_app_url = create_ref(cx, keys::WEB_APP_URL.to_string() + AppRoutes::Setup.to_string().as_str());
 
     view! {cx,
         ProgressBar(step=Five(step))
-        p(class=DESCRIPTION_CLASS) {"Choose your notification channel"}
+        h2(class=TITLE_CLASS) {"Choose your notification channels"}
+        div(class="flex flex-col space-y-4 mt-4") {
+            div(class="flex items-center p-8 rounded-lg dark:bg-purple-700") {
+                DiscordCard(web_app_url=web_app_url.clone(), center_button=true)
+            }
+            div(class="p-8 rounded-lg dark:bg-purple-700") {
+                TelegramCard(web_app_url=web_app_url.clone(), center_button=true)
+            }
+        }
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Finish"}

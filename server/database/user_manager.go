@@ -636,6 +636,7 @@ func (m *UserManager) createEventListeners(
 	entUser *ent.User,
 	chains []*ent.Chain,
 	selectedChains []*ent.Chain,
+	commChannels []*ent.CommChannel,
 ) error {
 	var bulk []*ent.EventListenerCreate
 	for _, entChain := range chains {
@@ -646,6 +647,7 @@ func (m *UserManager) createEventListeners(
 						Create().
 						SetChain(entChain).
 						AddUsers(entUser).
+						AddCommChannels(commChannels...).
 						SetWalletAddress(address).
 						SetDataType(dt))
 				}
@@ -659,6 +661,7 @@ func (m *UserManager) createEventListeners(
 				Create().
 				SetChain(entChain).
 				AddUsers(entUser).
+				AddCommChannels(commChannels...).
 				SetDataType(dt))
 		}
 		for _, dt := range getContractEvents(entChain) {
@@ -666,6 +669,7 @@ func (m *UserManager) createEventListeners(
 				Create().
 				SetChain(entChain).
 				AddUsers(entUser).
+				AddCommChannels(commChannels...).
 				SetDataType(dt))
 		}
 	}
@@ -697,7 +701,15 @@ func (m *UserManager) UpdateSetup(ctx context.Context, u *ent.User, query *ent.U
 				return nil, err
 			}
 
-			err = m.createEventListeners(ctx, tx, setup, u, availableChains, selectedChains)
+			commChannels, err := tx.CommChannel.
+				Query().
+				Where(commchannel.HasUsersWith(user.ID(u.ID))).
+				All(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			err = m.createEventListeners(ctx, tx, setup, u, availableChains, selectedChains, commChannels)
 			if err != nil {
 				return nil, err
 			}
