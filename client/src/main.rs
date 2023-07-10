@@ -550,7 +550,7 @@ pub async fn App<G: Html>(cx: Scope<'_>) -> View<G> {
                 (if *app_state.is_dialog_open.get() {
                     let app_state = use_context::<AppState>(cx);
                     view!{cx,
-                        div(class="fixed inset-0 bg-black opacity-50 z-50", on:click=move |_| app_state.is_dialog_open.set(false)) {}
+                        div(class="fixed inset-0 bg-black opacity-50 z-40", on:click=move |_| app_state.is_dialog_open.set(false)) {}
                     }
                 } else {
                     view!{cx,

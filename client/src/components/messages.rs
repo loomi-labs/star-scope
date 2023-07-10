@@ -1,5 +1,5 @@
 use gloo_timers::future::TimeoutFuture;
-use js_sys;
+use log::error;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::motion::create_raf;
 use sycamore::prelude::*;
@@ -43,7 +43,7 @@ pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String) -> View<G> {
     };
 
     view! { cx,
-        div(class=format!("absolute bottom-0 right-0 flex items-center justify-center min-w-96 z-50 p-4 mr-6 ml-48 lg:ml-56 rounded-lg bg-white border-l-[20px] drop-shadow-lg {}", color), style=format!("{} opacity: {}", style, state.get().as_ref())) {
+        div(class=format!("absolute bottom-0 right-0 flex items-center justify-center min-w-96 p-4 mr-6 ml-48 lg:ml-56 rounded-lg bg-white border-l-[20px] drop-shadow-lg {}", color), style=format!("{} opacity: {}", style, state.get().as_ref())) {
             span(class=format!("w-10 h-10 {}", icon)) {}
             div(class="flex flex-col pl-4") {
                 h3(class="text-lg font-bold") { (msg.title) }
@@ -90,7 +90,7 @@ pub fn MessageOverlay<G: Html>(cx: Scope) -> View<G> {
 
     view!(
         cx,
-        div(class="fixed inset-0 min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0 pointer-events-none") {
+        div(class="fixed inset-0 min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0 z-50 pointer-events-none") {
             div(class="relative flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
                 Indexed(
                     iterable = messages,
@@ -118,7 +118,12 @@ pub fn create_message(
     level: InfoLevel,
 ) {
     let app_state = use_context::<AppState>(cx);
-    let uuid = app_state.add_message(title.into(), message.into(), level);
+    let title = title.into();
+    let message = message.into();
+    let uuid = app_state.add_message(title.clone(), message.clone(), level.clone());
+    if level == InfoLevel::Error {
+        error!("{}: {}", title, message);
+    }   
     create_effect(cx, move || {
         spawn_local_scoped(cx, async move {
             TimeoutFuture::new(1000 * 10).await;
