@@ -163,10 +163,10 @@ pub fn DeleteEntityDialog<'a, G: Html>(
     }
 }
 
-const CARD_CLASS: &str = "p-8 rounded-lg dark:bg-purple-700";
+const CARD_DIV_CLASS: &str = "flex flex-col w-full";
 const CARD_TITLE_CLASS: &str = "text-2xl font-semibold";
 const CARD_SUBTITLE_CLASS: &str = "text-lg font-semibold mt-2";
-const CARD_LIST_UL_CLASS: &str = "space-y-2";
+const CARD_LIST_UL_CLASS: &str = "space-y-2 mt-4";
 const CARD_LIST_LI_CLASS: &str = "border-b border-gray-200 dark:border-purple-600";
 const CARD_LIST_LI_ROW_CLASS: &str = "flex items-center justify-items-start my-2";
 const CARD_LIST_LI_ROW_NAME_CLASS: &str = "flex-grow";
@@ -177,7 +177,7 @@ const CARD_ADD_DIV: &str = "flex items-center justify-items-end mt-4";
 const CARD_ADD_DIV_BUTTON: &str = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
 #[component(inline_props)]
-pub async fn DiscordCard<G: Html>(cx: Scope<'_>, web_app_url: String) -> View<G> {
+pub async fn DiscordCard<G: Html>(cx: Scope<'_>, web_app_url: String, center_button: bool) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
@@ -225,66 +225,66 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>, web_app_url: String) -> View<G>
     });
 
     view! {cx,
-        div(class=CARD_CLASS) {
-            AddEntityDialog(is_open=show_add_channel_dialog, service_name="Discord", entity_name="channel", icon="icon-[mingcute--discord-fill]", icon_bg_color="bg-discord-purple-500")
-            DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Discord", entity_name="channel")
-            div {
-                h2(class=CARD_TITLE_CLASS) { "Discord" }
-                (if *is_loading.get() {
-                    view! {cx,
-                        LoadingSpinner {}
-                    }
-                } else {
-                    match *is_connected.get() {
-                        false => {
-                            let web_app_url = web_app_url.clone();
-                            view! {cx,
-                                p(class="my-4") { "Receive notifications via Discord." }
-                                DiscordLoginButton(text="Connect Discord".to_string(), open_in_new_tab=false, web_app_url=web_app_url)
-                            }
+        AddEntityDialog(is_open=show_add_channel_dialog, service_name="Discord", entity_name="channel", icon="icon-[mingcute--discord-fill]", icon_bg_color="bg-discord-purple-500")
+        DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Discord", entity_name="channel")
+        div(class=format!("{} {}", CARD_DIV_CLASS, if center_button { "items-center" } else { "" })) {
+            h2(class=CARD_TITLE_CLASS) { "Discord" }
+            (if *is_loading.get() {
+                view! {cx,
+                    LoadingSpinner {}
+                }
+            } else {
+                match *is_connected.get() {
+                    false => {
+                        let web_app_url = web_app_url.clone();
+                        view! {cx,
+                            p(class="my-4") { "Receive notifications via Discord." }
+                            DiscordLoginButton(text="Connect Discord".to_string(), open_in_new_tab=false, web_app_url=web_app_url)
                         }
-                        true => {
-                            let discord_login_url = format!(
-                                "https://discord.com/api/oauth2/authorize?client_id={}&permissions=2048&scope=bot",
-                                keys::DISCORD_CLIENT_ID,
-                            );
-                            view! {cx,
-                                (if !channels.get().is_empty() {
-                                    view!{cx,
-                                        h3(class=CARD_SUBTITLE_CLASS) { "Connected Channels" }
-                                    }
-                                } else {
-                                    view!{cx,}
-                                })
+                    }
+                    true => {
+                        let discord_login_url = format!(
+                            "https://discord.com/api/oauth2/authorize?client_id={}&permissions=2048&scope=bot",
+                            keys::DISCORD_CLIENT_ID,
+                        );
+                        view! {cx,
+                            (if channels.get().is_empty() {
+                                view!{cx,
+                                    p(class="mt-4") { "You have to add at least one channel." }
+                                }
+                            } else {
+                                view!{cx,
+                                    h3(class=CARD_SUBTITLE_CLASS) { "Connected Channels" }
+                                }
+                            })
 
-                                ul(class=CARD_LIST_UL_CLASS) {
-                                    Indexed(
-                                        iterable=channels,
-                                        view=move|cx, channel| {
-                                            view! { cx,
-                                                li(class=CARD_LIST_LI_CLASS) {
-                                                    div(class=CARD_LIST_LI_ROW_CLASS) {
-                                                        p(class=CARD_LIST_LI_ROW_NAME_CLASS) { (format!("{}{}", channel.name, if channel.is_group { " (Group)"} else {""} )) }
-                                                        button(class=CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS, on:click=move |_| show_delete_dialog.set(Some(channel.channel_id))) {
-                                                            span(class="w-6 h-6 icon-[ph--trash]") {}
-                                                        }
+                            ul(class=CARD_LIST_UL_CLASS) {
+                                Indexed(
+                                    iterable=channels,
+                                    view=move|cx, channel| {
+                                        view! { cx,
+                                            li(class=CARD_LIST_LI_CLASS) {
+                                                div(class=CARD_LIST_LI_ROW_CLASS) {
+                                                    p(class=CARD_LIST_LI_ROW_NAME_CLASS) { (format!("{}{}", channel.name, if channel.is_group { " (Group)"} else {""} )) }
+                                                    button(class=CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS, on:click=move |_| show_delete_dialog.set(Some(channel.channel_id))) {
+                                                        span(class="w-6 h-6 icon-[ph--trash]") {}
                                                     }
                                                 }
                                             }
                                         }
-                                    )
-                                }
-                                div(class=CARD_ADD_DIV) {
-                                    a(class=format!("w-48 bg-discord-purple-500 hover:bg-discord-purple-600 {}", CARD_ADD_DIV_BUTTON), href=discord_login_url, target="_blank", on:click=move |_| show_add_channel_dialog.set(true)) {
-                                        span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
-                                        "Add Channel"
                                     }
+                                )
+                            }
+                            div(class=CARD_ADD_DIV) {
+                                a(class=format!("w-48 bg-discord-purple-500 hover:bg-discord-purple-600 {}", CARD_ADD_DIV_BUTTON), href=discord_login_url, target="_blank", on:click=move |_| show_add_channel_dialog.set(true)) {
+                                    span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
+                                    "Add Channel"
                                 }
                             }
                         }
                     }
-                })
-            }
+                }
+            })
         }
     }
 }
@@ -350,7 +350,7 @@ async fn delete_telegram_chat(
 }
 
 #[component(inline_props)]
-pub async fn TelegramCard<G: Html>(cx: Scope<'_>, web_app_url: String) -> View<G> {
+pub async fn TelegramCard<G: Html>(cx: Scope<'_>, web_app_url: String, center_button: bool) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
@@ -397,56 +397,62 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>, web_app_url: String) -> View<G
     });
 
     view! {cx,
-        div(class="p-8 rounded-lg dark:bg-purple-700") {
-            AddEntityDialog(is_open=show_add_chat_dialog, service_name="Telegram", entity_name="chat", icon="icon-[bxl--telegram]", icon_bg_color="bg-telegram-blue-500")
-            DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Telegram", entity_name="chat")
-            div {
-                h2(class="text-2xl font-semibold") { "Telegram" }
-                (if *is_loading.get() {
-                    view! {cx,
-                        LoadingSpinner {}
-                    }
-                } else {
-                    match *is_connected.get() {
-                        false => {
-                            let web_app_url = web_app_url.clone();
-                            view! {cx,
-                                p(class="my-4") { "Receive notifications via Telegram." }
-                                TelegramLoginButton(web_app_url=web_app_url, is_hidden=Some(is_connected))
-                            }
+        AddEntityDialog(is_open=show_add_chat_dialog, service_name="Telegram", entity_name="chat", icon="icon-[bxl--telegram]", icon_bg_color="bg-telegram-blue-500")
+        DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Telegram", entity_name="chat")
+        div(class=format!("{} {}", CARD_DIV_CLASS, if center_button { "items-center" } else { "" })) {
+            h2(class="text-2xl font-semibold") { "Telegram" }
+            (if *is_loading.get() {
+                view! {cx,
+                    LoadingSpinner {}
+                }
+            } else {
+                match *is_connected.get() {
+                    false => {
+                        let web_app_url = web_app_url.clone();
+                        view! {cx,
+                            p(class="my-4") { "Receive notifications via Telegram." }
+                            TelegramLoginButton(web_app_url=web_app_url, is_hidden=Some(is_connected))
                         }
-                        true => {
-                            let tg_bot_url = format!("https://t.me/{}", keys::TELEGRAM_BOT_NAME);
-                            view! {cx,
-                                h3(class=CARD_SUBTITLE_CLASS) { "Connected Chats" }
-                                ul(class=CARD_LIST_UL_CLASS) {
-                                    Indexed(
-                                        iterable=chats,
-                                        view=move|cx, chat| {
-                                            view! { cx,
-                                                li(class=CARD_LIST_LI_CLASS) {
-                                                    div(class=CARD_LIST_LI_ROW_CLASS) {
-                                                        p(class=CARD_LIST_LI_ROW_NAME_CLASS) { (format!("{}{}", chat.name, if chat.is_group { " (Group)"} else {""} )) }
-                                                        button(class=CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS, on:click=move |_| show_delete_dialog.set(Some(chat.chat_id))) {
-                                                            span(class="w-6 h-6 icon-[ph--trash]") {}
-                                                        }
+                    }
+                    true => {
+                        let tg_bot_url = format!("https://t.me/{}", keys::TELEGRAM_BOT_NAME);
+                        view! {cx,
+                            (if chats.get().is_empty() {
+                                view!{cx,
+                                    p(class="mt-4") { "You have to add at least one chat." }
+                                }
+                            } else {
+                                view!{cx,
+                                    h3(class=CARD_SUBTITLE_CLASS) { "Connected Chats" }
+                                }
+                            })
+                            ul(class=CARD_LIST_UL_CLASS) {
+                                Indexed(
+                                    iterable=chats,
+                                    view=move|cx, chat| {
+                                        view! { cx,
+                                            li(class=CARD_LIST_LI_CLASS) {
+                                                div(class=CARD_LIST_LI_ROW_CLASS) {
+                                                    p(class=CARD_LIST_LI_ROW_NAME_CLASS) { (format!("{}{}", chat.name, if chat.is_group { " (Group)"} else {""} )) }
+                                                    button(class=CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS, on:click=move |_| show_delete_dialog.set(Some(chat.chat_id))) {
+                                                        span(class="w-6 h-6 icon-[ph--trash]") {}
                                                     }
                                                 }
                                             }
                                         }
-                                    )
-                                }
-                                div(class=CARD_ADD_DIV) {
-                                    a(class=format!("w-48 bg-telegram-blue-500 hover:bg-telegram-blue-600 {}", CARD_ADD_DIV_BUTTON), href=tg_bot_url, target="_blank", on:click=move |_| show_add_chat_dialog.set(true)) {
-                                        span(class="w-6 h-6 mr-2 icon-[bxl--telegram]") {}
-                                        "Add Chat"
                                     }
+                                )
+                            }
+                            div(class=CARD_ADD_DIV) {
+                                a(class=format!("w-48 bg-telegram-blue-500 hover:bg-telegram-blue-600 {}", CARD_ADD_DIV_BUTTON), href=tg_bot_url, target="_blank", on:click=move |_| show_add_chat_dialog.set(true)) {
+                                    span(class="w-6 h-6 mr-2 icon-[bxl--telegram]") {}
+                                    "Add Chat"
                                 }
                             }
                         }
                     }
-                })
-            }
+                }
+            })
         }
     }
 }
@@ -529,15 +535,12 @@ pub fn Communication<G: Html>(cx: Scope) -> View<G> {
                 div {
                     h1(class="text-4xl font-bold") { "Communication Channels" }
                 }
-                div {
-                    DiscordCard(web_app_url=web_app_url.clone())
+                div(class="p-8 rounded-lg dark:bg-purple-700") {
+                    DiscordCard(web_app_url=web_app_url.clone(), center_button=false)
                 }
-                div {
-                    TelegramCard(web_app_url=web_app_url.clone())
+                div(class="p-8 rounded-lg dark:bg-purple-700") {
+                    TelegramCard(web_app_url=web_app_url.clone(), center_button=false)
                 }
-                // div {
-                //     Card(state=CardState::Connected)
-                // }
             }
         }
     }
