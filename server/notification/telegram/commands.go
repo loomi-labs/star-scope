@@ -16,7 +16,7 @@ const (
 	MessageCmdStop          MessageCommand = "stop"
 )
 
-func (client TelegramBot) handleCommand(update *tgbotapi.Update) {
+func (client *TelegramBot) handleCommand(update *tgbotapi.Update) {
 	switch MessageCommand(update.Message.Command()) {
 	case MessageCmdStart, MessageCmdSubscriptions:
 		client.handleStart(update)
@@ -37,7 +37,7 @@ const subscriptionsMsg = `🚀 Star Scope bot started.
 To stop the bot send the command /stop
 `
 
-func (client TelegramBot) handleStart(update *tgbotapi.Update) {
+func (client *TelegramBot) handleStart(update *tgbotapi.Update) {
 	userId := getUserIdX(update)
 	userName := getUserName(update)
 	chatId := getChatIdX(update)
@@ -48,7 +48,7 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 
 	text := ""
 	ctx := context.Background()
-	_, err := client.UserManager.CreateOrUpdateByTelegramUser(ctx, userId, userName, &chatId, &chatName, &isGroup)
+	_, err := client.userManager.CreateOrUpdateByTelegramUser(ctx, userId, userName, &chatId, &chatName, &isGroup)
 	if err != nil {
 		log.Sugar.Errorf("Error while registering user %v (%v): %v", chatName, chatId, err)
 		text = "There was an error registering your user. Please try again later."
@@ -56,11 +56,11 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 		adminText := ""
 		if isGroup {
 			adminText += "\n👮‍♂ Bot admins in this chat\n"
-			for _, user := range client.UserManager.QueryUsersForTelegramChat(ctx, chatId) {
+			for _, user := range client.userManager.QueryUsersForTelegramChat(ctx, chatId) {
 				adminText += fmt.Sprintf("- @%v\n", user.TelegramUsername)
 			}
 		}
-		cnt := client.EventListenerManager.QuerySubscriptionsCountForTelegramChat(ctx, chatId)
+		cnt := client.eventListenerManager.QuerySubscriptionsCountForTelegramChat(ctx, chatId)
 		text = fmt.Sprintf(subscriptionsMsg, adminText, cnt)
 	}
 
@@ -78,7 +78,7 @@ func (client TelegramBot) handleStart(update *tgbotapi.Update) {
 	}
 }
 
-func (client TelegramBot) getSubscriptionButtonRow(_ *tgbotapi.Update) []Button {
+func (client *TelegramBot) getSubscriptionButtonRow(_ *tgbotapi.Update) []Button {
 	var buttonRow []Button
 	button := NewButton("🔔 Subscriptions")
 	button.LoginURL = &tgbotapi.LoginURL{URL: client.webAppUrl, RequestWriteAccess: true}
@@ -86,7 +86,7 @@ func (client TelegramBot) getSubscriptionButtonRow(_ *tgbotapi.Update) []Button 
 	return buttonRow
 }
 
-func (client TelegramBot) handleStop(update *tgbotapi.Update) {
+func (client *TelegramBot) handleStop(update *tgbotapi.Update) {
 	userId := getUserIdX(update)
 	chatId := getChatIdX(update)
 	chatName := getChatName(update)
@@ -95,7 +95,7 @@ func (client TelegramBot) handleStop(update *tgbotapi.Update) {
 	log.Sugar.Debugf("Send stop to %v %v (%v)", gog.If(isGroup, "group", "user"), chatName, chatId)
 
 	text := ""
-	err := client.UserManager.DeleteTelegramCommChannel(context.Background(), userId, chatId, true)
+	err := client.userManager.DeleteTelegramCommChannel(context.Background(), userId, chatId, true)
 	if err != nil {
 		log.Sugar.Errorf("Error while unregistering user %v (%v): %v", chatName, chatId, err)
 		text = "There was an error stopping the bot. Please try again later."

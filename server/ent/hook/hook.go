@@ -81,6 +81,18 @@ func (f ProposalFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProposalMutation", m)
 }
 
+// The StateFunc type is an adapter to allow the use of ordinary
+// function as State mutator.
+type StateFunc func(context.Context, *ent.StateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StateMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

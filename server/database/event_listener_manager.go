@@ -12,6 +12,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/schema"
+	"github.com/loomi-labs/star-scope/ent/state"
 	"github.com/loomi-labs/star-scope/ent/user"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/kafka_internal"
@@ -112,6 +113,58 @@ func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventLis
 		Offset(int(offset)).
 		Limit(int(limit)).
 		All(ctx)
+}
+
+func (m *EventListenerManager) QueryEventsSince(ctx context.Context, startTime time.Time, endTime time.Time, entity state.Entity) ([]*ent.Event, error) {
+	var predicates = []predicate.Event{
+		event.NotifyTimeGTE(startTime),
+		event.NotifyTimeLTE(endTime),
+		event.IsBackgroundEQ(false),
+	}
+	var eventListenerQueries = []func(q *ent.EventListenerQuery){
+		func(q *ent.EventListenerQuery) {
+			q.WithChain()
+		},
+	}
+	if entity == state.EntityDiscord {
+		predicates = append(predicates, event.HasEventListenerWith(eventlistener.HasCommChannelsWith(commchannel.TypeEQ(commchannel.TypeDiscord))))
+		eventListenerQueries = append(eventListenerQueries, func(q *ent.EventListenerQuery) {
+			q.WithCommChannels(func(q *ent.CommChannelQuery) {
+				q.Where(commchannel.TypeEQ(commchannel.TypeDiscord))
+			})
+		})
+	} else if entity == state.EntityTelegram {
+		predicates = append(predicates, event.HasEventListenerWith(eventlistener.HasCommChannelsWith(commchannel.TypeEQ(commchannel.TypeTelegram))))
+		eventListenerQueries = append(eventListenerQueries, func(q *ent.EventListenerQuery) {
+			q.WithCommChannels(func(q *ent.CommChannelQuery) {
+				q.Where(commchannel.TypeEQ(commchannel.TypeTelegram))
+			})
+		})
+	}
+	return m.client.Event.
+		Query().
+		Where(
+			event.And(predicates...),
+		).
+		Order(ent.Desc(event.FieldDataType)).
+		WithEventListener(eventListenerQueries...).
+		All(ctx)
+}
+
+func (m *EventListenerManager) QueryNotifierState(ctx context.Context, entity state.Entity) (*ent.State, error) {
+	return m.client.State.
+		Query().
+		Where(
+			state.EntityEQ(entity),
+		).
+		Only(ctx)
+}
+
+func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *ent.State, updatetime time.Time) (*ent.State, error) {
+	return state.
+		Update().
+		SetUpdateTime(updatetime).
+		Save(ctx)
 }
 
 type VoteReminder struct {

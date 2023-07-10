@@ -105,9 +105,17 @@ var forbiddenErrors = []string{
 	"Forbidden: bot is not a member of the supergroup chat",
 	"Forbidden: user is deactivated",
 	"Bad Request: chat not found",
+	"Bad Request: group chat was upgraded to a supergroup chat",
 }
 
-func (client TelegramBot) isUpdateFromCreatorOrAdministrator(update *tgbotapi.Update) bool {
+func (client *TelegramBot) shouldDeleteUser(err error) bool {
+	if err != nil {
+		return slices.Contains(forbiddenErrors, err.Error())
+	}
+	return false
+}
+
+func (client *TelegramBot) isUpdateFromCreatorOrAdministrator(update *tgbotapi.Update) bool {
 	chatId := getChatIdX(update)
 	userId := getUserIdX(update)
 	memberConfig := tgbotapi.GetChatMemberConfig{

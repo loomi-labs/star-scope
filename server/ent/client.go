@@ -21,6 +21,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/ent/state"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
@@ -43,6 +44,8 @@ type Client struct {
 	EventListener *EventListenerClient
 	// Proposal is the client for interacting with the Proposal builders.
 	Proposal *ProposalClient
+	// State is the client for interacting with the State builders.
+	State *StateClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserSetup is the client for interacting with the UserSetup builders.
@@ -68,6 +71,7 @@ func (c *Client) init() {
 	c.Event = NewEventClient(c.config)
 	c.EventListener = NewEventListenerClient(c.config)
 	c.Proposal = NewProposalClient(c.config)
+	c.State = NewStateClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserSetup = NewUserSetupClient(c.config)
 	c.Validator = NewValidatorClient(c.config)
@@ -159,6 +163,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Event:            NewEventClient(cfg),
 		EventListener:    NewEventListenerClient(cfg),
 		Proposal:         NewProposalClient(cfg),
+		State:            NewStateClient(cfg),
 		User:             NewUserClient(cfg),
 		UserSetup:        NewUserSetupClient(cfg),
 		Validator:        NewValidatorClient(cfg),
@@ -187,6 +192,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Event:            NewEventClient(cfg),
 		EventListener:    NewEventListenerClient(cfg),
 		Proposal:         NewProposalClient(cfg),
+		State:            NewStateClient(cfg),
 		User:             NewUserClient(cfg),
 		UserSetup:        NewUserSetupClient(cfg),
 		Validator:        NewValidatorClient(cfg),
@@ -220,7 +226,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Chain, c.CommChannel, c.ContractProposal, c.Event, c.EventListener,
-		c.Proposal, c.User, c.UserSetup, c.Validator,
+		c.Proposal, c.State, c.User, c.UserSetup, c.Validator,
 	} {
 		n.Use(hooks...)
 	}
@@ -231,7 +237,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Chain, c.CommChannel, c.ContractProposal, c.Event, c.EventListener,
-		c.Proposal, c.User, c.UserSetup, c.Validator,
+		c.Proposal, c.State, c.User, c.UserSetup, c.Validator,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -252,6 +258,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.EventListener.mutate(ctx, m)
 	case *ProposalMutation:
 		return c.Proposal.mutate(ctx, m)
+	case *StateMutation:
+		return c.State.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *UserSetupMutation:
@@ -1195,6 +1203,124 @@ func (c *ProposalClient) mutate(ctx context.Context, m *ProposalMutation) (Value
 	}
 }
 
+// StateClient is a client for the State schema.
+type StateClient struct {
+	config
+}
+
+// NewStateClient returns a client for the State from the given config.
+func NewStateClient(c config) *StateClient {
+	return &StateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `state.Hooks(f(g(h())))`.
+func (c *StateClient) Use(hooks ...Hook) {
+	c.hooks.State = append(c.hooks.State, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `state.Intercept(f(g(h())))`.
+func (c *StateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.State = append(c.inters.State, interceptors...)
+}
+
+// Create returns a builder for creating a State entity.
+func (c *StateClient) Create() *StateCreate {
+	mutation := newStateMutation(c.config, OpCreate)
+	return &StateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of State entities.
+func (c *StateClient) CreateBulk(builders ...*StateCreate) *StateCreateBulk {
+	return &StateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for State.
+func (c *StateClient) Update() *StateUpdate {
+	mutation := newStateMutation(c.config, OpUpdate)
+	return &StateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StateClient) UpdateOne(s *State) *StateUpdateOne {
+	mutation := newStateMutation(c.config, OpUpdateOne, withState(s))
+	return &StateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StateClient) UpdateOneID(id int) *StateUpdateOne {
+	mutation := newStateMutation(c.config, OpUpdateOne, withStateID(id))
+	return &StateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for State.
+func (c *StateClient) Delete() *StateDelete {
+	mutation := newStateMutation(c.config, OpDelete)
+	return &StateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StateClient) DeleteOne(s *State) *StateDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StateClient) DeleteOneID(id int) *StateDeleteOne {
+	builder := c.Delete().Where(state.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StateDeleteOne{builder}
+}
+
+// Query returns a query builder for State.
+func (c *StateClient) Query() *StateQuery {
+	return &StateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeState},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a State entity by its id.
+func (c *StateClient) Get(ctx context.Context, id int) (*State, error) {
+	return c.Query().Where(state.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StateClient) GetX(ctx context.Context, id int) *State {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StateClient) Hooks() []Hook {
+	return c.hooks.State
+}
+
+// Interceptors returns the client interceptors.
+func (c *StateClient) Interceptors() []Interceptor {
+	return c.inters.State
+}
+
+func (c *StateClient) mutate(ctx context.Context, m *StateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown State mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -1680,11 +1806,11 @@ func (c *ValidatorClient) mutate(ctx context.Context, m *ValidatorMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, User,
-		UserSetup, Validator []ent.Hook
+		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, State,
+		User, UserSetup, Validator []ent.Hook
 	}
 	inters struct {
-		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, User,
-		UserSetup, Validator []ent.Interceptor
+		Chain, CommChannel, ContractProposal, Event, EventListener, Proposal, State,
+		User, UserSetup, Validator []ent.Interceptor
 	}
 )

@@ -8,7 +8,7 @@ import (
 
 // groups -> just admins and creators can interact with the bot
 // private -> everything is allowed
-func (client TelegramBot) isInteractionAllowed(update *tgbotapi.Update) bool {
+func (client *TelegramBot) isInteractionAllowed(update *tgbotapi.Update) bool {
 	if isGroupX(update) {
 		return client.isUpdateFromCreatorOrAdministrator(update)
 	}
@@ -16,7 +16,7 @@ func (client TelegramBot) isInteractionAllowed(update *tgbotapi.Update) bool {
 }
 
 // Handles updates for only 1 user in a serial way
-func (client TelegramBot) handleUpdates(channel chan tgbotapi.Update) {
+func (client *TelegramBot) handleUpdates(channel chan tgbotapi.Update) {
 	for update := range channel {
 		chatId := getChatIdX(&update)
 		if client.isInteractionAllowed(&update) {
@@ -40,7 +40,7 @@ type UpdateCount struct {
 	Updates int
 }
 
-func (client TelegramBot) hasChannel(channelId int64) bool {
+func (client *TelegramBot) hasChannel(channelId int64) bool {
 	for key := range client.updateChannels {
 		if key == channelId {
 			return true
@@ -49,12 +49,12 @@ func (client TelegramBot) hasChannel(channelId int64) bool {
 	return false
 }
 
-func (client TelegramBot) sendToChannelAsync(chatId int64, update tgbotapi.Update) {
+func (client *TelegramBot) sendToChannelAsync(chatId int64, update tgbotapi.Update) {
 	client.updateCountChannel <- UpdateCount{ChatId: chatId, Updates: 1}
 	client.updateChannels[chatId] <- update
 }
 
-func (client TelegramBot) sendToChannel(update *tgbotapi.Update) {
+func (client *TelegramBot) sendToChannel(update *tgbotapi.Update) {
 	chatId := getChatIdX(update)
 	if !client.hasChannel(chatId) {
 		client.updateChannels[chatId] = make(chan tgbotapi.Update)
@@ -64,7 +64,7 @@ func (client TelegramBot) sendToChannel(update *tgbotapi.Update) {
 }
 
 // Keeps track of all the user channels and closes them if there are no more updates
-func (client TelegramBot) manageUpdateChannels() {
+func (client *TelegramBot) manageUpdateChannels() {
 	var count = make(map[int64]int)
 	for msg := range client.updateCountChannel {
 		count[msg.ChatId] += msg.Updates
@@ -87,8 +87,8 @@ type TelegramBot struct {
 	// updateCountChannel is used to communicate to `manageUpdateChannels` from `handleUpdates`
 	updateCountChannel chan UpdateCount
 
-	UserManager          *database.UserManager
-	EventListenerManager *database.EventListenerManager
+	userManager          *database.UserManager
+	eventListenerManager *database.EventListenerManager
 
 	botToken  string
 	endpoint  string
@@ -113,8 +113,8 @@ func NewTelegramBot(
 		updateChannels:     make(map[int64]chan tgbotapi.Update),
 		updateCountChannel: make(chan UpdateCount),
 
-		UserManager:          managers.UserManager,
-		EventListenerManager: managers.EventListenerManager,
+		userManager:          managers.UserManager,
+		eventListenerManager: managers.EventListenerManager,
 
 		botToken:  botToken,
 		endpoint:  endpoint,
@@ -122,13 +122,14 @@ func NewTelegramBot(
 	}
 }
 
-func (client TelegramBot) Start() {
+func (client *TelegramBot) Start() {
 	log.Sugar.Info("Start telegram bot")
 
 	updateConfig := tgbotapi.NewUpdate(0)
 	updates := client.api.GetUpdatesChan(updateConfig)
 
 	go client.manageUpdateChannels()
+	go client.startTelegramEventNotifier()
 
 	for update := range updates {
 		if !hasChatId(&update) { // no chat id means there is something strange or the update is not for us

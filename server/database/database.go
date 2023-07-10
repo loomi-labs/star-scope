@@ -13,6 +13,7 @@ import (
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/migrate"
+	"github.com/loomi-labs/star-scope/ent/state"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/pkg/errors"
 	"github.com/shifty11/go-logger/log"
@@ -234,6 +235,19 @@ func MigrateDb() {
 func InitDb() {
 	client := connect()
 	ctx := context.Background()
+
+	if !client.State.Query().Where(state.EntityEQ(state.EntityDiscord)).ExistX(ctx) {
+		client.State.
+			Create().
+			SetEntity(state.EntityDiscord).
+			SaveX(ctx)
+	}
+	if !client.State.Query().Where(state.EntityEQ(state.EntityTelegram)).ExistX(ctx) {
+		client.State.
+			Create().
+			SetEntity(state.EntityTelegram).
+			SaveX(ctx)
+	}
 
 	chainManager := NewDbManagersWithoutKafka().ChainManager
 	for _, chain := range chainManager.QueryAll(ctx) {

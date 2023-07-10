@@ -24,6 +24,9 @@ type EventListener func(*sql.Selector)
 // Proposal is the predicate function for proposal builders.
 type Proposal func(*sql.Selector)
 
+// State is the predicate function for state builders.
+type State func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
