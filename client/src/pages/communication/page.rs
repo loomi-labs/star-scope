@@ -105,7 +105,7 @@ pub fn AddEntityDialog<'a, G: Html>(
                     }
                     h2(class="text-lg font-semibold mt-2") { (format!("Add {} {}", service_name, entity_name)) }
                     p(class="mt-4 text-center") { (format!("Add the {} bot to your {}.", service_name, entity_name)) }
-                    p(class="mb-4 text-center") { (format!("Then send the bot command `/start` in the {}(s) that you want to add.", entity_name)) }
+                    p(class="mb-4 text-center") { (format!("Then send the bot command `/start` in the {} that you want to add.", entity_name)) }
                 }
                 div(class="flex justify-center mt-2") {
                     button(class="border-2 border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-semibold px-4 py-2 rounded mr-2", on:click=move |_| {
@@ -176,8 +176,8 @@ const CARD_LIST_LI_ROW_DELETE_BUTTON_CLASS: &str =
 const CARD_ADD_DIV: &str = "flex items-center justify-items-end mt-4";
 const CARD_ADD_DIV_BUTTON: &str = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
-#[component]
-pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
+#[component(inline_props)]
+pub async fn DiscordCard<G: Html>(cx: Scope<'_>, web_app_url: String) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
@@ -195,6 +195,13 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let show_add_channel_dialog = create_signal(cx, false);
     let show_delete_dialog = create_signal(cx, None::<i64>);
     let delete_signal = create_signal(cx, None::<i64>);
+
+    if let Some(req) = get_discord_login_data() {
+        let web_app_url = web_app_url.clone();
+        spawn_local_scoped(cx, async move {
+            connect_discord_account(cx, req, web_app_url, is_loading).await;
+        });
+    }
 
     create_effect(cx, move || {
         if *is_connected.get() && !(*show_add_channel_dialog.get()) {
@@ -223,26 +230,33 @@ pub async fn DiscordCard<G: Html>(cx: Scope<'_>) -> View<G> {
             DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Discord", entity_name="channel")
             div {
                 h2(class=CARD_TITLE_CLASS) { "Discord" }
-                (match *is_connected.get() {
-                    false => {
-                        let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
-                        view! {cx,
-                            p(class="my-4") { "Receive notifications via Discord." }
-                            DiscordLoginButton(text="Connect Discord".to_string(), open_in_new_tab=false, web_app_url=web_app_url)
-                        }
+                (if *is_loading.get() {
+                    view! {cx,
+                        LoadingSpinner {}
                     }
-                    true => {
-                        let discord_login_url = format!(
-                            "https://discord.com/api/oauth2/authorize?client_id={}&permissions=2048&scope=bot",
-                            keys::DISCORD_CLIENT_ID,
-                        );
-                        if *is_loading.get() {
+                } else {
+                    match *is_connected.get() {
+                        false => {
+                            let web_app_url = web_app_url.clone();
                             view! {cx,
-                                LoadingSpinner {}
+                                p(class="my-4") { "Receive notifications via Discord." }
+                                DiscordLoginButton(text="Connect Discord".to_string(), open_in_new_tab=false, web_app_url=web_app_url)
                             }
-                        } else {
+                        }
+                        true => {
+                            let discord_login_url = format!(
+                                "https://discord.com/api/oauth2/authorize?client_id={}&permissions=2048&scope=bot",
+                                keys::DISCORD_CLIENT_ID,
+                            );
                             view! {cx,
-                                h3(class=CARD_SUBTITLE_CLASS) { "Connected Channels" }
+                                (if !channels.get().is_empty() {
+                                    view!{cx,
+                                        h3(class=CARD_SUBTITLE_CLASS) { "Connected Channels" }
+                                    }
+                                } else {
+                                    view!{cx,}
+                                })
+
                                 ul(class=CARD_LIST_UL_CLASS) {
                                     Indexed(
                                         iterable=channels,
@@ -335,8 +349,8 @@ async fn delete_telegram_chat(
     is_loading.set(false);
 }
 
-#[component]
-pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
+#[component(inline_props)]
+pub async fn TelegramCard<G: Html>(cx: Scope<'_>, web_app_url: String) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
@@ -354,6 +368,12 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     let show_delete_dialog = create_signal(cx, None::<i64>);
     let show_add_chat_dialog = create_signal(cx, false);
     let delete_signal = create_signal(cx, None::<i64>);
+
+    if let Some(req) = get_telegram_login_data() {
+        spawn_local_scoped(cx, async move {
+            connect_telegram_account(cx, req, is_loading).await;
+        });
+    }
 
     create_effect(cx, move || {
         if *is_connected.get() && !(*show_add_chat_dialog.get()) {
@@ -382,20 +402,20 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
             DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Telegram", entity_name="chat")
             div {
                 h2(class="text-2xl font-semibold") { "Telegram" }
-                (match *is_connected.get() {
-                    false => {
-                        let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
-                        view! {cx,
-                            p(class="my-4") { "Receive notifications via Telegram." }
-                            TelegramLoginButton(web_app_url=web_app_url, is_hidden=Some(is_connected))
-                        }
+                (if *is_loading.get() {
+                    view! {cx,
+                        LoadingSpinner {}
                     }
-                    true => {
-                        if *is_loading.get() {
+                } else {
+                    match *is_connected.get() {
+                        false => {
+                            let web_app_url = web_app_url.clone();
                             view! {cx,
-                                LoadingSpinner {}
+                                p(class="my-4") { "Receive notifications via Telegram." }
+                                TelegramLoginButton(web_app_url=web_app_url, is_hidden=Some(is_connected))
                             }
-                        } else {
+                        }
+                        true => {
                             let tg_bot_url = format!("https://t.me/{}", keys::TELEGRAM_BOT_NAME);
                             view! {cx,
                                 h3(class=CARD_SUBTITLE_CLASS) { "Connected Chats" }
@@ -431,9 +451,14 @@ pub async fn TelegramCard<G: Html>(cx: Scope<'_>) -> View<G> {
     }
 }
 
-async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
+async fn connect_discord_account(
+    cx: Scope<'_>,
+    data: DiscordLoginRequest,
+    web_app_url: String,
+    is_loading: &Signal<bool>,
+) {
+    is_loading.set(true);
     let services = use_context::<Services>(cx);
-    let web_app_url = keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str();
     let request = services.grpc_client.create_request(ConnectDiscordRequest {
         code: data.code,
         web_app_url,
@@ -445,20 +470,26 @@ async fn connect_discord_account(cx: Scope<'_>, data: DiscordLoginRequest) {
         .await
         .map(|res| res.into_inner());
     if response.is_ok() {
-        clean_query_params();
+        query_user_info(cx).await;
         create_message(
             cx,
             "Discord account connected",
             "Your Discord account is now connected. Add channels to receive notifications.",
             InfoLevel::Success,
         );
-        query_user_info(cx).await;
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
+    clean_query_params();
+    is_loading.set(false);
 }
 
-async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
+async fn connect_telegram_account(
+    cx: Scope<'_>,
+    data: TelegramLoginRequest,
+    is_loading: &Signal<bool>,
+) {
+    is_loading.set(true);
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(ConnectTelegramRequest {
         data_str: data.data_str,
@@ -471,31 +502,26 @@ async fn connect_telegram_account(cx: Scope<'_>, data: TelegramLoginRequest) {
         .await
         .map(|res| res.into_inner());
     if response.is_ok() {
-        clean_query_params();
+        query_user_info(cx).await;
         create_message(
             cx,
             "Telegram account connected",
             "Your Telegram account is now connected. Add chats to receive notifications.",
             InfoLevel::Success,
         );
-        query_user_info(cx).await;
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
     }
+    clean_query_params();
+    is_loading.set(false);
 }
 
 #[component]
 pub fn Communication<G: Html>(cx: Scope) -> View<G> {
-    if let Some(req) = get_discord_login_data() {
-        spawn_local_scoped(cx, async move {
-            connect_discord_account(cx, req).await;
-        });
-    }
-    if let Some(req) = get_telegram_login_data() {
-        spawn_local_scoped(cx, async move {
-            connect_telegram_account(cx, req).await;
-        });
-    }
+    let web_app_url = create_ref(
+        cx,
+        keys::WEB_APP_URL.to_string() + AppRoutes::Communication.to_string().as_str(),
+    );
 
     view! {cx,
         div(class="container mx-auto") {
@@ -503,12 +529,11 @@ pub fn Communication<G: Html>(cx: Scope) -> View<G> {
                 div {
                     h1(class="text-4xl font-bold") { "Communication Channels" }
                 }
-
                 div {
-                    DiscordCard {}
+                    DiscordCard(web_app_url=web_app_url.clone())
                 }
                 div {
-                    TelegramCard {}
+                    TelegramCard(web_app_url=web_app_url.clone())
                 }
                 // div {
                 //     Card(state=CardState::Connected)
