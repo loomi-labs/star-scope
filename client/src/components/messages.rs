@@ -123,7 +123,7 @@ pub fn create_message(
     let uuid = app_state.add_message(title.clone(), message.clone(), level.clone());
     if level == InfoLevel::Error {
         error!("{}: {}", title, message);
-    }   
+    }
     create_effect(cx, move || {
         spawn_local_scoped(cx, async move {
             TimeoutFuture::new(1000 * 10).await;

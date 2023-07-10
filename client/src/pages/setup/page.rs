@@ -369,6 +369,13 @@ async fn query_search_wallets<'a>(
         Ok(mut stream) => loop {
             match stream.message().await {
                 Ok(Some(response)) => {
+                    let setup_state = try_use_context::<SetupState>(cx);
+                    if setup_state.is_none() {
+                        break;
+                    }
+                    if !matches!(*setup_state.unwrap().step.get_untracked(), Some(Three(_))) {
+                        break;
+                    }
                     if response.wallet.is_none() {
                         create_message(cx, "Error", "No wallets found", InfoLevel::Error);
                     } else {
@@ -508,7 +515,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
                                 }
                             } else {
                                 view!{cx,
-                                    button(class="flex justify-between items-center p-2 opacity-100 rounded-lg border-2 border-green-500 bg-green-500 hover:bg-green-600",
+                                    button(class="flex justify-between items-center p-2 opacity-100 rounded-lg border-2 border-green-500 bg-green-500 hover:bg-green-600 hover:border-green-600",
                                             on:click=move |_| wallet_ref.is_added.set(true)) {
                                         span(class="w-6 h-6 icon-[ic--round-add] cursor-pointer")
                                     }
