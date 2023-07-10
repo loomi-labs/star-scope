@@ -9,6 +9,8 @@ pub const LOGO_WITH_TEXT_ORANGE_IMG: &str = "assets/images/logo_with_text_orange
 pub const SCOPE_IMG: &str = "assets/images/scope.png";
 pub const SCOPE_SMALL_IMG: &str = "assets/images/scope_small.png";
 
+pub const ROCKET_JSON: &str = "assets/lottie/rocket.json";
+
 pub const GRPC_WEB_ENDPOINT_URL: &str = env!("GRPC_WEB_ENDPOINT_URL");
 pub const COSMOS_LOGIN_BUTTON_URL: &str = env!("COSMOS_LOGIN_BUTTON_URL");
 

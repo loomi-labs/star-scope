@@ -60,6 +60,7 @@ fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
     };
 
     view! {cx,
+        lottie-player(src=keys::ROCKET_JSON, background="transparent", speed="1", style="width: 300px; height: 300px;", loop=true, autoplay=true) {}
         h1(class=TITLE_CLASS) {"Welcome to Star Scope!"}
         p(class=DESCRIPTION_CLASS) {"We deliver quick and effortless notifications about your Cosmos ecosystem activities."}
         h2(class=SUBTITLE_CLASS) {"Are you a validator?"}
