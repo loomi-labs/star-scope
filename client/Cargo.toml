@@ -27,7 +27,7 @@ tonic = { version = "0.9.1", default-features = false, features = ["codegen", "p
 uuid = { version = "1.3.1", features = ["v4"] }
 wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
-web-sys = { version = "0.3.61", features = ["Storage", "StorageEvent", "Window", "Location", "HtmlSelectElement", "Navigator", "IntersectionObserver", "IntersectionObserverEntry", "HtmlDivElement", "Element", "MessageEvent"] }
+web-sys = { version = "0.3.61", features = ["Storage", "StorageEvent", "Window", "Location", "HtmlSelectElement", "Navigator", "IntersectionObserver", "IntersectionObserverEntry", "HtmlDivElement", "Element", "MessageEvent", "Event"] }
 chrono = "0.4.24"
 enum-iterator = "1.4.1"
 querystring = "1.1.0"
