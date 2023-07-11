@@ -215,7 +215,7 @@ pub fn Navigation<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View
                 Header{}
                 div(class="flex flex-row h-full w-full dark:bg-d-bg") {
                     Sidebar{}
-                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100vh-theme(space.16))] overflow-y-auto overflow-x-visible") {    // TODO: fix the 100vh-theme(space.16) hack
+                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100svh-theme(space.16))] overflow-y-auto overflow-x-visible") {    // TODO: fix the 100svh-theme(space.16) hack
                         (children)
                     }
                 }

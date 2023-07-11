@@ -13,21 +13,24 @@ pub fn Search<'a, G: Html>(
     placeholder: &'a str,
 ) -> View<G> {
     view! {cx,
-        input(
-            class="w-full placeholder:italic placeholder:text-slate-400 block border border-slate-300 rounded-full px-4 py-2
-                shadow-sm focus:outline-none focus:border-primary focus:ring-primary focus:ring-1 sm:text-sm",
-            placeholder=placeholder,
-            type="text",
-            bind:value=search_term,
-            on:focusin=move |_| has_input_focus.set(true),
-            on:blur=move |_| {
-                // this has to be delayed because otherwise the blur event will fire before the focusin event on the dialog
-                spawn_local_scoped(cx, async move {
-                    gloo_timers::future::TimeoutFuture::new(100).await;
-                    has_input_focus.set(false)
-                });
-            },
-        )
+        div(class="relative flex items-center") {
+            input(
+                class="relative w-full placeholder:italic placeholder:text-slate-400 block border border-slate-300 rounded-full px-4 py-2
+                    shadow-sm focus:outline-none focus:border-primary focus:ring-primary focus:ring-1 sm:text-sm",
+                placeholder=placeholder,
+                type="text",
+                bind:value=search_term,
+                on:focusin=move |_| has_input_focus.set(true),
+                on:blur=move |_| {
+                    // this has to be delayed because otherwise the blur event will fire before the focusin event on the dialog
+                    spawn_local_scoped(cx, async move {
+                        gloo_timers::future::TimeoutFuture::new(100).await;
+                        has_input_focus.set(false)
+                    });
+                },
+            )
+            span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
+        }
     }
 }
 
@@ -104,10 +107,9 @@ where
     let has_results = create_selector(cx, move || search_results.get().len() > 0);
 
     view! {cx,
-        div(class="relative flex items-center text-gray-500") {
+        div(class="relative flex justify-center items-center text-gray-500") {
             Search(search_term=search_term, has_input_focus=has_input_focus, placeholder=placeholder)
-            span(class="absolute right-3 w-5 h-5 bg-slate-400 icon-[ion--search] pointer-events-none")
-            dialog(class="absolute z-20 top-full left-0 w-full bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
+            dialog(class="absolute z-20 top-full left-0 bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
                     open=*show_dialog.get(),
                     on:focusin= move |_| has_dialog_focus.set(true),
                     on:blur= move |_| has_dialog_focus.set(false),
