@@ -71,6 +71,7 @@ func (dc *DiscordBot) sendNewEvents() {
 				continue
 			}
 			for _, commChannel := range entEvent.Edges.EventListener.Edges.CommChannels {
+				log.Sugar.Debugf("sending event to discord channel %v (%v)", commChannel.Name, commChannel.DiscordChannelID)
 				var textMsgs []string
 				text := fmt.Sprintf("**%v**\n\n%v", p.Sanitize(pbEvent.Title), sanitizeUrls(p.Sanitize(pbEvent.Description)))
 				if len(text) <= maxMsgLength {
@@ -114,12 +115,6 @@ func (dc *DiscordBot) sendNewEvents() {
 
 func (dc *DiscordBot) startDiscordEventNotifier() {
 	log.Sugar.Info("Start Discord event notifier")
-	//cr := cron.New()
-	//_, err := cr.AddFunc("* * * * *", func() { client.sendNewEvents() }) // every minute
-	//if err != nil {
-	//	log.Sugar.Errorf("while executing 'addOrUpdateChains' via cron: %v", err)
-	//}
-	//cr.Start()
 	for {
 		dc.sendNewEvents()
 		time.Sleep(1 * time.Minute)

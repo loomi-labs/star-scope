@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/state"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/kafka_internal"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/shifty11/go-logger/log"
 	"time"
 )
+
+const maxMsgLength = 4096
 
 type DeleteTelegramUser struct {
 	ChatId        int64
@@ -54,6 +58,9 @@ func (client *TelegramBot) sendNewEvents() {
 	}
 	if len(events) > 0 {
 		log.Sugar.Infof("sending %v events", len(events))
+
+		p := bluemonday.StripTagsPolicy()
+
 		for _, entEvent := range events {
 			pbEvent, err := kafka_internal.EntEventToProto(entEvent, entEvent.Edges.EventListener.Edges.Chain)
 			if err != nil {
@@ -61,25 +68,37 @@ func (client *TelegramBot) sendNewEvents() {
 				continue
 			}
 			for _, tg := range entEvent.Edges.EventListener.Edges.CommChannels {
-				text := fmt.Sprintf("<b>%v</b>\n\n%v", pbEvent.Title, pbEvent.Description)
+				log.Sugar.Debugf("sending event to telegram chat %v (%v)", tg.Name, tg.TelegramChatID)
+				var textMsgs []string
+				text := fmt.Sprintf("<b>%v</b>\n\n%v", p.Sanitize(pbEvent.Title), p.Sanitize(pbEvent.Description))
 
-				// TODO: chunk messages if too long
-
-				msg := tgbotapi.NewMessage(tg.TelegramChatID, text)
-				msg.ParseMode = "html"
-				msg.DisableWebPagePreview = true
-
-				_, err := client.api.Send(msg)
-				if err != nil {
-					if client.shouldDeleteUser(err) {
-						toBeDeleted = append(toBeDeleted, DeleteTelegramUser{
-							EventListener: entEvent.Edges.EventListener,
-							ChatId:        tg.TelegramChatID,
-						})
-					} else {
-						log.Sugar.Errorf("Error sending event to telegram chat %v (%v): %v", tg.Name, tg.TelegramChatID, err)
+				if len(text) <= maxMsgLength {
+					textMsgs = append(textMsgs, text)
+				} else {
+					textMsgs = append(textMsgs, text[:maxMsgLength-4]+"</i>")
+					text = text[:len(text)-4] // remove the last 4 characters which are "</i>"
+					for _, chunk := range common.Chunks(text[maxMsgLength-4:], maxMsgLength-7) {
+						textMsgs = append(textMsgs, fmt.Sprintf("<i>%v</i>", chunk))
 					}
-					continue
+				}
+
+				for _, textMsg := range textMsgs {
+					msg := tgbotapi.NewMessage(tg.TelegramChatID, textMsg)
+					msg.ParseMode = "html"
+					msg.DisableWebPagePreview = true
+
+					_, err := client.api.Send(msg)
+					if err != nil {
+						if client.shouldDeleteUser(err) {
+							toBeDeleted = append(toBeDeleted, DeleteTelegramUser{
+								EventListener: entEvent.Edges.EventListener,
+								ChatId:        tg.TelegramChatID,
+							})
+						} else {
+							log.Sugar.Errorf("Error sending event to telegram chat %v (%v): %v", tg.Name, tg.TelegramChatID, err)
+						}
+						continue
+					}
 				}
 			}
 		}
@@ -96,12 +115,6 @@ func (client *TelegramBot) sendNewEvents() {
 
 func (client *TelegramBot) startTelegramEventNotifier() {
 	log.Sugar.Info("Start Telegram event notifier")
-	//cr := cron.New()
-	//_, err := cr.AddFunc("* * * * *", func() { client.sendNewEvents() }) // every minute
-	//if err != nil {
-	//	log.Sugar.Errorf("while executing 'addOrUpdateChains' via cron: %v", err)
-	//}
-	//cr.Start()
 	for {
 		client.sendNewEvents()
 		time.Sleep(1 * time.Minute)

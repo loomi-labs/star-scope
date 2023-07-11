@@ -163,7 +163,7 @@ func (m *EventListenerManager) QueryNotifierState(ctx context.Context, entity st
 func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *ent.State, updatetime time.Time) (*ent.State, error) {
 	return state.
 		Update().
-		SetUpdateTime(updatetime).
+		SetLastEventTime(updatetime).
 		Save(ctx)
 }
 
