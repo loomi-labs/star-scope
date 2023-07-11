@@ -736,9 +736,9 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
             div(class="lg:hidden flex flex-col") {
                 h1(class="text-4xl font-bold pb-4") { "Notifications" }
                 div(class="flex flex-wrap") {
-                    div(class="w-full sm:w-auto flex-shrink-0 flex-grow-0 mb-4 sm:mb-0 sm:mr-4") {
-                        ReadStatusFilterDropdown {}
-                    }
+                    // div(class="w-full sm:w-auto flex-shrink-0 flex-grow-0 mb-4 sm:mb-0 sm:mr-4") {
+                    //     ReadStatusFilterDropdown {}
+                    // }
                     div(class="w-full sm:w-auto flex-shrink-0 flex-grow-0 mb-4 sm:mb-0 sm:mr-4") {
                         ChainFilterDropdown {}
                     }
