@@ -45,6 +45,8 @@ const DESCRIPTION_CLASS: &str = "dark:text-purple-600 mb-8";
 const DESCRIPTION_PROMINENT_CLASS: &str = "dark:text-white";
 const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-8 mt-8";
 
+const SPACER_H10_OR_10PERCENT_CLASS: &str = "w-full h-10 md:h-[10%]";
+
 #[component]
 fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
     let handle_click = move |is_validator| {
@@ -60,13 +62,24 @@ fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
     };
 
     view! {cx,
-        lottie-player(src=keys::ROCKET_JSON, background="transparent", speed="1", style="width: 300px; height: 300px;", loop=true, autoplay=true) {}
-        h1(class=TITLE_CLASS) {"Welcome to Star Scope!"}
-        p(class=DESCRIPTION_CLASS) {"Setup your account to receive notifications about your Cosmos activities."}
-        h2(class=SUBTITLE_CLASS) {"Are you a validator?"}
-        div(class="flex justify-center space-x-4") {
-            SolidButton(on_click=move || handle_click(true), color=ColorScheme::Subtle) {"Yes"}
-            SolidButton(on_click=move || handle_click(false), color=ColorScheme::Subtle) {"No"}
+        div() {
+            div(class="hidden md:block") {
+                lottie-player(src=keys::ROCKET_JSON, background="transparent", speed="1", style="width: 400px; height: 400px;", loop=true, autoplay=true) {}
+            }
+            div(class="md:hidden") {
+                lottie-player(src=keys::ROCKET_JSON, background="transparent", speed="1", style="width: 300px; height: 300px;", loop=true, autoplay=true) {}
+            }
+        }
+        div() {
+            h1(class=TITLE_CLASS) {"Welcome to Star Scope!"}
+            p(class=DESCRIPTION_CLASS) {"Setup your account to receive notifications about your Cosmos activities."}
+        }
+        div(class="mb-16") {
+            h2(class=SUBTITLE_CLASS) {"Are you a validator?"}
+            div(class="flex justify-center space-x-4") {
+                SolidButton(on_click=move || handle_click(true), color=ColorScheme::Subtle) {"Yes"}
+                SolidButton(on_click=move || handle_click(false), color=ColorScheme::Subtle) {"No"}
+            }
         }
     }
 }
@@ -146,7 +159,7 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
         }).collect()
     );
     view! {cx,
-        div(class="flex flex-col justify-center items-center w-full space-y-2") {
+        div(class="flex flex-col w-full justify-center items-center w-full space-y-2 my-10 md:my-16") {
             h2(class="text-xl dark:text-purple-600") { "Account setup" }
             div(class="flex justify-center items-center w-4/5 md:w-2/5") {
                 (progress_bar_views)
@@ -229,14 +242,23 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     };
 
     view! {cx,
-        ProgressBar(step=Two(step))
-        h2(class=TITLE_CLASS) {"Choose your validator(s)"}
-        p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
-        SearchEntity(searchables=validators.clone(), selected_entities=selected_validators.clone(), placeholder="Search validators")
-        div(class=BUTTON_ROW_CLASS) {
-            OutlineButton(on_click=move || handle_click(false)) {"Back"}
-            SolidButton(on_click=move || handle_click(true)) {"Next"}
+        div(class=SPACER_H10_OR_10PERCENT_CLASS)
+        div(class="w-full") {
+            ProgressBar(step=Two(step))
         }
+        div(class=SPACER_H10_OR_10PERCENT_CLASS)
+        div(class="flex flex-col grow-[1]") {
+            h2(class=TITLE_CLASS) {"Choose your validator(s)"}
+            p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
+            SearchEntity(searchables=validators.clone(), selected_entities=selected_validators.clone(), placeholder="Search validators")
+        }
+        div() {
+            div(class=BUTTON_ROW_CLASS) {
+                OutlineButton(on_click=move || handle_click(false)) {"Back"}
+                SolidButton(on_click=move || handle_click(true)) {"Next"}
+            }
+        }
+        div(class="w-full grow-[4]")
     }
 }
 
@@ -760,10 +782,10 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
             "Choose additional channels to receive notifications on."
         }
         div(class="flex flex-col space-x-0 space-y-8 mt-4 md:flex-row md:space-x-8 md:space-y-0") {
-            div(class="flex items-center p-8 rounded-lg dark:bg-purple-700") {
+            div(class="flex items-center p-8 rounded-lg md:w-1/2 dark:bg-purple-700") {
                 DiscordCard(web_app_url=web_app_url.clone(), center_button=true)
             }
-            div(class="p-8 rounded-lg dark:bg-purple-700") {
+            div(class="p-8 rounded-lg md:w-1/2 dark:bg-purple-700") {
                 TelegramCard(web_app_url=web_app_url.clone(), center_button=true)
             }
         }
@@ -864,10 +886,8 @@ pub fn Setup<G: Html>(cx: Scope) -> View<G> {
                 div(class="min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {
                     div(class="min-h-[100svh] flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
                         Header{}
-                        div(class="w-full h-full flex flex-col flex-auto justify-center text-center p-4") {
-                            div(class="flex flex-col justify-center items-center") {
-                                (child)
-                            }
+                        div(class="w-full flex flex-col flex-auto items-center text-center p-4") {
+                            (child)
                         }
                     }
                 }
