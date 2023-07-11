@@ -38,7 +38,7 @@ pub async fn Login<G: Html>(cx: Scope<'_>) -> View<G> {
                 }
             }
             div(class="mt-8 mx-auto w-full h-full max-w-md") {
-                div(class="bg-white dark:bg-purple-700 py-8 px-4 shadow rounded-lg px-10") {
+                div(class="py-8 px-4 shadow rounded-lg px-10") {
                     div(class="flex items-center justify-center space-y-6 mt-6") {
                         DiscordLoginButton(text="Login with Discord".to_string())
                     }
