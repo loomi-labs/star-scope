@@ -19,7 +19,7 @@
         file_server
 
         @images {
-            path *.jpg *.jpeg *.png *.gif *.webp
+            path *.jpg *.jpeg *.png *.gif *.svg *.webp
         }
 
         header @images Cache-Control "public, max-age=3600"
