@@ -70,7 +70,13 @@ func (client *TelegramBot) sendNewEvents() {
 			for _, tg := range entEvent.Edges.EventListener.Edges.CommChannels {
 				log.Sugar.Debugf("sending event to telegram chat %v (%v)", tg.Name, tg.TelegramChatID)
 				var textMsgs []string
-				text := fmt.Sprintf("<b>%v</b>\n\n%v", p.Sanitize(pbEvent.Title), p.Sanitize(pbEvent.Description))
+				var subtitle string
+				if pbEvent.Subtitle != "" {
+					subtitle = fmt.Sprintf("\n\n%v", p.Sanitize(pbEvent.Subtitle))
+				}
+				text := fmt.Sprintf("<b>%v - %v %v%v</b>\n\n<i>%v</i>",
+					pbEvent.Chain.Name, p.Sanitize(pbEvent.Title), pbEvent.Emoji, subtitle, p.Sanitize(pbEvent.Description),
+				)
 
 				if len(text) <= maxMsgLength {
 					textMsgs = append(textMsgs, text)

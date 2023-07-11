@@ -27,11 +27,12 @@ message Event {
   string title = 2;
   string subtitle = 3;
   string description = 4;
-  google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp notify_at = 6;
-  starscope.event.EventType event_type = 7;
-  ChainData chain = 8;
-  bool read = 9;
+  string emoji = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp notify_at = 7;
+  starscope.event.EventType event_type = 8;
+  ChainData chain = 9;
+  bool read = 10;
 }
 
 message EventList {

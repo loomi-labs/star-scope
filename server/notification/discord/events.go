@@ -73,7 +73,13 @@ func (dc *DiscordBot) sendNewEvents() {
 			for _, commChannel := range entEvent.Edges.EventListener.Edges.CommChannels {
 				log.Sugar.Debugf("sending event to discord channel %v (%v)", commChannel.Name, commChannel.DiscordChannelID)
 				var textMsgs []string
-				text := fmt.Sprintf("**%v**\n\n%v", p.Sanitize(pbEvent.Title), sanitizeUrls(p.Sanitize(pbEvent.Description)))
+				var subtitle string
+				if pbEvent.Subtitle != "" {
+					subtitle = fmt.Sprintf("\n\n%v", p.Sanitize(pbEvent.Subtitle))
+				}
+				text := fmt.Sprintf("**%v - %v %v%v**\n\n*%v*",
+					pbEvent.Chain.Name, p.Sanitize(pbEvent.Title), pbEvent.Emoji, subtitle, sanitizeUrls(p.Sanitize(pbEvent.Description)),
+				)
 				if len(text) <= maxMsgLength {
 					textMsgs = append(textMsgs, text)
 				} else {

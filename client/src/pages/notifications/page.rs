@@ -146,7 +146,7 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
                     }
                     div(class="flex flex-col w-full") {
                         div(class="flex flex-row text-center items-center") {
-                            span(class="text-lg font-bold") { (event.title.clone()) }
+                            span(class="text-lg font-bold") { (format!("{} {}", event.title.clone(), event.emoji)) }
                             EventBadge(event_type=event_type)
                             div(class="flex-grow") {}
                             span(class="text-sm justify-self-end dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
