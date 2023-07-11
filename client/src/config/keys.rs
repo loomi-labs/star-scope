@@ -6,8 +6,7 @@ pub const WHITE_COLOR: &str = "#FFFFFF";
 
 pub const LOGO_WITH_TEXT_WHITE_IMG: &str = "assets/images/logo_with_text_white.png";
 pub const LOGO_WITH_TEXT_ORANGE_IMG: &str = "assets/images/logo_with_text_orange.png";
-pub const SCOPE_IMG: &str = "assets/images/scope.png";
-pub const SCOPE_SMALL_IMG: &str = "assets/images/scope_small.png";
+pub const SCOPE_IMG: &str = "assets/images/scope.webp";
 
 pub const ROCKET_JSON: &str = "assets/lottie/rocket.json";
 
