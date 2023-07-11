@@ -239,7 +239,7 @@ func (m *UserManager) createOrAddDiscordCommChannel(ctx context.Context, tx *ent
 }
 
 func (m *UserManager) CreateOrUpdateByDiscordUser(ctx context.Context, userId int64, userName string, channelId *int64, channelName *string, isGroup *bool) (*ent.User, error) {
-	log.Sugar.Debugf("CreateOrUpdateByDiscordUser: %s (%d) in %s (%d)", userName, userId, channelName, channelId)
+	log.Sugar.Debugf("CreateOrUpdateByDiscordUser: %v (%v) in %v (%v)", userName, userId, channelName, channelId)
 	return withTxResult(m.client, ctx, func(tx *ent.Tx) (*ent.User, error) {
 		u, err := tx.User.
 			Query().

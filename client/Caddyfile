@@ -17,6 +17,13 @@
         root * /var/www/star-scope
         encode gzip
         file_server
+
+        @images {
+            path *.jpg *.jpeg *.png *.gif *.webp
+        }
+
+        header @images Cache-Control "public, max-age=3600"
+
         try_files {path} /
     }
 }

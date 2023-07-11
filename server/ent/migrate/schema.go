@@ -79,7 +79,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"OPEN", "REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.
@@ -101,7 +101,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"DEX", "GOVERNANCE", "FUNDING", "STAKING"}},
+		{Name: "event_type", Type: field.TypeEnum, Enums: []string{"FUNDING", "STAKING", "DEX", "GOVERNANCE"}},
 		{Name: "chain_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "contract_event", Type: field.TypeBytes, Nullable: true},
 		{Name: "wallet_event", Type: field.TypeBytes, Nullable: true},
@@ -158,7 +158,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "voting_start_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_PASSED", "PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PROPOSAL_STATUS_REJECTED", "PROPOSAL_STATUS_FAILED", "PROPOSAL_STATUS_UNSPECIFIED", "PROPOSAL_STATUS_DEPOSIT_PERIOD", "PROPOSAL_STATUS_VOTING_PERIOD", "PROPOSAL_STATUS_PASSED"}},
 		{Name: "chain_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ProposalsTable holds the schema information for the "proposals" table.
@@ -172,6 +172,27 @@ var (
 				Columns:    []*schema.Column{ProposalsColumns[9]},
 				RefColumns: []*schema.Column{ChainsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// StatesColumns holds the columns for the "states" table.
+	StatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "entity", Type: field.TypeEnum, Enums: []string{"discord", "telegram"}},
+		{Name: "last_event_time", Type: field.TypeTime, Nullable: true},
+	}
+	// StatesTable holds the schema information for the "states" table.
+	StatesTable = &schema.Table{
+		Name:       "states",
+		Columns:    StatesColumns,
+		PrimaryKey: []*schema.Column{StatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "state_entity",
+				Unique:  true,
+				Columns: []*schema.Column{StatesColumns[3]},
 			},
 		},
 	}
@@ -437,6 +458,7 @@ var (
 		EventsTable,
 		EventListenersTable,
 		ProposalsTable,
+		StatesTable,
 		UsersTable,
 		UserSetupsTable,
 		ValidatorsTable,

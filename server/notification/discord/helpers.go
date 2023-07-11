@@ -86,10 +86,18 @@ func sendEmptyResponse(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func sanitizeUrls(text string) string {
 	// Use <> around urls so that no embeds are created
-	r, _ := regexp.Compile("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)")
+	r, _ := regexp.Compile("https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9@:%_+.~#?&/=]*)")
 	return r.ReplaceAllStringFunc(text,
 		func(part string) string {
 			return "<" + part + ">"
 		},
 	)
+}
+
+func shouldDeleteUser(err error) bool {
+	if restErr, ok := err.(*discordgo.RESTError); ok {
+		return restErr.Response.StatusCode == 403 || restErr.Response.StatusCode == 404
+	} else {
+		return false
+	}
 }

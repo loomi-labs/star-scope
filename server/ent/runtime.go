@@ -13,6 +13,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
 	"github.com/loomi-labs/star-scope/ent/schema"
+	"github.com/loomi-labs/star-scope/ent/state"
 	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/ent/usersetup"
 	"github.com/loomi-labs/star-scope/ent/validator"
@@ -156,6 +157,21 @@ func init() {
 	proposal.DefaultUpdateTime = proposalDescUpdateTime.Default.(func() time.Time)
 	// proposal.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	proposal.UpdateDefaultUpdateTime = proposalDescUpdateTime.UpdateDefault.(func() time.Time)
+	stateMixin := schema.State{}.Mixin()
+	stateMixinFields0 := stateMixin[0].Fields()
+	_ = stateMixinFields0
+	stateFields := schema.State{}.Fields()
+	_ = stateFields
+	// stateDescCreateTime is the schema descriptor for create_time field.
+	stateDescCreateTime := stateMixinFields0[0].Descriptor()
+	// state.DefaultCreateTime holds the default value on creation for the create_time field.
+	state.DefaultCreateTime = stateDescCreateTime.Default.(func() time.Time)
+	// stateDescUpdateTime is the schema descriptor for update_time field.
+	stateDescUpdateTime := stateMixinFields0[1].Descriptor()
+	// state.DefaultUpdateTime holds the default value on creation for the update_time field.
+	state.DefaultUpdateTime = stateDescUpdateTime.Default.(func() time.Time)
+	// state.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	state.UpdateDefaultUpdateTime = stateDescUpdateTime.UpdateDefault.(func() time.Time)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

@@ -22,7 +22,7 @@ pub fn Header<G: Html>(cx: Scope) -> View<G> {
                     li {
                         button(class="flex items-center p-2 rounded hover:text-primary dark:hover:text-primary", on:click=move |_| app_state.logout()) {
                             span(class="inline-flex mr-1") {
-                                i(class="fas fa-sign-out-alt text-xl") {}
+                                div(class="w-6 h-6 icon-[heroicons-outline--logout]") {}
                             }
                             "Logout"
                         }

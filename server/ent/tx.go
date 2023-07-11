@@ -24,6 +24,8 @@ type Tx struct {
 	EventListener *EventListenerClient
 	// Proposal is the client for interacting with the Proposal builders.
 	Proposal *ProposalClient
+	// State is the client for interacting with the State builders.
+	State *StateClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserSetup is the client for interacting with the UserSetup builders.
@@ -167,6 +169,7 @@ func (tx *Tx) init() {
 	tx.Event = NewEventClient(tx.config)
 	tx.EventListener = NewEventListenerClient(tx.config)
 	tx.Proposal = NewProposalClient(tx.config)
+	tx.State = NewStateClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserSetup = NewUserSetupClient(tx.config)
 	tx.Validator = NewValidatorClient(tx.config)

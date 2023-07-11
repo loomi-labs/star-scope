@@ -13,6 +13,7 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka"
+	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"time"
@@ -99,8 +100,8 @@ func (e EventService) ListEvents(ctx context.Context, request *connect.Request[e
 			log.Sugar.Error(err)
 			return nil, types.UnknownErr
 		}
-		for _, event := range events {
-			pbEvent, err := kafka.EntEventToProto(event, el.Edges.Chain)
+		for _, ev := range events {
+			pbEvent, err := kafka_internal.EntEventToProto(ev, el.Edges.Chain)
 			if err != nil {
 				log.Sugar.Error(err)
 				return nil, types.UnknownErr

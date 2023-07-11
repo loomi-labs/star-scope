@@ -22,8 +22,8 @@ var (
 			Description: "Stop the bot",
 		},
 	}
-	cmdHandlers = map[string]func(dc DiscordBot, s *discordgo.Session, i *discordgo.InteractionCreate){
-		startCmd: func(dc DiscordBot, s *discordgo.Session, i *discordgo.InteractionCreate) {
+	cmdHandlers = map[string]func(dc *DiscordBot, s *discordgo.Session, i *discordgo.InteractionCreate){
+		startCmd: func(dc *DiscordBot, s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if !canInteractWithBot(s, i) {
 				sendEmptyResponse(s, i)
 				return
@@ -89,7 +89,7 @@ var (
 				log.Sugar.Errorf("Error while sending subscriptions: %v", err)
 			}
 		},
-		stopCmd: func(dc DiscordBot, s *discordgo.Session, i *discordgo.InteractionCreate) {
+		stopCmd: func(dc *DiscordBot, s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if !canInteractWithBot(s, i) {
 				sendEmptyResponse(s, i)
 				return

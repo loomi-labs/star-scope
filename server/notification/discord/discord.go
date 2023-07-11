@@ -29,7 +29,7 @@ func NewDiscordBot(managers *database.DbManagers, botToken string, clientId stri
 	}
 }
 
-func (dc DiscordBot) initDiscord() *discordgo.Session {
+func (dc *DiscordBot) initDiscord() *discordgo.Session {
 	log.Sugar.Info("Init discord bot")
 
 	var err error
@@ -50,7 +50,7 @@ func (dc DiscordBot) initDiscord() *discordgo.Session {
 	return s
 }
 
-func (dc DiscordBot) addCommands() {
+func (dc *DiscordBot) addCommands() {
 	for _, v := range cmds {
 		_, err := dc.s.ApplicationCommandCreate(dc.s.State.User.ID, "", v)
 		if err != nil {
@@ -59,7 +59,7 @@ func (dc DiscordBot) addCommands() {
 	}
 }
 
-func (dc DiscordBot) removeCommands() {
+func (dc *DiscordBot) removeCommands() {
 	registeredCommands, err := dc.s.ApplicationCommands(dc.s.State.User.ID, "")
 	if err != nil {
 		log.Sugar.Fatalf("Could not fetch registered commands: %v", err)
@@ -73,7 +73,28 @@ func (dc DiscordBot) removeCommands() {
 	}
 }
 
-func (dc DiscordBot) Start() {
+func (dc *DiscordBot) startDiscordSession() *discordgo.Session {
+	var err error
+	session, err := discordgo.New("Bot " + dc.botToken)
+	if err != nil {
+		log.Sugar.Fatalf("Invalid bot parameters: %v", err)
+	}
+
+	err = session.Open()
+	if err != nil {
+		log.Sugar.Fatalf("Cannot open the s: %v", err)
+	}
+	return session
+}
+
+func (dc *DiscordBot) closeDiscordSession(session *discordgo.Session) {
+	err := session.Close()
+	if err != nil {
+		log.Sugar.Errorf("Error while closing discord s: %v", err)
+	}
+}
+
+func (dc *DiscordBot) Start() {
 	dc.s = dc.initDiscord()
 	log.Sugar.Info("Start discord bot")
 
@@ -86,6 +107,8 @@ func (dc DiscordBot) Start() {
 
 	dc.removeCommands()
 	dc.addCommands()
+
+	go dc.startDiscordEventNotifier()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT)
