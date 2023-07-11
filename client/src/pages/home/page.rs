@@ -56,7 +56,7 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
             }
             div(class="flex flex-col grow items-center justify-center text-center") {
                 div(class="flex flex-col items-center py-16") {
-                    h1(class="text-xl font-bold") {
+                    h1(class="text-2xl font-bold") {
                         (title)
                     }
                     p(class="text-base my-8") {
