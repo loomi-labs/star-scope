@@ -60,7 +60,6 @@ export const Connected = ({
   buttonText: string;
   onClick: MouseEventHandler<HTMLButtonElement>;
 }) => {
-  console.log('Connected')
   return (
     <ConnectWalletButton buttonText={buttonText} onClickConnectBtn={onClick} />
   );

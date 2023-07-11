@@ -31,7 +31,7 @@ const signMsg = (
           type: "sign/MsgSignData",
           value: {
             signer: address,
-            data: btoa(""),
+            data: btoa("hello"),
           },
         },
       ],
@@ -40,11 +40,11 @@ const signMsg = (
     try {
       const response = await signAmino(address, signMsg,
         {preferNoSetFee: true, preferNoSetMemo: true, disableBalanceCheck: true});
-      console.log(response)
       const result = JSON.stringify(response, null, 2)
       window.parent.postMessage(result, '*');
       setResp(result);
     } catch (e) {
+      console.error(e);
       window.parent.postMessage(e, '*');
     }
   };

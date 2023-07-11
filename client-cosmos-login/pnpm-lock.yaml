@@ -121,7 +121,7 @@ packages:
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@babel/code-frame': 7.22.5
-      '@babel/generator': 7.19.3
+      '@babel/generator': 7.22.5
       '@babel/helper-compilation-targets': 7.22.5(@babel/core@7.18.10)
       '@babel/helper-module-transforms': 7.22.5
       '@babel/helpers': 7.22.5
@@ -144,14 +144,14 @@ packages:
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@babel/code-frame': 7.22.5
-      '@babel/generator': 7.19.3
+      '@babel/generator': 7.22.5
       '@babel/helper-compilation-targets': 7.22.5(@babel/core@7.19.3)
       '@babel/helper-module-transforms': 7.22.5
       '@babel/helpers': 7.22.5
       '@babel/parser': 7.22.5
       '@babel/template': 7.22.5
-      '@babel/traverse': 7.19.3
-      '@babel/types': 7.19.3
+      '@babel/traverse': 7.22.5
+      '@babel/types': 7.22.5
       convert-source-map: 1.9.0
       debug: 4.3.4
       gensync: 1.0.0-beta.2
@@ -174,7 +174,7 @@ packages:
     resolution: {integrity: sha512-fqVZnmp1ncvZU757UzDheKZpfPgatqY59XtW2/j/18H7u76akb8xqvjw82f+i2UKd/ksYsSick/BCLQUUtJ/qQ==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.19.3
+      '@babel/types': 7.22.5
       '@jridgewell/gen-mapping': 0.3.3
       jsesc: 2.5.2
     dev: false
@@ -514,7 +514,7 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
     dependencies:
-      '@babel/types': 7.19.3
+      '@babel/types': 7.22.5
     dev: false
 
   /@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@7.22.5(@babel/core@7.18.10):
@@ -2261,7 +2261,7 @@ packages:
       '@babel/plugin-transform-unicode-escapes': 7.22.5(@babel/core@7.19.3)
       '@babel/plugin-transform-unicode-regex': 7.22.5(@babel/core@7.19.3)
       '@babel/preset-modules': 0.1.5(@babel/core@7.19.3)
-      '@babel/types': 7.19.3
+      '@babel/types': 7.22.5
       babel-plugin-polyfill-corejs2: 0.3.3(@babel/core@7.19.3)
       babel-plugin-polyfill-corejs3: 0.6.0(@babel/core@7.19.3)
       babel-plugin-polyfill-regenerator: 0.4.1(@babel/core@7.19.3)
@@ -2359,7 +2359,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/code-frame': 7.22.5
-      '@babel/generator': 7.19.3
+      '@babel/generator': 7.22.5
       '@babel/helper-environment-visitor': 7.22.5
       '@babel/helper-function-name': 7.22.5
       '@babel/helper-hoist-variables': 7.22.5
@@ -2377,13 +2377,13 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/code-frame': 7.22.5
-      '@babel/generator': 7.19.3
+      '@babel/generator': 7.22.5
       '@babel/helper-environment-visitor': 7.22.5
       '@babel/helper-function-name': 7.22.5
       '@babel/helper-hoist-variables': 7.22.5
       '@babel/helper-split-export-declaration': 7.22.5
       '@babel/parser': 7.22.5
-      '@babel/types': 7.19.3
+      '@babel/types': 7.22.5
       debug: 4.3.4
       globals: 11.12.0
     transitivePeerDependencies:
@@ -4065,7 +4065,7 @@ packages:
     peerDependencies:
       react: 18.2.0
     dependencies:
-      '@babel/runtime': 7.11.2
+      '@babel/runtime': 7.22.5
       '@chakra-ui/react': 2.5.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(@types/react@18.0.25)(framer-motion@9.0.7)(react-dom@18.2.0)(react@18.2.0)
       '@cosmology-ui/utils': 0.1.24(@chakra-ui/form-control@2.0.18)(@chakra-ui/icon@3.0.15)(@chakra-ui/layout@2.2.0)(@chakra-ui/media-query@3.2.12)(@chakra-ui/menu@2.1.15)(@chakra-ui/spinner@2.0.12)(@chakra-ui/system@2.5.8)(@types/react@18.0.25)(react-dom@18.2.0)(react@18.2.0)
       '@emotion/react': 11.10.6(@types/react@18.0.25)(react@18.2.0)
@@ -4145,8 +4145,8 @@ packages:
       - lokijs
     dev: false
 
-  /@cosmos-kit/core@1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0):
-    resolution: {integrity: sha512-NL4dKByAeIbM4/lsw781biiKyjZNkstEecDAoH5Sivz/3trH2cguwE39QvBqJkZQPVlKp0P5RXGlse6hfMskBw==}
+  /@cosmos-kit/core@1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0):
+    resolution: {integrity: sha512-07+upbiwT1IaIhpxINk1g4+T5z9uaQ0ZJhqVAAMoN32fch8D1FmHHaf3PQa/J3uG+KifbhnANwrdtgvnYB8cLw==}
     peerDependencies:
       '@cosmjs/amino': '>= 0.28'
       '@cosmjs/cosmwasm-stargate': '>= 0.28'
@@ -4178,7 +4178,7 @@ packages:
       '@chain-registry/cosmostation': 1.8.0
       '@cosmjs/amino': 0.31.0
       '@cosmjs/proto-signing': 0.31.0
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
     transitivePeerDependencies:
       - '@cosmjs/cosmwasm-stargate'
       - '@cosmjs/stargate'
@@ -4197,8 +4197,8 @@ packages:
       '@chain-registry/cosmostation': 1.8.0
       '@cosmjs/amino': 0.31.0
       '@cosmjs/proto-signing': 0.31.0
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
-      '@cosmos-kit/walletconnect': 0.3.18(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/walletconnect': 0.3.19(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
     transitivePeerDependencies:
       - '@cosmjs/cosmwasm-stargate'
       - '@cosmjs/stargate'
@@ -4242,7 +4242,7 @@ packages:
       '@chain-registry/keplr': 1.8.0
       '@cosmjs/amino': 0.31.0
       '@cosmjs/proto-signing': 0.31.0
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
     transitivePeerDependencies:
       - '@cosmjs/cosmwasm-stargate'
       - '@cosmjs/stargate'
@@ -4261,8 +4261,8 @@ packages:
       '@chain-registry/keplr': 1.8.0
       '@cosmjs/amino': 0.31.0
       '@cosmjs/proto-signing': 0.31.0
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
-      '@cosmos-kit/walletconnect': 0.3.18(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/walletconnect': 0.3.19(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
     transitivePeerDependencies:
       - '@cosmjs/cosmwasm-stargate'
       - '@cosmjs/stargate'
@@ -4305,7 +4305,7 @@ packages:
     dependencies:
       '@cosmjs/amino': 0.31.0
       '@cosmjs/proto-signing': 0.31.0
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
     transitivePeerDependencies:
       - '@cosmjs/cosmwasm-stargate'
       - '@cosmjs/stargate'
@@ -4335,8 +4335,8 @@ packages:
       - lokijs
     dev: false
 
-  /@cosmos-kit/react-lite@1.5.2(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-eZW+WccYvjadx1F7mm1w3ZkvGxaXXYikC+qKSMDdzD7oyAIY3WVO+ikUy3F5ShGP/b9Whdz1nYLizcOnHfJ66g==}
+  /@cosmos-kit/react-lite@1.5.3(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-6/6sK0Te6Jec5kPgz/mUPnhI47rLxxij8+5em5zsiut2nUVZ7ovN5NghTEWzY8eQgo+9anMsdLrvmOHE522Kkw==}
     peerDependencies:
       '@cosmjs/cosmwasm-stargate': '>= 0.28'
       '@cosmjs/stargate': '>= 0.28'
@@ -4347,7 +4347,7 @@ packages:
       '@chain-registry/types': 0.13.1
       '@cosmjs/cosmwasm-stargate': 0.29.5
       '@cosmjs/stargate': 0.29.5
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     transitivePeerDependencies:
@@ -4374,7 +4374,7 @@ packages:
       '@cosmjs/stargate': 0.29.5
       '@cosmology-ui/react': 0.1.21(@chakra-ui/form-control@2.0.18)(@chakra-ui/icon@3.0.15)(@chakra-ui/layout@2.2.0)(@chakra-ui/media-query@3.2.12)(@chakra-ui/menu@2.1.15)(@chakra-ui/spinner@2.0.12)(@chakra-ui/system@2.5.8)(@types/react@18.0.25)(react-dom@18.2.0)(react@18.2.0)
       '@cosmos-kit/core': 1.3.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
-      '@cosmos-kit/react-lite': 1.5.2(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)(react-dom@18.2.0)(react@18.2.0)
+      '@cosmos-kit/react-lite': 1.5.3(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)(react-dom@18.2.0)(react@18.2.0)
       '@emotion/react': 11.10.6(@types/react@18.0.25)(react@18.2.0)
       '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@18.0.25)(react@18.2.0)
       framer-motion: 9.0.7(react-dom@18.2.0)(react@18.2.0)
@@ -4398,8 +4398,8 @@ packages:
       - lokijs
     dev: false
 
-  /@cosmos-kit/walletconnect@0.3.18(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0):
-    resolution: {integrity: sha512-GoqfJ4hCkx765mD8yPhBekY1eRYJaNS+kkuLp1wo6juHjuriUFm9IR4H46P4pm/yf6BWgmtRsu/ZVKhxq2AG6Q==}
+  /@cosmos-kit/walletconnect@0.3.19(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0):
+    resolution: {integrity: sha512-xAMor6jMi7yCYmptRCm1lPBPDXXyZ79G32bySqsKiDT0HYClnrhR8pZBxOJlMS/nUAH7YF7KRcv4bil3c53dTA==}
     peerDependencies:
       '@cosmjs/amino': '>= 0.28'
       '@cosmjs/proto-signing': '>= 0.28'
@@ -4407,7 +4407,7 @@ packages:
       '@babel/runtime': 7.11.2
       '@cosmjs/amino': 0.31.0
       '@cosmjs/proto-signing': 0.31.0
-      '@cosmos-kit/core': 1.7.1(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
+      '@cosmos-kit/core': 1.8.0(@cosmjs/amino@0.31.0)(@cosmjs/cosmwasm-stargate@0.29.5)(@cosmjs/proto-signing@0.31.0)(@cosmjs/stargate@0.29.5)(cosmjs-types@0.8.0)
       '@walletconnect/sign-client': 2.8.6
       '@walletconnect/types': 2.8.6
       '@walletconnect/utils': 2.8.6
@@ -4597,7 +4597,7 @@ packages:
     dependencies:
       ajv: 6.12.6
       debug: 4.3.4
-      espree: 9.5.2
+      espree: 9.6.0
       globals: 13.20.0
       ignore: 5.2.4
       import-fresh: 3.3.0
@@ -5304,7 +5304,7 @@ packages:
       glob-promise: 4.2.2(glob@7.2.3)
       is-glob: 4.0.3
       lodash: 4.17.21
-      minimist: 1.2.6
+      minimist: 1.2.8
       mkdirp: 1.0.4
       mz: 2.7.0
       prettier: 2.8.8
@@ -7122,7 +7122,7 @@ packages:
       eslint-scope: 7.2.0
       eslint-utils: 3.0.0(eslint@8.28.0)
       eslint-visitor-keys: 3.4.1
-      espree: 9.5.2
+      espree: 9.6.0
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -7152,8 +7152,8 @@ packages:
       - supports-color
     dev: true
 
-  /espree@9.5.2:
-    resolution: {integrity: sha512-7OASN1Wma5fum5SrNhFMAMJxOUAbhyfQ8dQ//PJaJbNw0URTPWqIghHWt1MmAANKhHZIYOHruW4Kw4ruUWOdGw==}
+  /espree@9.6.0:
+    resolution: {integrity: sha512-1FH/IiruXZ84tpUlm0aCUEwMl2Ho5ilqVh0VvQXw+byAz/4SAciyHLlfmL5WYqsvD38oymdUwBss0LtK8m4s/A==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       acorn: 8.9.0
@@ -8421,7 +8421,6 @@ packages:
 
   /minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
-    dev: true
 
   /miscreant@0.3.2:
     resolution: {integrity: sha512-fL9KxsQz9BJB2KGPMHFrReioywkiomBiuaLk6EuChijK0BsJsIKJXdVomR+/bPj5mvbFD6wM0CM3bZio9g7OHA==}
