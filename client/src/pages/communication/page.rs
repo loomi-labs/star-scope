@@ -171,7 +171,7 @@ pub fn DeleteEntityDialog<'a, G: Html>(
 
 const CARD_DIV_CLASS: &str = "flex flex-col w-full";
 const CARD_TITLE_CLASS: &str = "text-2xl font-semibold";
-const CARD_SUBTITLE_CLASS: &str = "text-md font-semibold mt-2";
+const CARD_SUBTITLE_CLASS: &str = "text-base font-semibold mt-2";
 const CARD_LIST_UL_CLASS: &str = "space-y-2 mt-4";
 const CARD_LIST_LI_CLASS: &str = "border-b border-gray-200 dark:border-purple-600";
 const CARD_LIST_LI_ROW_CLASS: &str = "flex items-center justify-items-start my-2";
