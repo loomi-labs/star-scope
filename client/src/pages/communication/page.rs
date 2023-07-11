@@ -171,7 +171,7 @@ pub fn DeleteEntityDialog<'a, G: Html>(
 
 const CARD_DIV_CLASS: &str = "flex flex-col w-full";
 const CARD_TITLE_CLASS: &str = "text-2xl font-semibold";
-const CARD_SUBTITLE_CLASS: &str = "text-lg font-semibold mt-2";
+const CARD_SUBTITLE_CLASS: &str = "text-md font-semibold mt-2";
 const CARD_LIST_UL_CLASS: &str = "space-y-2 mt-4";
 const CARD_LIST_LI_CLASS: &str = "border-b border-gray-200 dark:border-purple-600";
 const CARD_LIST_LI_ROW_CLASS: &str = "flex items-center justify-items-start my-2";
@@ -183,16 +183,14 @@ const CARD_ADD_DIV: &str = "flex items-center justify-items-end mt-4";
 const CARD_ADD_DIV_BUTTON: &str = "flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
 #[derive(Prop)]
-pub struct DiscordCardProps<'a, G: Html> {
+pub struct DiscordCardProps {
     web_app_url: String,
     #[builder(default = false)]
-    is_setup_style: bool,
-    #[builder(default = None)]
-    title: Option<Children<'a, G>>,
+    center_button: bool,
 }
 
 #[component]
-pub async fn DiscordCard<'a, G: Html>(cx: Scope<'a>, props: DiscordCardProps<'a, G>) -> View<G> {
+pub async fn DiscordCard<'a, G: Html>(cx: Scope<'a>, props: DiscordCardProps) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {
@@ -239,18 +237,11 @@ pub async fn DiscordCard<'a, G: Html>(cx: Scope<'a>, props: DiscordCardProps<'a,
         }
     });
 
-    let title_view = match props.title {
-        Some(title) => title.call(cx),
-        None => view! {cx,
-            h2(class=CARD_TITLE_CLASS) { "Discord" }
-        },
-    };
-
     view! {cx,
         AddEntityDialog(is_open=show_add_channel_dialog, service_name="Discord", entity_name="channel", icon="icon-[mingcute--discord-fill]", icon_bg_color="bg-discord-purple-500")
         DeleteEntityDialog(is_open=show_delete_dialog, delete_signal=delete_signal, service_name="Discord", entity_name="channel")
-        div(class=format!("{} {}", CARD_DIV_CLASS, if props.is_setup_style { "items-center" } else { "" })) {
-            (title_view)
+        div(class=format!("{} {}", CARD_DIV_CLASS, if props.center_button { "items-center" } else { "" })) {
+            h2(class=CARD_TITLE_CLASS) { "Discord" }
             (if *is_loading.get() {
                 view! {cx,
                     LoadingSpinner {}

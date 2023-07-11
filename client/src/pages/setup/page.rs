@@ -746,12 +746,20 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
             update_step(cx, finish_step).await;
         });
     };
-    let web_app_url = create_ref(cx, keys::WEB_APP_URL.to_string() + AppRoutes::Setup.to_string().as_str());
+    let web_app_url = create_ref(
+        cx,
+        keys::WEB_APP_URL.to_string() + AppRoutes::Setup.to_string().as_str(),
+    );
 
     view! {cx,
         ProgressBar(step=Five(step))
         h2(class=TITLE_CLASS) {"Choose your notification channels"}
-        div(class="flex flex-col space-y-4 mt-4") {
+        div(class=DESCRIPTION_CLASS) {
+            "You will always receive notifications on the web app."
+            br()
+            "Choose additional channels to receive notifications on."
+        }
+        div(class="flex flex-col space-x-0 space-y-8 mt-4 md:flex-row md:space-x-8 md:space-y-0") {
             div(class="flex items-center p-8 rounded-lg dark:bg-purple-700") {
                 DiscordCard(web_app_url=web_app_url.clone(), center_button=true)
             }
