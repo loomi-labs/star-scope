@@ -448,6 +448,7 @@ const DROPDOWN_DIV_CLASS: &str = "relative inline-flex items-center w-full";
 const DROPDOWN_ICON_CLASS: &str = "absolute w-full left-0 top-0 h-full flex items-center pl-2 pointer-events-none text-gray-500 dark:text-purple-600";
 const DROPDOWN_SELECT_CLASS: &str = "block capitalize w-full md:w-auto pl-8 py-2 rounded border-0 duration-300 hover:bg-sky-400 dark:text-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800";
 
+#[allow(dead_code)]
 #[component]
 pub fn ReadStatusFilterDropdown<G: Html>(cx: Scope) -> View<G> {
     let notifications_state = use_context::<NotificationsState>(cx);

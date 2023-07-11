@@ -97,7 +97,7 @@ pub fn AddEntityDialog<'a, G: Html>(
     });
 
     view! {cx,
-        dialog(class="fixed bg-white p-4 rounded-lg z-50", open=*is_open.get()) {
+        dialog(class="fixed inset-0 bg-white p-4 rounded-lg z-40", open=*is_open.get()) {
             div(class="flex flex-col p-4") {
                 div(class="flex flex-col items-center") {
                     div(class=format!("flex items-center justify-center rounded-full text-white w-8 h-8 {}", icon_bg_color)) {
@@ -142,7 +142,7 @@ pub fn DeleteEntityDialog<'a, G: Html>(
     });
 
     view! {cx,
-        dialog(class="fixed inset-0 bg-white p-4 rounded-lg z-50", open=is_open.get().is_some()) {
+        dialog(class="fixed inset-0 bg-white p-4 rounded-lg z-40", open=is_open.get().is_some()) {
             div(class="flex flex-col p-4") {
                 div(class="flex flex-col items-center") {
                     span(class="w-12 h-12 text-black icon-[ph--trash]") {}
