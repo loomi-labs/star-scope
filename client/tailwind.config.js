@@ -8,7 +8,7 @@ module.exports = {
       colors: {
         transparent: 'transparent',
         current: 'currentColor',
-        primary: '#D68940',
+        primary: '#FA803D',
         "primary-gradient": {
           from: '#FA803D',
             to: '#D14809',

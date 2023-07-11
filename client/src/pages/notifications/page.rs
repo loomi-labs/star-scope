@@ -728,7 +728,7 @@ pub async fn Notifications<G: Html>(cx: Scope<'_>) -> View<G> {
             div(class="hidden lg:flex flex-row justify-between items-center pb-4") {
                 h1(class="text-4xl font-bold") { "Notifications" }
                 div(class="flex flex-row space-x-4 h-8") {
-                    ReadStatusFilterDropdown {}
+                    // ReadStatusFilterDropdown {}
                     ChainFilterDropdown {}
                     TimeFilterDropdown {}
                 }

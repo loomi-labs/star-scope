@@ -90,9 +90,10 @@ pub fn DiscordLoginButton<G: Html>(cx: Scope, props: DiscordLoginButtonProps) ->
 
     view!(
         cx,
-        a(class=format!("w-[219px] bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target=target) {
-                            span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
-                            (props.text)
+        a(class=format!("w-[219px] bg-discord-purple-500 hover:bg-discord-purple-600 {}", class_button), href=discord_login_url, target=target,
+                on:click=move |event: web_sys::Event| event.stop_propagation()) {
+            span(class="w-6 h-6 mr-2 icon-[mingcute--discord-fill]") {}
+            (props.text)
         }
     )
 }

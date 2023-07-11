@@ -60,8 +60,9 @@ fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
     };
 
     view! {cx,
+        lottie-player(src=keys::ROCKET_JSON, background="transparent", speed="1", style="width: 300px; height: 300px;", loop=true, autoplay=true) {}
         h1(class=TITLE_CLASS) {"Welcome to Star Scope!"}
-        p(class=DESCRIPTION_CLASS) {"We deliver quick and effortless notifications about your Cosmos ecosystem activities."}
+        p(class=DESCRIPTION_CLASS) {"Setup your account to receive notifications about your Cosmos activities."}
         h2(class=SUBTITLE_CLASS) {"Are you a validator?"}
         div(class="flex justify-center space-x-4") {
             SolidButton(on_click=move || handle_click(true), color=ColorScheme::Subtle) {"Yes"}
@@ -328,7 +329,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>>
         div(class="flex flex-col") {
             div(class="flex") {
                 input(
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
+                    class="w-full placeholder:italic border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
                     placeholder="Wallet address",
                     type="text",
                     bind:value=new_wallet_address,
@@ -414,12 +415,6 @@ struct SearchQuery<'a> {
 
 #[component(inline_props)]
 fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>>) -> View<G> {
-    let handle_delete_wallet = move |delete_wallet: &NewWallet| {
-        wallets
-            .modify()
-            .retain(|w| w.wallet.address != delete_wallet.wallet.address);
-    };
-
     let search_wallets = create_signal(cx, Vec::<SearchQuery>::new());
 
     create_effect(cx, move || {
@@ -511,7 +506,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<NewWallet<'a>>
                             (if *wallet_ref.is_added.get() {
                                 view!{cx,
                                     button(class="flex justify-between items-center p-2 rounded-lg border-2 border-purple-700 hover:bg-primary",
-                                            on:click=move |_| handle_delete_wallet(wallet_ref)) {
+                                            on:click=move |_| wallet_ref.is_added.set(false)) {
                                         span(class="w-6 h-6 icon-[tabler--trash] cursor-pointer")
                                     }
                                 }
@@ -573,8 +568,8 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
 
     view! {cx,
         ProgressBar(step=Three(step))
-        h2(class=TITLE_CLASS) {"Add your wallet(s)"}
-        p(class=DESCRIPTION_CLASS) {"You will receive notifications about important updates and events directly related to your wallet."}
+        h2(class=TITLE_CLASS) {"Add your wallets"}
+        p(class=DESCRIPTION_CLASS) {"You will receive notifications about events related to your wallets."}
         WalletList(wallets=wallets.clone())
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
@@ -674,13 +669,13 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
     view! {cx,
         ProgressBar(step=Four(step))
         h2(class=TITLE_CLASS) {"Choose your notifications"}
-        div(class="flex flex-wrap rounded-xl mt-4 text-sm md:text-base dark:bg-purple-800") {
+        div(class="flex flex-wrap w-full lg:w-4/5 rounded-xl mt-4 text-sm md:text-base dark:bg-purple-800") {
             div(class="flex flex-col items-center w-full md:w-1/3 px-6 py-10 md:py-6 rounded-xl hover:dark:bg-purple-700", on:click=move |_| notify_funding.set(!notify_funding.get().as_ref())) {
                 div(class=centered_row_class) {
                     span(class=(if *notify_funding.get() {section_selected_class} else {section_unselected_class})) {}
                     h3(class=SUBTITLE_CLASS) {"Funding"}
                 }
-                p(class=DESCRIPTION_PROMINENT_CLASS) {"Whenever someone sends you tokens, we'll make sure you know"}
+                p(class=DESCRIPTION_PROMINENT_CLASS) {"When you receive tokens"}
             }
             div(class="flex w-full md:w-1/3 rounded-xl hover:dark:bg-purple-700", on:click=move |_| notify_staking.set(!notify_staking.get().as_ref())) {
                 div(class="flex flex-col md:flex-row w-full h-full") {
@@ -703,7 +698,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                             }
                             div(class=starting_row_class) {
                                 span(class=check_mark_class)
-                                span() {"When a validator falls out of the active set"}
+                                span() {"When a validator gets inactive"}
                             }
                         }
                     }
@@ -717,7 +712,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                 div(class="flex flex-col mb-4") {
                     div(class=starting_row_selectable_class, on:click=move |_| notify_gov_new_proposal.set(!notify_gov_new_proposal.get().as_ref())) {
                         span(class=(if *notify_gov_new_proposal.get() {section_selected_class} else {section_unselected_class})) {}
-                        span() {"New proposal in voting period"}
+                        span() {"New proposal open for voting"}
                     }
                     div(class=starting_row_selectable_class, on:click=move |_| notify_gov_voting_end.set(!notify_gov_voting_end.get().as_ref())) {
                         span(class=(if *notify_gov_voting_end.get() {section_selected_class} else {section_unselected_class})) {}
@@ -751,12 +746,20 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
             update_step(cx, finish_step).await;
         });
     };
-    let web_app_url = create_ref(cx, keys::WEB_APP_URL.to_string() + AppRoutes::Setup.to_string().as_str());
+    let web_app_url = create_ref(
+        cx,
+        keys::WEB_APP_URL.to_string() + AppRoutes::Setup.to_string().as_str(),
+    );
 
     view! {cx,
         ProgressBar(step=Five(step))
         h2(class=TITLE_CLASS) {"Choose your notification channels"}
-        div(class="flex flex-col space-y-4 mt-4") {
+        div(class=DESCRIPTION_CLASS) {
+            "You will always receive notifications on the web app."
+            br()
+            "Choose additional channels to receive notifications on."
+        }
+        div(class="flex flex-col space-x-0 space-y-8 mt-4 md:flex-row md:space-x-8 md:space-y-0") {
             div(class="flex items-center p-8 rounded-lg dark:bg-purple-700") {
                 DiscordCard(web_app_url=web_app_url.clone(), center_button=true)
             }
