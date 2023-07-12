@@ -882,7 +882,7 @@ pub fn Setup<G: Html>(cx: Scope) -> View<G> {
             };
             view! {
                 cx,
-                div(class="h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {
+                div(class="h-[100dvh] flex justify-center items-center flex-auto flex-shrink-0") {
                     div(class="w-full h-full flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl overflow-y-auto") {
                         Header{}
                         div(class="w-full h-full flex flex-col flex-auto items-center text-center p-4") {
