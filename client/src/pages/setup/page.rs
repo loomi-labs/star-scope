@@ -47,8 +47,6 @@ const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-8 pb-6";
 
 const SPACER_10_PERCENT_CLASS: &str = "w-full min-h-[10%]";
 
-const SPACER_H10_OR_10PERCENT_CLASS: &str = "w-full h-10 md:h-[10%]";
-
 #[component]
 fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
     let handle_click = move |is_validator| {
