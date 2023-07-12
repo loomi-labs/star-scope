@@ -210,12 +210,12 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
 pub fn Navigation<'a, G: Html>(cx: Scope<'a>, children: Children<'a, G>) -> View<G> {
     let children = children.call(cx);
     view! { cx,
-        div(class="min-h-[100svh] max-h-[100lvh] flex justify-center items-center flex-auto flex-shrink-0") {
+        div(class="h-[100dvh] flex justify-center items-center flex-auto flex-shrink-0") {
             div(class="flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full dark:bg-purple-800") {
                 Header{}
                 div(class="flex flex-row h-full w-full dark:bg-d-bg") {
                     Sidebar{}
-                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100svh-theme(space.16))] overflow-y-auto overflow-x-visible") {    // TODO: fix the 100svh-theme(space.16) hack
+                    div(class="w-full p-4 md:p-8 lg:p-0 lg:py-8 lg:pl-8 md:max-w-auto h-[calc(100dvh-theme(space.16))] overflow-y-auto overflow-x-visible") {    // TODO: fix the 100dvh-theme(space.16) hack
                         (children)
                     }
                 }
