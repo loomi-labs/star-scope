@@ -43,7 +43,7 @@ pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String) -> View<G> {
     };
 
     view! { cx,
-        div(class=format!("absolute bottom-0 right-0 flex items-center justify-center min-w-96 p-4 mr-6 ml-48 lg:ml-56 rounded-lg bg-white border-l-[20px] drop-shadow-lg {}", color), style=format!("{} opacity: {}", style, state.get().as_ref())) {
+        div(class=format!("absolute bottom-0 right-0 flex items-center justify-center min-w-96 p-4 m-6 rounded-lg bg-white border-l-[20px] drop-shadow-lg {}", color), style=format!("{} opacity: {}", style, state.get().as_ref())) {
             span(class=format!("w-10 h-10 {}", icon)) {}
             div(class="flex flex-col pl-4") {
                 h3(class="text-lg font-bold") { (msg.title) }
