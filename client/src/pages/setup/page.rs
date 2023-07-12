@@ -39,7 +39,7 @@ impl SetupState {
     }
 }
 
-const TITLE_CLASS: &str = "text-2xl md:text-4xl font-bold m-4";
+const TITLE_CLASS: &str = "text-3xl md:text-4xl font-bold m-4";
 const SUBTITLE_CLASS: &str = "text-2xl font-semibold m-4";
 const DESCRIPTION_CLASS: &str = "dark:text-purple-600 mb-8";
 const DESCRIPTION_PROMINENT_CLASS: &str = "dark:text-white";
@@ -742,7 +742,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                         span() {"Voting reminders"}
                     }
                 }
-                SearchEntity(searchables=chain_rows, selected_entities=selected_chains, placeholder="Select chains")
+                SearchEntity(searchables=chain_rows, selected_entities=selected_chains, placeholder="Select chains", show_results_for_empty_search=true)
             }
         }
         div(class=SPACER_10_PERCENT_CLASS)

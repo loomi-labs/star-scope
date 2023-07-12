@@ -40,19 +40,27 @@ pub struct Searchable<'a, T> {
     pub is_selected: &'a Signal<bool>,
 }
 
-#[component(inline_props)]
-pub fn SearchEntity<'a, G: Html, T>(
-    cx: Scope<'a>,
+#[derive(Prop)]
+pub struct SearchEntityProps<'a, T> {
     searchables: Vec<Searchable<'a, T>>,
     selected_entities: &'a Signal<HashSet<T>>,
     placeholder: &'a str,
+    #[builder(default = false)]
+    show_results_for_empty_search: bool,
+}
+
+#[component]
+pub fn SearchEntity<'a, G: Html, T>(
+    cx: Scope<'a>,
+    props: SearchEntityProps<'a, T>
 ) -> View<G>
 where
     T: Clone + Hash + Eq + PartialEq + Display + 'a,
 {
+    const MAX_ENTRIES: usize = 10;
     let search_term = create_signal(cx, String::new());
 
-    let searchables_ref = create_ref(cx, searchables);
+    let searchables_ref = create_ref(cx, props.searchables);
     let search_results = create_selector(cx, move || {
         let search = search_term.get().to_lowercase();
         let mut results = vec![];
@@ -66,10 +74,12 @@ where
                 {
                     results.push(searhable.clone());
                 }
-                if results.len() >= 10 {
+                if results.len() >= MAX_ENTRIES {
                     break;
                 }
             }
+        } else if props.show_results_for_empty_search {
+            results = searchables_ref.iter().take(MAX_ENTRIES).cloned().collect();
         }
         results
     });
@@ -88,9 +98,9 @@ where
         create_effect(cx, move || {
             let is_selected = *searchable.is_selected.get();
             if is_selected {
-                selected_entities.modify().insert(searchable.entity.clone());
+                props.selected_entities.modify().insert(searchable.entity.clone());
             } else {
-                selected_entities
+                props.selected_entities
                     .modify()
                     .retain(|current| *current != searchable.entity);
             }
@@ -108,7 +118,7 @@ where
 
     view! {cx,
         div(class="relative flex justify-center items-center text-gray-500") {
-            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder=placeholder)
+            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder=props.placeholder)
             dialog(class="absolute z-20 top-full left-0 bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
                     open=*show_dialog.get(),
                     on:focusin= move |_| has_dialog_focus.set(true),
