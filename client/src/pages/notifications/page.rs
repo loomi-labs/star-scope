@@ -10,10 +10,11 @@ use prost_types::Timestamp;
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use wasm_bindgen::closure::Closure;
-use wasm_bindgen::{JsCast};
+use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use web_sys::{
-    Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, IntersectionObserverEntry, HtmlParagraphElement,
+    Event, HtmlDivElement, HtmlParagraphElement, HtmlSelectElement, IntersectionObserver,
+    IntersectionObserverEntry,
 };
 
 use crate::components::messages::create_error_msg_from_status;
@@ -103,7 +104,7 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref())
         .expect("Failed to create IntersectionObserver");
     let observer_ref = create_ref(cx, observer.clone());
-    
+
     callback.forget(); // Prevent the closure from being dropped prematurely
 
     on_mount(cx, move || {

@@ -190,7 +190,7 @@ pub struct DiscordCardProps {
 }
 
 #[component]
-pub async fn DiscordCard<'a, G: Html>(cx: Scope<'a>, props: DiscordCardProps) -> View<G> {
+pub async fn DiscordCard<G: Html>(cx: Scope<'_>, props: DiscordCardProps) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let is_connected = create_selector(cx, move || {

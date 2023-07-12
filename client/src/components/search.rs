@@ -50,10 +50,7 @@ pub struct SearchEntityProps<'a, T> {
 }
 
 #[component]
-pub fn SearchEntity<'a, G: Html, T>(
-    cx: Scope<'a>,
-    props: SearchEntityProps<'a, T>
-) -> View<G>
+pub fn SearchEntity<'a, G: Html, T>(cx: Scope<'a>, props: SearchEntityProps<'a, T>) -> View<G>
 where
     T: Clone + Hash + Eq + PartialEq + Display + 'a,
 {
@@ -98,9 +95,13 @@ where
         create_effect(cx, move || {
             let is_selected = *searchable.is_selected.get();
             if is_selected {
-                props.selected_entities.modify().insert(searchable.entity.clone());
+                props
+                    .selected_entities
+                    .modify()
+                    .insert(searchable.entity.clone());
             } else {
-                props.selected_entities
+                props
+                    .selected_entities
                     .modify()
                     .retain(|current| *current != searchable.entity);
             }
