@@ -122,7 +122,7 @@ pub fn setup_iframe_message_listener() {
             }
         }
     })
-    .forget();
+    .forget(); // TODO: remove this when the listener is no longer needed
 }
 
 async fn login_with_wallet(cx: Scope<'_>, login_str: String) -> Result<(), ()> {
