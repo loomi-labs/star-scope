@@ -139,33 +139,31 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     view! {cx,
         div(ref=event_ref, class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
             div(class="flex flex-row justify-between") {
-                div(class="flex flex-row items-center w-full") {
-                    div(class="rounded-full w-10 h-10 md:w-14 md:h-14  aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center relative") {
-                        img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="w-8 h-8 md:w-12 md:h-12") {}
-                        div(class=format!("w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 transition-opacity duration-[3000ms] {}", if rc_event.get().read {"opacity-0"} else {"opacity-100"})) {}
+                div(class="rounded-full w-10 h-10 md:w-14 md:h-14  aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center self-center relative") {
+                    img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="w-8 h-8 md:w-12 md:h-12") {}
+                    div(class=format!("w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 transition-opacity duration-[3000ms] {}", if rc_event.get().read {"opacity-0"} else {"opacity-100"})) {}
+                }
+                div(class="flex flex-col w-full max-w-[calc(100%-theme(space.16))]") {
+                    div(class="flex flex-row text-center items-center") {
+                        span(class="text-sm md:text-lg font-bold") { (event.title.clone()) } span(class="text-sm md:text-base ml-2") { (event.emoji.clone()) }
+                        EventBadge(event_type=event_type)
+                        div(class="flex-grow") {}
+                        span(class="text-sm justify-self-end hidden md:block dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
                     }
-                    div(class="flex flex-col w-full") {
-                        div(class="flex flex-row text-center items-center") {
-                            span(class="text-sm md:text-lg font-bold") { (event.title.clone()) } span(class="text-sm md:text-base ml-2") { (event.emoji.clone()) }
-                            EventBadge(event_type=event_type)
-                            div(class="flex-grow") {}
-                            span(class="text-sm justify-self-end hidden md:block dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
-                        }
-                        p(class="text-sm font-bold py-1") { (event.subtitle.clone()) }
-                        p(class=format!("text-sm italic {}", if *is_collapsed.get() {"line-clamp-3"} else {""})) { (event.description.clone()) }
-                        div(class="flex items-center justify-center") {
-                            button(class=format!("flex items-center justify-center text-sm font-bold border rounded-lg mt-2 p-2 \
-                                    text-purple-600 border-purple-600 hover:text-primary hover:border-primary {}", if is_clamping {""} else {"hidden"}), on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
-                                (if *is_collapsed.get() {
-                                    view! {cx,
-                                        div(class="icon-[simple-line-icons--arrow-down]") {}
-                                    }
-                                } else {
-                                    view! {cx,
-                                        div(class="icon-[simple-line-icons--arrow-up]") {}
-                                    }
-                                })
-                            }
+                    p(class="text-sm font-bold py-1") { (event.subtitle.clone()) }
+                    p(class=format!("text-sm italic break-words {}", if *is_collapsed.get() {"line-clamp-3"} else {""})) { (event.description.clone()) }
+                    div(class="flex items-center justify-center") {
+                        button(class=format!("flex items-center justify-center text-sm font-bold border rounded-lg mt-2 p-2 \
+                                text-purple-600 border-purple-600 hover:text-primary hover:border-primary {}", if is_clamping {""} else {"hidden"}), on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
+                            (if *is_collapsed.get() {
+                                view! {cx,
+                                    div(class="icon-[simple-line-icons--arrow-down]") {}
+                                }
+                            } else {
+                                view! {cx,
+                                    div(class="icon-[simple-line-icons--arrow-up]") {}
+                                }
+                            })
                         }
                     }
                 }
