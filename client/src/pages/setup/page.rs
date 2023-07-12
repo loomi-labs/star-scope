@@ -39,13 +39,13 @@ impl SetupState {
     }
 }
 
-const TITLE_CLASS: &str = "text-4xl font-bold m-4";
+const TITLE_CLASS: &str = "text-2xl md:text-4xl font-bold m-4";
 const SUBTITLE_CLASS: &str = "text-2xl font-semibold m-4";
 const DESCRIPTION_CLASS: &str = "dark:text-purple-600 mb-8";
 const DESCRIPTION_PROMINENT_CLASS: &str = "dark:text-white";
-const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-8 mt-8";
+const BUTTON_ROW_CLASS: &str = "flex justify-center space-x-8 pb-6";
 
-const SPACER_H10_OR_10PERCENT_CLASS: &str = "w-full h-10 md:h-[10%]";
+const SPACER_10_PERCENT_CLASS: &str = "w-full min-h-[10%]";
 
 #[component]
 fn StepOneComponent<G: Html>(cx: Scope) -> View<G> {
@@ -159,13 +159,14 @@ fn ProgressBar<G: Html>(cx: Scope, step: Step) -> View<G> {
         }).collect()
     );
     view! {cx,
-        div(class="flex flex-col w-full justify-center items-center w-full space-y-2 my-10 md:my-16") {
+        div(class=SPACER_10_PERCENT_CLASS)
+        div(class="flex flex-col w-full justify-center items-center w-full space-y-2") {
             h2(class="text-xl dark:text-purple-600") { "Account setup" }
             div(class="flex justify-center items-center w-4/5 md:w-2/5") {
                 (progress_bar_views)
             }
-            div(class="w-full h-10")
         }
+        div(class=SPACER_10_PERCENT_CLASS)
     }
 }
 
@@ -242,23 +243,18 @@ fn StepTwoComponent<G: Html>(cx: Scope, step: StepTwoResponse) -> View<G> {
     };
 
     view! {cx,
-        div(class=SPACER_H10_OR_10PERCENT_CLASS)
-        div(class="w-full") {
-            ProgressBar(step=Two(step))
-        }
-        div(class=SPACER_H10_OR_10PERCENT_CLASS)
-        div(class="flex flex-col grow-[1]") {
+        ProgressBar(step=Two(step))
+        div(class="flex flex-col md:h-2/5 md:w-3/5") {
             h2(class=TITLE_CLASS) {"Choose your validator(s)"}
             p(class=DESCRIPTION_CLASS) {"You will receive reminders to vote on governance proposals from the validators you've selected."}
             SearchEntity(searchables=validators.clone(), selected_entities=selected_validators.clone(), placeholder="Search validators")
         }
-        div() {
-            div(class=BUTTON_ROW_CLASS) {
-                OutlineButton(on_click=move || handle_click(false)) {"Back"}
-                SolidButton(on_click=move || handle_click(true)) {"Next"}
-            }
+        div(class="min-h-[10%] md:min-h-0")
+        div(class=BUTTON_ROW_CLASS) {
+            OutlineButton(on_click=move || handle_click(false)) {"Back"}
+            SolidButton(on_click=move || handle_click(true)) {"Next"}
         }
-        div(class="w-full grow-[4]")
+        div(class=SPACER_10_PERCENT_CLASS)
     }
 }
 
@@ -593,6 +589,7 @@ fn StepThreeComponent<G: Html>(cx: Scope, step: StepThreeResponse) -> View<G> {
         h2(class=TITLE_CLASS) {"Add your wallets"}
         p(class=DESCRIPTION_CLASS) {"You will receive notifications about events related to your wallets."}
         WalletList(wallets=wallets.clone())
+        div(class=SPACER_10_PERCENT_CLASS)
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
@@ -748,6 +745,7 @@ fn StepFourComponent<G: Html>(cx: Scope, step: StepFourResponse) -> View<G> {
                 SearchEntity(searchables=chain_rows, selected_entities=selected_chains, placeholder="Select chains")
             }
         }
+        div(class=SPACER_10_PERCENT_CLASS)
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Next"}
@@ -789,6 +787,7 @@ fn StepFiveComponent<G: Html>(cx: Scope, step: StepFiveResponse) -> View<G> {
                 TelegramCard(web_app_url=web_app_url.clone(), center_button=true)
             }
         }
+        div(class=SPACER_10_PERCENT_CLASS)
         div(class=BUTTON_ROW_CLASS) {
             OutlineButton(on_click=move || handle_click(false)) {"Back"}
             SolidButton(on_click=move || handle_click(true)) {"Finish"}
@@ -883,10 +882,10 @@ pub fn Setup<G: Html>(cx: Scope) -> View<G> {
             };
             view! {
                 cx,
-                div(class="min-h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {
-                    div(class="min-h-[100svh] flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl h-full w-full") {
+                div(class="h-[100svh] flex justify-center items-center flex-auto flex-shrink-0") {
+                    div(class="w-full h-full flex flex-col lg:max-w-screen-lg xl:max-w-screen-xl overflow-y-auto") {
                         Header{}
-                        div(class="w-full flex flex-col flex-auto items-center text-center p-4") {
+                        div(class="w-full h-full flex flex-col flex-auto items-center text-center p-4") {
                             (child)
                         }
                     }

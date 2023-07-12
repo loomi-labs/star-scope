@@ -89,6 +89,7 @@ services:
     ports:
       - "3000:80"
     container_name: starscope_client_cosmos_login
+    restart: unless-stopped
 
 volumes:
   data:

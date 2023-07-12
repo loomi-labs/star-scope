@@ -187,5 +187,6 @@ where
                 }
             )
         }
+        div(class="flex-grow")
     }
 }
