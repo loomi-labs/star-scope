@@ -57,7 +57,7 @@ export default function Home() {
   const [resp, setResp] = useState('');
 
   return (
-    <Container maxW="5xl" bg="#342335">
+    <Container maxW="5xl" bg="#111223">
       <WalletSection
         handleSingMsg={signMsg(
           signAmino as () => Promise<AminoSignResponse>,
