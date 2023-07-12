@@ -190,7 +190,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
                     }
                 }
             }
-            ul(class="pt-4 pb-10 md:pb-4 space-y-1 dark:bg-purple-800 rounded-t-lg") {
+            ul(class="py-4 space-y-1 dark:bg-purple-800 rounded-t-lg") {
                 li() {
                     a(href=AppRoutes::Notifications, class=format!("{} {} transition duration-500 ease-in-out text-purple-600 lg:text-purple-600", button_class, if *is_sidebar_hovered.get() { "" } else { "text-purple-600/0" })) {
                         div(style="overflow: hidden; text-overflow: ellipsis;") {
