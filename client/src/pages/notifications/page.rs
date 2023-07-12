@@ -13,7 +13,8 @@ use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use web_sys::{
-    Event, HtmlDivElement, HtmlSelectElement, IntersectionObserver, IntersectionObserverEntry,
+    Event, HtmlDivElement, HtmlParagraphElement, HtmlSelectElement, IntersectionObserver,
+    IntersectionObserverEntry,
 };
 
 use crate::components::messages::create_error_msg_from_status;
@@ -80,11 +81,11 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     let notifications_state = use_context::<NotificationsState>(cx);
     let locale = notifications_state.locale.get();
 
-    // TODO: make this proper
-    let is_clamping = event.description.len() > 250;
+    let is_clamping = create_signal(cx, false);
 
     let in_viewport = create_signal(cx, false);
     let event_ref = create_node_ref(cx);
+    let description_ref = create_node_ref(cx);
 
     let boxed = Box::new(
         move |entries: Vec<JsValue>, _observer: IntersectionObserver| {
@@ -102,6 +103,7 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
 
     let observer = IntersectionObserver::new(callback.as_ref().unchecked_ref())
         .expect("Failed to create IntersectionObserver");
+    let observer_ref = create_ref(cx, observer.clone());
 
     callback.forget(); // Prevent the closure from being dropped prematurely
 
@@ -113,6 +115,14 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
         {
             observer.observe(&element);
         }
+
+        if let Ok(element) = description_ref
+            .get::<DomNode>()
+            .unchecked_into::<HtmlParagraphElement>()
+            .dyn_into::<web_sys::Element>()
+        {
+            is_clamping.set(element.scroll_height() > element.client_height());
+        }
     });
 
     on_cleanup(cx, move || {
@@ -121,7 +131,7 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
             .unchecked_into::<HtmlDivElement>()
             .dyn_into::<web_sys::Element>()
         {
-            // TODO: ("Call observer.unobserve(element) here (or observer.disconnect()");
+            observer_ref.disconnect();
         }
     });
 
@@ -137,35 +147,33 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
     });
 
     view! {cx,
-        div(ref=event_ref, class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700 ") {
+        div(ref=event_ref, class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700", on:resize=move |_| debug!("resize")) {
             div(class="flex flex-row justify-between") {
-                div(class="flex flex-row items-center w-full") {
-                    div(class="rounded-full w-10 h-10 md:w-14 md:h-14  aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center relative") {
-                        img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="w-8 h-8 md:w-12 md:h-12") {}
-                        div(class=format!("w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 transition-opacity duration-[3000ms] {}", if rc_event.get().read {"opacity-0"} else {"opacity-100"})) {}
+                div(class="rounded-full w-10 h-10 md:w-14 md:h-14  aspect-square mr-4 bg-gray-300 dark:bg-purple-600 flex items-center justify-center self-center relative") {
+                    img(src=event.chain.clone().unwrap().image_url, alt="Event Logo", class="w-8 h-8 md:w-12 md:h-12") {}
+                    div(class=format!("w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 transition-opacity duration-[3000ms] {}", if rc_event.get().read {"opacity-0"} else {"opacity-100"})) {}
+                }
+                div(class="flex flex-col w-full max-w-[calc(100%-theme(space.16))]") {
+                    div(class="flex flex-row text-center items-center") {
+                        span(class="text-sm md:text-lg font-bold") { (event.title.clone()) } span(class="text-sm md:text-base ml-2") { (event.emoji.clone()) }
+                        EventBadge(event_type=event_type)
+                        div(class="flex-grow") {}
+                        span(class="text-sm justify-self-end hidden md:block dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
                     }
-                    div(class="flex flex-col w-full") {
-                        div(class="flex flex-row text-center items-center") {
-                            span(class="text-sm md:text-lg font-bold") { (event.title.clone()) } span(class="text-sm md:text-base ml-2") { (event.emoji.clone()) }
-                            EventBadge(event_type=event_type)
-                            div(class="flex-grow") {}
-                            span(class="text-sm justify-self-end hidden md:block dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
-                        }
-                        p(class="text-sm font-bold py-1") { (event.subtitle.clone()) }
-                        p(class=format!("text-sm italic {}", if *is_collapsed.get() {"line-clamp-3"} else {""})) { (event.description.clone()) }
-                        div(class="flex items-center justify-center") {
-                            button(class=format!("flex items-center justify-center text-sm font-bold border rounded-lg mt-2 p-2 \
-                                    text-purple-600 border-purple-600 hover:text-primary hover:border-primary {}", if is_clamping {""} else {"hidden"}), on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
-                                (if *is_collapsed.get() {
-                                    view! {cx,
-                                        div(class="icon-[simple-line-icons--arrow-down]") {}
-                                    }
-                                } else {
-                                    view! {cx,
-                                        div(class="icon-[simple-line-icons--arrow-up]") {}
-                                    }
-                                })
-                            }
+                    p(class="text-sm font-bold py-1") { (event.subtitle.clone()) }
+                    p(ref=description_ref, class=format!("text-sm italic break-words {}", if *is_collapsed.get() {"line-clamp-3"} else {""})) { (event.description.clone()) }
+                    div(class="flex items-center justify-center") {
+                        button(class=format!("flex items-center justify-center text-sm font-bold border rounded-lg mt-2 p-2 \
+                                text-purple-600 border-purple-600 hover:text-primary hover:border-primary {}", if *is_clamping.get() {""} else {"hidden"}), on:click=move |_| is_collapsed.set(!*is_collapsed.get())) {
+                            (if *is_collapsed.get() {
+                                view! {cx,
+                                    div(class="icon-[simple-line-icons--arrow-down]") {}
+                                }
+                            } else {
+                                view! {cx,
+                                    div(class="icon-[simple-line-icons--arrow-up]") {}
+                                }
+                            })
                         }
                     }
                 }

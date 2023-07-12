@@ -56,7 +56,7 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
             }
             div(class="flex flex-col grow items-center justify-center text-center") {
                 div(class="flex flex-col items-center py-16") {
-                    h1(class="text-2xl font-bold") {
+                    h1(class="text-4xl font-bold") {
                         (title)
                     }
                     p(class="text-base my-8") {
@@ -74,43 +74,43 @@ pub fn Intro<G: Html>(cx: Scope) -> View<G> {
 #[component]
 pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
-         div(class="flex flex-col items-center justify-center min-h-screen") {
+         div(class="flex flex-col items-center justify-center min-h-screen p-8") {
              div(class="flex flex-col items-center justify-around min-h-screen 2xl:max-w-screen-2xl") {
-                 h1(class="text-5xl font-bold text-center py-16") {
+                 h1(class="text-4xl md:text-5xl font-bold text-center py-16") {
                      "What is Star Scope?"
                  }
                  div(class="flex flex-col lg:flex-row justify-center items-center w-full pb-16") {
                      div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                         div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to") {
+                         div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-purple-700 to-purple-900") {
                              div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[mdi--email-fast-outline]") {}
                          }
                          h2(class="text-2xl font-bold my-4") {
                              "Instant Notifications"
                          }
                          p(class="text-center p-4") {
-                             "Star Scope delivers real-time notifications about critical events occurring on Cosmos blockchains." br() "Stay informed and never miss important updates."
+                             "Star Scope delivers real-time notifications about critical events occurring on Cosmos blockchains."
                          }
                      }
                      div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                         div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to") {
+                         div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-purple-700 to-purple-900") {
                              div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[octicon--bell-16]")
                          }
                          h2(class="text-2xl font-bold my-4") {
                              "Customizable Alerts"
                          }
                          p(class="text-center p-4") {
-                             "Tailor your notification preferences within Star Scope to receive alerts specific to your interests." br() "Choose the events and chains you want to monitor, enabling you to focus on what matters most to you."
+                             "Tailor your notification preferences to receive alerts specific to your interests."
                          }
                      }
                      div(class="flex flex-col items-center justify-center w-full lg:w-1/3") {
-                         div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-primary-gradient-from to-primary-gradient-to") {
+                         div(class="flex flex-col items-center justify-center w-28 h-28 lg:w-56 lg:h-56 mt-8 mb-4 rounded-full bg-gradient-to-r from-purple-700 to-purple-900") {
                              div(class="w-16 h-16 lg:w-32 lg:h-32 icon-[ps--world]")
                          }
                          h2(class="text-2xl font-bold my-4") {
                              "Extensive Coverage"
                          }
                          p(class="text-center p-4") {
-                             "We provide comprehensive coverage of over 100 Cosmos blockchains, ensuring you have access to vital information from the most prominent networks in the ecosystem." br() "Stay connected to the entire Cosmos community."
+                             "We provide comprehensive coverage of over 100 Cosmos blockchains."
                          }
                      }
                  }
@@ -125,10 +125,10 @@ pub fn Explanation<G: Html>(cx: Scope) -> View<G> {
 #[component]
 pub fn Footer<G: Html>(cx: Scope) -> View<G> {
     view! {cx,
-        div(class="flex flex-col items-center justify-center h-64 bg-d-bg-1") {
-            div(class="flex w-full items-center justify-between max-w-screen-2xl") {
+        div(class="flex flex-col items-center justify-center h-50 bg-d-bg-1") {
+            div(class="flex w-full items-center justify-between max-w-screen-2xl p-8") {
                 img(class="h-fit w-36 lg:w-64", src=keys::LOGO_WITH_TEXT_WHITE_IMG) {}
-                div(class="") {
+                div() {
                     a(class="p-4 hover:text-primary", href="https://t.me/rapha_decrypto", target="_blank") {
                         span(class="w-6 h-6 lg:w-14 lg:h-14 icon-[bxl--telegram]") {}
                     }

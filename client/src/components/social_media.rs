@@ -1,8 +1,10 @@
+use futures::channel::mpsc;
+use futures::{future, FutureExt, StreamExt};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use urlencoding::encode;
-use wasm_bindgen::JsCast;
-use web_sys::{HtmlInputElement, MessageEvent};
+use wasm_bindgen::{JsCast, UnwrapThrowExt};
+use web_sys::MessageEvent;
 
 use crate::components::messages::create_error_msg_from_status;
 use crate::config::keys;
@@ -98,34 +100,7 @@ pub fn DiscordLoginButton<G: Html>(cx: Scope, props: DiscordLoginButtonProps) ->
     )
 }
 
-const IFRAME_INPUT_ID: &str = "iframe-input";
-
-pub fn setup_iframe_message_listener() {
-    let window = web_sys::window().expect("Missing Window");
-    let location = window.location();
-    let host = location.hostname().unwrap();
-
-    gloo_events::EventListener::new(&window, "message", move |event| {
-        if let Some(message_event) = event.dyn_ref::<MessageEvent>() {
-            if message_event.origin().contains(host.as_str())
-                || (message_event.origin().contains("localhost") && host == "127.0.0.1")
-            {
-                if let Some(data) = message_event.data().as_string() {
-                    let window = web_sys::window().expect("Missing Window");
-                    let hidden_input = window
-                        .document()
-                        .and_then(|document| document.get_element_by_id(IFRAME_INPUT_ID))
-                        .and_then(|input| input.dyn_into::<HtmlInputElement>().ok())
-                        .unwrap();
-                    hidden_input.set_value(data.as_str());
-                }
-            }
-        }
-    })
-    .forget();
-}
-
-async fn login_with_wallet(cx: Scope<'_>, login_str: String) -> Result<(), ()> {
+async fn login_with_wallet(cx: Scope<'_>, login_str: String) {
     let app_state = use_context::<AppState>(cx);
     let response = use_context::<Services>(cx)
         .auth_manager
@@ -136,53 +111,48 @@ async fn login_with_wallet(cx: Scope<'_>, login_str: String) -> Result<(), ()> {
         Ok(_) => {
             let mut auth_state = app_state.auth_state.modify();
             *auth_state = AuthState::LoggedIn;
-            Ok(())
         }
         Err(status) => {
             create_error_msg_from_status(cx, status);
-            Err(())
         }
     }
 }
 
-// Hack to read the value of the hidden input
-fn start_login_input_timer(cx: Scope) {
-    spawn_local_scoped(cx, async move {
-        gloo_timers::future::TimeoutFuture::new(200).await;
-        let window = web_sys::window().expect("Missing Window");
-        let input_field = window
-            .document()
-            .and_then(|document| document.get_element_by_id(IFRAME_INPUT_ID))
-            .and_then(|input| input.dyn_into::<HtmlInputElement>().ok())
-            .unwrap();
-        let value = input_field.value();
-        if !value.is_empty() {
-            // todo: check if value is a valid response
-            // Err(status) => create_message(
-            //     cx,
-            //     "Login failed",
-            //     format!("Login failed with status: {}", status),
-            //     InfoLevel::Error,
-            // ),
-            spawn_local_scoped(cx, async move {
-                if login_with_wallet(cx, value).await.is_err() {
-                    input_field.set_value("");
-                    start_login_input_timer(cx);
-                }
-            });
-        } else {
-            start_login_input_timer(cx);
-        }
-    });
-}
-
 #[component]
 pub fn CosmosLoginButton<G: Html>(cx: Scope) -> View<G> {
-    setup_iframe_message_listener();
-    start_login_input_timer(cx);
+    let window = web_sys::window().expect("Missing Window");
+    let location = window.location();
+    let host = location.hostname().unwrap();
+
+    let (sender, mut receiver) = mpsc::unbounded();
+
+    gloo_events::EventListener::new(&window, "message", move |event| {
+        if let Some(message_event) = event.dyn_ref::<MessageEvent>() {
+            if message_event.origin().contains(host.as_str())
+                || (message_event.origin().contains("localhost") && host == "127.0.0.1")
+            {
+                if let Some(data) = message_event.data().as_string() {
+                    sender.unbounded_send(data).unwrap_throw();
+                }
+            }
+        }
+    })
+    .forget();
+
+    spawn_local_scoped(cx, async move {
+        gloo_timers::future::IntervalStream::new(200)
+            .for_each(|_| {
+                if let Ok(Some(value)) = receiver.try_next() {
+                    Box::pin(login_with_wallet(cx, value))
+                } else {
+                    future::ready(()).boxed_local()
+                }
+            })
+            .await;
+    });
+
     view!(
         cx,
-        input(id=IFRAME_INPUT_ID, class="text-black", type="text", value="", hidden=true) {}
         iframe(
             id="iframe",
             height="470",

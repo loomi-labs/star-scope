@@ -411,8 +411,9 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 			}
 			if doesExist {
 				wallet := &userpb.Wallet{
-					Address: address,
-					LogoUrl: chain.Image,
+					Address:       address,
+					Bech32Address: bech32Address,
+					LogoUrl:       chain.Image,
 				}
 				err = stream.Send(&userpb.SearchWalletsResponse{
 					Wallet: wallet,

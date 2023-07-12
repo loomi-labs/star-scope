@@ -28,3 +28,24 @@ func GetJson(url string, retries int, target interface{}) (int, error) {
 
 	return resp.StatusCode, json.NewDecoder(resp.Body).Decode(target)
 }
+
+func GetJsonWithCustomTimeout(url string, retries int, target interface{}, timeout time.Duration) (int, error) {
+	var customHttpClient = &http.Client{Timeout: timeout}
+	resp, err := customHttpClient.Get(url)
+	if err != nil {
+		if retries > 0 {
+			return GetJson(url, retries-1, target)
+		}
+		return 0, err
+	}
+	if resp.StatusCode != 200 {
+		if retries > 0 {
+			return GetJson(url, retries-1, target)
+		}
+		return resp.StatusCode, errors.New(resp.Status)
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
+
+	return resp.StatusCode, json.NewDecoder(resp.Body).Decode(target)
+}
