@@ -24,7 +24,7 @@ func NewIndexerServiceHandler(dbManagers *database.DbManagers) indexerpbconnect.
 }
 
 func (i IndexerService) GetIndexingChains(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[indexerpb.GetIndexingChainsResponse], error) {
-	chains := i.chainManager.QueryEnabled(ctx)
+	chains := i.chainManager.QueryIsIndexing(ctx)
 	pbChains := make([]*indexerpb.IndexingChain, len(chains))
 	for ix, chain := range chains {
 		pbChains[ix] = &indexerpb.IndexingChain{

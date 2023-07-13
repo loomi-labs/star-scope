@@ -42,6 +42,10 @@ const (
 	FieldUnhandledMessageTypes = "unhandled_message_types"
 	// FieldIsEnabled holds the string denoting the is_enabled field in the database.
 	FieldIsEnabled = "is_enabled"
+	// FieldIsQuerying holds the string denoting the is_querying field in the database.
+	FieldIsQuerying = "is_querying"
+	// FieldIsIndexing holds the string denoting the is_indexing field in the database.
+	FieldIsIndexing = "is_indexing"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// EdgeProposals holds the string denoting the proposals edge name in mutations.
@@ -106,6 +110,8 @@ var Columns = []string{
 	FieldHandledMessageTypes,
 	FieldUnhandledMessageTypes,
 	FieldIsEnabled,
+	FieldIsQuerying,
+	FieldIsIndexing,
 }
 
 var (
@@ -143,6 +149,10 @@ var (
 	DefaultUnhandledMessageTypes string
 	// DefaultIsEnabled holds the default value on creation for the "is_enabled" field.
 	DefaultIsEnabled bool
+	// DefaultIsQuerying holds the default value on creation for the "is_querying" field.
+	DefaultIsQuerying bool
+	// DefaultIsIndexing holds the default value on creation for the "is_indexing" field.
+	DefaultIsIndexing bool
 )
 
 // OrderOption defines the ordering options for the Chain queries.
@@ -221,6 +231,16 @@ func ByUnhandledMessageTypes(opts ...sql.OrderTermOption) OrderOption {
 // ByIsEnabled orders the results by the is_enabled field.
 func ByIsEnabled(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsEnabled, opts...).ToFunc()
+}
+
+// ByIsQuerying orders the results by the is_querying field.
+func ByIsQuerying(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsQuerying, opts...).ToFunc()
+}
+
+// ByIsIndexing orders the results by the is_indexing field.
+func ByIsIndexing(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsIndexing, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.

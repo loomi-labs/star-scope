@@ -173,6 +173,34 @@ func (cc *ChainCreate) SetNillableIsEnabled(b *bool) *ChainCreate {
 	return cc
 }
 
+// SetIsQuerying sets the "is_querying" field.
+func (cc *ChainCreate) SetIsQuerying(b bool) *ChainCreate {
+	cc.mutation.SetIsQuerying(b)
+	return cc
+}
+
+// SetNillableIsQuerying sets the "is_querying" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableIsQuerying(b *bool) *ChainCreate {
+	if b != nil {
+		cc.SetIsQuerying(*b)
+	}
+	return cc
+}
+
+// SetIsIndexing sets the "is_indexing" field.
+func (cc *ChainCreate) SetIsIndexing(b bool) *ChainCreate {
+	cc.mutation.SetIsIndexing(b)
+	return cc
+}
+
+// SetNillableIsIndexing sets the "is_indexing" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableIsIndexing(b *bool) *ChainCreate {
+	if b != nil {
+		cc.SetIsIndexing(*b)
+	}
+	return cc
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cc *ChainCreate) AddEventListenerIDs(ids ...int) *ChainCreate {
 	cc.mutation.AddEventListenerIDs(ids...)
@@ -315,6 +343,14 @@ func (cc *ChainCreate) defaults() {
 		v := chain.DefaultIsEnabled
 		cc.mutation.SetIsEnabled(v)
 	}
+	if _, ok := cc.mutation.IsQuerying(); !ok {
+		v := chain.DefaultIsQuerying
+		cc.mutation.SetIsQuerying(v)
+	}
+	if _, ok := cc.mutation.IsIndexing(); !ok {
+		v := chain.DefaultIsIndexing
+		cc.mutation.SetIsIndexing(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -360,6 +396,12 @@ func (cc *ChainCreate) check() error {
 	}
 	if _, ok := cc.mutation.IsEnabled(); !ok {
 		return &ValidationError{Name: "is_enabled", err: errors.New(`ent: missing required field "Chain.is_enabled"`)}
+	}
+	if _, ok := cc.mutation.IsQuerying(); !ok {
+		return &ValidationError{Name: "is_querying", err: errors.New(`ent: missing required field "Chain.is_querying"`)}
+	}
+	if _, ok := cc.mutation.IsIndexing(); !ok {
+		return &ValidationError{Name: "is_indexing", err: errors.New(`ent: missing required field "Chain.is_indexing"`)}
 	}
 	return nil
 }
@@ -442,6 +484,14 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.IsEnabled(); ok {
 		_spec.SetField(chain.FieldIsEnabled, field.TypeBool, value)
 		_node.IsEnabled = value
+	}
+	if value, ok := cc.mutation.IsQuerying(); ok {
+		_spec.SetField(chain.FieldIsQuerying, field.TypeBool, value)
+		_node.IsQuerying = value
+	}
+	if value, ok := cc.mutation.IsIndexing(); ok {
+		_spec.SetField(chain.FieldIsIndexing, field.TypeBool, value)
+		_node.IsIndexing = value
 	}
 	if nodes := cc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

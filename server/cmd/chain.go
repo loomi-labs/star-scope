@@ -52,7 +52,7 @@ var listUnhandledMsgTypesCmd = &cobra.Command{
 	},
 }
 
-func enableChain(args []string, enable bool, fromLatestBlock bool) {
+func enableChain(args []string, enable bool, querying bool, indexing bool, fromLatestBlock bool) {
 	if len(args) == 0 {
 		fmt.Println("Missing chain name")
 		os.Exit(1)
@@ -68,7 +68,7 @@ func enableChain(args []string, enable bool, fromLatestBlock bool) {
 		var value uint64 = 0
 		indexingHeight = &value
 	}
-	chain, err = chainManager.UpdateSetEnabled(context.Background(), chain, enable, indexingHeight)
+	chain, err = chainManager.UpdateSetEnabled(context.Background(), chain, enable, querying, indexing, indexingHeight)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -83,10 +83,15 @@ func enableChain(args []string, enable bool, fromLatestBlock bool) {
 
 var enableChainCmd = &cobra.Command{
 	Use:   "enable",
-	Short: "Enable/disable chain",
+	Short: "Enable chain",
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
-		enable, err := cmd.Flags().GetBool("enable")
+		querying, err := cmd.Flags().GetBool("querying")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		indexing, err := cmd.Flags().GetBool("indexing")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -96,7 +101,16 @@ var enableChainCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		enableChain(args, enable, latestBlock)
+		enableChain(args, true, querying, indexing, latestBlock)
+	},
+}
+
+var disableChainCmd = &cobra.Command{
+	Use:   "disable",
+	Short: "Disable chain",
+	Args:  cobra.RangeArgs(0, 1),
+	Run: func(cmd *cobra.Command, args []string) {
+		enableChain(args, false, false, false, false)
 	},
 }
 
@@ -105,7 +119,9 @@ func init() {
 	infoCmd.AddCommand(listHandledMsgTypesCmd)
 	infoCmd.AddCommand(listUnhandledMsgTypesCmd)
 	infoCmd.AddCommand(enableChainCmd)
+	infoCmd.AddCommand(disableChainCmd)
 
-	enableChainCmd.Flags().BoolP("enable", "e", true, "Enable chain")
+	enableChainCmd.Flags().BoolP("querying", "q", true, "Enable querying")
+	enableChainCmd.Flags().BoolP("indexing", "i", false, "Enable indexing")
 	enableChainCmd.Flags().BoolP("latest-block", "l", false, "Start indexing from the latest block")
 }

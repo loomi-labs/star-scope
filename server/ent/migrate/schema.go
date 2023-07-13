@@ -25,6 +25,8 @@ var (
 		{Name: "handled_message_types", Type: field.TypeString, Default: ""},
 		{Name: "unhandled_message_types", Type: field.TypeString, Default: ""},
 		{Name: "is_enabled", Type: field.TypeBool, Default: false},
+		{Name: "is_querying", Type: field.TypeBool, Default: false},
+		{Name: "is_indexing", Type: field.TypeBool, Default: false},
 	}
 	// ChainsTable holds the schema information for the "chains" table.
 	ChainsTable = &schema.Table{
@@ -79,7 +81,7 @@ var (
 		{Name: "first_seen_time", Type: field.TypeTime},
 		{Name: "voting_end_time", Type: field.TypeTime},
 		{Name: "contract_address", Type: field.TypeString},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"REJECTED", "PASSED", "EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"EXECUTED", "CLOSED", "EXECUTION_FAILED", "OPEN", "REJECTED", "PASSED"}},
 		{Name: "chain_contract_proposals", Type: field.TypeInt, Nullable: true},
 	}
 	// ContractProposalsTable holds the schema information for the "contract_proposals" table.

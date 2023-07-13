@@ -50,6 +50,10 @@ func (Chain) Fields() []ent.Field {
 
 		field.Bool("is_enabled").
 			Default(false),
+		field.Bool("is_querying").
+			Default(false),
+		field.Bool("is_indexing").
+			Default(false),
 	}
 }
 

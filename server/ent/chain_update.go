@@ -160,6 +160,34 @@ func (cu *ChainUpdate) SetNillableIsEnabled(b *bool) *ChainUpdate {
 	return cu
 }
 
+// SetIsQuerying sets the "is_querying" field.
+func (cu *ChainUpdate) SetIsQuerying(b bool) *ChainUpdate {
+	cu.mutation.SetIsQuerying(b)
+	return cu
+}
+
+// SetNillableIsQuerying sets the "is_querying" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableIsQuerying(b *bool) *ChainUpdate {
+	if b != nil {
+		cu.SetIsQuerying(*b)
+	}
+	return cu
+}
+
+// SetIsIndexing sets the "is_indexing" field.
+func (cu *ChainUpdate) SetIsIndexing(b bool) *ChainUpdate {
+	cu.mutation.SetIsIndexing(b)
+	return cu
+}
+
+// SetNillableIsIndexing sets the "is_indexing" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableIsIndexing(b *bool) *ChainUpdate {
+	if b != nil {
+		cu.SetIsIndexing(*b)
+	}
+	return cu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cu *ChainUpdate) AddEventListenerIDs(ids ...int) *ChainUpdate {
 	cu.mutation.AddEventListenerIDs(ids...)
@@ -428,6 +456,12 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.IsEnabled(); ok {
 		_spec.SetField(chain.FieldIsEnabled, field.TypeBool, value)
+	}
+	if value, ok := cu.mutation.IsQuerying(); ok {
+		_spec.SetField(chain.FieldIsQuerying, field.TypeBool, value)
+	}
+	if value, ok := cu.mutation.IsIndexing(); ok {
+		_spec.SetField(chain.FieldIsIndexing, field.TypeBool, value)
 	}
 	if cu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -801,6 +835,34 @@ func (cuo *ChainUpdateOne) SetNillableIsEnabled(b *bool) *ChainUpdateOne {
 	return cuo
 }
 
+// SetIsQuerying sets the "is_querying" field.
+func (cuo *ChainUpdateOne) SetIsQuerying(b bool) *ChainUpdateOne {
+	cuo.mutation.SetIsQuerying(b)
+	return cuo
+}
+
+// SetNillableIsQuerying sets the "is_querying" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableIsQuerying(b *bool) *ChainUpdateOne {
+	if b != nil {
+		cuo.SetIsQuerying(*b)
+	}
+	return cuo
+}
+
+// SetIsIndexing sets the "is_indexing" field.
+func (cuo *ChainUpdateOne) SetIsIndexing(b bool) *ChainUpdateOne {
+	cuo.mutation.SetIsIndexing(b)
+	return cuo
+}
+
+// SetNillableIsIndexing sets the "is_indexing" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableIsIndexing(b *bool) *ChainUpdateOne {
+	if b != nil {
+		cuo.SetIsIndexing(*b)
+	}
+	return cuo
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cuo *ChainUpdateOne) AddEventListenerIDs(ids ...int) *ChainUpdateOne {
 	cuo.mutation.AddEventListenerIDs(ids...)
@@ -1099,6 +1161,12 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	}
 	if value, ok := cuo.mutation.IsEnabled(); ok {
 		_spec.SetField(chain.FieldIsEnabled, field.TypeBool, value)
+	}
+	if value, ok := cuo.mutation.IsQuerying(); ok {
+		_spec.SetField(chain.FieldIsQuerying, field.TypeBool, value)
+	}
+	if value, ok := cuo.mutation.IsIndexing(); ok {
+		_spec.SetField(chain.FieldIsIndexing, field.TypeBool, value)
 	}
 	if cuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

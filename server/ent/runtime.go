@@ -62,6 +62,14 @@ func init() {
 	chainDescIsEnabled := chainFields[11].Descriptor()
 	// chain.DefaultIsEnabled holds the default value on creation for the is_enabled field.
 	chain.DefaultIsEnabled = chainDescIsEnabled.Default.(bool)
+	// chainDescIsQuerying is the schema descriptor for is_querying field.
+	chainDescIsQuerying := chainFields[12].Descriptor()
+	// chain.DefaultIsQuerying holds the default value on creation for the is_querying field.
+	chain.DefaultIsQuerying = chainDescIsQuerying.Default.(bool)
+	// chainDescIsIndexing is the schema descriptor for is_indexing field.
+	chainDescIsIndexing := chainFields[13].Descriptor()
+	// chain.DefaultIsIndexing holds the default value on creation for the is_indexing field.
+	chain.DefaultIsIndexing = chainDescIsIndexing.Default.(bool)
 	commchannelMixin := schema.CommChannel{}.Mixin()
 	commchannelMixinFields0 := commchannelMixin[0].Fields()
 	_ = commchannelMixinFields0

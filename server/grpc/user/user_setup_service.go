@@ -16,6 +16,7 @@ import (
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"io"
 	"sort"
 	"sync"
 )
@@ -406,7 +407,7 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 
 			doesExist, err := queries.DoesWalletExist(chain.RestEndpoint, address)
 			if err != nil {
-				log.Sugar.Errorf("failed to check if wallet exists on chain %v: %v", chain.PrettyName, err)
+				log.Sugar.Debugf("failed to check if wallet exists on chain %v: %v", chain.PrettyName, err)
 				return
 			}
 			if doesExist {
@@ -419,8 +420,17 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 					Wallet: wallet,
 				})
 				if err != nil {
-					log.Sugar.Errorf("failed to send response: %v", err)
-					return
+					if err == io.EOF || status.Code(err) == codes.Canceled {
+						return
+					}
+					// try again
+					err2 := stream.Send(&userpb.SearchWalletsResponse{
+						Wallet: wallet,
+					})
+					if err2 != nil {
+						log.Sugar.Errorf("failed twice to send response: %v | %v", err, err2)
+						return
+					}
 				}
 			}
 		}(chain)

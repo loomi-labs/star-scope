@@ -68,6 +68,8 @@ type ChainMutation struct {
 	handled_message_types     *string
 	unhandled_message_types   *string
 	is_enabled                *bool
+	is_querying               *bool
+	is_indexing               *bool
 	clearedFields             map[string]struct{}
 	event_listeners           map[int]struct{}
 	removedevent_listeners    map[int]struct{}
@@ -711,6 +713,78 @@ func (m *ChainMutation) ResetIsEnabled() {
 	m.is_enabled = nil
 }
 
+// SetIsQuerying sets the "is_querying" field.
+func (m *ChainMutation) SetIsQuerying(b bool) {
+	m.is_querying = &b
+}
+
+// IsQuerying returns the value of the "is_querying" field in the mutation.
+func (m *ChainMutation) IsQuerying() (r bool, exists bool) {
+	v := m.is_querying
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsQuerying returns the old "is_querying" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldIsQuerying(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsQuerying is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsQuerying requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsQuerying: %w", err)
+	}
+	return oldValue.IsQuerying, nil
+}
+
+// ResetIsQuerying resets all changes to the "is_querying" field.
+func (m *ChainMutation) ResetIsQuerying() {
+	m.is_querying = nil
+}
+
+// SetIsIndexing sets the "is_indexing" field.
+func (m *ChainMutation) SetIsIndexing(b bool) {
+	m.is_indexing = &b
+}
+
+// IsIndexing returns the value of the "is_indexing" field in the mutation.
+func (m *ChainMutation) IsIndexing() (r bool, exists bool) {
+	v := m.is_indexing
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsIndexing returns the old "is_indexing" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldIsIndexing(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsIndexing is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsIndexing requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsIndexing: %w", err)
+	}
+	return oldValue.IsIndexing, nil
+}
+
+// ResetIsIndexing resets all changes to the "is_indexing" field.
+func (m *ChainMutation) ResetIsIndexing() {
+	m.is_indexing = nil
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
 func (m *ChainMutation) AddEventListenerIDs(ids ...int) {
 	if m.event_listeners == nil {
@@ -1015,7 +1089,7 @@ func (m *ChainMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChainMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 16)
 	if m.create_time != nil {
 		fields = append(fields, chain.FieldCreateTime)
 	}
@@ -1058,6 +1132,12 @@ func (m *ChainMutation) Fields() []string {
 	if m.is_enabled != nil {
 		fields = append(fields, chain.FieldIsEnabled)
 	}
+	if m.is_querying != nil {
+		fields = append(fields, chain.FieldIsQuerying)
+	}
+	if m.is_indexing != nil {
+		fields = append(fields, chain.FieldIsIndexing)
+	}
 	return fields
 }
 
@@ -1094,6 +1174,10 @@ func (m *ChainMutation) Field(name string) (ent.Value, bool) {
 		return m.UnhandledMessageTypes()
 	case chain.FieldIsEnabled:
 		return m.IsEnabled()
+	case chain.FieldIsQuerying:
+		return m.IsQuerying()
+	case chain.FieldIsIndexing:
+		return m.IsIndexing()
 	}
 	return nil, false
 }
@@ -1131,6 +1215,10 @@ func (m *ChainMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldUnhandledMessageTypes(ctx)
 	case chain.FieldIsEnabled:
 		return m.OldIsEnabled(ctx)
+	case chain.FieldIsQuerying:
+		return m.OldIsQuerying(ctx)
+	case chain.FieldIsIndexing:
+		return m.OldIsIndexing(ctx)
 	}
 	return nil, fmt.Errorf("unknown Chain field %s", name)
 }
@@ -1238,6 +1326,20 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIsEnabled(v)
 		return nil
+	case chain.FieldIsQuerying:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsQuerying(v)
+		return nil
+	case chain.FieldIsIndexing:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsIndexing(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)
 }
@@ -1343,6 +1445,12 @@ func (m *ChainMutation) ResetField(name string) error {
 		return nil
 	case chain.FieldIsEnabled:
 		m.ResetIsEnabled()
+		return nil
+	case chain.FieldIsQuerying:
+		m.ResetIsQuerying()
+		return nil
+	case chain.FieldIsIndexing:
+		m.ResetIsIndexing()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)

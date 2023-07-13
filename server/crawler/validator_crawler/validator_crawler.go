@@ -90,7 +90,7 @@ func (c *ValidatorCrawler) createOutOfActiveSetEvent(chain *ent.Chain, validator
 func (c *ValidatorCrawler) addOrUpdateValidators() {
 	log.Sugar.Info("Getting all validators")
 	var pbEvents [][]byte
-	for _, chainEnt := range c.chainManager.QueryEnabled(context.Background()) {
+	for _, chainEnt := range c.chainManager.QueryIsQuerying(context.Background()) {
 		if strings.Contains(chainEnt.Path, "neutron") {
 			continue
 		}

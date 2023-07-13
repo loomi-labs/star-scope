@@ -38,10 +38,24 @@ func (m *ChainManager) QueryEnabled(ctx context.Context) []*ent.Chain {
 		AllX(ctx)
 }
 
-func (m *ChainManager) QueryEnabledWithProposals(ctx context.Context) []*ent.Chain {
+func (m *ChainManager) QueryIsQuerying(ctx context.Context) []*ent.Chain {
 	return m.client.Chain.
 		Query().
-		Where(chain.IsEnabledEQ(true)).
+		Where(chain.IsQuerying(true)).
+		AllX(ctx)
+}
+
+func (m *ChainManager) QueryIsIndexing(ctx context.Context) []*ent.Chain {
+	return m.client.Chain.
+		Query().
+		Where(chain.IsIndexing(true)).
+		AllX(ctx)
+}
+
+func (m *ChainManager) QueryIsQueryingWithProposals(ctx context.Context) []*ent.Chain {
+	return m.client.Chain.
+		Query().
+		Where(chain.IsQuerying(true)).
 		WithProposals().
 		AllX(ctx)
 }
@@ -106,8 +120,12 @@ func (m *ChainManager) UpdateChainInfo(ctx context.Context, entChain *ent.Chain,
 		Save(ctx)
 }
 
-func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool, height *uint64) (*ent.Chain, error) {
-	query := entChain.Update().SetIsEnabled(isEnabled)
+func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain, isEnabled bool, isQuerying bool, isIndexing bool, height *uint64) (*ent.Chain, error) {
+	query := entChain.
+		Update().
+		SetIsEnabled(isEnabled).
+		SetIsQuerying(isQuerying).
+		SetIsIndexing(isIndexing)
 	if height != nil {
 		query = query.SetIndexingHeight(*height)
 	}
@@ -115,7 +133,7 @@ func (m *ChainManager) UpdateSetEnabled(ctx context.Context, entChain *ent.Chain
 	if err != nil {
 		return updated, err
 	}
-	if isEnabled {
+	if isEnabled || isQuerying || isIndexing {
 		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.ChainEnabled)
 	} else {
 		m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.ChainDisabled)

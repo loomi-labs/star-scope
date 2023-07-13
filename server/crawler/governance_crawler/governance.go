@@ -63,7 +63,7 @@ func (c *GovernanceCrawler) createGovEvent(chain *ent.Chain, prop *types.Proposa
 func (c *GovernanceCrawler) fetchProposals() {
 	log.Sugar.Debug("Fetching governance proposals")
 
-	var chains = c.chainManager.QueryEnabledWithProposals(context.Background())
+	var chains = c.chainManager.QueryIsQueryingWithProposals(context.Background())
 
 	var pbEvents [][]byte
 	for _, chain := range chains {

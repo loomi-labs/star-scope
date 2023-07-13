@@ -45,6 +45,10 @@ type Chain struct {
 	UnhandledMessageTypes string `json:"unhandled_message_types,omitempty"`
 	// IsEnabled holds the value of the "is_enabled" field.
 	IsEnabled bool `json:"is_enabled,omitempty"`
+	// IsQuerying holds the value of the "is_querying" field.
+	IsQuerying bool `json:"is_querying,omitempty"`
+	// IsIndexing holds the value of the "is_indexing" field.
+	IsIndexing bool `json:"is_indexing,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
 	Edges        ChainEdges `json:"edges"`
@@ -118,7 +122,7 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case chain.FieldHasCustomIndexer, chain.FieldIsEnabled:
+		case chain.FieldHasCustomIndexer, chain.FieldIsEnabled, chain.FieldIsQuerying, chain.FieldIsIndexing:
 			values[i] = new(sql.NullBool)
 		case chain.FieldID, chain.FieldIndexingHeight:
 			values[i] = new(sql.NullInt64)
@@ -231,6 +235,18 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.IsEnabled = value.Bool
 			}
+		case chain.FieldIsQuerying:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_querying", values[i])
+			} else if value.Valid {
+				c.IsQuerying = value.Bool
+			}
+		case chain.FieldIsIndexing:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_indexing", values[i])
+			} else if value.Valid {
+				c.IsIndexing = value.Bool
+			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
 		}
@@ -333,6 +349,12 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_enabled=")
 	builder.WriteString(fmt.Sprintf("%v", c.IsEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("is_querying=")
+	builder.WriteString(fmt.Sprintf("%v", c.IsQuerying))
+	builder.WriteString(", ")
+	builder.WriteString("is_indexing=")
+	builder.WriteString(fmt.Sprintf("%v", c.IsIndexing))
 	builder.WriteByte(')')
 	return builder.String()
 }

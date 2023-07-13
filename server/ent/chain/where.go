@@ -125,6 +125,16 @@ func IsEnabled(v bool) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIsEnabled, v))
 }
 
+// IsQuerying applies equality check predicate on the "is_querying" field. It's identical to IsQueryingEQ.
+func IsQuerying(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIsQuerying, v))
+}
+
+// IsIndexing applies equality check predicate on the "is_indexing" field. It's identical to IsIndexingEQ.
+func IsIndexing(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIsIndexing, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldCreateTime, v))
@@ -848,6 +858,26 @@ func IsEnabledEQ(v bool) predicate.Chain {
 // IsEnabledNEQ applies the NEQ predicate on the "is_enabled" field.
 func IsEnabledNEQ(v bool) predicate.Chain {
 	return predicate.Chain(sql.FieldNEQ(FieldIsEnabled, v))
+}
+
+// IsQueryingEQ applies the EQ predicate on the "is_querying" field.
+func IsQueryingEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIsQuerying, v))
+}
+
+// IsQueryingNEQ applies the NEQ predicate on the "is_querying" field.
+func IsQueryingNEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldIsQuerying, v))
+}
+
+// IsIndexingEQ applies the EQ predicate on the "is_indexing" field.
+func IsIndexingEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldIsIndexing, v))
+}
+
+// IsIndexingNEQ applies the NEQ predicate on the "is_indexing" field.
+func IsIndexingNEQ(v bool) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldIsIndexing, v))
 }
 
 // HasEventListeners applies the HasEdge predicate on the "event_listeners" edge.
