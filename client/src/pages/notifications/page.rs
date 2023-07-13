@@ -47,7 +47,7 @@ pub fn EventBadge<G: Html>(cx: Scope, event_type: EventType) -> View<G> {
         EventType::Governance => "border-badge-blue",
     };
     view! {cx,
-        span(class={format!("text-xs rounded-full border flex items-center px-3 mx-8 {} {}", border_color, text_color)}) { (event_type.as_str_name().to_title_case()) }
+        span(class={format!("text-xs rounded-full border flex items-center px-3 {} {}", border_color, text_color)}) { (event_type.as_str_name().to_title_case()) }
     }
 }
 
@@ -146,6 +146,7 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
         }
     });
 
+    let title = format!("{} - {}", event.chain.clone().unwrap().name, event.title);
     view! {cx,
         div(ref=event_ref, class="flex flex-col rounded-lg shadow my-4 p-4 w-full bg-gray-100 dark:bg-purple-700", on:resize=move |_| debug!("resize")) {
             div(class="flex flex-row justify-between") {
@@ -154,8 +155,8 @@ pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> Vi
                     div(class=format!("w-2 h-2 bg-red-500 rounded-full absolute top-0 right-0 transition-opacity duration-[3000ms] {}", if rc_event.get().read {"opacity-0"} else {"opacity-100"})) {}
                 }
                 div(class="flex flex-col w-full max-w-[calc(100%-theme(space.16))]") {
-                    div(class="flex flex-row text-center items-center") {
-                        span(class="text-sm md:text-lg font-bold") { (event.title.clone()) } span(class="text-sm md:text-base ml-2") { (event.emoji.clone()) }
+                    div(class="flex flex-row text-center items-center flex-wrap gap-2") {
+                        span(class="text-sm md:text-lg font-bold") { (title) } span(class="text-sm md:text-base mr-8") { (event.emoji.clone()) }
                         EventBadge(event_type=event_type)
                         div(class="flex-grow") {}
                         span(class="text-sm justify-self-end hidden md:block dark:text-purple-600") { (display_timestamp(event.created_at.clone(), locale.to_string())) }
