@@ -161,6 +161,10 @@ func (m *UserManager) CreateByWalletAddress(ctx context.Context, walletAddress s
 }
 
 func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *ent.Tx, u *ent.User, chatId int64, chatName string, isGroup bool) error {
+	var eventListenerIds []int
+	for _, eventListener := range u.Edges.EventListeners {
+		eventListenerIds = append(eventListenerIds, eventListener.ID)
+	}
 	commChannel, err := tx.CommChannel.
 		Query().
 		Where(commchannel.TelegramChatIDEQ(chatId)).
@@ -171,6 +175,7 @@ func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *en
 	if commChannel != nil {
 		return commChannel.Update().
 			AddUsers(u).
+			AddEventListenerIDs(eventListenerIds...).
 			Exec(ctx)
 	} else {
 		return tx.CommChannel.
@@ -180,6 +185,7 @@ func (m *UserManager) createOrAddTelegramCommChannel(ctx context.Context, tx *en
 			SetTelegramChatID(chatId).
 			SetIsGroup(isGroup).
 			AddUsers(u).
+			AddEventListenerIDs(eventListenerIds...).
 			Exec(ctx)
 	}
 }
@@ -215,6 +221,10 @@ func (m *UserManager) CreateOrUpdateByTelegramUser(ctx context.Context, userId i
 }
 
 func (m *UserManager) createOrAddDiscordCommChannel(ctx context.Context, tx *ent.Tx, u *ent.User, channelId int64, channelName string, isGroup bool) error {
+	var eventListenerIds []int
+	for _, eventListener := range u.Edges.EventListeners {
+		eventListenerIds = append(eventListenerIds, eventListener.ID)
+	}
 	commChannel, err := tx.CommChannel.
 		Query().
 		Where(commchannel.DiscordChannelIDEQ(channelId)).
@@ -225,6 +235,7 @@ func (m *UserManager) createOrAddDiscordCommChannel(ctx context.Context, tx *ent
 	if commChannel != nil {
 		return commChannel.Update().
 			AddUsers(u).
+			AddEventListenerIDs(eventListenerIds...).
 			Exec(ctx)
 	} else {
 		return tx.CommChannel.
@@ -234,6 +245,7 @@ func (m *UserManager) createOrAddDiscordCommChannel(ctx context.Context, tx *ent
 			SetDiscordChannelID(channelId).
 			SetIsGroup(isGroup).
 			AddUsers(u).
+			AddEventListenerIDs(eventListenerIds...).
 			Exec(ctx)
 	}
 }
@@ -244,6 +256,7 @@ func (m *UserManager) CreateOrUpdateByDiscordUser(ctx context.Context, userId in
 		u, err := tx.User.
 			Query().
 			Where(user.DiscordUserIDEQ(userId)).
+			WithEventListeners().
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
 			return u, err
