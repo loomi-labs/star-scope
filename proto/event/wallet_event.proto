@@ -46,6 +46,7 @@ message VotedEvent {
 message WalletEvent {
   uint64 chain_id = 1;
   string wallet_address = 2;
+  string wallet_name = 11;
   google.protobuf.Timestamp timestamp = 3;
   google.protobuf.Timestamp notify_time = 4;
   oneof event {

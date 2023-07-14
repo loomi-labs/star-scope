@@ -24,6 +24,7 @@ const urlAuthz = "%v/cosmos/authz/v1beta1/grants/granter/%v"
 type GovernanceCrawler struct {
 	chainManager         *database.ChainManager
 	eventListenerManager *database.EventListenerManager
+	validatorManager     *database.ValidatorManager
 	kafkaInternal        kafka_internal.KafkaInternal
 }
 
@@ -31,6 +32,7 @@ func NewGovernanceCrawler(dbManagers *database.DbManagers, kafkaInternal kafka_i
 	return &GovernanceCrawler{
 		chainManager:         dbManagers.ChainManager,
 		eventListenerManager: dbManagers.EventListenerManager,
+		validatorManager:     dbManagers.ValidatorManager,
 		kafkaInternal:        kafkaInternal,
 	}
 }
@@ -131,7 +133,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 	}
 }
 
-func (c *GovernanceCrawler) createVoteReminderEvent(chain *ent.Chain, prop *ent.Proposal, walletAddress string) ([]byte, error) {
+func (c *GovernanceCrawler) createVoteReminderEvent(chain *ent.Chain, prop *ent.Proposal, walletAddress string, name string) ([]byte, error) {
 	var now = timestamppb.Now()
 	var chainEvent = &kafkaevent.WalletEvent{
 		ChainId:       uint64(chain.ID),
@@ -189,9 +191,21 @@ func (c *GovernanceCrawler) fetchAuthzVotes(chain *ent.Chain, walletAddress stri
 	//}
 }
 
+func (c *GovernanceCrawler) getWalletName(chain *ent.Chain, walletAddress string) string {
+	ctx := context.Background()
+	val, err := c.validatorManager.QueryByAddress(ctx, chain.ID, walletAddress)
+	if err != nil && !ent.IsNotFound(err) {
+		log.Sugar.Errorf("while fetching validator for address %v: %v", walletAddress, err)
+	} else if val != nil {
+		return val.Moniker
+	}
+	return ""
+}
+
 func (c *GovernanceCrawler) fetchVotingReminders() {
 	log.Sugar.Info("Checking for voting reminders")
-	voteReminders, err := c.eventListenerManager.QueryForVoteReminderAddresses(context.Background())
+	ctx := context.Background()
+	voteReminders, err := c.eventListenerManager.QueryForVoteReminderAddresses(ctx)
 	if err != nil {
 		log.Sugar.Errorf("while querying for vote reminders: %v", err)
 		return
@@ -207,7 +221,8 @@ func (c *GovernanceCrawler) fetchVotingReminders() {
 		statusCode, err := common.GetJson(url, 5, &voteResponse)
 		if err != nil && statusCode == 400 {
 			c.fetchAuthzVotes(chain, walletAddress, vr.Proposal)
-			pbEvent, err := c.createVoteReminderEvent(chain, vr.Proposal, walletAddress)
+			walletName := c.getWalletName(chain, walletAddress)
+			pbEvent, err := c.createVoteReminderEvent(chain, vr.Proposal, walletAddress, walletName)
 			if err != nil {
 				log.Sugar.Errorf("while creating vote reminder event for proposal %v: %v", proposalId, err)
 				continue
@@ -218,7 +233,8 @@ func (c *GovernanceCrawler) fetchVotingReminders() {
 			continue
 		} else {
 			if voteResponse.Vote.Option.ToCosmosType() == cosmossdktypes.OptionEmpty {
-				pbEvent, err := c.createVoteReminderEvent(chain, vr.Proposal, walletAddress)
+				walletName := c.getWalletName(chain, walletAddress)
+				pbEvent, err := c.createVoteReminderEvent(chain, vr.Proposal, walletAddress, walletName)
 				if err != nil {
 					log.Sugar.Errorf("while creating vote reminder event for proposal %v: %v", proposalId, err)
 					continue

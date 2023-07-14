@@ -119,9 +119,15 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 			}, nil
 		case *kafkaevent.WalletEvent_VoteReminder:
 			var voteReminder = walletEvent.GetVoteReminder()
+			var wallet = ""
+			if walletEvent.GetWalletName() != "" {
+				wallet = fmt.Sprintf("%v (%v)", walletEvent.GetWalletName(), walletEvent.GetWalletAddress())
+			} else {
+				wallet = walletEvent.GetWalletAddress()
+			}
 			return &eventpb.Event{
 				Title:       fmt.Sprintf("Vote Reminder for Proposal %v", voteReminder.GetProposalId()),
-				Description: fmt.Sprintf("%v did not vote yet", walletEvent.GetWalletAddress()),
+				Description: fmt.Sprintf("%v did not vote yet", wallet),
 				Emoji:       "🗳",
 				CreatedAt:   walletEvent.Timestamp,
 				EventType:   kafkaevent.EventType_GOVERNANCE,

@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/event"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/validator"
@@ -84,6 +85,17 @@ func (m *ValidatorManager) QueryActive(ctx context.Context) []*ent.Validator {
 		WithChain().
 		Order(ent.Asc(validator.FieldMoniker)). // order by moniker so that the chain is random -> avoid spamming the same chain when querying validators
 		AllX(ctx)
+}
+
+func (m *ValidatorManager) QueryByAddress(ctx context.Context, chainId int, address string) (*ent.Validator, error) {
+	return m.client.Validator.
+		Query().
+		Where(validator.And(
+			validator.AddressEQ(address),
+			validator.HasChainWith(chain.IDEQ(chainId)),
+		)).
+		WithChain().
+		First(ctx)
 }
 
 type ValidatorBundle struct {
