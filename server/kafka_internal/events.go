@@ -119,7 +119,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 			}, nil
 		case *kafkaevent.WalletEvent_VoteReminder:
 			var voteReminder = walletEvent.GetVoteReminder()
-			var wallet = ""
+			wallet := ""
 			if walletEvent.GetWalletName() != "" {
 				wallet = fmt.Sprintf("%v (%v)", walletEvent.GetWalletName(), walletEvent.GetWalletAddress())
 			} else {

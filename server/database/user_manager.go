@@ -637,6 +637,7 @@ func (m *UserManager) createEventListeners(
 	chains []*ent.Chain,
 	selectedChains []*ent.Chain,
 	commChannels []*ent.CommChannel,
+	selectedValidators []*ent.Validator,
 ) error {
 	var bulk []*ent.EventListenerCreate
 	for _, entChain := range chains {
@@ -673,6 +674,21 @@ func (m *UserManager) createEventListeners(
 				SetDataType(dt))
 		}
 	}
+	valEventListeners := []eventlistener.DataType{
+		eventlistener.DataTypeWalletEvent_Voted,
+		eventlistener.DataTypeWalletEvent_VoteReminder,
+	}
+	for _, entValidator := range selectedValidators {
+		for _, dt := range valEventListeners {
+			bulk = append(bulk, tx.EventListener.
+				Create().
+				SetChain(entValidator.Edges.Chain).
+				AddUsers(entUser).
+				AddCommChannels(commChannels...).
+				SetWalletAddress(entValidator.Address).
+				SetDataType(dt))
+		}
+	}
 	return tx.EventListener.
 		CreateBulk(bulk...).
 		Exec(ctx)
@@ -701,6 +717,14 @@ func (m *UserManager) UpdateSetup(ctx context.Context, u *ent.User, query *ent.U
 				return nil, err
 			}
 
+			selectedValidators, err := setup.
+				QuerySelectedValidators().
+				WithChain().
+				All(ctx)
+			if err != nil {
+				return nil, err
+			}
+
 			commChannels, err := tx.CommChannel.
 				Query().
 				Where(commchannel.HasUsersWith(user.ID(u.ID))).
@@ -709,7 +733,7 @@ func (m *UserManager) UpdateSetup(ctx context.Context, u *ent.User, query *ent.U
 				return nil, err
 			}
 
-			err = m.createEventListeners(ctx, tx, setup, u, availableChains, selectedChains, commChannels)
+			err = m.createEventListeners(ctx, tx, setup, u, availableChains, selectedChains, commChannels, selectedValidators)
 			if err != nil {
 				return nil, err
 			}
