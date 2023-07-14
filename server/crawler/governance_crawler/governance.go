@@ -133,11 +133,12 @@ func (c *GovernanceCrawler) fetchProposals() {
 	}
 }
 
-func (c *GovernanceCrawler) createVoteReminderEvent(chain *ent.Chain, prop *ent.Proposal, walletAddress string, name string) ([]byte, error) {
+func (c *GovernanceCrawler) createVoteReminderEvent(chain *ent.Chain, prop *ent.Proposal, walletAddress string, walletName string) ([]byte, error) {
 	var now = timestamppb.Now()
 	var chainEvent = &kafkaevent.WalletEvent{
 		ChainId:       uint64(chain.ID),
 		WalletAddress: walletAddress,
+		WalletName:    walletName,
 		Timestamp:     now,
 		NotifyTime:    now,
 		Event: &kafkaevent.WalletEvent_VoteReminder{
