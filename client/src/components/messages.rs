@@ -60,7 +60,7 @@ pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String, timeout: u32) ->
                     });
                 }
             ) {
-                div(class=format!("flex items-center justify-center rounded-full text-white w-8 h-8 {}", hover_color)) {
+                div(class=format!("flex items-center justify-center rounded-full text-white w-8 h-8 hover:bg-opacity-70 {}", hover_color)) {
                     span(class="w-6 h-6 bg-black icon-[bi--x]") {}
                 }
             }
