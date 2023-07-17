@@ -2,8 +2,8 @@ package main
 
 import (
 	"buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go/grpc/indexer/indexerpb/indexerpbconnect"
+	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/event"
 	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/grpc/indexer/indexerpb"
-	"buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go/indexevent"
 	"context"
 	"fmt"
 	"github.com/bufbuild/connect-go"
@@ -77,12 +77,12 @@ func (t TxHandlerService) handleMsgBeginUnlocking(_ *lockuptypes.MsgBeginUnlocki
 	if err != nil {
 		return nil, err
 	}
-	txEvent := &indexevent.TxEvent{
+	txEvent := &event.WalletEvent{
 		ChainName:  t.txHelper.chainInfo.Name,
 		Timestamp:  timestamppb.New(timestamp),
 		NotifyTime: timestamppb.Now(),
-		Event: &indexevent.TxEvent_OsmosisPoolUnlock{
-			OsmosisPoolUnlock: &indexevent.OsmosisPoolUnlockEvent{},
+		Event: &event.WalletEvent_OsmosisPoolUnlock{
+			OsmosisPoolUnlock: &event.OsmosisPoolUnlockEvent{},
 		},
 	}
 	var owner, duration, unlockTime = "owner", "duration", "unlock_time"

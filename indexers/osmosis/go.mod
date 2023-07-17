@@ -3,9 +3,9 @@ module github.com/loomi-labs/star-scope/indexers/osmosis
 go 1.20
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1
-	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1
-	github.com/bufbuild/connect-go v1.7.0
+	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.9.0-20230717091739-33f0cd6b74ed.1
+	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.31.0-20230717091739-33f0cd6b74ed.1
+	github.com/bufbuild/connect-go v1.9.0
 	github.com/cosmos/cosmos-sdk v0.46.10
 	github.com/golang/protobuf v1.5.3
 	github.com/osmosis-labs/osmosis/osmoutils v0.0.4
@@ -14,7 +14,7 @@ require (
 	github.com/tendermint/tendermint v0.34.24
 	golang.org/x/exp v0.0.0-20221212164502-fae10dda9338
 	golang.org/x/net v0.10.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
