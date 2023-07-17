@@ -2,7 +2,7 @@ use sycamore::prelude::*;
 
 use crate::config::keys;
 use crate::pages::notifications::page::NotificationsState;
-use crate::types::protobuf::event::EventType;
+use crate::types::protobuf::grpc_event::EventType;
 use crate::utils::url::safe_navigate;
 use crate::{AppRoutes, AppState, EventsState};
 
@@ -142,6 +142,11 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     );
 
     let s_button_data = vec![
+        (
+            Some(AppRoutes::NotificationSettings),
+            "icon-[carbon--notification]",
+            "Notifications",
+        ),
         (
             Some(AppRoutes::Communication),
             "icon-[mi--message]",

@@ -2,10 +2,9 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package starscope.grpc;
+package starscope.grpc.user;
 
 option go_package = "github.com/loomi-labs/star-scope/grpc/user/usersetuppb";
-
 
 service UserSetupService {
   rpc GetStep(GetStepRequest) returns (StepResponse);

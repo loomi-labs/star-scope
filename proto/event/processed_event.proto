@@ -2,20 +2,14 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
+import "grpc/event/eventpb/event_service.proto";
 
 package starscope.event;
 
 option go_package = "github.com/loomi-labs/star-scope/event/processedeventpb";
 
-enum EventType {
-  FUNDING = 0;
-  STAKING = 1;
-  DEX = 2;
-  GOVERNANCE = 3;
-}
-
 message EventProcessedMsg {
   uint64 chain_id = 1;
   string wallet_address = 2;
-  EventType event_type = 3;
+  starscope.grpc.event.EventType event_type = 3;
 }

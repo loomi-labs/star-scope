@@ -8,7 +8,6 @@ import (
 	"github.com/loomi-labs/star-scope/database"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
-	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
 	"github.com/loomi-labs/star-scope/grpc/types"
@@ -147,10 +146,10 @@ func (e EventService) ListEventsCount(ctx context.Context, _ *connect.Request[em
 		log.Sugar.Error(err)
 		return nil, types.UnknownErr
 	}
-	counters := make([]*eventpb.EventsCount, len(kafkaevent.EventType_name))
-	for i, name := range kafkaevent.EventType_name {
+	counters := make([]*eventpb.EventsCount, len(eventpb.EventType_name))
+	for i, name := range eventpb.EventType_name {
 		counters[i] = &eventpb.EventsCount{
-			EventType: kafkaevent.EventType(i),
+			EventType: eventpb.EventType(i),
 			Count:     0,
 		}
 		for _, cnt := range *cntRead {

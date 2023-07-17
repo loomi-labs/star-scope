@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package starscope.grpc.settings;
+
+option go_package = "github.com/loomi-labs/star-scope/grpc/user/userpb";
+
+service SettingsService {
+  rpc GetWallets (google.protobuf.Empty) returns (GetWalletsResponse) {}
+  rpc AddWallet (Wallet) returns (google.protobuf.Empty) {}
+  rpc RemoveWallet (Wallet) returns (google.protobuf.Empty) {}
+}
+
+message Wallet {
+  string address = 1;
+  string bech32_address = 2;
+  string logo_url = 3;
+}
+
+message GetWalletsResponse {
+  repeated Wallet wallets = 1;
+}

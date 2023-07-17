@@ -11,6 +11,7 @@ use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 use sycamore::suspense::Suspense;
 use sycamore_router::{HistoryIntegration, Route, Router};
+use types::protobuf::grpc_user::User;
 use uuid::Uuid;
 
 use crate::components::messages::{create_error_msg_from_status, create_message, MessageOverlay};
@@ -18,13 +19,13 @@ use crate::components::navigation::Navigation;
 use crate::pages::communication::page::Communication;
 use crate::pages::home::page::Home;
 use crate::pages::login::page::Login;
+use crate::pages::notification_settings::page::NotificationSettings;
 use crate::pages::notifications::page::{Notifications, NotificationsState};
 use crate::pages::settings::page::Settings;
 use crate::pages::setup::page::Setup;
 use crate::services::auth::AuthService;
 use crate::services::grpc::GrpcClient;
-use crate::types::protobuf::event::EventType;
-use crate::types::protobuf::grpc::{Event, EventsCount, User, WalletInfo};
+use crate::types::protobuf::grpc_event::{Event, EventType, EventsCount, WalletInfo};
 use crate::utils::url::{navigate_launch_app, safe_navigate};
 
 mod components;
@@ -46,6 +47,8 @@ pub enum AppRoutes {
     Communication,
     #[to("/settings")]
     Settings,
+    #[to("/notifications-settings")]
+    NotificationSettings,
     #[to("/login")]
     Login,
     #[not_found]
@@ -58,6 +61,7 @@ impl AppRoutes {
             AppRoutes::Home => false,
             AppRoutes::Setup => true,
             AppRoutes::Notifications => true,
+            AppRoutes::NotificationSettings => true,
             AppRoutes::Communication => true,
             AppRoutes::Settings => true,
             AppRoutes::Login => false,
@@ -70,6 +74,7 @@ impl AppRoutes {
             AppRoutes::Home => false,
             AppRoutes::Setup => false,
             AppRoutes::Notifications => true,
+            AppRoutes::NotificationSettings => true,
             AppRoutes::Communication => true,
             AppRoutes::Settings => true,
             AppRoutes::Login => false,
@@ -84,6 +89,7 @@ impl ToString for AppRoutes {
             AppRoutes::Home => "/".to_string(),
             AppRoutes::Setup => "/setup".to_string(),
             AppRoutes::Notifications => "/notifications".to_string(),
+            AppRoutes::NotificationSettings => "/notifications-settings".to_string(),
             AppRoutes::Communication => "/communication".to_string(),
             AppRoutes::Settings => "/settings".to_string(),
             AppRoutes::Login => "/login".to_string(),
@@ -310,6 +316,7 @@ fn has_access_permission(auth_service: &AuthService, route: &AppRoutes) -> bool 
         AppRoutes::Home => true,
         AppRoutes::Setup => is_user || is_admin,
         AppRoutes::Notifications => is_user || is_admin,
+        AppRoutes::NotificationSettings => is_user || is_admin,
         AppRoutes::Communication => is_user || is_admin,
         AppRoutes::Settings => is_user || is_admin,
         AppRoutes::Login => true,
@@ -327,6 +334,7 @@ fn activate_view<G: Html>(cx: Scope, route: &AppRoutes) -> View<G> {
             AppRoutes::Home => view!(cx, Home {}),
             AppRoutes::Setup => view!(cx, Setup {}),
             AppRoutes::Notifications => view!(cx, Notifications {}),
+            AppRoutes::NotificationSettings => view!(cx, NotificationSettings {}),
             AppRoutes::Communication => view!(cx, Communication {}),
             AppRoutes::Settings => view!(cx, Settings {}),
             AppRoutes::Login => view!(cx, Login {}),

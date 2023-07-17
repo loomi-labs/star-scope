@@ -10,8 +10,8 @@ use simple_error::bail;
 use tonic::Status;
 
 use crate::config::keys;
-use crate::types::protobuf::grpc::auth_service_client::AuthServiceClient;
-use crate::types::protobuf::grpc::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
+use crate::types::protobuf::grpc_auth::auth_service_client::AuthServiceClient;
+use crate::types::protobuf::grpc_auth::{KeplrLoginRequest, LoginResponse, RefreshAccessTokenRequest};
 use crate::utils::url::{
     get_discord_login_data, get_telegram_login_data, has_discord_login_query_params,
     has_telegram_login_query_params,

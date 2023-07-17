@@ -1,5 +1,5 @@
 use crate::components::messages::create_message;
-use crate::types::protobuf::grpc::{DiscordLoginRequest, TelegramLoginRequest};
+use crate::types::protobuf::grpc_auth::{DiscordLoginRequest, TelegramLoginRequest};
 use crate::{AppRoutes, AppState, AuthState, InfoLevel};
 use log::debug;
 use sycamore::prelude::{use_context, Scope};

@@ -22,7 +22,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// UserSetupServiceName is the fully-qualified name of the UserSetupService service.
-	UserSetupServiceName = "starscope.grpc.UserSetupService"
+	UserSetupServiceName = "starscope.grpc.user.UserSetupService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,19 +35,19 @@ const (
 const (
 	// UserSetupServiceGetStepProcedure is the fully-qualified name of the UserSetupService's GetStep
 	// RPC.
-	UserSetupServiceGetStepProcedure = "/starscope.grpc.UserSetupService/GetStep"
+	UserSetupServiceGetStepProcedure = "/starscope.grpc.user.UserSetupService/GetStep"
 	// UserSetupServiceFinishStepProcedure is the fully-qualified name of the UserSetupService's
 	// FinishStep RPC.
-	UserSetupServiceFinishStepProcedure = "/starscope.grpc.UserSetupService/FinishStep"
+	UserSetupServiceFinishStepProcedure = "/starscope.grpc.user.UserSetupService/FinishStep"
 	// UserSetupServiceValidateWalletProcedure is the fully-qualified name of the UserSetupService's
 	// ValidateWallet RPC.
-	UserSetupServiceValidateWalletProcedure = "/starscope.grpc.UserSetupService/ValidateWallet"
+	UserSetupServiceValidateWalletProcedure = "/starscope.grpc.user.UserSetupService/ValidateWallet"
 	// UserSetupServiceSearchWalletsProcedure is the fully-qualified name of the UserSetupService's
 	// SearchWallets RPC.
-	UserSetupServiceSearchWalletsProcedure = "/starscope.grpc.UserSetupService/SearchWallets"
+	UserSetupServiceSearchWalletsProcedure = "/starscope.grpc.user.UserSetupService/SearchWallets"
 )
 
-// UserSetupServiceClient is a client for the starscope.grpc.UserSetupService service.
+// UserSetupServiceClient is a client for the starscope.grpc.user.UserSetupService service.
 type UserSetupServiceClient interface {
 	GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 	FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
@@ -55,10 +55,10 @@ type UserSetupServiceClient interface {
 	SearchWallets(context.Context, *connect_go.Request[userpb.SearchWalletsRequest]) (*connect_go.ServerStreamForClient[userpb.SearchWalletsResponse], error)
 }
 
-// NewUserSetupServiceClient constructs a client for the starscope.grpc.UserSetupService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
+// NewUserSetupServiceClient constructs a client for the starscope.grpc.user.UserSetupService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -96,27 +96,27 @@ type userSetupServiceClient struct {
 	searchWallets  *connect_go.Client[userpb.SearchWalletsRequest, userpb.SearchWalletsResponse]
 }
 
-// GetStep calls starscope.grpc.UserSetupService.GetStep.
+// GetStep calls starscope.grpc.user.UserSetupService.GetStep.
 func (c *userSetupServiceClient) GetStep(ctx context.Context, req *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
 	return c.getStep.CallUnary(ctx, req)
 }
 
-// FinishStep calls starscope.grpc.UserSetupService.FinishStep.
+// FinishStep calls starscope.grpc.user.UserSetupService.FinishStep.
 func (c *userSetupServiceClient) FinishStep(ctx context.Context, req *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
 	return c.finishStep.CallUnary(ctx, req)
 }
 
-// ValidateWallet calls starscope.grpc.UserSetupService.ValidateWallet.
+// ValidateWallet calls starscope.grpc.user.UserSetupService.ValidateWallet.
 func (c *userSetupServiceClient) ValidateWallet(ctx context.Context, req *connect_go.Request[userpb.ValidateWalletRequest]) (*connect_go.Response[userpb.ValidateWalletResponse], error) {
 	return c.validateWallet.CallUnary(ctx, req)
 }
 
-// SearchWallets calls starscope.grpc.UserSetupService.SearchWallets.
+// SearchWallets calls starscope.grpc.user.UserSetupService.SearchWallets.
 func (c *userSetupServiceClient) SearchWallets(ctx context.Context, req *connect_go.Request[userpb.SearchWalletsRequest]) (*connect_go.ServerStreamForClient[userpb.SearchWalletsResponse], error) {
 	return c.searchWallets.CallServerStream(ctx, req)
 }
 
-// UserSetupServiceHandler is an implementation of the starscope.grpc.UserSetupService service.
+// UserSetupServiceHandler is an implementation of the starscope.grpc.user.UserSetupService service.
 type UserSetupServiceHandler interface {
 	GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
 	FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error)
@@ -150,7 +150,7 @@ func NewUserSetupServiceHandler(svc UserSetupServiceHandler, opts ...connect_go.
 		svc.SearchWallets,
 		opts...,
 	)
-	return "/starscope.grpc.UserSetupService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/starscope.grpc.user.UserSetupService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserSetupServiceGetStepProcedure:
 			userSetupServiceGetStepHandler.ServeHTTP(w, r)
@@ -170,17 +170,17 @@ func NewUserSetupServiceHandler(svc UserSetupServiceHandler, opts ...connect_go.
 type UnimplementedUserSetupServiceHandler struct{}
 
 func (UnimplementedUserSetupServiceHandler) GetStep(context.Context, *connect_go.Request[userpb.GetStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.GetStep is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.user.UserSetupService.GetStep is not implemented"))
 }
 
 func (UnimplementedUserSetupServiceHandler) FinishStep(context.Context, *connect_go.Request[userpb.FinishStepRequest]) (*connect_go.Response[userpb.StepResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.FinishStep is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.user.UserSetupService.FinishStep is not implemented"))
 }
 
 func (UnimplementedUserSetupServiceHandler) ValidateWallet(context.Context, *connect_go.Request[userpb.ValidateWalletRequest]) (*connect_go.Response[userpb.ValidateWalletResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.ValidateWallet is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.user.UserSetupService.ValidateWallet is not implemented"))
 }
 
 func (UnimplementedUserSetupServiceHandler) SearchWallets(context.Context, *connect_go.Request[userpb.SearchWalletsRequest], *connect_go.ServerStream[userpb.SearchWalletsResponse]) error {
-	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.UserSetupService.SearchWallets is not implemented"))
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.user.UserSetupService.SearchWallets is not implemented"))
 }

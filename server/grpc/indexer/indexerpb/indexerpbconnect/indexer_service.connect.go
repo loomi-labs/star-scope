@@ -23,9 +23,9 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// IndexerServiceName is the fully-qualified name of the IndexerService service.
-	IndexerServiceName = "starscope.grpc.IndexerService"
+	IndexerServiceName = "starscope.grpc.indexer.IndexerService"
 	// TxHandlerServiceName is the fully-qualified name of the TxHandlerService service.
-	TxHandlerServiceName = "starscope.grpc.TxHandlerService"
+	TxHandlerServiceName = "starscope.grpc.indexer.TxHandlerService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -38,25 +38,25 @@ const (
 const (
 	// IndexerServiceGetIndexingChainsProcedure is the fully-qualified name of the IndexerService's
 	// GetIndexingChains RPC.
-	IndexerServiceGetIndexingChainsProcedure = "/starscope.grpc.IndexerService/GetIndexingChains"
+	IndexerServiceGetIndexingChainsProcedure = "/starscope.grpc.indexer.IndexerService/GetIndexingChains"
 	// IndexerServiceUpdateIndexingChainsProcedure is the fully-qualified name of the IndexerService's
 	// UpdateIndexingChains RPC.
-	IndexerServiceUpdateIndexingChainsProcedure = "/starscope.grpc.IndexerService/UpdateIndexingChains"
+	IndexerServiceUpdateIndexingChainsProcedure = "/starscope.grpc.indexer.IndexerService/UpdateIndexingChains"
 	// TxHandlerServiceHandleTxsProcedure is the fully-qualified name of the TxHandlerService's
 	// HandleTxs RPC.
-	TxHandlerServiceHandleTxsProcedure = "/starscope.grpc.TxHandlerService/HandleTxs"
+	TxHandlerServiceHandleTxsProcedure = "/starscope.grpc.indexer.TxHandlerService/HandleTxs"
 )
 
-// IndexerServiceClient is a client for the starscope.grpc.IndexerService service.
+// IndexerServiceClient is a client for the starscope.grpc.indexer.IndexerService service.
 type IndexerServiceClient interface {
 	GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error)
 	UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[indexerpb.UpdateIndexingChainsResponse], error)
 }
 
-// NewIndexerServiceClient constructs a client for the starscope.grpc.IndexerService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
+// NewIndexerServiceClient constructs a client for the starscope.grpc.indexer.IndexerService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -82,17 +82,17 @@ type indexerServiceClient struct {
 	updateIndexingChains *connect_go.Client[indexerpb.UpdateIndexingChainsRequest, indexerpb.UpdateIndexingChainsResponse]
 }
 
-// GetIndexingChains calls starscope.grpc.IndexerService.GetIndexingChains.
+// GetIndexingChains calls starscope.grpc.indexer.IndexerService.GetIndexingChains.
 func (c *indexerServiceClient) GetIndexingChains(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error) {
 	return c.getIndexingChains.CallUnary(ctx, req)
 }
 
-// UpdateIndexingChains calls starscope.grpc.IndexerService.UpdateIndexingChains.
+// UpdateIndexingChains calls starscope.grpc.indexer.IndexerService.UpdateIndexingChains.
 func (c *indexerServiceClient) UpdateIndexingChains(ctx context.Context, req *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[indexerpb.UpdateIndexingChainsResponse], error) {
 	return c.updateIndexingChains.CallUnary(ctx, req)
 }
 
-// IndexerServiceHandler is an implementation of the starscope.grpc.IndexerService service.
+// IndexerServiceHandler is an implementation of the starscope.grpc.indexer.IndexerService service.
 type IndexerServiceHandler interface {
 	GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error)
 	UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[indexerpb.UpdateIndexingChainsResponse], error)
@@ -114,7 +114,7 @@ func NewIndexerServiceHandler(svc IndexerServiceHandler, opts ...connect_go.Hand
 		svc.UpdateIndexingChains,
 		opts...,
 	)
-	return "/starscope.grpc.IndexerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/starscope.grpc.indexer.IndexerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case IndexerServiceGetIndexingChainsProcedure:
 			indexerServiceGetIndexingChainsHandler.ServeHTTP(w, r)
@@ -130,22 +130,22 @@ func NewIndexerServiceHandler(svc IndexerServiceHandler, opts ...connect_go.Hand
 type UnimplementedIndexerServiceHandler struct{}
 
 func (UnimplementedIndexerServiceHandler) GetIndexingChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[indexerpb.GetIndexingChainsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.GetIndexingChains is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.indexer.IndexerService.GetIndexingChains is not implemented"))
 }
 
 func (UnimplementedIndexerServiceHandler) UpdateIndexingChains(context.Context, *connect_go.Request[indexerpb.UpdateIndexingChainsRequest]) (*connect_go.Response[indexerpb.UpdateIndexingChainsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.IndexerService.UpdateIndexingChains is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.indexer.IndexerService.UpdateIndexingChains is not implemented"))
 }
 
-// TxHandlerServiceClient is a client for the starscope.grpc.TxHandlerService service.
+// TxHandlerServiceClient is a client for the starscope.grpc.indexer.TxHandlerService service.
 type TxHandlerServiceClient interface {
 	HandleTxs(context.Context, *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error)
 }
 
-// NewTxHandlerServiceClient constructs a client for the starscope.grpc.TxHandlerService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
+// NewTxHandlerServiceClient constructs a client for the starscope.grpc.indexer.TxHandlerService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -165,12 +165,13 @@ type txHandlerServiceClient struct {
 	handleTxs *connect_go.Client[indexerpb.HandleTxsRequest, indexerpb.HandleTxsResponse]
 }
 
-// HandleTxs calls starscope.grpc.TxHandlerService.HandleTxs.
+// HandleTxs calls starscope.grpc.indexer.TxHandlerService.HandleTxs.
 func (c *txHandlerServiceClient) HandleTxs(ctx context.Context, req *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error) {
 	return c.handleTxs.CallUnary(ctx, req)
 }
 
-// TxHandlerServiceHandler is an implementation of the starscope.grpc.TxHandlerService service.
+// TxHandlerServiceHandler is an implementation of the starscope.grpc.indexer.TxHandlerService
+// service.
 type TxHandlerServiceHandler interface {
 	HandleTxs(context.Context, *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error)
 }
@@ -186,7 +187,7 @@ func NewTxHandlerServiceHandler(svc TxHandlerServiceHandler, opts ...connect_go.
 		svc.HandleTxs,
 		opts...,
 	)
-	return "/starscope.grpc.TxHandlerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/starscope.grpc.indexer.TxHandlerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TxHandlerServiceHandleTxsProcedure:
 			txHandlerServiceHandleTxsHandler.ServeHTTP(w, r)
@@ -200,5 +201,5 @@ func NewTxHandlerServiceHandler(svc TxHandlerServiceHandler, opts ...connect_go.
 type UnimplementedTxHandlerServiceHandler struct{}
 
 func (UnimplementedTxHandlerServiceHandler) HandleTxs(context.Context, *connect_go.Request[indexerpb.HandleTxsRequest]) (*connect_go.Response[indexerpb.HandleTxsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.TxHandlerService.HandleTxs is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.indexer.TxHandlerService.HandleTxs is not implemented"))
 }

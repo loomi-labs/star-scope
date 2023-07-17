@@ -7,6 +7,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/event"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/shifty11/go-logger/log"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -148,7 +149,7 @@ func (d *FakeEventCreator) CreateFakeEvents() {
 					if msg.NotifyTime.AsTime().Before(time.Now()) {
 						d.kafka.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
 							WalletAddress: msg.WalletAddress,
-							EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
+							EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
 						}})
 					}
 				}
