@@ -130,7 +130,7 @@ func (m *UserManager) QueryWallets(ctx context.Context, u *ent.User) ([]*setting
 		)).
 		Select(eventlistener.FieldWalletAddress, eventlistener.FieldDataType).
 		WithChain(func(q *ent.ChainQuery) {
-			q.Select(chain.FieldImage)
+			q.Select(chain.FieldImage, chain.FieldIsQuerying, chain.FieldIsIndexing, chain.FieldIsEnabled)
 		}).
 		All(ctx)
 	if err != nil {
@@ -141,8 +141,11 @@ func (m *UserManager) QueryWallets(ctx context.Context, u *ent.User) ([]*setting
 	for _, el := range els {
 		if _, ok := walletsMap[el.WalletAddress]; !ok {
 			walletsMap[el.WalletAddress] = &settingspb.Wallet{
-				Address: el.WalletAddress,
-				LogoUrl: el.Edges.Chain.Image,
+				Address:                            el.WalletAddress,
+				LogoUrl:                            el.Edges.Chain.Image,
+				IsNotifyFundingSupported:           el.Edges.Chain.IsEnabled && el.Edges.Chain.IsIndexing,
+				IsNotifyStakingSupported:           el.Edges.Chain.IsEnabled && el.Edges.Chain.IsIndexing,
+				IsNotifyGovVotingReminderSupported: el.Edges.Chain.IsEnabled && el.Edges.Chain.IsQuerying,
 			}
 		}
 		if el.DataType == eventlistener.DataTypeWalletEvent_VoteReminder {

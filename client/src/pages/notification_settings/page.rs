@@ -1,6 +1,4 @@
-use crate::components::messages::{
-    create_error_msg_from_status, create_message, create_timed_message,
-};
+use crate::components::messages::{create_error_msg_from_status, create_timed_message};
 use crate::types::protobuf::grpc_settings::{UpdateWalletRequest, Wallet};
 use crate::{InfoLevel, Services};
 use sycamore::futures::spawn_local_scoped;
@@ -23,28 +21,28 @@ async fn query_wallets(cx: Scope<'_>) -> Result<Vec<Wallet>, ()> {
     }
 }
 enum Update {
-    NotifyFunding,
-    NotifyStaking,
-    NotifyGovVotingReminder,
+    Funding,
+    Staking,
+    GovVotingReminder,
 }
 
 async fn update_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Update) {
     let wallet = create_ref(cx, wallet_sig.get_untracked());
     let services = use_context::<Services>(cx);
-    let notify_funding = if let Update::NotifyFunding = update {
-        !wallet.notify_funding.clone()
+    let notify_funding = if let Update::Funding = update {
+        !wallet.notify_funding
     } else {
-        wallet.notify_funding.clone()
+        wallet.notify_funding
     };
-    let notify_staking = if let Update::NotifyStaking = update {
-        !wallet.notify_staking.clone()
+    let notify_staking = if let Update::Staking = update {
+        !wallet.notify_staking
     } else {
-        wallet.notify_staking.clone()
+        wallet.notify_staking
     };
-    let notify_gov_voting_reminder = if let Update::NotifyGovVotingReminder = update {
-        !wallet.notify_gov_voting_reminder.clone()
+    let notify_gov_voting_reminder = if let Update::GovVotingReminder = update {
+        !wallet.notify_gov_voting_reminder
     } else {
-        wallet.notify_gov_voting_reminder.clone()
+        wallet.notify_gov_voting_reminder
     };
     let request = services.grpc_client.create_request(UpdateWalletRequest {
         wallet_address: wallet.address.clone(),
@@ -60,30 +58,33 @@ async fn update_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Updat
         .await
         .map(|res| res.into_inner());
 
-    if let Ok(_) = response {
+    if response.is_ok() {
         wallet_sig.set(Wallet {
             address: wallet.address.clone(),
             logo_url: wallet.logo_url.clone(),
             notify_funding,
             notify_staking,
             notify_gov_voting_reminder,
+            is_notify_funding_supported: wallet.is_notify_funding_supported,
+            is_notify_staking_supported: wallet.is_notify_staking_supported,
+            is_notify_gov_voting_reminder_supported: wallet .is_notify_gov_voting_reminder_supported,
         });
         let msg = match update {
-            Update::NotifyFunding => {
+            Update::Funding => {
                 if notify_funding {
                     "You will be notified about funding events"
                 } else {
                     "You will no longer be notified about funding events"
                 }
             }
-            Update::NotifyStaking => {
+            Update::Staking => {
                 if notify_staking {
                     "You will be notified about staking events"
                 } else {
                     "You will no longer be notified about staking events"
                 }
             }
-            Update::NotifyGovVotingReminder => {
+            Update::GovVotingReminder => {
                 if notify_gov_voting_reminder {
                     "You will be notified to vote on governance proposals"
                 } else {
@@ -97,6 +98,30 @@ async fn update_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Updat
     }
 }
 
+const BUTTON_ROW_CLASS: &str =
+    "flex items-center cursor-pointer p-2 space-x-2 rounded-lg hover:bg-purple-700";
+
+#[component(inline_props)]
+fn Tooltip<G: Html>(cx: Scope, title: &'static str) -> View<G> {
+    let is_visible = create_signal(cx, false);
+
+    let unavailable_class = "w-4 h-4 bg-red-500 icon-[iconamoon--unavailable]";
+
+    view! {cx,
+        div(class="relative") {
+            div(class=BUTTON_ROW_CLASS,
+                    on:mouseover=move |_| is_visible.set(true),
+                    on:mouseout=move |_| is_visible.set(false)) {
+                span(class=unavailable_class) {}
+                span() { (title) }
+                span(class=format!("absolute inset-0 italic text-sm rounded-lg dark:bg-purple-700 {}", if *is_visible.get() { "visible" } else { "invisible" })) {
+                    "Not yet supported"
+                }
+            }
+        }
+    }
+}
+
 pub struct NotificationSettingsState<'a> {
     pub wallets: &'a Signal<Vec<&'a Signal<Wallet>>>,
 }
@@ -104,7 +129,7 @@ pub struct NotificationSettingsState<'a> {
 #[component]
 pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
     let notification_settings_state = NotificationSettingsState {
-        wallets: &create_signal(cx, vec![]),
+        wallets: create_signal(cx, vec![]),
     };
 
     spawn_local_scoped(cx, async move {
@@ -120,14 +145,12 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
 
     let selected_class = "w-4 h-4 bg-primary icon-[icon-park-solid--check-one]";
     let unselected_class = "w-4 h-4 rounded-full border-2 border-primary";
-    let button_row_class =
-        "flex items-center cursor-pointer p-2 space-x-2 rounded-lg hover:bg-purple-700";
 
     view! {cx,
         div(class="flex flex-col") {
-            h1(class="text-2xl font-semibold") { "Notification settings" }
+            h1(class="text-4xl font-semibold") { "Notification settings" }
             div(class="flex flex-col mt-4") {
-                h2(class="text-lg font-semibold") { (format!("Wallets ({})", notification_settings_state.wallets.get().len())) }
+                h2(class="text-xl font-semibold") { (format!("Wallets ({})", notification_settings_state.wallets.get().len())) }
                 div(class="flex flex-col mt-2 space-y-2") {
                     Indexed(
                         iterable = notification_settings_state.wallets,
@@ -147,21 +170,45 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
                                 div(class="flex flex-col p-4 space-y-4 rounded-lg bg-purple-800") {
                                     div(class="flex items-center px-1 gap-1") {
                                         img(src=cloned.logo_url, class="w-6 h-6") {}
-                                        span(class="text-sm") { (shortened_address) }
+                                        span(class="text-base") { (shortened_address) }
                                     }
-                                    div(class="flex flex-wrap items-center gap-4") {
-                                        div(class=button_row_class, on:click=move |_| handle_update(Update::NotifyFunding)) {
-                                            span(class=(if wallet.get().notify_funding { selected_class } else { unselected_class })) {}
-                                            span(class="text-sm") { "Funding" }
-                                        }
-                                        div(class=button_row_class, on:click=move |_| handle_update(Update::NotifyStaking)) {
-                                            span(class=(if wallet.get().notify_staking { selected_class } else { unselected_class })) {}
-                                            span(class="text-sm") { "Staking" }
-                                        }
-                                        div(class=button_row_class, on:click=move |_| handle_update(Update::NotifyGovVotingReminder)) {
-                                            span(class=(if wallet.get().notify_gov_voting_reminder { selected_class } else { unselected_class })) {}
-                                            span(class="text-sm truncate") { "Governance reminders" }
-                                        }
+                                    div(class="flex flex-wrap items-center gap-4 text-sm") {
+                                        (if wallet.get().is_notify_funding_supported {
+                                            view!{cx,
+                                                div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(Update::Funding)) {
+                                                    span(class=(if wallet.get().notify_funding { selected_class } else { unselected_class })) {}
+                                                    span() { "Funding" }
+                                                }
+                                            }
+                                        } else {
+                                            view!{cx,
+                                                Tooltip(title="Funding")
+                                            }
+                                        })
+                                        (if wallet.get().is_notify_staking_supported {
+                                            view!{cx,
+                                                div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(Update::Staking)) {
+                                                    span(class=(if wallet.get().notify_staking { selected_class } else { unselected_class })) {}
+                                                    span() { "Staking" }
+                                                }
+                                            }
+                                        } else {
+                                            view!{cx,
+                                                Tooltip(title="Staking")
+                                            }
+                                        })
+                                        (if wallet.get().is_notify_gov_voting_reminder_supported {
+                                            view!{cx,
+                                                div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(Update::GovVotingReminder)) {
+                                                    span(class=(if wallet.get().notify_gov_voting_reminder { selected_class } else { unselected_class })) {}
+                                                    span(class="truncate") { "Governance reminders" }
+                                                }
+                                            }
+                                        } else {
+                                            view!{cx,
+                                                Tooltip(title="Governance")
+                                            }
+                                        })
                                     }
                                 }
                             }
