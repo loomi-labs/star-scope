@@ -16,7 +16,7 @@ fn get_files_in_dir(path: &str) -> Result<Vec<PathBuf>, io::Error> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let proto_files = get_files_in_dir("proto")?;
+    let proto_files = get_files_in_dir("proto/grpc")?;
 
     let proto_files_refs: Vec<&std::path::Path> = proto_files
         .iter()

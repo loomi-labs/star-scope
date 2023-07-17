@@ -151,6 +151,7 @@ pub struct InfoMsg {
     pub message: String,
     pub level: InfoLevel,
     pub created_at: f64,
+    pub timeout: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -185,7 +186,13 @@ impl AppState {
         }
     }
 
-    pub fn add_message(&self, title: String, message: String, level: InfoLevel) -> Uuid {
+    pub fn add_message(
+        &self,
+        title: String,
+        message: String,
+        level: InfoLevel,
+        timeout: u32,
+    ) -> Uuid {
         let uuid = Uuid::new_v4();
         let created_at = js_sys::Date::now();
         self.messages.modify().push(create_rc_signal(InfoMsg {
@@ -194,6 +201,7 @@ impl AppState {
             message,
             level,
             created_at,
+            timeout,
         }));
         uuid
     }

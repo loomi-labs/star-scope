@@ -8,16 +8,30 @@ option go_package = "github.com/loomi-labs/star-scope/grpc/user/userpb";
 
 service SettingsService {
   rpc GetWallets (google.protobuf.Empty) returns (GetWalletsResponse) {}
-  rpc AddWallet (Wallet) returns (google.protobuf.Empty) {}
-  rpc RemoveWallet (Wallet) returns (google.protobuf.Empty) {}
+  rpc AddWallet (UpdateWalletRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateWallet (UpdateWalletRequest) returns (google.protobuf.Empty) {}
+  rpc RemoveWallet (RemoveWalletRequest) returns (google.protobuf.Empty) {}
 }
 
 message Wallet {
   string address = 1;
-  string bech32_address = 2;
-  string logo_url = 3;
+  string logo_url = 2;
+  bool notify_funding = 3;
+  bool notify_staking = 4;
+  bool notify_gov_voting_reminder = 5;
 }
 
 message GetWalletsResponse {
   repeated Wallet wallets = 1;
+}
+
+message UpdateWalletRequest {
+  string wallet_address = 1;
+  bool notify_funding = 3;
+  bool notify_staking = 4;
+  bool notify_gov_voting_reminder = 5;
+}
+
+message RemoveWalletRequest {
+  string wallet_address = 1;
 }

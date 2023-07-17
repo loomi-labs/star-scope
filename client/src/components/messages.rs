@@ -8,14 +8,16 @@ use tonic::Status;
 use crate::{AppState, InfoLevel, InfoMsg};
 
 #[component(inline_props)]
-pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String) -> View<G> {
+pub fn Message<G: Html>(cx: Scope, msg: InfoMsg, style: String, timeout: u32) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let state = create_signal(cx, 1.0);
+    let start_elapse = timeout as f64 * 0.7 * 1000.0; // start elapsing after 70% of the timeout
+    let elapse_time = timeout as f64 * 1000.0 - start_elapse;
     let (_running, start, stop) = create_raf(cx, move || {
         let elapsed = js_sys::Date::now() - msg.created_at;
-        if elapsed > 7000.0 {
-            let new_state = 1.0 - (elapsed - 7000.0) / 3000.0;
+        if elapsed > start_elapse {
+            let new_state = 1.0 - (elapsed - start_elapse) / elapse_time;
             state.set(new_state);
             if new_state <= 0.0 {
                 app_state.remove_message(msg.id);
@@ -102,6 +104,7 @@ pub fn MessageOverlay<G: Html>(cx: Scope) -> View<G> {
                             Message(
                                 msg=item.as_ref().clone(),
                                 style=style,
+                                timeout=item.timeout,
                             )
                         }
                     },
@@ -111,25 +114,35 @@ pub fn MessageOverlay<G: Html>(cx: Scope) -> View<G> {
     )
 }
 
+pub fn create_timed_message(
+    cx: Scope,
+    title: impl Into<String>,
+    message: impl Into<String>,
+    level: InfoLevel,
+    timeout: u32,
+) {
+    let app_state = use_context::<AppState>(cx);
+    let title = title.into();
+    let message = message.into();
+    let uuid = app_state.add_message(title.clone(), message.clone(), level.clone(), timeout);
+    if level == InfoLevel::Error {
+        error!("{}: {}", title, message);
+    }
+    create_effect(cx, move || {
+        spawn_local_scoped(cx, async move {
+            TimeoutFuture::new(1000 * timeout).await;
+            app_state.remove_message(uuid);
+        });
+    });
+}
+
 pub fn create_message(
     cx: Scope,
     title: impl Into<String>,
     message: impl Into<String>,
     level: InfoLevel,
 ) {
-    let app_state = use_context::<AppState>(cx);
-    let title = title.into();
-    let message = message.into();
-    let uuid = app_state.add_message(title.clone(), message.clone(), level.clone());
-    if level == InfoLevel::Error {
-        error!("{}: {}", title, message);
-    }
-    create_effect(cx, move || {
-        spawn_local_scoped(cx, async move {
-            TimeoutFuture::new(1000 * 10).await;
-            app_state.remove_message(uuid);
-        });
-    });
+    create_timed_message(cx, title, message, level, 10)
 }
 
 pub fn create_error_msg_from_status(cx: Scope, status: Status) {
