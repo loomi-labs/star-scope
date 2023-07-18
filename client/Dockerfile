@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Copy your project's files into the container
 COPY client .
-COPY proto ./proto
+COPY proto/grpc ./proto/grpc
 
 RUN npm install
 
