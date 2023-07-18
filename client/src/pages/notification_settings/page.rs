@@ -310,9 +310,8 @@ fn AskDeleteDialog<'a, G: Html>(
     let handle_delete = move |wallet: Option<Wallet>| {
         is_open.set(None);
         app_state.set_showing_dialog(false);
-        if wallet.is_some() {
-            let wallet_address = wallet.unwrap().address;
-            delete_signal.set(Some(wallet_address));
+        if let Some(wallet) = wallet {
+            delete_signal.set(Some(wallet.address));
         } else {
             create_message(cx, "Error", "Wallet could not be deleted", InfoLevel::Error);
         }
@@ -451,8 +450,8 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
 }
 
 #[component]
-pub async fn NotificationSettings<'a, G: Html>(cx: Scope<'a>) -> View<G> {
-    let wallets: &'a Signal<Vec<&'a Signal<Wallet>>> = create_signal(cx, vec![]);
+pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
+    let wallets: &'_ Signal<Vec<&'_ Signal<Wallet>>> = create_signal(cx, vec![]);
 
     spawn_local_scoped(cx, async move {
         let result = query_wallets(cx).await;

@@ -96,7 +96,7 @@ jobs:
             GRPC_WEB_ENDPOINT_URL=https://starscope.network
             COSMOS_LOGIN_BUTTON_URL=https://cosmos-login.starscope.network
             WEB_APP_URL=https://starscope.network
-            TELEGRAM_BOT_NAME=StarScopeTestBot
+            TELEGRAM_BOT_NAME=StarScopeBot
             DISCORD_CLIENT_ID=1120308547142549565
 
   build-and-push-client-cosmos-login:
