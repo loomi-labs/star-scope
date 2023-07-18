@@ -203,7 +203,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
 
     view! {cx,
         AskDeleteDialog(is_open=show_delete_dialog.clone(), delete_signal=delete_signal)
-        div(class="flex flex-col w-full mt-2 space-y-2") {
+        div(class="flex flex-col w-full space-y-2") {
             Indexed(
                 iterable = wallets,
                 view = move |cx, wallet| {
@@ -294,14 +294,25 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
         }
     });
 
+    let is_wallet_list_open = create_signal(cx, false);
+    let is_chain_list_open = create_signal(cx, false);
+
+    let collapsible_header_class = "flex items-center p-4 cursor-pointer peer dark:hover:bg-gray-800";
+
     view! {cx,
         div(class="flex flex-col") {
             h1(class="text-4xl font-semibold") { "Notification settings" }
-            div(class="flex flex-col mt-4") {
-                h2(class="text-xl font-semibold") { (format!("Wallets ({})", wallets.get().len())) }
-                div(class="flex flex-col rounded-lg") {
-                    WalletList(wallets=wallets)
-                    AddWallet(wallets=wallets)
+            div(class="flex flex-col mt-4 rounded-lg") {
+                div(class=format!("{} {}", collapsible_header_class, if *is_wallet_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ), 
+                        on:click=move |_| is_wallet_list_open.set(!*is_wallet_list_open.get())) {
+                    h2(class="text-xl font-semibold") { (format!("Wallets ({})", wallets.get().len())) }
+                    span(class=format!("w-6 h-6 icon-[octicon--triangle-down-16] transform transition-all duration-300 {}", if *is_wallet_list_open.get() {""} else {"-rotate-90"})) {}
+                }
+                div(class=format!("flex flex-col rounded-b-lg px-2 peer-hover:bg-gray-800 {}", if *is_wallet_list_open.get() {"pb-2"} else {""})) {
+                    div(class=if *is_wallet_list_open.get() {""} else {"hidden"}) {
+                        WalletList(wallets=wallets)
+                        AddWallet(wallets=wallets)
+                    }
                 }
             }
         }
