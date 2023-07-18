@@ -222,6 +222,13 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
         }
     });
 
+    create_effect(cx, move || {
+        if !*has_new_wallet.get() {
+            new_wallet_address.set(String::new());
+            validation.set(None);
+        }
+    });
+
     view! {cx,
         div(class=format!("flex rounded-lg p-4 mt-2 {}", if *has_new_wallet.get() { "transition ease-in-out duration-500 dark:bg-purple-800" } else { "" })) {
             div(class="flex items-center px-1 gap-1") {
