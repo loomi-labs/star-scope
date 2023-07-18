@@ -232,9 +232,16 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
                         if *has_new_wallet.get() { "icon-[iconoir--cancel]" } else { "icon-[ic--round-add]" })) {}
                 }
             }
+            (if !*has_new_wallet.get() {
+                view! {cx,
+                    div(class=format!("flex flex-col w-full justify-center px-2")) {
+                        span(class="text-base font-semibold") { "Add wallet" }
+                    }
+                }
+            } else { view! {cx, }})
             div(class=format!("flex flex-col w-full px-2 space-y-2 {}", if *has_new_wallet.get() { "visible" } else { "invisible" })) {
-                span(class="text-base font-semibold") { "Add new wallet" }
-                div(class="flex flex-wrap items-center gap-x-4") {
+                span(class="text-base font-semibold") { "Add wallet" }
+                div(class=format!("flex flex-wrap items-center gap-x-4")) {
                     div(class="flex flex-col") {
                         div(class="flex") {
                             input(
