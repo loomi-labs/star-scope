@@ -10,6 +10,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/ent/validator"
 	"github.com/loomi-labs/star-scope/grpc/settings/settingspb"
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka_internal"
@@ -117,7 +118,8 @@ func (m *UserManager) QuerySetup(ctx context.Context, u *ent.User) (*ent.UserSet
 		Only(ctx)
 }
 
-func (m *UserManager) QueryWallets(ctx context.Context, u *ent.User) ([]*settingspb.Wallet, error) {
+// QuerySubscribedWallets returns all wallets that the user has subscribed to.
+func (m *UserManager) QuerySubscribedWallets(ctx context.Context, u *ent.User) ([]*settingspb.Wallet, error) {
 	els, err := u.
 		QueryEventListeners().
 		Where(eventlistener.DataTypeIn(
@@ -137,8 +139,24 @@ func (m *UserManager) QueryWallets(ctx context.Context, u *ent.User) ([]*setting
 		return nil, err
 	}
 
+	var validatorChecking = make(map[string]bool)
 	var walletsMap = make(map[string]*settingspb.Wallet)
 	for _, el := range els {
+		// filter out all validator addresses
+		if _, ok := validatorChecking[el.WalletAddress]; !ok {
+			doesExist, err := m.client.Validator.
+				Query().
+				Where(validator.AddressEQ(el.WalletAddress)).
+				Exist(ctx)
+			if err != nil {
+				return nil, err
+			}
+			validatorChecking[el.WalletAddress] = doesExist
+		}
+		if validatorChecking[el.WalletAddress] {
+			continue
+		}
+
 		if _, ok := walletsMap[el.WalletAddress]; !ok {
 			walletsMap[el.WalletAddress] = &settingspb.Wallet{
 				Address:                            el.WalletAddress,

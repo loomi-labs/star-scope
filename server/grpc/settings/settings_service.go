@@ -36,7 +36,7 @@ func (s *SettingsService) GetWallets(ctx context.Context, _ *connect.Request[emp
 		return nil, types.UserNotFoundErr
 	}
 
-	wallets, err := s.userManager.QueryWallets(ctx, user)
+	wallets, err := s.userManager.QuerySubscribedWallets(ctx, user)
 	if err != nil {
 		log.Sugar.Error("failed to query wallets: ", err)
 		return nil, err
