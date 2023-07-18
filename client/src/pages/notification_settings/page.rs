@@ -1,7 +1,7 @@
 use crate::components::messages::create_message;
-use crate::pages::notification_settings::queries::{self, Update, WalletValidation};
+use crate::pages::notification_settings::queries::{self, WalletUpdate, ChainUpdate, WalletValidation};
 use crate::types::protobuf::grpc_settings::{
-    UpdateWalletRequest, Wallet,
+    UpdateWalletRequest, Chain, Wallet
 };
 use crate::{AppState, InfoLevel};
 use sycamore::futures::spawn_local_scoped;
@@ -130,7 +130,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
 }
 
 #[component(inline_props)]
-fn AskDeleteDialog<'a, G: Html>(
+fn AskDeleteWalletDialog<'a, G: Html>(
     cx: Scope<'a>,
     is_open: &'a Signal<Option<Wallet>>,
     delete_signal: &'a Signal<Option<String>>,
@@ -202,13 +202,13 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
     });
 
     view! {cx,
-        AskDeleteDialog(is_open=show_delete_dialog.clone(), delete_signal=delete_signal)
+        AskDeleteWalletDialog(is_open=show_delete_dialog.clone(), delete_signal=delete_signal)
         div(class="flex flex-col w-full space-y-2") {
             Indexed(
                 iterable = wallets,
                 view = move |cx, wallet| {
                     let cloned = wallet.get().as_ref().clone();
-                    let handle_update = move |update: Update| {
+                    let handle_update = move |update: WalletUpdate| {
                         spawn_local_scoped(cx, async move {
                             queries::update_existing_wallet(cx, wallet, update).await;
                         });
@@ -228,7 +228,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                                 div(class="flex flex-wrap flex-shrink items-center gap-x-4") {
                                     (if wallet.get().is_notify_funding_supported {
                                         view!{cx,
-                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(Update::Funding)) {
+                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(WalletUpdate::Funding)) {
                                                 span(class=(if wallet.get().notify_funding { selected_class } else { unselected_class })) {}
                                                 span() { "Funding" }
                                             }
@@ -240,7 +240,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                                     })
                                     (if wallet.get().is_notify_staking_supported {
                                         view!{cx,
-                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(Update::Staking)) {
+                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(WalletUpdate::Staking)) {
                                                 span(class=(if wallet.get().notify_staking { selected_class } else { unselected_class })) {}
                                                 span() { "Staking" }
                                             }
@@ -252,7 +252,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                                     })
                                     (if wallet.get().is_notify_gov_voting_reminder_supported {
                                         view!{cx,
-                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(Update::GovVotingReminder)) {
+                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(WalletUpdate::GovVotingReminder)) {
                                                 span(class=(if wallet.get().notify_gov_voting_reminder { selected_class } else { unselected_class })) {}
                                                 span(class="truncate") { "Governance reminders" }
                                             }
@@ -279,13 +279,147 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
     }
 }
 
+#[component(inline_props)]
+fn AskDeleteChainDialog<'a, G: Html>(
+    cx: Scope<'a>,
+    is_open: &'a Signal<Option<Chain>>,
+    delete_signal: &'a Signal<Option<Chain>>,
+) -> View<G> {
+    let app_state = use_context::<AppState>(cx);
+
+    let handle_delete = move |chain: Option<Chain>| {
+        is_open.set(None);
+        app_state.set_showing_dialog(false);
+        if let Some(chain) = chain {
+            delete_signal.set(Some(chain));
+        } else {
+            create_message(cx, "Error", "Chain could not be deleted", InfoLevel::Error);
+        }
+    };
+
+    create_effect(cx, move || {
+        if is_open.get().is_some() {
+            app_state.set_showing_dialog(true); // sets the backdrop to be visible
+        }
+    });
+
+    create_effect(cx, move || {
+        if !(*app_state.is_dialog_open.get()) {
+            is_open.set(None);
+        }
+    });
+
+    view! {cx,
+        dialog(class="fixed inset-0 bg-white p-4 rounded-lg z-40", open=is_open.get().is_some()) {
+            div(class="flex flex-col p-4") {
+                div(class="flex flex-col items-center") {
+                    span(class="w-12 h-12 text-black icon-[ph--trash]") {}
+                    h2(class="text-lg font-semibold") { ("Delete chain") }
+                    span(class="my-4 text-center break-all") { (format!("Are you sure you want to delete {}?", is_open.get().as_ref().clone().map_or("".to_string(), |c: Chain| c.name))) }
+                }
+                div(class="flex justify-center mt-2") {
+                    button(class="border-2 border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-semibold px-4 py-2 rounded mr-2",
+                            on:click=move |event: web_sys::Event| {
+                        event.stop_propagation();
+                        app_state.set_showing_dialog(false);
+                    }) { "Cancel" }
+                    button(class="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded",
+                            on:click=move |_| handle_delete(is_open.get().as_ref().clone())) { "Delete" }
+                }
+            }
+        }
+    }
+}
+
+#[component(inline_props)]
+fn ChainList<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>>>) -> View<G> {
+    let selected_class = "w-4 h-4 bg-primary icon-[icon-park-solid--check-one]";
+    let unselected_class = "w-4 h-4 rounded-full border-2 border-primary";
+
+    let show_delete_dialog = create_signal(cx, None::<Chain>);
+
+    let delete_signal = create_signal(cx, None::<Chain>);
+
+    create_effect(cx, move || {
+        if let Some(chain) = delete_signal.get().as_ref().clone() {
+            let mut wallets: Modify<'_, Vec<&Signal<Chain>>> = chains.modify();
+            spawn_local_scoped(cx, async move {
+                if queries::delete_chain(cx, chain.clone()).await.is_ok() {
+                    wallets.retain(|w| w.get().id != chain.id);
+                }
+            });
+        }
+    });
+
+    view! {cx,
+        AskDeleteChainDialog(is_open=show_delete_dialog.clone(), delete_signal=delete_signal)
+        div(class="flex flex-col w-full space-y-2") {
+            Indexed(
+                iterable = chains,
+                view = move |cx, chain| {
+                    let cloned = chain.get().as_ref().clone();
+                    let handle_update = move |update: ChainUpdate| {
+                        spawn_local_scoped(cx, async move {
+                            queries::update_existing_chain(cx, chain, update).await;
+                        });
+                    };
+
+                    view!{cx,
+                        div(class="flex p-4 rounded-lg items-center bg-purple-800") {
+                            div(class="flex items-center px-1 gap-1") {
+                                img(src=cloned.logo_url, class="w-10 h-10 md:w-14 md:h-14") {}
+                            }
+                            div(class="flex flex-col text-sm max-w-[calc(100%-theme(space.16))]") {
+                                span(class="text-base font-semibold px-2") { (chain.get().name) }
+                                div(class="flex flex-wrap flex-shrink items-center gap-x-4") {
+                                    (if chain.get().is_notify_new_proposals_supported {
+                                        view!{cx,
+                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(ChainUpdate::NewProposal)) {
+                                                span(class=(if chain.get().notify_new_proposals { selected_class } else { unselected_class })) {}
+                                                span() { "New governance proposals" }
+                                            }
+                                        }
+                                    } else {
+                                        view!{cx,
+                                            Tooltip(title="New governance proposals")
+                                        }
+                                    })
+                                    (if chain.get().is_notify_proposal_finished_supported {
+                                        view!{cx,
+                                            div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(ChainUpdate::ProposalFinished)) {
+                                                span(class=(if chain.get().notify_proposal_finished { selected_class } else { unselected_class })) {}
+                                                span() { "Finishd governance proposals" }
+                                            }
+                                        }
+                                    } else {
+                                        view!{cx,
+                                            Tooltip(title="Finishd governance proposals")
+                                        }
+                                    })
+                                    button(class="flex items-center justify-center w-8 h-8 rounded-lg dark:bg-purple-700 dark:hover:bg-purple-600",
+                                        on:click=move |event: web_sys::Event| {
+                                            event.stop_propagation();
+                                            show_delete_dialog.set(Some(chain.get().as_ref().clone()));
+                                    }) {
+                                        span(class="w-4 h-4 icon-[ph--trash]") {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+            )
+        }
+    }
+}
+
 #[component]
 pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
     let wallets: &'_ Signal<Vec<&'_ Signal<Wallet>>> = create_signal(cx, vec![]);
+    let chains: &'_ Signal<Vec<&'_ Signal<Chain>>> = create_signal(cx, vec![]);
 
     spawn_local_scoped(cx, async move {
-        let result = queries::query_wallets(cx).await;
-        if let Ok(result_wallets) = result {
+        if let Ok(result_wallets) = queries::query_wallets(cx).await {
             let new_wallets: Vec<&Signal<Wallet>> = result_wallets
                 .iter()
                 .map(|wallet| create_signal(cx, wallet.clone()))
@@ -294,27 +428,51 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
         }
     });
 
-    let is_wallet_list_open = create_signal(cx, false);
-    let is_chain_list_open = create_signal(cx, false);
+    spawn_local_scoped(cx, async move {
+        if let Ok(result_chains) = queries::query_chains(cx).await {
+            let new_chains: Vec<&Signal<Chain>> = result_chains
+                .iter()
+                .map(|wallet| create_signal(cx, wallet.clone()))
+                .collect();
+            chains.set(new_chains);
+        }
+    });
 
-    let collapsible_header_class = "flex items-center p-4 cursor-pointer peer dark:hover:bg-gray-800";
+    let is_wallet_list_open = create_signal(cx, true);
+    let is_chain_list_open = create_signal(cx, true);
+
+    let collapsible_header_class = "flex items-center p-4 cursor-pointer dark:hover:bg-gray-800";
+    let collapsible_content_class = "flex flex-col rounded-b-lg px-2 peer-hover:bg-gray-800";
+    let collapsible_icon_class = "w-6 h-6 icon-[octicon--triangle-down-16] transform transition-all duration-300";
+    let subheader_class = "text-xl font-semibold";
 
     view! {cx,
         div(class="flex flex-col") {
             h1(class="text-4xl font-semibold") { "Notification settings" }
             div(class="flex flex-col mt-4 rounded-lg") {
-                div(class=format!("{} {}", collapsible_header_class, if *is_wallet_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ), 
+                div(class=format!("{} {} peer/wallets", collapsible_header_class, if *is_wallet_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ), 
                         on:click=move |_| is_wallet_list_open.set(!*is_wallet_list_open.get())) {
-                    h2(class="text-xl font-semibold") { (format!("Wallets ({})", wallets.get().len())) }
-                    span(class=format!("w-6 h-6 icon-[octicon--triangle-down-16] transform transition-all duration-300 {}", if *is_wallet_list_open.get() {""} else {"-rotate-90"})) {}
+                    h2(class=subheader_class) { (format!("Wallets ({})", wallets.get().len())) }
+                    span(class=format!("{} {}", collapsible_icon_class, if *is_wallet_list_open.get() {""} else {"-rotate-90"})) {}
                 }
-                div(class=format!("flex flex-col rounded-b-lg px-2 peer-hover:bg-gray-800 {}", if *is_wallet_list_open.get() {"pb-2"} else {""})) {
+                div(class=format!("{} peer-hover/wallets:bg-gray-800 {}", collapsible_content_class, if *is_wallet_list_open.get() {"pb-2"} else {""})) {
                     div(class=if *is_wallet_list_open.get() {""} else {"hidden"}) {
                         WalletList(wallets=wallets)
                         AddWallet(wallets=wallets)
                     }
                 }
-            }
+                div(class=format!("{} {} peer/chains", collapsible_header_class, if *is_chain_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ), 
+                        on:click=move |_| is_chain_list_open.set(!*is_chain_list_open.get())) {
+                    h2(class=subheader_class) { (format!("Chains ({})", chains.get().len())) }
+                    span(class=format!("{} {}", collapsible_icon_class, if *is_chain_list_open.get() {""} else {"-rotate-90"})) {}
+                }
+                div(class=format!("{} peer-hover/chains:bg-gray-800 {}", collapsible_content_class, if *is_chain_list_open.get() {"pb-2"} else {""})) {
+                    div(class=if *is_chain_list_open.get() {""} else {"hidden"}) {
+                        ChainList(chains=chains)
+                        // AddWallet(wallets=wallets)
+                    }
+                }
+                }
         }
     }
 }
