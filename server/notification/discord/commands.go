@@ -60,7 +60,7 @@ var (
 						//fmt.Sprintf(":bell: Active subscriptions: %v\n\n", cntSubs) +
 						fmt.Sprintf("Go to **[Star Scope](%v)** to change subscriptions for this channel.\n\n", redirectUrl) +
 						"**How does it work?**\n" +
-						"- You subscribe this channel to a on-chain events\n" +
+						"- You subscribe this channel to on-chain events\n" +
 						"- An on-chain event happens\n" +
 						"- A notification is sent to this channel\n\n" +
 						"To register another user as admin he has to send the command `/start` to the bot.\n" +
