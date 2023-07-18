@@ -1,6 +1,10 @@
-use crate::components::messages::{create_error_msg_from_status, create_timed_message, create_message};
-use crate::types::protobuf::grpc_settings::{UpdateWalletRequest, Wallet, ValidateWalletRequest, RemoveWalletRequest};
-use crate::{InfoLevel, Services, AppState};
+use crate::components::messages::{
+    create_error_msg_from_status, create_message, create_timed_message,
+};
+use crate::types::protobuf::grpc_settings::{
+    RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Wallet,
+};
+use crate::{AppState, InfoLevel, Services};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 
@@ -26,9 +30,8 @@ enum Update {
     GovVotingReminder,
 }
 
-async fn update_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Update) {
+async fn update_existing_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Update) {
     let wallet = create_ref(cx, wallet_sig.get_untracked());
-    let services = use_context::<Services>(cx);
     let notify_funding = if let Update::Funding = update {
         !wallet.notify_funding
     } else {
@@ -44,31 +47,15 @@ async fn update_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Updat
     } else {
         wallet.notify_gov_voting_reminder
     };
-    let request = services.grpc_client.create_request(UpdateWalletRequest {
+    let request = UpdateWalletRequest {
         wallet_address: wallet.address.clone(),
         notify_funding,
         notify_staking,
         notify_gov_voting_reminder,
-    });
+    };
 
-    let response = services
-        .grpc_client
-        .get_settings_service()
-        .update_wallet(request)
-        .await
-        .map(|res| res.into_inner());
-
-    if response.is_ok() {
-        wallet_sig.set(Wallet {
-            address: wallet.address.clone(),
-            logo_url: wallet.logo_url.clone(),
-            notify_funding,
-            notify_staking,
-            notify_gov_voting_reminder,
-            is_notify_funding_supported: wallet.is_notify_funding_supported,
-            is_notify_staking_supported: wallet.is_notify_staking_supported,
-            is_notify_gov_voting_reminder_supported: wallet .is_notify_gov_voting_reminder_supported,
-        });
+    let result = update_wallet(cx, wallet_sig, request).await;
+    if result.is_ok() {
         let msg = match update {
             Update::Funding => {
                 if notify_funding {
@@ -93,8 +80,32 @@ async fn update_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Updat
             }
         };
         create_timed_message(cx, "Wallet updated", msg, InfoLevel::Success, 5);
+    }
+}
+
+async fn update_wallet(
+    cx: Scope<'_>,
+    wallet: &Signal<Wallet>,
+    update: UpdateWalletRequest,
+) -> Result<(), ()> {
+    let update_ref = create_ref(cx, update.clone());
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(update);
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .update_wallet(request)
+        .await
+        .map(|res| res.into_inner());
+
+    if response.is_ok() {
+        wallet.modify().notify_funding = update_ref.notify_funding;
+        wallet.modify().notify_staking = update_ref.notify_staking;
+        wallet.modify().notify_gov_voting_reminder = update_ref.notify_gov_voting_reminder;
+        Ok(())
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
     }
 }
 
@@ -168,6 +179,8 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
 
     let validation = create_signal(cx, None::<WalletValidation>);
 
+    let has_new_wallet = create_signal(cx, false);
+
     create_effect(cx, move || {
         let address = new_wallet_address.get().as_ref().clone();
         if address.is_empty() {
@@ -176,39 +189,69 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
             validation.set(Some(WalletValidation::Invalid(
                 "Wallet address is too short".to_string(),
             )));
+        } else if wallets.get().iter().any(|w| w.get().address == address) {
+            validation.set(Some(WalletValidation::Invalid(
+                "Wallet already added".to_string(),
+            )));
         } else {
             spawn_local_scoped(cx, async move {
-                let result = query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
+                let result =
+                    query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
                 validation.set(Some(result.clone()));
                 if let WalletValidation::Valid(wallet) = result {
+                    let request = UpdateWalletRequest {
+                        wallet_address: wallet.address.clone(),
+                        notify_funding: true,
+                        notify_staking: true,
+                        notify_gov_voting_reminder: true,
+                    };
                     let wallet_sig = create_signal(cx, wallet.clone());
-                    wallets.modify().insert(0, wallet_sig);
-                    new_wallet_address.set(String::new());
+                    if update_wallet(cx, wallet_sig, request).await.is_ok() {
+                        wallets.modify().push(wallet_sig);
+                        new_wallet_address.set(String::new());
+                        has_new_wallet.set(false);
+                        create_message(
+                            cx,
+                            "Wallet added",
+                            format!("You added the wallet {}", wallet.address),
+                            InfoLevel::Success,
+                        );
+                    }
                 }
             });
         }
     });
 
     view! {cx,
-        div(class="flex flex-col w-full mt-2 space-y-2") {
-            span(class="text-base font-semibold px-2") { "Add new wallet" }
-            div(class="flex flex-wrap items-center gap-x-4") {
-                div(class="flex flex-col") {
-                    div(class="flex") {
-                        input(
-                            class="w-full placeholder:italic border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
-                            placeholder="Wallet address",
-                            type="text",
-                            bind:value=new_wallet_address,
-                        )
-                    }
-                    (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
-                        view! {cx,
-                            span(class="text-red-500 text-left") {(msg)}
+        div(class=format!("flex rounded-lg p-4 mt-2 {}", if *has_new_wallet.get() { "transition ease-in-out duration-500 dark:bg-purple-800" } else { "" })) {
+            div(class="flex items-center px-1 gap-1") {
+                button(class=format!("flex justify-center items-center w-10 h-10 md:w-14 md:h-14 opacity-100 rounded-full {}",
+                        if *has_new_wallet.get() { "bg-red-500 hover:bg-red-600" } else { "bg-green-500 hover:bg-green-600" }),
+                        on:click=move |_| has_new_wallet.set(!*has_new_wallet.get())) {
+                    span(class=format!("w-6 h-6 md:w-10 md:h-10 cursor-pointer {}",
+                        if *has_new_wallet.get() { "icon-[iconoir--cancel]" } else { "icon-[ic--round-add]" })) {}
+                }
+            }
+            div(class=format!("flex flex-col w-full px-2 space-y-2 {}", if *has_new_wallet.get() { "visible" } else { "invisible" })) {
+                span(class="text-base font-semibold") { "Add new wallet" }
+                div(class="flex flex-wrap items-center gap-x-4") {
+                    div(class="flex flex-col") {
+                        div(class="flex") {
+                            input(
+                                class="w-full placeholder:italic border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
+                                placeholder="Wallet address",
+                                type="text",
+                                bind:value=new_wallet_address,
+                            )
                         }
-                    } else {
-                        view! {cx, }
-                    })
+                        (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
+                            view! {cx,
+                                span(class="text-red-500 text-left") {(msg)}
+                            }
+                        } else {
+                            view! {cx, }
+                        })
+                    }
                 }
             }
         }
@@ -219,7 +262,6 @@ async fn delete_wallet(cx: Scope<'_>, wallet_address: String) -> Result<(), ()> 
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(RemoveWalletRequest {
         wallet_address: wallet_address.clone(),
-
     });
     let response = services
         .grpc_client
@@ -229,7 +271,13 @@ async fn delete_wallet(cx: Scope<'_>, wallet_address: String) -> Result<(), ()> 
         .map(|res| res.into_inner());
 
     if response.is_ok() {
-        create_timed_message(cx, "Wallet deleted", format!("Wallet {} was deleted", wallet_address), InfoLevel::Success, 5);
+        create_timed_message(
+            cx,
+            "Wallet deleted",
+            format!("Wallet {} was deleted", wallet_address),
+            InfoLevel::Success,
+            5,
+        );
         Ok(())
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
@@ -238,7 +286,11 @@ async fn delete_wallet(cx: Scope<'_>, wallet_address: String) -> Result<(), ()> 
 }
 
 #[component(inline_props)]
-fn AskDeleteDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<Option<Wallet>>, delete_signal: &'a Signal<Option<String>>) -> View<G> {
+fn AskDeleteDialog<'a, G: Html>(
+    cx: Scope<'a>,
+    is_open: &'a Signal<Option<Wallet>>,
+    delete_signal: &'a Signal<Option<String>>,
+) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let handle_delete = move |wallet: Option<Wallet>| {
@@ -303,10 +355,10 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                     wallets.retain(|w| w.get().address != wallet_address);
                 }
             });
-        }        
+        }
     });
 
-    view!{cx,
+    view! {cx,
         div(class="flex flex-col w-full mt-2 space-y-2") {
             Indexed(
                 iterable = wallets,
@@ -314,7 +366,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                     let cloned = wallet.get().as_ref().clone();
                     let handle_update = move |update: Update| {
                         spawn_local_scoped(cx, async move {
-                            update_wallet(cx, wallet, update).await;
+                            update_existing_wallet(cx, wallet, update).await;
                         });
                     };
 
@@ -399,13 +451,12 @@ pub async fn NotificationSettings<'a, G: Html>(cx: Scope<'a>) -> View<G> {
         }
     });
 
-
     view! {cx,
         div(class="flex flex-col") {
             h1(class="text-4xl font-semibold") { "Notification settings" }
             div(class="flex flex-col mt-4") {
                 h2(class="text-xl font-semibold") { (format!("Wallets ({})", wallets.get().len())) }
-                div(class="flex flex-col p-4 rounded-lg") {
+                div(class="flex flex-col rounded-lg") {
                     WalletList(wallets=wallets)
                     AddWallet(wallets=wallets)
                 }

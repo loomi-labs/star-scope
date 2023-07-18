@@ -13,6 +13,5 @@ pub fn StarScopeLogo<G: Html>(cx: Scope, width: u32, height: u32, color: &'stati
             path(fill="none", stroke=color, stroke-miterlimit="10", stroke-width="30", d="M425.44,274.43a143.53,143.53,0,0,1-140.55,143.5")
             path(fill="none", stroke=color, stroke-miterlimit="10", stroke-width="10", d="M284.89,130.92A143.54,143.54,0,0,1,425.43,272.21")
         }
-        
     )
 }
