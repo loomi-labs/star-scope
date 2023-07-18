@@ -110,7 +110,7 @@ async fn update_wallet(
 }
 
 const BUTTON_ROW_CLASS: &str =
-    "flex items-center cursor-pointer py-1 px-2 space-x-2 rounded-lg hover:bg-purple-700";
+    "flex items-center cursor-pointer py-1 px-2 space-x-2 rounded-lg hover:bg-purple-600";
 
 #[component(inline_props)]
 fn Tooltip<G: Html>(cx: Scope, title: &'static str) -> View<G> {
@@ -125,7 +125,7 @@ fn Tooltip<G: Html>(cx: Scope, title: &'static str) -> View<G> {
                     on:mouseout=move |_| is_visible.set(false)) {
                 span(class=unavailable_class) {}
                 span() { (title) }
-                div(class=format!("absolute inset-0 italic text-xs rounded-lg dark:bg-purple-700 {}", if *is_visible.get() { "visible" } else { "invisible" })) {
+                div(class=format!("absolute inset-0 italic text-xs rounded-lg dark:bg-purple-600 {}", if *is_visible.get() { "visible" } else { "invisible" })) {
                     "Not yet supported"
                 }
             }
@@ -235,7 +235,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
             (if !*has_new_wallet.get() {
                 view! {cx,
                     div(class=format!("flex flex-col w-full justify-center px-2")) {
-                        span(class="text-base font-semibold") { "Add wallet" }
+                        span(class="text-base font-semibold overflow-hidden whitespace-nowrap overflow-ellipsis") { "Add wallet" }
                     }
                 }
             } else { view! {cx, }})
@@ -329,7 +329,7 @@ fn AskDeleteDialog<'a, G: Html>(
                 div(class="flex flex-col items-center") {
                     span(class="w-12 h-12 text-black icon-[ph--trash]") {}
                     h2(class="text-lg font-semibold") { ("Delete wallet") }
-                    p(class="my-4 text-center") { (format!("Are you sure you want to delete {}?", is_open.get().as_ref().clone().map_or("".to_string(), |w: Wallet| w.address))) }
+                    span(class="my-4 text-center break-all") { (format!("Are you sure you want to delete {}?", is_open.get().as_ref().clone().map_or("".to_string(), |w: Wallet| w.address))) }
                 }
                 div(class="flex justify-center mt-2") {
                     button(class="border-2 border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-semibold px-4 py-2 rounded mr-2",
@@ -366,6 +366,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
     });
 
     view! {cx,
+        AskDeleteDialog(is_open=show_delete_dialog.clone(), delete_signal=delete_signal)
         div(class="flex flex-col w-full mt-2 space-y-2") {
             Indexed(
                 iterable = wallets,
@@ -425,15 +426,14 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                                             Tooltip(title="Governance")
                                         }
                                     })
+                                    button(class="flex items-center justify-center w-8 h-8 rounded-lg dark:bg-purple-700 dark:hover:bg-purple-600",
+                                        on:click=move |event: web_sys::Event| {
+                                            event.stop_propagation();
+                                            show_delete_dialog.set(Some(wallet.get().as_ref().clone()));
+                                    }) {
+                                        span(class="w-4 h-4 icon-[ph--trash]") {}
+                                    }
                                 }
-                            }
-                            AskDeleteDialog(is_open=show_delete_dialog.clone(), delete_signal=delete_signal)
-                            button(class="flex items-center justify-center w-10 h-10 rounded-lg dark:bg-purple-700 dark:hover:bg-purple-600",
-                                on:click=move |event: web_sys::Event| {
-                                    event.stop_propagation();
-                                    show_delete_dialog.set(Some(wallet.get().as_ref().clone()));
-                            }) {
-                                span(class="w-6 h-6 icon-[ph--trash]") {}
                             }
                         }
                     }
