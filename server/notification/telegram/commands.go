@@ -25,9 +25,21 @@ func (client *TelegramBot) handleCommand(update *tgbotapi.Update) {
 	}
 }
 
+/*
 const subscriptionsMsg = `🚀 Star Scope bot started.
 %v
 🔔 Active subscriptions: %v
+
+<b>How does it work?</b>
+- You subscribe to on-chain events
+- An on-chain event happens
+- A notification is sent to this chat
+
+To stop the bot send the command /stop
+`
+*/
+const subscriptionsMsg = `🚀 Star Scope bot started.
+%v
 
 <b>How does it work?</b>
 - You subscribe to on-chain events
@@ -60,8 +72,9 @@ func (client *TelegramBot) handleStart(update *tgbotapi.Update) {
 				adminText += fmt.Sprintf("- @%v\n", user.TelegramUsername)
 			}
 		}
-		cnt := client.eventListenerManager.QuerySubscriptionsCountForTelegramChat(ctx, chatId)
-		text = fmt.Sprintf(subscriptionsMsg, adminText, cnt)
+		//cnt := client.eventListenerManager.QuerySubscriptionsCountForTelegramChat(ctx, chatId)
+		//text = fmt.Sprintf(subscriptionsMsg, adminText, cnt)
+		text = fmt.Sprintf(subscriptionsMsg, adminText)
 	}
 
 	var buttons [][]Button

@@ -49,15 +49,15 @@ var (
 				log.Sugar.Errorf("Error while creating or updating user: %v", err)
 				text = "There was an error registering your user. Please try again later."
 			} else {
-				cntSubs := dc.eventListenerManager.QuerySubscriptionsCountForDiscordChannel(ctx, channelId)
+				//cntSubs := dc.eventListenerManager.QuerySubscriptionsCountForDiscordChannel(ctx, channelId)
 				if isGroup {
 					adminText := ""
 					for _, user := range dc.userManager.QueryUsersForDiscordChannel(ctx, channelId) {
 						adminText += fmt.Sprintf("- `%v`\n", user.DiscordUsername)
 					}
-					text = fmt.Sprintf(":rocket: Star Scope bot started\n\n") +
+					text = ":rocket: Star Scope bot started\n\n" +
 						fmt.Sprintf(":police_officer: Bot admins in this channel:\n%v\n", adminText) +
-						fmt.Sprintf(":bell: Active subscriptions: %v\n\n", cntSubs) +
+						//fmt.Sprintf(":bell: Active subscriptions: %v\n\n", cntSubs) +
 						fmt.Sprintf("Go to **[Star Scope](%v)** to change subscriptions for this channel.\n\n", redirectUrl) +
 						"**How does it work?**\n" +
 						"- You subscribe this channel to a on-chain events\n" +
@@ -66,8 +66,8 @@ var (
 						"To register another user as admin he has to send the command `/start` to the bot.\n" +
 						"To stop the bot send the command `/stop`."
 				} else {
-					text = fmt.Sprintf(":rocket: Star Scope bot started\n\n") +
-						fmt.Sprintf(":bell: Active subscriptions: %v\n\n", cntSubs) +
+					text = ":rocket: Star Scope bot started\n\n" +
+						//fmt.Sprintf(":bell: Active subscriptions: %v\n\n", cntSubs) +
 						fmt.Sprintf("Go to **[Star Scope](%v)** to change your subscriptions.\n\n", redirectUrl) +
 						"**How does it work?**\n" +
 						"- You subscribe to on-chain events\n" +
