@@ -134,6 +134,57 @@ func (k *Kafka) getEventListenerMapForWallets() map[string]map[event.DataType]*e
 	return elMap
 }
 
+func (k *Kafka) processWalletEvent(
+	msg kafka.Message,
+	elMapMutex *sync.Mutex,
+	elMap map[string]map[event.DataType]*ent.EventListener,
+	walletEvent *kafkaevent.WalletEvent,
+) {
+	elMapMutex.Lock()
+	defer elMapMutex.Unlock()
+
+	if els, ok := elMap[walletEvent.WalletAddress]; ok {
+		log.Sugar.Debugf("Processing event %v with address %v", msg.Offset, walletEvent.WalletAddress)
+		var eventType event.EventType
+		var dataType event.DataType
+		var isBackground = false
+		switch walletEvent.GetEvent().(type) {
+		case *kafkaevent.WalletEvent_CoinReceived:
+			eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_CoinReceived
+		case *kafkaevent.WalletEvent_OsmosisPoolUnlock:
+			eventType, dataType = event.EventTypeDEX, event.DataTypeWalletEvent_OsmosisPoolUnlock
+		case *kafkaevent.WalletEvent_Unstake:
+			eventType, dataType = event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake
+		case *kafkaevent.WalletEvent_NeutronTokenVesting:
+			eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_NeutronTokenVesting
+		case *kafkaevent.WalletEvent_Voted:
+			eventType, dataType, isBackground = event.EventTypeGOVERNANCE, event.DataTypeWalletEvent_Voted, true
+		case *kafkaevent.WalletEvent_VoteReminder:
+			eventType, dataType = event.EventTypeGOVERNANCE, event.DataTypeWalletEvent_VoteReminder
+		default:
+			log.Sugar.Errorf("unknown event type %v", reflect.TypeOf(walletEvent.GetEvent()))
+		}
+		if el, ok := els[dataType]; ok {
+			_, err := k.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, walletEvent, eventType, dataType, isBackground)
+			if err != nil {
+				log.Sugar.Errorf("failed to update event for %v: %v", walletEvent.WalletAddress, err)
+			} else {
+				if walletEvent.NotifyTime.AsTime().Before(time.Now()) {
+					k.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
+						WalletAddress: walletEvent.WalletAddress,
+						EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
+					}})
+					log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, walletEvent.WalletAddress, processedEventsTopic)
+				}
+			}
+		} else {
+			log.Sugar.Debugf("No event listener for %v and %v", walletEvent.WalletAddress, dataType)
+		}
+	} else {
+		log.Sugar.Debugf("Discard event %v with address %v", msg.Offset, walletEvent.WalletAddress)
+	}
+}
+
 func (k *Kafka) ProcessWalletEvents() {
 	r := k.groupReader(walletEventsTopic)
 	defer k.closeReader(r)
@@ -154,9 +205,11 @@ func (k *Kafka) ProcessWalletEvents() {
 
 		for range ch {
 			log.Sugar.Debugf("Updating event listener map")
-			elMapMutex.Lock()
-			elMap = k.getEventListenerMapForWallets()
-			elMapMutex.Unlock()
+			func() {
+				elMapMutex.Lock()
+				defer elMapMutex.Unlock()
+				elMap = k.getEventListenerMapForWallets()
+			}()
 		}
 	}()
 
@@ -170,48 +223,7 @@ func (k *Kafka) ProcessWalletEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			elMapMutex.Lock()
-			if els, ok := elMap[walletEvent.WalletAddress]; ok {
-				log.Sugar.Debugf("Processing event %v with address %v", msg.Offset, walletEvent.WalletAddress)
-				var eventType event.EventType
-				var dataType event.DataType
-				var isBackground = false
-				switch walletEvent.GetEvent().(type) {
-				case *kafkaevent.WalletEvent_CoinReceived:
-					eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_CoinReceived
-				case *kafkaevent.WalletEvent_OsmosisPoolUnlock:
-					eventType, dataType = event.EventTypeDEX, event.DataTypeWalletEvent_OsmosisPoolUnlock
-				case *kafkaevent.WalletEvent_Unstake:
-					eventType, dataType = event.EventTypeSTAKING, event.DataTypeWalletEvent_Unstake
-				case *kafkaevent.WalletEvent_NeutronTokenVesting:
-					eventType, dataType = event.EventTypeFUNDING, event.DataTypeWalletEvent_NeutronTokenVesting
-				case *kafkaevent.WalletEvent_Voted:
-					eventType, dataType, isBackground = event.EventTypeGOVERNANCE, event.DataTypeWalletEvent_Voted, true
-				case *kafkaevent.WalletEvent_VoteReminder:
-					eventType, dataType = event.EventTypeGOVERNANCE, event.DataTypeWalletEvent_VoteReminder
-				default:
-					log.Sugar.Errorf("unknown event type %v", reflect.TypeOf(walletEvent.GetEvent()))
-				}
-				if el, ok := els[dataType]; ok {
-					_, err := k.eventListenerManager.UpdateAddWalletEvent(context.Background(), el, &walletEvent, eventType, dataType, isBackground)
-					if err != nil {
-						log.Sugar.Errorf("failed to update event for %v: %v", walletEvent.WalletAddress, err)
-					} else {
-						if walletEvent.NotifyTime.AsTime().Before(time.Now()) {
-							k.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
-								WalletAddress: walletEvent.WalletAddress,
-								EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
-							}})
-							log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, walletEvent.WalletAddress, processedEventsTopic)
-						}
-					}
-				} else {
-					log.Sugar.Debugf("No event listener for %v and %v", walletEvent.WalletAddress, dataType)
-				}
-			} else {
-				log.Sugar.Debugf("Discard event %v with address %v", msg.Offset, walletEvent.WalletAddress)
-			}
-			elMapMutex.Unlock()
+			k.processWalletEvent(msg, &elMapMutex, elMap, &walletEvent)
 		}
 	}
 }
@@ -264,6 +276,71 @@ func (k *Kafka) getChains() map[uint64]*ent.Chain {
 	return chains
 }
 
+func (k *Kafka) processChainEvent(
+	msg kafka.Message,
+	elMapMutex *sync.Mutex,
+	chainsMutex *sync.Mutex,
+	elMap map[uint64]map[event.DataType][]*ent.EventListener,
+	chains map[uint64]*ent.Chain,
+	chainEvent *kafkaevent.ChainEvent,
+) {
+	elMapMutex.Lock()
+	chainsMutex.Lock()
+	defer elMapMutex.Unlock()
+	defer chainsMutex.Unlock()
+
+	chain, ok := chains[chainEvent.ChainId]
+	if !ok {
+		log.Sugar.Panicf("failed to find chain %v", chainEvent.ChainId)
+	}
+	log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
+	var pbEvents []*kafkaevent.EventProcessedMsg
+	var eventType event.EventType
+	var dataType event.DataType
+	switch chainEvent.GetEvent().(type) {
+	case *kafkaevent.ChainEvent_GovernanceProposal:
+		var ignoredStates = []string{
+			proposal.StatusPROPOSAL_STATUS_UNSPECIFIED.String(),
+			proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD.String(),
+		}
+		if slices.Contains(ignoredStates, chainEvent.GetGovernanceProposal().GetProposalStatus().String()) {
+			log.Sugar.Debugf("Ignore event %v", msg.Offset)
+			return
+		}
+		eventType = event.EventTypeGOVERNANCE
+		dataType = getProposalDataType(chainEvent.GetGovernanceProposal().GetProposalStatus())
+	case *kafkaevent.ChainEvent_ValidatorOutOfActiveSet:
+		eventType, dataType = event.EventTypeSTAKING, event.DataTypeChainEvent_ValidatorOutOfActiveSet
+	case *kafkaevent.ChainEvent_ValidatorSlash:
+		eventType, dataType = event.EventTypeSTAKING, event.DataTypeChainEvent_ValidatorSlash
+	default:
+		log.Sugar.Errorf("Unknown event type: %v", reflect.TypeOf(chainEvent.GetEvent()))
+	}
+	if dTypes, ok := elMap[chainEvent.ChainId]; ok {
+		if els, ok := dTypes[dataType]; ok {
+			for _, el := range els {
+				_, err := k.eventListenerManager.UpdateAddChainEvent(context.Background(), el, chainEvent, eventType, dataType)
+				if err != nil {
+					log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err)
+				} else {
+					if chainEvent.NotifyTime.AsTime().Before(time.Now()) {
+						pbEvents = append(pbEvents, &kafkaevent.EventProcessedMsg{
+							ChainId:       chainEvent.ChainId,
+							WalletAddress: "",
+							EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
+						})
+						log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
+					}
+				}
+			}
+		}
+	}
+	if len(pbEvents) > 0 {
+		log.Sugar.Debugf("Produce %v events", len(pbEvents))
+		k.produceProcessedEvents(pbEvents)
+	}
+}
+
 func (k *Kafka) ProcessChainEvents() {
 	r := k.groupReader(chainEventsTopic)
 	defer k.closeReader(r)
@@ -288,13 +365,17 @@ func (k *Kafka) ProcessChainEvents() {
 		for change := range ch {
 			switch change {
 			case kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted:
-				elMapMutex.Lock()
-				elMap = k.getEventListenerMapForChains(true)
-				elMapMutex.Unlock()
+				func() {
+					elMapMutex.Lock()
+					defer elMapMutex.Unlock()
+					elMap = k.getEventListenerMapForChains(true)
+				}()
 			case kafka_internal.ChainEnabled, kafka_internal.ChainDisabled:
-				chainsMutex.Lock()
-				chains = k.getChains()
-				chainsMutex.Unlock()
+				func() {
+					chainsMutex.Lock()
+					defer chainsMutex.Unlock()
+					chains = k.getChains()
+				}()
 			}
 		}
 		log.Sugar.Debugf("Stopped processing chain events")
@@ -310,60 +391,61 @@ func (k *Kafka) ProcessChainEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			elMapMutex.Lock()
-			chainsMutex.Lock()
-			chain, ok := chains[chainEvent.ChainId]
-			if !ok {
-				log.Sugar.Panicf("failed to find chain %v", chainEvent.ChainId)
-			}
-			log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
-			var pbEvents []*kafkaevent.EventProcessedMsg
-			var eventType event.EventType
-			var dataType event.DataType
-			switch chainEvent.GetEvent().(type) {
-			case *kafkaevent.ChainEvent_GovernanceProposal:
-				var ignoredStates = []string{
-					proposal.StatusPROPOSAL_STATUS_UNSPECIFIED.String(),
-					proposal.StatusPROPOSAL_STATUS_DEPOSIT_PERIOD.String(),
-				}
-				if slices.Contains(ignoredStates, chainEvent.GetGovernanceProposal().GetProposalStatus().String()) {
-					continue
-				}
-				eventType = event.EventTypeGOVERNANCE
-				dataType = getProposalDataType(chainEvent.GetGovernanceProposal().GetProposalStatus())
-			case *kafkaevent.ChainEvent_ValidatorOutOfActiveSet:
-				eventType, dataType = event.EventTypeSTAKING, event.DataTypeChainEvent_ValidatorOutOfActiveSet
-			case *kafkaevent.ChainEvent_ValidatorSlash:
-				eventType, dataType = event.EventTypeSTAKING, event.DataTypeChainEvent_ValidatorSlash
-			default:
-				log.Sugar.Errorf("Unknown event type: %v", reflect.TypeOf(chainEvent.GetEvent()))
-			}
-			if dTypes, ok := elMap[chainEvent.ChainId]; ok {
-				if els, ok := dTypes[dataType]; ok {
-					for _, el := range els {
-						_, err := k.eventListenerManager.UpdateAddChainEvent(context.Background(), el, &chainEvent, eventType, dataType)
-						if err != nil {
-							log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err)
-						} else {
-							if chainEvent.NotifyTime.AsTime().Before(time.Now()) {
-								pbEvents = append(pbEvents, &kafkaevent.EventProcessedMsg{
-									ChainId:       chainEvent.ChainId,
-									WalletAddress: "",
-									EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
-								})
-								log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
-							}
-						}
+			k.processChainEvent(msg, &elMapMutex, &chainsMutex, elMap, chains, &chainEvent)
+		}
+	}
+}
+
+func (k *Kafka) processContractEvent(
+	msg kafka.Message,
+	elMapMutex *sync.Mutex,
+	chainsMutex *sync.Mutex,
+	elMap map[uint64]map[event.DataType][]*ent.EventListener,
+	chains map[uint64]*ent.Chain,
+	contractEvent *kafkaevent.ContractEvent,
+) {
+	elMapMutex.Lock()
+	chainsMutex.Lock()
+	defer elMapMutex.Unlock()
+	defer chainsMutex.Unlock()
+
+	chain, ok := chains[contractEvent.ChainId]
+	if !ok {
+		log.Sugar.Panicf("failed to find chain %v", contractEvent.ChainId)
+	}
+	log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
+	var pbEvents []*kafkaevent.EventProcessedMsg
+	var eventType event.EventType
+	var dataType event.DataType
+	switch contractEvent.GetEvent().(type) {
+	case *kafkaevent.ContractEvent_ContractGovernanceProposal:
+		dataType = getContractProposalDataType(contractEvent.GetContractGovernanceProposal().GetProposalStatus())
+		eventType = event.EventTypeGOVERNANCE
+	default:
+		log.Sugar.Errorf("Unknown event type: %v", reflect.TypeOf(contractEvent.GetEvent()))
+	}
+	if dTypes, ok := elMap[contractEvent.ChainId]; ok {
+		if els, ok := dTypes[dataType]; ok {
+			for _, el := range els {
+				_, err := k.eventListenerManager.UpdateAddContractEvent(context.Background(), el, contractEvent, eventType, dataType)
+				if err != nil {
+					log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err)
+				} else {
+					if contractEvent.NotifyTime.AsTime().Before(time.Now()) {
+						pbEvents = append(pbEvents, &kafkaevent.EventProcessedMsg{
+							ChainId:       contractEvent.ChainId,
+							WalletAddress: "",
+							EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
+						})
+						log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
 					}
 				}
 			}
-			if len(pbEvents) > 0 {
-				log.Sugar.Debugf("Produce %v events", len(pbEvents))
-				k.produceProcessedEvents(pbEvents)
-			}
-			elMapMutex.Unlock()
-			chainsMutex.Unlock()
 		}
+	}
+	if len(pbEvents) > 0 {
+		log.Sugar.Debugf("Produce %v events", len(pbEvents))
+		k.produceProcessedEvents(pbEvents)
 	}
 }
 
@@ -391,13 +473,17 @@ func (k *Kafka) ProcessContractEvents() {
 		for change := range ch {
 			switch change {
 			case kafka_internal.EventListenerCreated, kafka_internal.EventListenerDeleted:
-				elMapMutex.Lock()
-				elMap = k.getEventListenerMapForChains(false)
-				elMapMutex.Unlock()
+				func() {
+					elMapMutex.Lock()
+					defer elMapMutex.Unlock()
+					elMap = k.getEventListenerMapForChains(false)
+				}()
 			case kafka_internal.ChainEnabled, kafka_internal.ChainDisabled:
-				chainsMutex.Lock()
-				chains = k.getChains()
-				chainsMutex.Unlock()
+				func() {
+					chainsMutex.Lock()
+					defer chainsMutex.Unlock()
+					chains = k.getChains()
+				}()
 			}
 		}
 	}()
@@ -412,48 +498,7 @@ func (k *Kafka) ProcessContractEvents() {
 		if err != nil {
 			log.Sugar.Error(err)
 		} else {
-			elMapMutex.Lock()
-			chainsMutex.Lock()
-			chain, ok := chains[contractEvent.ChainId]
-			if !ok {
-				log.Sugar.Panicf("failed to find chain %v", contractEvent.ChainId)
-			}
-			log.Sugar.Debugf("Processing event %v for chain %v", msg.Offset, chain.PrettyName)
-			var pbEvents []*kafkaevent.EventProcessedMsg
-			var eventType event.EventType
-			var dataType event.DataType
-			switch contractEvent.GetEvent().(type) {
-			case *kafkaevent.ContractEvent_ContractGovernanceProposal:
-				dataType = getContractProposalDataType(contractEvent.GetContractGovernanceProposal().GetProposalStatus())
-				eventType = event.EventTypeGOVERNANCE
-			default:
-				log.Sugar.Errorf("Unknown event type: %v", reflect.TypeOf(contractEvent.GetEvent()))
-			}
-			if dTypes, ok := elMap[contractEvent.ChainId]; ok {
-				if els, ok := dTypes[dataType]; ok {
-					for _, el := range els {
-						_, err := k.eventListenerManager.UpdateAddContractEvent(context.Background(), el, &contractEvent, eventType, dataType)
-						if err != nil {
-							log.Sugar.Errorf("failed to update event for %v: %v", el.WalletAddress, err)
-						} else {
-							if contractEvent.NotifyTime.AsTime().Before(time.Now()) {
-								pbEvents = append(pbEvents, &kafkaevent.EventProcessedMsg{
-									ChainId:       contractEvent.ChainId,
-									WalletAddress: "",
-									EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
-								})
-								log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
-							}
-						}
-					}
-				}
-			}
-			if len(pbEvents) > 0 {
-				log.Sugar.Debugf("Produce %v events", len(pbEvents))
-				k.produceProcessedEvents(pbEvents)
-			}
-			elMapMutex.Unlock()
-			chainsMutex.Unlock()
+			k.processContractEvent(msg, &elMapMutex, &chainsMutex, elMap, chains, &contractEvent)
 		}
 	}
 }

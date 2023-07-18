@@ -19,6 +19,7 @@ import (
 	"io"
 	"sort"
 	"sync"
+	"time"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -416,6 +417,7 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 					Bech32Address: bech32Address,
 					LogoUrl:       chain.Image,
 				}
+				time.Sleep(20 * time.Millisecond)
 				err = stream.Send(&userpb.SearchWalletsResponse{
 					Wallet: wallet,
 				})

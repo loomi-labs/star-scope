@@ -60,7 +60,7 @@ func (s *SettingsService) AddWallet(ctx context.Context, request *connect.Reques
 		return nil, types.UnknownErr
 	}
 
-	err = s.userManager.UpdateWallet(ctx, user, chain, request.Msg)
+	err = s.eventListenerManager.UpdateWallet(ctx, user, chain, request.Msg)
 	if err != nil {
 		log.Sugar.Error("failed to update wallet: ", err)
 		return nil, types.UnknownErr
@@ -82,7 +82,7 @@ func (s *SettingsService) UpdateWallet(ctx context.Context, request *connect.Req
 		return nil, types.UnknownErr
 	}
 
-	err = s.userManager.UpdateWallet(ctx, user, chain, request.Msg)
+	err = s.eventListenerManager.UpdateWallet(ctx, user, chain, request.Msg)
 	if err != nil {
 		log.Sugar.Error("failed to update wallet: ", err)
 		return nil, types.UnknownErr
@@ -105,7 +105,7 @@ func (s *SettingsService) RemoveWallet(ctx context.Context, request *connect.Req
 		NotifyGovVotingReminder: false,
 	}
 
-	err := s.userManager.UpdateWallet(ctx, user, nil, update)
+	err := s.eventListenerManager.UpdateWallet(ctx, user, nil, update)
 	if err != nil {
 		log.Sugar.Error("failed to remove wallet: ", err)
 		return nil, types.UnknownErr

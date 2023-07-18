@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
@@ -16,6 +17,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/user"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
+	"github.com/loomi-labs/star-scope/grpc/settings/settingspb"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -354,4 +356,127 @@ func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *e
 		Update().
 		SetLastEventTime(updatetime).
 		Save(ctx)
+}
+
+type updateResult struct {
+	totalCreated int
+	totalDeleted int
+}
+
+func (m *EventListenerManager) createOrDeleteEventListener(ctx context.Context, tx *ent.Tx, entUser *ent.User, entChain *ent.Chain, walletAddress string, dataType eventlistener.DataType, create bool, result *updateResult) error {
+	exists, err := tx.EventListener.
+		Query().
+		Where(eventlistener.And(
+			eventlistener.HasUsersWith(user.IDEQ(entUser.ID)),
+			eventlistener.WalletAddressEQ(walletAddress),
+			eventlistener.DataTypeEQ(dataType),
+		)).
+		Exist(ctx)
+	if err != nil {
+		return err
+	}
+	if !exists && create {
+		result.totalCreated += 1
+		commChannels, err := entUser.QueryCommChannels().IDs(ctx)
+		if err != nil {
+			return err
+		}
+		err = tx.EventListener.
+			Create().
+			SetChain(entChain).
+			AddUsers(entUser).
+			AddCommChannelIDs(commChannels...).
+			SetWalletAddress(walletAddress).
+			SetDataType(dataType).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	} else if exists && !create {
+		cntDeleted, err := tx.EventListener.
+			Delete().
+			Where(eventlistener.And(
+				eventlistener.HasUsersWith(user.IDEQ(entUser.ID)),
+				eventlistener.WalletAddressEQ(walletAddress),
+				eventlistener.DataTypeEQ(dataType),
+			)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		result.totalDeleted += cntDeleted
+	}
+	return nil
+}
+
+func (m *EventListenerManager) UpdateWallet(ctx context.Context, entUser *ent.User, entChain *ent.Chain, update *settingspb.UpdateWalletRequest) error {
+	if update.GetWalletAddress() == "" {
+		return fmt.Errorf("wallet address is required")
+	}
+	result, err := withTxResult(m.client, ctx, func(tx *ent.Tx) (*updateResult, error) {
+		result := &updateResult{}
+		err := m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_CoinReceived,
+			update.GetNotifyFunding(),
+			result,
+		)
+		if err != nil {
+			return result, err
+		}
+		err = m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_Unstake,
+			update.GetNotifyStaking(),
+			result,
+		)
+		if err != nil {
+			return result, err
+		}
+		err = m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_Voted,
+			update.GetNotifyGovVotingReminder(),
+			result,
+		)
+		if err != nil {
+			return result, err
+		}
+		err = m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_VoteReminder,
+			update.GetNotifyGovVotingReminder(),
+			result,
+		)
+		if err != nil {
+			return result, err
+		}
+		return result, nil
+	})
+	if err != nil {
+		return err
+	}
+	if result.totalCreated > 0 {
+		go m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerCreated)
+	}
+	if result.totalDeleted > 0 {
+		go m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
+	}
+	return nil
 }
