@@ -235,8 +235,8 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
                 button(class=format!("flex justify-center items-center w-10 h-10 md:w-14 md:h-14 opacity-100 rounded-full {}",
                         if *has_new_wallet.get() { "bg-red-500 hover:bg-red-600" } else { "bg-green-500 hover:bg-green-600" }),
                         on:click=move |_| has_new_wallet.set(!*has_new_wallet.get())) {
-                    span(class=format!("w-6 h-6 md:w-10 md:h-10 cursor-pointer {}",
-                        if *has_new_wallet.get() { "icon-[iconoir--cancel]" } else { "icon-[ic--round-add]" })) {}
+                    span(class=format!("w-6 h-6 md:w-10 md:h-10 icon-[ic--round-add] cursor-pointer transform transition-all duration-500 {}",
+                        if *has_new_wallet.get() { "rotate-45" } else { "" })) {}
                 }
             }
             (if !*has_new_wallet.get() {
