@@ -1,113 +1,11 @@
-use crate::components::messages::{
-    create_error_msg_from_status, create_message, create_timed_message,
-};
+use crate::components::messages::create_message;
+use crate::pages::notification_settings::queries::{self, Update, WalletValidation};
 use crate::types::protobuf::grpc_settings::{
-    RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Wallet,
+    UpdateWalletRequest, Wallet,
 };
-use crate::{AppState, InfoLevel, Services};
+use crate::{AppState, InfoLevel};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
-
-async fn query_wallets(cx: Scope<'_>) -> Result<Vec<Wallet>, ()> {
-    let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(());
-    let response = services
-        .grpc_client
-        .get_settings_service()
-        .get_wallets(request)
-        .await
-        .map(|res| res.into_inner());
-    if let Ok(result) = response {
-        Ok(result.wallets)
-    } else {
-        create_error_msg_from_status(cx, response.err().unwrap());
-        Err(())
-    }
-}
-enum Update {
-    Funding,
-    Staking,
-    GovVotingReminder,
-}
-
-async fn update_existing_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Update) {
-    let wallet = create_ref(cx, wallet_sig.get_untracked());
-    let notify_funding = if let Update::Funding = update {
-        !wallet.notify_funding
-    } else {
-        wallet.notify_funding
-    };
-    let notify_staking = if let Update::Staking = update {
-        !wallet.notify_staking
-    } else {
-        wallet.notify_staking
-    };
-    let notify_gov_voting_reminder = if let Update::GovVotingReminder = update {
-        !wallet.notify_gov_voting_reminder
-    } else {
-        wallet.notify_gov_voting_reminder
-    };
-    let request = UpdateWalletRequest {
-        wallet_address: wallet.address.clone(),
-        notify_funding,
-        notify_staking,
-        notify_gov_voting_reminder,
-    };
-
-    let result = update_wallet(cx, wallet_sig, request).await;
-    if result.is_ok() {
-        let msg = match update {
-            Update::Funding => {
-                if notify_funding {
-                    "You will be notified about funding events"
-                } else {
-                    "You will no longer be notified about funding events"
-                }
-            }
-            Update::Staking => {
-                if notify_staking {
-                    "You will be notified about staking events"
-                } else {
-                    "You will no longer be notified about staking events"
-                }
-            }
-            Update::GovVotingReminder => {
-                if notify_gov_voting_reminder {
-                    "You will be notified to vote on governance proposals"
-                } else {
-                    "You will no longer be notified to vote on governance proposals"
-                }
-            }
-        };
-        create_timed_message(cx, "Wallet updated", msg, InfoLevel::Success, 5);
-    }
-}
-
-async fn update_wallet(
-    cx: Scope<'_>,
-    wallet: &Signal<Wallet>,
-    update: UpdateWalletRequest,
-) -> Result<(), ()> {
-    let update_ref = create_ref(cx, update.clone());
-    let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(update);
-    let response = services
-        .grpc_client
-        .get_settings_service()
-        .update_wallet(request)
-        .await
-        .map(|res| res.into_inner());
-
-    if response.is_ok() {
-        wallet.modify().notify_funding = update_ref.notify_funding;
-        wallet.modify().notify_staking = update_ref.notify_staking;
-        wallet.modify().notify_gov_voting_reminder = update_ref.notify_gov_voting_reminder;
-        Ok(())
-    } else {
-        create_error_msg_from_status(cx, response.err().unwrap());
-        Err(())
-    }
-}
 
 const BUTTON_ROW_CLASS: &str =
     "flex items-center cursor-pointer py-1 px-2 space-x-2 rounded-lg hover:bg-purple-600";
@@ -133,46 +31,6 @@ fn Tooltip<G: Html>(cx: Scope, title: &'static str) -> View<G> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-enum WalletValidation {
-    Valid(Wallet),
-    Invalid(String),
-}
-
-async fn query_validate_wallet(cx: Scope<'_>, address: String) -> WalletValidation {
-    let services = use_context::<Services>(cx);
-    let request = services
-        .grpc_client
-        .create_request(ValidateWalletRequest { address });
-    let response = services
-        .grpc_client
-        .get_settings_service()
-        .validate_wallet(request)
-        .await
-        .map(|res| res.into_inner());
-    if let Ok(response) = response {
-        if response.is_valid {
-            if response.is_supported {
-                if response.is_already_added {
-                    return WalletValidation::Invalid("Wallet already added".to_string());
-                }
-                if let Some(wallet) = response.wallet {
-                    return WalletValidation::Valid(wallet);
-                }
-                create_message(cx, "Error", "Wallet not found", InfoLevel::Error);
-                WalletValidation::Invalid("Wallet not found".to_string())
-            } else {
-                WalletValidation::Invalid("Chain is currently not supported".to_string())
-            }
-        } else {
-            WalletValidation::Invalid("Invalid wallet address".to_string())
-        }
-    } else {
-        create_error_msg_from_status(cx, response.err().unwrap());
-        WalletValidation::Invalid("Error".to_string())
-    }
-}
-
 #[component(inline_props)]
 fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wallet>>>) -> View<G> {
     let new_wallet_address = create_signal(cx, String::new());
@@ -195,8 +53,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
             )));
         } else {
             spawn_local_scoped(cx, async move {
-                let result =
-                    query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
+                let result =  queries::query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
                 validation.set(Some(result.clone()));
                 if let WalletValidation::Valid(wallet) = result {
                     let request = UpdateWalletRequest {
@@ -206,7 +63,7 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
                         notify_gov_voting_reminder: true,
                     };
                     let wallet_sig = create_signal(cx, wallet.clone());
-                    if update_wallet(cx, wallet_sig, request).await.is_ok() {
+                    if queries::update_wallet(cx, wallet_sig, request).await.is_ok() {
                         wallets.modify().push(wallet_sig);
                         new_wallet_address.set(String::new());
                         has_new_wallet.set(false);
@@ -269,33 +126,6 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
                 }
             }
         }
-    }
-}
-
-async fn delete_wallet(cx: Scope<'_>, wallet_address: String) -> Result<(), ()> {
-    let services = use_context::<Services>(cx);
-    let request = services.grpc_client.create_request(RemoveWalletRequest {
-        wallet_address: wallet_address.clone(),
-    });
-    let response = services
-        .grpc_client
-        .get_settings_service()
-        .remove_wallet(request)
-        .await
-        .map(|res| res.into_inner());
-
-    if response.is_ok() {
-        create_timed_message(
-            cx,
-            "Wallet deleted",
-            format!("Wallet {} was deleted", wallet_address),
-            InfoLevel::Success,
-            5,
-        );
-        Ok(())
-    } else {
-        create_error_msg_from_status(cx, response.err().unwrap());
-        Err(())
     }
 }
 
@@ -364,7 +194,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
         if let Some(wallet_address) = delete_signal.get().as_ref().clone() {
             let mut wallets: Modify<'_, Vec<&Signal<Wallet>>> = wallets.modify();
             spawn_local_scoped(cx, async move {
-                if delete_wallet(cx, wallet_address.clone()).await.is_ok() {
+                if queries::delete_wallet(cx, wallet_address.clone()).await.is_ok() {
                     wallets.retain(|w| w.get().address != wallet_address);
                 }
             });
@@ -380,7 +210,7 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
                     let cloned = wallet.get().as_ref().clone();
                     let handle_update = move |update: Update| {
                         spawn_local_scoped(cx, async move {
-                            update_existing_wallet(cx, wallet, update).await;
+                            queries::update_existing_wallet(cx, wallet, update).await;
                         });
                     };
 
@@ -454,7 +284,7 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
     let wallets: &'_ Signal<Vec<&'_ Signal<Wallet>>> = create_signal(cx, vec![]);
 
     spawn_local_scoped(cx, async move {
-        let result = query_wallets(cx).await;
+        let result = queries::query_wallets(cx).await;
         if let Ok(result_wallets) = result {
             let new_wallets: Vec<&Signal<Wallet>> = result_wallets
                 .iter()
