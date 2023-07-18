@@ -46,6 +46,10 @@ const (
 	FieldIsQuerying = "is_querying"
 	// FieldIsIndexing holds the string denoting the is_indexing field in the database.
 	FieldIsIndexing = "is_indexing"
+	// FieldLastSuccessfulProposalQuery holds the string denoting the last_successful_proposal_query field in the database.
+	FieldLastSuccessfulProposalQuery = "last_successful_proposal_query"
+	// FieldLastSuccessfulValidatorQuery holds the string denoting the last_successful_validator_query field in the database.
+	FieldLastSuccessfulValidatorQuery = "last_successful_validator_query"
 	// EdgeEventListeners holds the string denoting the event_listeners edge name in mutations.
 	EdgeEventListeners = "event_listeners"
 	// EdgeProposals holds the string denoting the proposals edge name in mutations.
@@ -112,6 +116,8 @@ var Columns = []string{
 	FieldIsEnabled,
 	FieldIsQuerying,
 	FieldIsIndexing,
+	FieldLastSuccessfulProposalQuery,
+	FieldLastSuccessfulValidatorQuery,
 }
 
 var (
@@ -241,6 +247,16 @@ func ByIsQuerying(opts ...sql.OrderTermOption) OrderOption {
 // ByIsIndexing orders the results by the is_indexing field.
 func ByIsIndexing(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsIndexing, opts...).ToFunc()
+}
+
+// ByLastSuccessfulProposalQuery orders the results by the last_successful_proposal_query field.
+func ByLastSuccessfulProposalQuery(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastSuccessfulProposalQuery, opts...).ToFunc()
+}
+
+// ByLastSuccessfulValidatorQuery orders the results by the last_successful_validator_query field.
+func ByLastSuccessfulValidatorQuery(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastSuccessfulValidatorQuery, opts...).ToFunc()
 }
 
 // ByEventListenersCount orders the results by event_listeners count.

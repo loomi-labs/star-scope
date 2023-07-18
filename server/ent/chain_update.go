@@ -188,6 +188,46 @@ func (cu *ChainUpdate) SetNillableIsIndexing(b *bool) *ChainUpdate {
 	return cu
 }
 
+// SetLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field.
+func (cu *ChainUpdate) SetLastSuccessfulProposalQuery(t time.Time) *ChainUpdate {
+	cu.mutation.SetLastSuccessfulProposalQuery(t)
+	return cu
+}
+
+// SetNillableLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableLastSuccessfulProposalQuery(t *time.Time) *ChainUpdate {
+	if t != nil {
+		cu.SetLastSuccessfulProposalQuery(*t)
+	}
+	return cu
+}
+
+// ClearLastSuccessfulProposalQuery clears the value of the "last_successful_proposal_query" field.
+func (cu *ChainUpdate) ClearLastSuccessfulProposalQuery() *ChainUpdate {
+	cu.mutation.ClearLastSuccessfulProposalQuery()
+	return cu
+}
+
+// SetLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field.
+func (cu *ChainUpdate) SetLastSuccessfulValidatorQuery(t time.Time) *ChainUpdate {
+	cu.mutation.SetLastSuccessfulValidatorQuery(t)
+	return cu
+}
+
+// SetNillableLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field if the given value is not nil.
+func (cu *ChainUpdate) SetNillableLastSuccessfulValidatorQuery(t *time.Time) *ChainUpdate {
+	if t != nil {
+		cu.SetLastSuccessfulValidatorQuery(*t)
+	}
+	return cu
+}
+
+// ClearLastSuccessfulValidatorQuery clears the value of the "last_successful_validator_query" field.
+func (cu *ChainUpdate) ClearLastSuccessfulValidatorQuery() *ChainUpdate {
+	cu.mutation.ClearLastSuccessfulValidatorQuery()
+	return cu
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cu *ChainUpdate) AddEventListenerIDs(ids ...int) *ChainUpdate {
 	cu.mutation.AddEventListenerIDs(ids...)
@@ -462,6 +502,18 @@ func (cu *ChainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.IsIndexing(); ok {
 		_spec.SetField(chain.FieldIsIndexing, field.TypeBool, value)
+	}
+	if value, ok := cu.mutation.LastSuccessfulProposalQuery(); ok {
+		_spec.SetField(chain.FieldLastSuccessfulProposalQuery, field.TypeTime, value)
+	}
+	if cu.mutation.LastSuccessfulProposalQueryCleared() {
+		_spec.ClearField(chain.FieldLastSuccessfulProposalQuery, field.TypeTime)
+	}
+	if value, ok := cu.mutation.LastSuccessfulValidatorQuery(); ok {
+		_spec.SetField(chain.FieldLastSuccessfulValidatorQuery, field.TypeTime, value)
+	}
+	if cu.mutation.LastSuccessfulValidatorQueryCleared() {
+		_spec.ClearField(chain.FieldLastSuccessfulValidatorQuery, field.TypeTime)
 	}
 	if cu.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -863,6 +915,46 @@ func (cuo *ChainUpdateOne) SetNillableIsIndexing(b *bool) *ChainUpdateOne {
 	return cuo
 }
 
+// SetLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field.
+func (cuo *ChainUpdateOne) SetLastSuccessfulProposalQuery(t time.Time) *ChainUpdateOne {
+	cuo.mutation.SetLastSuccessfulProposalQuery(t)
+	return cuo
+}
+
+// SetNillableLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableLastSuccessfulProposalQuery(t *time.Time) *ChainUpdateOne {
+	if t != nil {
+		cuo.SetLastSuccessfulProposalQuery(*t)
+	}
+	return cuo
+}
+
+// ClearLastSuccessfulProposalQuery clears the value of the "last_successful_proposal_query" field.
+func (cuo *ChainUpdateOne) ClearLastSuccessfulProposalQuery() *ChainUpdateOne {
+	cuo.mutation.ClearLastSuccessfulProposalQuery()
+	return cuo
+}
+
+// SetLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field.
+func (cuo *ChainUpdateOne) SetLastSuccessfulValidatorQuery(t time.Time) *ChainUpdateOne {
+	cuo.mutation.SetLastSuccessfulValidatorQuery(t)
+	return cuo
+}
+
+// SetNillableLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field if the given value is not nil.
+func (cuo *ChainUpdateOne) SetNillableLastSuccessfulValidatorQuery(t *time.Time) *ChainUpdateOne {
+	if t != nil {
+		cuo.SetLastSuccessfulValidatorQuery(*t)
+	}
+	return cuo
+}
+
+// ClearLastSuccessfulValidatorQuery clears the value of the "last_successful_validator_query" field.
+func (cuo *ChainUpdateOne) ClearLastSuccessfulValidatorQuery() *ChainUpdateOne {
+	cuo.mutation.ClearLastSuccessfulValidatorQuery()
+	return cuo
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cuo *ChainUpdateOne) AddEventListenerIDs(ids ...int) *ChainUpdateOne {
 	cuo.mutation.AddEventListenerIDs(ids...)
@@ -1167,6 +1259,18 @@ func (cuo *ChainUpdateOne) sqlSave(ctx context.Context) (_node *Chain, err error
 	}
 	if value, ok := cuo.mutation.IsIndexing(); ok {
 		_spec.SetField(chain.FieldIsIndexing, field.TypeBool, value)
+	}
+	if value, ok := cuo.mutation.LastSuccessfulProposalQuery(); ok {
+		_spec.SetField(chain.FieldLastSuccessfulProposalQuery, field.TypeTime, value)
+	}
+	if cuo.mutation.LastSuccessfulProposalQueryCleared() {
+		_spec.ClearField(chain.FieldLastSuccessfulProposalQuery, field.TypeTime)
+	}
+	if value, ok := cuo.mutation.LastSuccessfulValidatorQuery(); ok {
+		_spec.SetField(chain.FieldLastSuccessfulValidatorQuery, field.TypeTime, value)
+	}
+	if cuo.mutation.LastSuccessfulValidatorQueryCleared() {
+		_spec.ClearField(chain.FieldLastSuccessfulValidatorQuery, field.TypeTime)
 	}
 	if cuo.mutation.EventListenersCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -135,6 +135,16 @@ func IsIndexing(v bool) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldIsIndexing, v))
 }
 
+// LastSuccessfulProposalQuery applies equality check predicate on the "last_successful_proposal_query" field. It's identical to LastSuccessfulProposalQueryEQ.
+func LastSuccessfulProposalQuery(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulValidatorQuery applies equality check predicate on the "last_successful_validator_query" field. It's identical to LastSuccessfulValidatorQueryEQ.
+func LastSuccessfulValidatorQuery(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldLastSuccessfulValidatorQuery, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Chain {
 	return predicate.Chain(sql.FieldEQ(FieldCreateTime, v))
@@ -878,6 +888,106 @@ func IsIndexingEQ(v bool) predicate.Chain {
 // IsIndexingNEQ applies the NEQ predicate on the "is_indexing" field.
 func IsIndexingNEQ(v bool) predicate.Chain {
 	return predicate.Chain(sql.FieldNEQ(FieldIsIndexing, v))
+}
+
+// LastSuccessfulProposalQueryEQ applies the EQ predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryEQ(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulProposalQueryNEQ applies the NEQ predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryNEQ(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulProposalQueryIn applies the In predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryIn(vs ...time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldLastSuccessfulProposalQuery, vs...))
+}
+
+// LastSuccessfulProposalQueryNotIn applies the NotIn predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryNotIn(vs ...time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldLastSuccessfulProposalQuery, vs...))
+}
+
+// LastSuccessfulProposalQueryGT applies the GT predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryGT(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulProposalQueryGTE applies the GTE predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryGTE(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulProposalQueryLT applies the LT predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryLT(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulProposalQueryLTE applies the LTE predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryLTE(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldLastSuccessfulProposalQuery, v))
+}
+
+// LastSuccessfulProposalQueryIsNil applies the IsNil predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryIsNil() predicate.Chain {
+	return predicate.Chain(sql.FieldIsNull(FieldLastSuccessfulProposalQuery))
+}
+
+// LastSuccessfulProposalQueryNotNil applies the NotNil predicate on the "last_successful_proposal_query" field.
+func LastSuccessfulProposalQueryNotNil() predicate.Chain {
+	return predicate.Chain(sql.FieldNotNull(FieldLastSuccessfulProposalQuery))
+}
+
+// LastSuccessfulValidatorQueryEQ applies the EQ predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryEQ(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldEQ(FieldLastSuccessfulValidatorQuery, v))
+}
+
+// LastSuccessfulValidatorQueryNEQ applies the NEQ predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryNEQ(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldNEQ(FieldLastSuccessfulValidatorQuery, v))
+}
+
+// LastSuccessfulValidatorQueryIn applies the In predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryIn(vs ...time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldIn(FieldLastSuccessfulValidatorQuery, vs...))
+}
+
+// LastSuccessfulValidatorQueryNotIn applies the NotIn predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryNotIn(vs ...time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldNotIn(FieldLastSuccessfulValidatorQuery, vs...))
+}
+
+// LastSuccessfulValidatorQueryGT applies the GT predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryGT(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldGT(FieldLastSuccessfulValidatorQuery, v))
+}
+
+// LastSuccessfulValidatorQueryGTE applies the GTE predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryGTE(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldGTE(FieldLastSuccessfulValidatorQuery, v))
+}
+
+// LastSuccessfulValidatorQueryLT applies the LT predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryLT(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldLT(FieldLastSuccessfulValidatorQuery, v))
+}
+
+// LastSuccessfulValidatorQueryLTE applies the LTE predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryLTE(v time.Time) predicate.Chain {
+	return predicate.Chain(sql.FieldLTE(FieldLastSuccessfulValidatorQuery, v))
+}
+
+// LastSuccessfulValidatorQueryIsNil applies the IsNil predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryIsNil() predicate.Chain {
+	return predicate.Chain(sql.FieldIsNull(FieldLastSuccessfulValidatorQuery))
+}
+
+// LastSuccessfulValidatorQueryNotNil applies the NotNil predicate on the "last_successful_validator_query" field.
+func LastSuccessfulValidatorQueryNotNil() predicate.Chain {
+	return predicate.Chain(sql.FieldNotNull(FieldLastSuccessfulValidatorQuery))
 }
 
 // HasEventListeners applies the HasEdge predicate on the "event_listeners" edge.

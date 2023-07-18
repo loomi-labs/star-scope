@@ -54,6 +54,12 @@ func (Chain) Fields() []ent.Field {
 			Default(false),
 		field.Bool("is_indexing").
 			Default(false),
+		field.Time("last_successful_proposal_query").
+			Nillable().
+			Optional(),
+		field.Time("last_successful_validator_query").
+			Nillable().
+			Optional(),
 	}
 }
 

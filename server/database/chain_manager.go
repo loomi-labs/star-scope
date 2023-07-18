@@ -195,6 +195,26 @@ func (m *ChainManager) UpdateIndexStatus(
 		Save(ctx)
 }
 
+func (m *ChainManager) UpdateSetLastSuccessfulProposalQuery(ctx context.Context, entChain *ent.Chain) {
+	err := entChain.
+		Update().
+		SetLastSuccessfulProposalQuery(time.Now()).
+		Exec(ctx)
+	if err != nil {
+		log.Sugar.Errorf("Error updating last successful proposal query: %v", err)
+	}
+}
+
+func (m *ChainManager) UpdateSetLastSuccessfulValidatorQuery(ctx context.Context, entChain *ent.Chain) {
+	err := entChain.
+		Update().
+		SetLastSuccessfulValidatorQuery(time.Now()).
+		Exec(ctx)
+	if err != nil {
+		log.Sugar.Errorf("Error updating last successful validator query: %v", err)
+	}
+}
+
 func (m *ChainManager) createProposal(ctx context.Context, entChain *ent.Chain, prop *types.Proposal) (*ent.Proposal, error) {
 	return m.client.Proposal.
 		Create().

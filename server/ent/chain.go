@@ -49,6 +49,10 @@ type Chain struct {
 	IsQuerying bool `json:"is_querying,omitempty"`
 	// IsIndexing holds the value of the "is_indexing" field.
 	IsIndexing bool `json:"is_indexing,omitempty"`
+	// LastSuccessfulProposalQuery holds the value of the "last_successful_proposal_query" field.
+	LastSuccessfulProposalQuery *time.Time `json:"last_successful_proposal_query,omitempty"`
+	// LastSuccessfulValidatorQuery holds the value of the "last_successful_validator_query" field.
+	LastSuccessfulValidatorQuery *time.Time `json:"last_successful_validator_query,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChainQuery when eager-loading is set.
 	Edges        ChainEdges `json:"edges"`
@@ -128,7 +132,7 @@ func (*Chain) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case chain.FieldChainID, chain.FieldName, chain.FieldPrettyName, chain.FieldPath, chain.FieldImage, chain.FieldBech32Prefix, chain.FieldRestEndpoint, chain.FieldHandledMessageTypes, chain.FieldUnhandledMessageTypes:
 			values[i] = new(sql.NullString)
-		case chain.FieldCreateTime, chain.FieldUpdateTime:
+		case chain.FieldCreateTime, chain.FieldUpdateTime, chain.FieldLastSuccessfulProposalQuery, chain.FieldLastSuccessfulValidatorQuery:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -247,6 +251,20 @@ func (c *Chain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.IsIndexing = value.Bool
 			}
+		case chain.FieldLastSuccessfulProposalQuery:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_successful_proposal_query", values[i])
+			} else if value.Valid {
+				c.LastSuccessfulProposalQuery = new(time.Time)
+				*c.LastSuccessfulProposalQuery = value.Time
+			}
+		case chain.FieldLastSuccessfulValidatorQuery:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_successful_validator_query", values[i])
+			} else if value.Valid {
+				c.LastSuccessfulValidatorQuery = new(time.Time)
+				*c.LastSuccessfulValidatorQuery = value.Time
+			}
 		default:
 			c.selectValues.Set(columns[i], values[i])
 		}
@@ -355,6 +373,16 @@ func (c *Chain) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_indexing=")
 	builder.WriteString(fmt.Sprintf("%v", c.IsIndexing))
+	builder.WriteString(", ")
+	if v := c.LastSuccessfulProposalQuery; v != nil {
+		builder.WriteString("last_successful_proposal_query=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := c.LastSuccessfulValidatorQuery; v != nil {
+		builder.WriteString("last_successful_validator_query=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

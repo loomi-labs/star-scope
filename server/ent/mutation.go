@@ -50,45 +50,47 @@ const (
 // ChainMutation represents an operation that mutates the Chain nodes in the graph.
 type ChainMutation struct {
 	config
-	op                        Op
-	typ                       string
-	id                        *int
-	create_time               *time.Time
-	update_time               *time.Time
-	chain_id                  *string
-	name                      *string
-	pretty_name               *string
-	_path                     *string
-	image                     *string
-	bech32_prefix             *string
-	rest_endpoint             *string
-	indexing_height           *uint64
-	addindexing_height        *int64
-	has_custom_indexer        *bool
-	handled_message_types     *string
-	unhandled_message_types   *string
-	is_enabled                *bool
-	is_querying               *bool
-	is_indexing               *bool
-	clearedFields             map[string]struct{}
-	event_listeners           map[int]struct{}
-	removedevent_listeners    map[int]struct{}
-	clearedevent_listeners    bool
-	proposals                 map[int]struct{}
-	removedproposals          map[int]struct{}
-	clearedproposals          bool
-	contract_proposals        map[int]struct{}
-	removedcontract_proposals map[int]struct{}
-	clearedcontract_proposals bool
-	validators                map[int]struct{}
-	removedvalidators         map[int]struct{}
-	clearedvalidators         bool
-	selected_by_setups        map[int]struct{}
-	removedselected_by_setups map[int]struct{}
-	clearedselected_by_setups bool
-	done                      bool
-	oldValue                  func(context.Context) (*Chain, error)
-	predicates                []predicate.Chain
+	op                              Op
+	typ                             string
+	id                              *int
+	create_time                     *time.Time
+	update_time                     *time.Time
+	chain_id                        *string
+	name                            *string
+	pretty_name                     *string
+	_path                           *string
+	image                           *string
+	bech32_prefix                   *string
+	rest_endpoint                   *string
+	indexing_height                 *uint64
+	addindexing_height              *int64
+	has_custom_indexer              *bool
+	handled_message_types           *string
+	unhandled_message_types         *string
+	is_enabled                      *bool
+	is_querying                     *bool
+	is_indexing                     *bool
+	last_successful_proposal_query  *time.Time
+	last_successful_validator_query *time.Time
+	clearedFields                   map[string]struct{}
+	event_listeners                 map[int]struct{}
+	removedevent_listeners          map[int]struct{}
+	clearedevent_listeners          bool
+	proposals                       map[int]struct{}
+	removedproposals                map[int]struct{}
+	clearedproposals                bool
+	contract_proposals              map[int]struct{}
+	removedcontract_proposals       map[int]struct{}
+	clearedcontract_proposals       bool
+	validators                      map[int]struct{}
+	removedvalidators               map[int]struct{}
+	clearedvalidators               bool
+	selected_by_setups              map[int]struct{}
+	removedselected_by_setups       map[int]struct{}
+	clearedselected_by_setups       bool
+	done                            bool
+	oldValue                        func(context.Context) (*Chain, error)
+	predicates                      []predicate.Chain
 }
 
 var _ ent.Mutation = (*ChainMutation)(nil)
@@ -785,6 +787,104 @@ func (m *ChainMutation) ResetIsIndexing() {
 	m.is_indexing = nil
 }
 
+// SetLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field.
+func (m *ChainMutation) SetLastSuccessfulProposalQuery(t time.Time) {
+	m.last_successful_proposal_query = &t
+}
+
+// LastSuccessfulProposalQuery returns the value of the "last_successful_proposal_query" field in the mutation.
+func (m *ChainMutation) LastSuccessfulProposalQuery() (r time.Time, exists bool) {
+	v := m.last_successful_proposal_query
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSuccessfulProposalQuery returns the old "last_successful_proposal_query" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldLastSuccessfulProposalQuery(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSuccessfulProposalQuery is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSuccessfulProposalQuery requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSuccessfulProposalQuery: %w", err)
+	}
+	return oldValue.LastSuccessfulProposalQuery, nil
+}
+
+// ClearLastSuccessfulProposalQuery clears the value of the "last_successful_proposal_query" field.
+func (m *ChainMutation) ClearLastSuccessfulProposalQuery() {
+	m.last_successful_proposal_query = nil
+	m.clearedFields[chain.FieldLastSuccessfulProposalQuery] = struct{}{}
+}
+
+// LastSuccessfulProposalQueryCleared returns if the "last_successful_proposal_query" field was cleared in this mutation.
+func (m *ChainMutation) LastSuccessfulProposalQueryCleared() bool {
+	_, ok := m.clearedFields[chain.FieldLastSuccessfulProposalQuery]
+	return ok
+}
+
+// ResetLastSuccessfulProposalQuery resets all changes to the "last_successful_proposal_query" field.
+func (m *ChainMutation) ResetLastSuccessfulProposalQuery() {
+	m.last_successful_proposal_query = nil
+	delete(m.clearedFields, chain.FieldLastSuccessfulProposalQuery)
+}
+
+// SetLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field.
+func (m *ChainMutation) SetLastSuccessfulValidatorQuery(t time.Time) {
+	m.last_successful_validator_query = &t
+}
+
+// LastSuccessfulValidatorQuery returns the value of the "last_successful_validator_query" field in the mutation.
+func (m *ChainMutation) LastSuccessfulValidatorQuery() (r time.Time, exists bool) {
+	v := m.last_successful_validator_query
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSuccessfulValidatorQuery returns the old "last_successful_validator_query" field's value of the Chain entity.
+// If the Chain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChainMutation) OldLastSuccessfulValidatorQuery(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSuccessfulValidatorQuery is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSuccessfulValidatorQuery requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSuccessfulValidatorQuery: %w", err)
+	}
+	return oldValue.LastSuccessfulValidatorQuery, nil
+}
+
+// ClearLastSuccessfulValidatorQuery clears the value of the "last_successful_validator_query" field.
+func (m *ChainMutation) ClearLastSuccessfulValidatorQuery() {
+	m.last_successful_validator_query = nil
+	m.clearedFields[chain.FieldLastSuccessfulValidatorQuery] = struct{}{}
+}
+
+// LastSuccessfulValidatorQueryCleared returns if the "last_successful_validator_query" field was cleared in this mutation.
+func (m *ChainMutation) LastSuccessfulValidatorQueryCleared() bool {
+	_, ok := m.clearedFields[chain.FieldLastSuccessfulValidatorQuery]
+	return ok
+}
+
+// ResetLastSuccessfulValidatorQuery resets all changes to the "last_successful_validator_query" field.
+func (m *ChainMutation) ResetLastSuccessfulValidatorQuery() {
+	m.last_successful_validator_query = nil
+	delete(m.clearedFields, chain.FieldLastSuccessfulValidatorQuery)
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by ids.
 func (m *ChainMutation) AddEventListenerIDs(ids ...int) {
 	if m.event_listeners == nil {
@@ -1089,7 +1189,7 @@ func (m *ChainMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChainMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 18)
 	if m.create_time != nil {
 		fields = append(fields, chain.FieldCreateTime)
 	}
@@ -1138,6 +1238,12 @@ func (m *ChainMutation) Fields() []string {
 	if m.is_indexing != nil {
 		fields = append(fields, chain.FieldIsIndexing)
 	}
+	if m.last_successful_proposal_query != nil {
+		fields = append(fields, chain.FieldLastSuccessfulProposalQuery)
+	}
+	if m.last_successful_validator_query != nil {
+		fields = append(fields, chain.FieldLastSuccessfulValidatorQuery)
+	}
 	return fields
 }
 
@@ -1178,6 +1284,10 @@ func (m *ChainMutation) Field(name string) (ent.Value, bool) {
 		return m.IsQuerying()
 	case chain.FieldIsIndexing:
 		return m.IsIndexing()
+	case chain.FieldLastSuccessfulProposalQuery:
+		return m.LastSuccessfulProposalQuery()
+	case chain.FieldLastSuccessfulValidatorQuery:
+		return m.LastSuccessfulValidatorQuery()
 	}
 	return nil, false
 }
@@ -1219,6 +1329,10 @@ func (m *ChainMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldIsQuerying(ctx)
 	case chain.FieldIsIndexing:
 		return m.OldIsIndexing(ctx)
+	case chain.FieldLastSuccessfulProposalQuery:
+		return m.OldLastSuccessfulProposalQuery(ctx)
+	case chain.FieldLastSuccessfulValidatorQuery:
+		return m.OldLastSuccessfulValidatorQuery(ctx)
 	}
 	return nil, fmt.Errorf("unknown Chain field %s", name)
 }
@@ -1340,6 +1454,20 @@ func (m *ChainMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIsIndexing(v)
 		return nil
+	case chain.FieldLastSuccessfulProposalQuery:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSuccessfulProposalQuery(v)
+		return nil
+	case chain.FieldLastSuccessfulValidatorQuery:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSuccessfulValidatorQuery(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)
 }
@@ -1384,7 +1512,14 @@ func (m *ChainMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ChainMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(chain.FieldLastSuccessfulProposalQuery) {
+		fields = append(fields, chain.FieldLastSuccessfulProposalQuery)
+	}
+	if m.FieldCleared(chain.FieldLastSuccessfulValidatorQuery) {
+		fields = append(fields, chain.FieldLastSuccessfulValidatorQuery)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1397,6 +1532,14 @@ func (m *ChainMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ChainMutation) ClearField(name string) error {
+	switch name {
+	case chain.FieldLastSuccessfulProposalQuery:
+		m.ClearLastSuccessfulProposalQuery()
+		return nil
+	case chain.FieldLastSuccessfulValidatorQuery:
+		m.ClearLastSuccessfulValidatorQuery()
+		return nil
+	}
 	return fmt.Errorf("unknown Chain nullable field %s", name)
 }
 
@@ -1451,6 +1594,12 @@ func (m *ChainMutation) ResetField(name string) error {
 		return nil
 	case chain.FieldIsIndexing:
 		m.ResetIsIndexing()
+		return nil
+	case chain.FieldLastSuccessfulProposalQuery:
+		m.ResetLastSuccessfulProposalQuery()
+		return nil
+	case chain.FieldLastSuccessfulValidatorQuery:
+		m.ResetLastSuccessfulValidatorQuery()
 		return nil
 	}
 	return fmt.Errorf("unknown Chain field %s", name)

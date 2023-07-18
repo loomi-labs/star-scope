@@ -201,6 +201,34 @@ func (cc *ChainCreate) SetNillableIsIndexing(b *bool) *ChainCreate {
 	return cc
 }
 
+// SetLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field.
+func (cc *ChainCreate) SetLastSuccessfulProposalQuery(t time.Time) *ChainCreate {
+	cc.mutation.SetLastSuccessfulProposalQuery(t)
+	return cc
+}
+
+// SetNillableLastSuccessfulProposalQuery sets the "last_successful_proposal_query" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableLastSuccessfulProposalQuery(t *time.Time) *ChainCreate {
+	if t != nil {
+		cc.SetLastSuccessfulProposalQuery(*t)
+	}
+	return cc
+}
+
+// SetLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field.
+func (cc *ChainCreate) SetLastSuccessfulValidatorQuery(t time.Time) *ChainCreate {
+	cc.mutation.SetLastSuccessfulValidatorQuery(t)
+	return cc
+}
+
+// SetNillableLastSuccessfulValidatorQuery sets the "last_successful_validator_query" field if the given value is not nil.
+func (cc *ChainCreate) SetNillableLastSuccessfulValidatorQuery(t *time.Time) *ChainCreate {
+	if t != nil {
+		cc.SetLastSuccessfulValidatorQuery(*t)
+	}
+	return cc
+}
+
 // AddEventListenerIDs adds the "event_listeners" edge to the EventListener entity by IDs.
 func (cc *ChainCreate) AddEventListenerIDs(ids ...int) *ChainCreate {
 	cc.mutation.AddEventListenerIDs(ids...)
@@ -492,6 +520,14 @@ func (cc *ChainCreate) createSpec() (*Chain, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.IsIndexing(); ok {
 		_spec.SetField(chain.FieldIsIndexing, field.TypeBool, value)
 		_node.IsIndexing = value
+	}
+	if value, ok := cc.mutation.LastSuccessfulProposalQuery(); ok {
+		_spec.SetField(chain.FieldLastSuccessfulProposalQuery, field.TypeTime, value)
+		_node.LastSuccessfulProposalQuery = &value
+	}
+	if value, ok := cc.mutation.LastSuccessfulValidatorQuery(); ok {
+		_spec.SetField(chain.FieldLastSuccessfulValidatorQuery, field.TypeTime, value)
+		_node.LastSuccessfulValidatorQuery = &value
 	}
 	if nodes := cc.mutation.EventListenersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

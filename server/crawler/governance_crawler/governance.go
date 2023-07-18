@@ -15,6 +15,7 @@ import (
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
+	"time"
 )
 
 const urlProposals = "%v/cosmos/gov/v1beta1/proposals"
@@ -62,10 +63,20 @@ func (c *GovernanceCrawler) createGovEvent(chain *ent.Chain, prop *types.Proposa
 	return pbEvent, nil
 }
 
+func (c *GovernanceCrawler) reportErrorIfNecessary(chain *ent.Chain, err error) {
+	// If the last successful proposal query was less than 3 days ago, don't report the error
+	if chain.LastSuccessfulProposalQuery != nil && chain.LastSuccessfulProposalQuery.Add(24*time.Hour*3).After(time.Now()) {
+		log.Sugar.Debugf("error while fetching proposals for chain %v: %v", chain.Name, err)
+	} else {
+		log.Sugar.Errorf("error while fetching proposals for chain %v: %v", chain.Name, err)
+	}
+}
+
 func (c *GovernanceCrawler) fetchProposals() {
 	log.Sugar.Debug("Fetching governance proposals")
 
-	var chains = c.chainManager.QueryIsQueryingWithProposals(context.Background())
+	var ctx = context.Background()
+	var chains = c.chainManager.QueryIsQueryingWithProposals(ctx)
 
 	var pbEvents [][]byte
 	for _, chain := range chains {
@@ -86,7 +97,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 		var resp types.ProposalsResponse
 		_, err := common.GetJson(url, 5, &resp)
 		if err != nil {
-			log.Sugar.Errorf("while fetching proposals for chain %v: %v", chain.Name, err)
+			c.reportErrorIfNecessary(chain, err)
 			continue
 		}
 		for _, prop := range resp.Proposals {
@@ -95,7 +106,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 				if uint64(prop.ProposalId) == currentProp.ProposalID {
 					if prop.Status.String() != currentProp.Status.String() {
 						log.Sugar.Debugf("Proposal %v changed status from %v to %v", prop.ProposalId, currentProp.Status.String(), prop.Status.String())
-						_, err := c.chainManager.CreateOrUpdateProposal(context.Background(), chain, &prop)
+						_, err := c.chainManager.CreateOrUpdateProposal(ctx, chain, &prop)
 						if err != nil {
 							log.Sugar.Errorf("while updating proposal %v: %v", prop.ProposalId, err)
 							break
@@ -113,7 +124,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 			}
 			if !found {
 				log.Sugar.Debugf("New proposal on %v #%v", chain.Name, prop.ProposalId)
-				_, err := c.chainManager.CreateOrUpdateProposal(context.Background(), chain, &prop)
+				_, err := c.chainManager.CreateOrUpdateProposal(ctx, chain, &prop)
 				if err != nil {
 					log.Sugar.Errorf("while creating proposal %v: %v", prop.ProposalId, err)
 					break
@@ -127,6 +138,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 				continue
 			}
 		}
+		c.chainManager.UpdateSetLastSuccessfulProposalQuery(ctx, chain)
 	}
 	if len(pbEvents) > 0 {
 		log.Sugar.Debugf("Sending %v governance events", len(pbEvents))

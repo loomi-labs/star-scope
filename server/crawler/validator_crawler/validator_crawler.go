@@ -87,20 +87,30 @@ func (c *ValidatorCrawler) createOutOfActiveSetEvent(chain *ent.Chain, validator
 	return pbEvent, nil
 }
 
+func (c *ValidatorCrawler) reportErrorIfNecessary(chain *ent.Chain, url string, err error) {
+	// If the last successful validator query was less than 3 days ago, don't report the error
+	if chain.LastSuccessfulValidatorQuery != nil && chain.LastSuccessfulValidatorQuery.Add(24*time.Hour*3).After(time.Now()) {
+		log.Sugar.Debugf("error calling %v on %v: %v", url, chain.PrettyName, err)
+	} else {
+		log.Sugar.Errorf("error calling %v on %v: %v", url, chain.PrettyName, err)
+	}
+}
+
 func (c *ValidatorCrawler) addOrUpdateValidators() {
 	log.Sugar.Info("Getting all validators")
+	var ctx = context.Background()
 	var pbEvents [][]byte
-	for _, chainEnt := range c.chainManager.QueryIsQuerying(context.Background()) {
-		if strings.Contains(chainEnt.Path, "neutron") {
+	for _, entChain := range c.chainManager.QueryIsQuerying(ctx) {
+		if strings.Contains(entChain.Path, "neutron") {
 			continue
 		}
 
-		log.Sugar.Infof("Getting validators for chain %v", chainEnt.PrettyName)
-		url := fmt.Sprintf(urlValidators, chainEnt.RestEndpoint)
+		log.Sugar.Infof("Getting validators for chain %v", entChain.PrettyName)
+		url := fmt.Sprintf(urlValidators, entChain.RestEndpoint)
 		var validatorsResponse types.ValidatorsResponse
 		_, err := common.GetJson(url, 5, &validatorsResponse)
 		if err != nil {
-			log.Sugar.Errorf("error calling %v: %v", url, err)
+			c.reportErrorIfNecessary(entChain, url, err)
 			continue
 		}
 		if validatorsResponse.Pagination.Total != "0" {
@@ -108,16 +118,16 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 		}
 
 		var validatorSetResponse types.ValidatorSetResponse
-		url = fmt.Sprintf(urlValidatorSet, chainEnt.RestEndpoint)
+		url = fmt.Sprintf(urlValidatorSet, entChain.RestEndpoint)
 		_, err = common.GetJson(url, 5, &validatorSetResponse)
 		if err != nil {
-			log.Sugar.Errorf("error calling %v: %v", url, err)
+			c.reportErrorIfNecessary(entChain, url, err)
 			continue
 		}
 
-		existingValidators, err := chainEnt.QueryValidators().All(context.Background())
+		existingValidators, err := entChain.QueryValidators().All(ctx)
 		if err != nil {
-			log.Sugar.Panicf("error getting validators for chain %v: %v", chainEnt.PrettyName, err)
+			log.Sugar.Panicf("error getting validators for chain %v: %v", entChain.PrettyName, err)
 		}
 
 		for _, validator := range validatorsResponse.Validators {
@@ -127,14 +137,14 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 				if existingValidator != nil {
 					if validatorNeedsUpdate(existingValidator, &validator, isInActiveSet) {
 						log.Sugar.Infof("Updating validator %v %v", validator.OperatorAddress, validator.Description.Moniker)
-						err := c.validatorManager.Update(context.Background(), existingValidator, validator.Description.Moniker, isInActiveSet)
+						err := c.validatorManager.Update(ctx, existingValidator, validator.Description.Moniker, isInActiveSet)
 						if err != nil {
 							log.Sugar.Errorf("error updating validator %v: %v", existingValidator.Address, err)
 							continue
 						}
 						if !isInActiveSet {
 							log.Sugar.Infof("Validator %v %v is out of active set", validator.OperatorAddress, validator.Description.Moniker)
-							event, err := c.createOutOfActiveSetEvent(chainEnt, existingValidator)
+							event, err := c.createOutOfActiveSetEvent(entChain, existingValidator)
 							if err != nil {
 								log.Sugar.Errorf("error creating out of active set event for validator %v: %v", existingValidator.Address, err)
 								continue
@@ -142,7 +152,7 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 							pbEvents = append(pbEvents, event)
 						} else {
 							log.Sugar.Debugf("Validator %v %v is back in active set", validator.OperatorAddress, validator.Description.Moniker)
-							cnt, err := c.validatorManager.DeleteOutOfActiveSetEvents(context.Background(), existingValidator)
+							cnt, err := c.validatorManager.DeleteOutOfActiveSetEvents(ctx, existingValidator)
 							if err != nil {
 								log.Sugar.Errorf("error deleting out of active set events for validator %v: %v", existingValidator.Address, err)
 								continue
@@ -152,7 +162,7 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 					}
 				} else {
 					log.Sugar.Infof("Creating validator %v %v", validator.OperatorAddress, validator.Description.Moniker)
-					_, err = c.validatorManager.Create(context.Background(), chainEnt, validator.OperatorAddress, validator.Description.Moniker, isInActiveSet)
+					_, err = c.validatorManager.Create(ctx, entChain, validator.OperatorAddress, validator.Description.Moniker, isInActiveSet)
 					if err != nil {
 						log.Sugar.Errorf("error creating validator %v: %v", validator.OperatorAddress, err)
 						continue
@@ -162,6 +172,7 @@ func (c *ValidatorCrawler) addOrUpdateValidators() {
 				log.Sugar.Debugf("Validator %v %v is invalid", validator.OperatorAddress, validator.Description.Moniker)
 			}
 		}
+		c.chainManager.UpdateSetLastSuccessfulValidatorQuery(ctx, entChain)
 	}
 	if len(pbEvents) > 0 {
 		log.Sugar.Debugf("Send %v out-of-active-set events", len(pbEvents))
