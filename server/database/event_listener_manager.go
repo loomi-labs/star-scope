@@ -161,13 +161,6 @@ func (m *EventListenerManager) QueryNotifierState(ctx context.Context, entity st
 		Only(ctx)
 }
 
-func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *ent.State, updatetime time.Time) (*ent.State, error) {
-	return state.
-		Update().
-		SetLastEventTime(updatetime).
-		Save(ctx)
-}
-
 type VoteReminder struct {
 	Chain         *ent.Chain
 	EventListener *ent.EventListener
@@ -274,6 +267,13 @@ func (m *EventListenerManager) QuerySubscriptionsCountForDiscordChannel(ctx cont
 	return cnt
 }
 
+func (m *EventListenerManager) QueryHasWalletAddress(ctx context.Context, entUser *ent.User, walletAddress string) (bool, error) {
+	return entUser.
+		QueryEventListeners().
+		Where(eventlistener.WalletAddressEQ(walletAddress)).
+		Exist(ctx)
+}
+
 func (m *EventListenerManager) UpdateAddChainEvent(
 	ctx context.Context,
 	el *ent.EventListener,
@@ -347,4 +347,11 @@ func (m *EventListenerManager) UpdateMarkEventRead(ctx context.Context, u *ent.U
 		).
 		SetIsRead(true).
 		Exec(ctx)
+}
+
+func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *ent.State, updatetime time.Time) (*ent.State, error) {
+	return state.
+		Update().
+		SetLastEventTime(updatetime).
+		Save(ctx)
 }

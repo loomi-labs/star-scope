@@ -46,6 +46,9 @@ const (
 	// SettingsServiceRemoveWalletProcedure is the fully-qualified name of the SettingsService's
 	// RemoveWallet RPC.
 	SettingsServiceRemoveWalletProcedure = "/starscope.grpc.settings.SettingsService/RemoveWallet"
+	// SettingsServiceValidateWalletProcedure is the fully-qualified name of the SettingsService's
+	// ValidateWallet RPC.
+	SettingsServiceValidateWalletProcedure = "/starscope.grpc.settings.SettingsService/ValidateWallet"
 )
 
 // SettingsServiceClient is a client for the starscope.grpc.settings.SettingsService service.
@@ -54,6 +57,7 @@ type SettingsServiceClient interface {
 	AddWallet(context.Context, *connect_go.Request[settingspb.UpdateWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	UpdateWallet(context.Context, *connect_go.Request[settingspb.UpdateWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	RemoveWallet(context.Context, *connect_go.Request[settingspb.RemoveWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
+	ValidateWallet(context.Context, *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error)
 }
 
 // NewSettingsServiceClient constructs a client for the starscope.grpc.settings.SettingsService
@@ -86,15 +90,21 @@ func NewSettingsServiceClient(httpClient connect_go.HTTPClient, baseURL string, 
 			baseURL+SettingsServiceRemoveWalletProcedure,
 			opts...,
 		),
+		validateWallet: connect_go.NewClient[settingspb.ValidateWalletRequest, settingspb.ValidateWalletResponse](
+			httpClient,
+			baseURL+SettingsServiceValidateWalletProcedure,
+			opts...,
+		),
 	}
 }
 
 // settingsServiceClient implements SettingsServiceClient.
 type settingsServiceClient struct {
-	getWallets   *connect_go.Client[emptypb.Empty, settingspb.GetWalletsResponse]
-	addWallet    *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
-	updateWallet *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
-	removeWallet *connect_go.Client[settingspb.RemoveWalletRequest, emptypb.Empty]
+	getWallets     *connect_go.Client[emptypb.Empty, settingspb.GetWalletsResponse]
+	addWallet      *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
+	updateWallet   *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
+	removeWallet   *connect_go.Client[settingspb.RemoveWalletRequest, emptypb.Empty]
+	validateWallet *connect_go.Client[settingspb.ValidateWalletRequest, settingspb.ValidateWalletResponse]
 }
 
 // GetWallets calls starscope.grpc.settings.SettingsService.GetWallets.
@@ -117,6 +127,11 @@ func (c *settingsServiceClient) RemoveWallet(ctx context.Context, req *connect_g
 	return c.removeWallet.CallUnary(ctx, req)
 }
 
+// ValidateWallet calls starscope.grpc.settings.SettingsService.ValidateWallet.
+func (c *settingsServiceClient) ValidateWallet(ctx context.Context, req *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error) {
+	return c.validateWallet.CallUnary(ctx, req)
+}
+
 // SettingsServiceHandler is an implementation of the starscope.grpc.settings.SettingsService
 // service.
 type SettingsServiceHandler interface {
@@ -124,6 +139,7 @@ type SettingsServiceHandler interface {
 	AddWallet(context.Context, *connect_go.Request[settingspb.UpdateWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	UpdateWallet(context.Context, *connect_go.Request[settingspb.UpdateWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	RemoveWallet(context.Context, *connect_go.Request[settingspb.RemoveWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
+	ValidateWallet(context.Context, *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error)
 }
 
 // NewSettingsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -152,6 +168,11 @@ func NewSettingsServiceHandler(svc SettingsServiceHandler, opts ...connect_go.Ha
 		svc.RemoveWallet,
 		opts...,
 	)
+	settingsServiceValidateWalletHandler := connect_go.NewUnaryHandler(
+		SettingsServiceValidateWalletProcedure,
+		svc.ValidateWallet,
+		opts...,
+	)
 	return "/starscope.grpc.settings.SettingsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SettingsServiceGetWalletsProcedure:
@@ -162,6 +183,8 @@ func NewSettingsServiceHandler(svc SettingsServiceHandler, opts ...connect_go.Ha
 			settingsServiceUpdateWalletHandler.ServeHTTP(w, r)
 		case SettingsServiceRemoveWalletProcedure:
 			settingsServiceRemoveWalletHandler.ServeHTTP(w, r)
+		case SettingsServiceValidateWalletProcedure:
+			settingsServiceValidateWalletHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -185,4 +208,8 @@ func (UnimplementedSettingsServiceHandler) UpdateWallet(context.Context, *connec
 
 func (UnimplementedSettingsServiceHandler) RemoveWallet(context.Context, *connect_go.Request[settingspb.RemoveWalletRequest]) (*connect_go.Response[emptypb.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.RemoveWallet is not implemented"))
+}
+
+func (UnimplementedSettingsServiceHandler) ValidateWallet(context.Context, *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.ValidateWallet is not implemented"))
 }

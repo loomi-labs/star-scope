@@ -11,6 +11,7 @@ service SettingsService {
   rpc AddWallet (UpdateWalletRequest) returns (google.protobuf.Empty) {}
   rpc UpdateWallet (UpdateWalletRequest) returns (google.protobuf.Empty) {}
   rpc RemoveWallet (RemoveWalletRequest) returns (google.protobuf.Empty) {}
+  rpc ValidateWallet(ValidateWalletRequest) returns (ValidateWalletResponse);
 }
 
 message Wallet {
@@ -37,4 +38,15 @@ message UpdateWalletRequest {
 
 message RemoveWalletRequest {
   string wallet_address = 1;
+}
+
+message ValidateWalletRequest {
+  string address = 1;
+}
+
+message ValidateWalletResponse {
+  bool is_valid = 1;
+  bool is_supported = 2;
+  bool is_already_added = 3;
+  Wallet wallet = 4;
 }
