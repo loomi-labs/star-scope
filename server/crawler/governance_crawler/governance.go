@@ -81,6 +81,7 @@ func (c *GovernanceCrawler) fetchProposals() {
 		}
 
 		url := fmt.Sprintf(urlProposals+"?pagination.reverse=true&limit=100", chain.RestEndpoint)
+		log.Sugar.Debugf("Fetching proposals for chain %v", chain.Name)
 
 		var resp types.ProposalsResponse
 		_, err := common.GetJson(url, 5, &resp)
