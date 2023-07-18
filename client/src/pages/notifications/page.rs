@@ -18,8 +18,7 @@ use web_sys::{
 };
 
 use crate::components::messages::create_error_msg_from_status;
-use crate::types::protobuf::event::EventType;
-use crate::types::protobuf::grpc;
+use crate::types::protobuf::grpc_event::{self, EventType};
 use crate::utils::url::{add_or_update_query_params, get_query_param};
 use crate::{EventsState, Services};
 
@@ -56,7 +55,7 @@ async fn mark_event_as_read(cx: Scope<'_>, event_id: String) {
     let services = use_context::<Services>(cx);
     let request = services
         .grpc_client
-        .create_request(grpc::MarkEventReadRequest {
+        .create_request(grpc_event::MarkEventReadRequest {
             event_id: event_id.clone(),
         });
     let response = services
@@ -73,7 +72,7 @@ async fn mark_event_as_read(cx: Scope<'_>, event_id: String) {
 }
 
 #[component(inline_props)]
-pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc::Event>) -> View<G> {
+pub fn EventComponent<G: Html>(cx: Scope, rc_event: RcSignal<grpc_event::Event>) -> View<G> {
     let event = rc_event.get().as_ref().clone();
     let event_type = event.event_type();
 
@@ -270,7 +269,7 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
                 let event_type_filter = notifications_state.event_type_filter.get();
                 match event_type_filter.as_ref() {
                     None => true,
-                    Some(filter) => event.get().event_type() == *filter,
+                    Some(filter) => event.get().event_type == *filter as i32,
                 }
             })
             .filter(|event| {
@@ -323,9 +322,9 @@ pub fn Events<G: Html>(cx: Scope) -> View<G> {
 pub struct NotificationsState {
     event_type_filter: RcSignal<Option<EventType>>,
     read_status_filter: RcSignal<ReadStatusFilter>,
-    chain_filter: RcSignal<Option<grpc::ChainData>>,
+    chain_filter: RcSignal<Option<grpc_event::ChainData>>,
     time_filter: RcSignal<TimeFilter>,
-    chains: RcSignal<Vec<grpc::ChainData>>,
+    chains: RcSignal<Vec<grpc_event::ChainData>>,
     locale: RcSignal<String>,
 }
 
@@ -351,7 +350,7 @@ impl NotificationsState {
         self.time_filter.set(TimeFilter::default());
     }
 
-    pub fn add_chains(&self, chains: Vec<grpc::ChainData>) {
+    pub fn add_chains(&self, chains: Vec<grpc_event::ChainData>) {
         self.chains.set(chains);
     }
 
@@ -695,7 +694,7 @@ async fn query_events(cx: Scope<'_>, event_type: Option<EventType>) {
     let services = use_context::<Services>(cx);
     let request = services
         .grpc_client
-        .create_request(grpc::ListEventsRequest {
+        .create_request(grpc_event::ListEventsRequest {
             start_time: None,
             end_time: None,
             limit: 0,

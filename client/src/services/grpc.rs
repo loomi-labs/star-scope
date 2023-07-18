@@ -1,15 +1,16 @@
 use std::fmt::Debug;
 
 use crate::config::keys;
-use crate::types::protobuf::grpc::user_setup_service_client::UserSetupServiceClient;
+use crate::types::protobuf::grpc_settings::settings_service_client::SettingsServiceClient;
+use crate::types::protobuf::grpc_user::user_setup_service_client::UserSetupServiceClient;
 use grpc_web_client::Client;
 use tonic::metadata::MetadataValue;
 use tonic::Request;
 
 use crate::services::auth::AuthService;
-use crate::types::protobuf::grpc::auth_service_client::AuthServiceClient;
-use crate::types::protobuf::grpc::event_service_client::EventServiceClient;
-use crate::types::protobuf::grpc::user_service_client::UserServiceClient;
+use crate::types::protobuf::grpc_auth::auth_service_client::AuthServiceClient;
+use crate::types::protobuf::grpc_event::event_service_client::EventServiceClient;
+use crate::types::protobuf::grpc_user::user_service_client::UserServiceClient;
 
 #[derive(Debug, Clone)]
 pub struct GrpcClient {
@@ -57,5 +58,9 @@ impl GrpcClient {
 
     pub fn get_event_service(&self) -> EventServiceClient<Client> {
         EventServiceClient::new(Client::new(self.endpoint_url.clone()))
+    }
+
+    pub fn get_settings_service(&self) -> SettingsServiceClient<Client> {
+        SettingsServiceClient::new(Client::new(self.endpoint_url.clone()))
     }
 }

@@ -1,7 +1,11 @@
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1 h1:oP1I+fqUK/k96ZxGm1kXQpBK1a3FmWXrijoJS8Nysm4=
 buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.7.0-20230517105216-7b834542daf1.1/go.mod h1:PCpnvvWZIdoIHVCxgJlIikD25nSWfRl7KfIDUBlEEV4=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.9.0-20230717091739-33f0cd6b74ed.1 h1:EwqLHBRRTkHhX8r5FvL6Tpcuo5cnwIBP3hYP3m+ylIA=
+buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.9.0-20230717091739-33f0cd6b74ed.1/go.mod h1:fjZvZ9X5BrViMUZnLfyglDnyz6ODSu22np59N09VAJQ=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1 h1:3PmoQxUoB2Yf6wWVM3CPj/eGF9AHTE4BlXEP6NqjNbk=
 buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230517105216-7b834542daf1.1/go.mod h1:yo/Txis3eaiQip2qRKOboZKBtKKfJtNbpTf+f8TAKRQ=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.31.0-20230717091739-33f0cd6b74ed.1 h1:Zz1oIrgKvyCBx+H+7DpWSW6ukldv0OkYCbkQ/i3oXQk=
+buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.31.0-20230717091739-33f0cd6b74ed.1/go.mod h1:iFaIOhlKYQ/vumAibwGVG16vtCMmfSCib2E+h/XQQy4=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
 cloud.google.com/go v0.44.1/go.mod h1:iSa0KzasP4Uvy3f1mN/7PiObzGgflwredwwASm/v6AU=
@@ -138,6 +142,7 @@ github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792/go.mod h1:ghJtE
 github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46fmI40EZs=
 github.com/bufbuild/connect-go v1.7.0 h1:MGp82v7SCza+3RhsVhV7aMikwxvI3ZfD72YiGt8FYJo=
 github.com/bufbuild/connect-go v1.7.0/go.mod h1:GmMJYR6orFqD0Y6ZgX8pwQ8j9baizDrIQMm1/a6LnHk=
+github.com/bufbuild/connect-go v1.9.0/go.mod h1:CAIePUgkDR5pAFaylSMtNK45ANQjp9JvpluG20rhpV8=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
@@ -1242,6 +1247,7 @@ google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp0
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
 google.golang.org/protobuf v1.30.0 h1:kPPoIgf3TsEvrm0PFe15JQ+570QVxYzEvvHqChK+cng=
 google.golang.org/protobuf v1.30.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
+google.golang.org/protobuf v1.31.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

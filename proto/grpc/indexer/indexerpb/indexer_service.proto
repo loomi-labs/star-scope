@@ -1,10 +1,8 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
-import "event/chain_event.proto";
-import "event/contract_event.proto";
 
-package starscope.grpc;
+package starscope.grpc.indexer;
 
 option go_package = "github.com/loomi-labs/star-scope/grpc/indexer/indexerpb";
 

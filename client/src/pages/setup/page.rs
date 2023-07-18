@@ -14,9 +14,9 @@ use tonic::Status;
 use crate::components::loading::{LoadingSpinner, LoadingSpinnerSmall};
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::navigation::Header;
-use crate::types::protobuf::grpc::step_response::Step;
-use crate::types::protobuf::grpc::step_response::Step::{Five, Four, One, Three, Two};
-use crate::types::protobuf::grpc::{
+use crate::types::protobuf::grpc_user::step_response::Step;
+use crate::types::protobuf::grpc_user::step_response::Step::{Five, Four, One, Three, Two};
+use crate::types::protobuf::grpc_user::{
     finish_step_request, get_step_request, FinishStepRequest, GetStepRequest, GovChain,
     SearchWalletsRequest, StepFiveRequest, StepFiveResponse, StepFourRequest, StepFourResponse,
     StepOneRequest, StepResponse, StepThreeRequest, StepThreeResponse, StepTwoRequest,

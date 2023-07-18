@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
@@ -65,6 +66,15 @@ func (m *ChainManager) QueryByBech32Prefix(ctx context.Context, bech32Prefix str
 		Query().
 		Where(chain.Bech32Prefix(bech32Prefix)).
 		First(ctx)
+}
+
+func (m *ChainManager) QueryByNewAddress(ctx context.Context, address string) (*ent.Chain, error) {
+	for _, c := range m.QueryEnabled(ctx) {
+		if common.IsBech32AddressFromChain(address, c.Bech32Prefix) {
+			return c, nil
+		}
+	}
+	return nil, errors.New("no chain found for address")
 }
 
 func (m *ChainManager) QueryByName(ctx context.Context, name string) (*ent.Chain, error) {

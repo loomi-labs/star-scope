@@ -200,7 +200,7 @@ func (k *Kafka) ProcessWalletEvents() {
 						if walletEvent.NotifyTime.AsTime().Before(time.Now()) {
 							k.produceProcessedEvents([]*kafkaevent.EventProcessedMsg{{
 								WalletAddress: walletEvent.WalletAddress,
-								EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
+								EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
 							}})
 							log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, walletEvent.WalletAddress, processedEventsTopic)
 						}
@@ -349,7 +349,7 @@ func (k *Kafka) ProcessChainEvents() {
 								pbEvents = append(pbEvents, &kafkaevent.EventProcessedMsg{
 									ChainId:       chainEvent.ChainId,
 									WalletAddress: "",
-									EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
+									EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
 								})
 								log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
 							}
@@ -440,7 +440,7 @@ func (k *Kafka) ProcessContractEvents() {
 								pbEvents = append(pbEvents, &kafkaevent.EventProcessedMsg{
 									ChainId:       contractEvent.ChainId,
 									WalletAddress: "",
-									EventType:     kafkaevent.EventType(kafkaevent.EventType_value[eventType.String()]),
+									EventType:     eventpb.EventType(eventpb.EventType_value[eventType.String()]),
 								})
 								log.Sugar.Debugf("Put event %v with address %v to `%v`", msg.Offset, el.WalletAddress, processedEventsTopic)
 							}

@@ -23,7 +23,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// AuthServiceName is the fully-qualified name of the AuthService service.
-	AuthServiceName = "starscope.grpc.AuthService"
+	AuthServiceName = "starscope.grpc.auth.AuthService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,25 +35,25 @@ const (
 // period.
 const (
 	// AuthServiceKeplrLoginProcedure is the fully-qualified name of the AuthService's KeplrLogin RPC.
-	AuthServiceKeplrLoginProcedure = "/starscope.grpc.AuthService/KeplrLogin"
+	AuthServiceKeplrLoginProcedure = "/starscope.grpc.auth.AuthService/KeplrLogin"
 	// AuthServiceTelegramLoginProcedure is the fully-qualified name of the AuthService's TelegramLogin
 	// RPC.
-	AuthServiceTelegramLoginProcedure = "/starscope.grpc.AuthService/TelegramLogin"
+	AuthServiceTelegramLoginProcedure = "/starscope.grpc.auth.AuthService/TelegramLogin"
 	// AuthServiceDiscordLoginProcedure is the fully-qualified name of the AuthService's DiscordLogin
 	// RPC.
-	AuthServiceDiscordLoginProcedure = "/starscope.grpc.AuthService/DiscordLogin"
+	AuthServiceDiscordLoginProcedure = "/starscope.grpc.auth.AuthService/DiscordLogin"
 	// AuthServiceRefreshAccessTokenProcedure is the fully-qualified name of the AuthService's
 	// RefreshAccessToken RPC.
-	AuthServiceRefreshAccessTokenProcedure = "/starscope.grpc.AuthService/RefreshAccessToken"
+	AuthServiceRefreshAccessTokenProcedure = "/starscope.grpc.auth.AuthService/RefreshAccessToken"
 	// AuthServiceConnectDiscordProcedure is the fully-qualified name of the AuthService's
 	// ConnectDiscord RPC.
-	AuthServiceConnectDiscordProcedure = "/starscope.grpc.AuthService/ConnectDiscord"
+	AuthServiceConnectDiscordProcedure = "/starscope.grpc.auth.AuthService/ConnectDiscord"
 	// AuthServiceConnectTelegramProcedure is the fully-qualified name of the AuthService's
 	// ConnectTelegram RPC.
-	AuthServiceConnectTelegramProcedure = "/starscope.grpc.AuthService/ConnectTelegram"
+	AuthServiceConnectTelegramProcedure = "/starscope.grpc.auth.AuthService/ConnectTelegram"
 )
 
-// AuthServiceClient is a client for the starscope.grpc.AuthService service.
+// AuthServiceClient is a client for the starscope.grpc.auth.AuthService service.
 type AuthServiceClient interface {
 	KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
 	TelegramLogin(context.Context, *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
@@ -63,10 +63,10 @@ type AuthServiceClient interface {
 	ConnectTelegram(context.Context, *connect_go.Request[authpb.ConnectTelegramRequest]) (*connect_go.Response[emptypb.Empty], error)
 }
 
-// NewAuthServiceClient constructs a client for the starscope.grpc.AuthService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
+// NewAuthServiceClient constructs a client for the starscope.grpc.auth.AuthService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -116,37 +116,37 @@ type authServiceClient struct {
 	connectTelegram    *connect_go.Client[authpb.ConnectTelegramRequest, emptypb.Empty]
 }
 
-// KeplrLogin calls starscope.grpc.AuthService.KeplrLogin.
+// KeplrLogin calls starscope.grpc.auth.AuthService.KeplrLogin.
 func (c *authServiceClient) KeplrLogin(ctx context.Context, req *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	return c.keplrLogin.CallUnary(ctx, req)
 }
 
-// TelegramLogin calls starscope.grpc.AuthService.TelegramLogin.
+// TelegramLogin calls starscope.grpc.auth.AuthService.TelegramLogin.
 func (c *authServiceClient) TelegramLogin(ctx context.Context, req *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	return c.telegramLogin.CallUnary(ctx, req)
 }
 
-// DiscordLogin calls starscope.grpc.AuthService.DiscordLogin.
+// DiscordLogin calls starscope.grpc.auth.AuthService.DiscordLogin.
 func (c *authServiceClient) DiscordLogin(ctx context.Context, req *connect_go.Request[authpb.DiscordLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
 	return c.discordLogin.CallUnary(ctx, req)
 }
 
-// RefreshAccessToken calls starscope.grpc.AuthService.RefreshAccessToken.
+// RefreshAccessToken calls starscope.grpc.auth.AuthService.RefreshAccessToken.
 func (c *authServiceClient) RefreshAccessToken(ctx context.Context, req *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {
 	return c.refreshAccessToken.CallUnary(ctx, req)
 }
 
-// ConnectDiscord calls starscope.grpc.AuthService.ConnectDiscord.
+// ConnectDiscord calls starscope.grpc.auth.AuthService.ConnectDiscord.
 func (c *authServiceClient) ConnectDiscord(ctx context.Context, req *connect_go.Request[authpb.ConnectDiscordRequest]) (*connect_go.Response[emptypb.Empty], error) {
 	return c.connectDiscord.CallUnary(ctx, req)
 }
 
-// ConnectTelegram calls starscope.grpc.AuthService.ConnectTelegram.
+// ConnectTelegram calls starscope.grpc.auth.AuthService.ConnectTelegram.
 func (c *authServiceClient) ConnectTelegram(ctx context.Context, req *connect_go.Request[authpb.ConnectTelegramRequest]) (*connect_go.Response[emptypb.Empty], error) {
 	return c.connectTelegram.CallUnary(ctx, req)
 }
 
-// AuthServiceHandler is an implementation of the starscope.grpc.AuthService service.
+// AuthServiceHandler is an implementation of the starscope.grpc.auth.AuthService service.
 type AuthServiceHandler interface {
 	KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
 	TelegramLogin(context.Context, *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error)
@@ -192,7 +192,7 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect_go.HandlerOpt
 		svc.ConnectTelegram,
 		opts...,
 	)
-	return "/starscope.grpc.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/starscope.grpc.auth.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceKeplrLoginProcedure:
 			authServiceKeplrLoginHandler.ServeHTTP(w, r)
@@ -216,25 +216,25 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect_go.HandlerOpt
 type UnimplementedAuthServiceHandler struct{}
 
 func (UnimplementedAuthServiceHandler) KeplrLogin(context.Context, *connect_go.Request[authpb.KeplrLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.KeplrLogin is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.auth.AuthService.KeplrLogin is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) TelegramLogin(context.Context, *connect_go.Request[authpb.TelegramLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.TelegramLogin is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.auth.AuthService.TelegramLogin is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) DiscordLogin(context.Context, *connect_go.Request[authpb.DiscordLoginRequest]) (*connect_go.Response[authpb.LoginResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.DiscordLogin is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.auth.AuthService.DiscordLogin is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) RefreshAccessToken(context.Context, *connect_go.Request[authpb.RefreshAccessTokenRequest]) (*connect_go.Response[authpb.RefreshAccessTokenResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.RefreshAccessToken is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.auth.AuthService.RefreshAccessToken is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) ConnectDiscord(context.Context, *connect_go.Request[authpb.ConnectDiscordRequest]) (*connect_go.Response[emptypb.Empty], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.ConnectDiscord is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.auth.AuthService.ConnectDiscord is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) ConnectTelegram(context.Context, *connect_go.Request[authpb.ConnectTelegramRequest]) (*connect_go.Response[emptypb.Empty], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.AuthService.ConnectTelegram is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.auth.AuthService.ConnectTelegram is not implemented"))
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/loomi-labs/star-scope/ent/state"
 	"github.com/loomi-labs/star-scope/ent/user"
 	kafkaevent "github.com/loomi-labs/star-scope/event"
+	"github.com/loomi-labs/star-scope/grpc/event/eventpb"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -90,7 +91,7 @@ func (m *EventListenerManager) QueryCountEventsByType(ctx context.Context, entUs
 	return &eventsCount, err
 }
 
-func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType *kafkaevent.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
+func (m *EventListenerManager) QueryEvents(ctx context.Context, el *ent.EventListener, eventType *eventpb.EventType, startTime *timestamppb.Timestamp, endTime *timestamppb.Timestamp, limit int32, offset int64) ([]*ent.Event, error) {
 	if startTime == nil {
 		startTime = timestamppb.Now()
 	}
@@ -158,13 +159,6 @@ func (m *EventListenerManager) QueryNotifierState(ctx context.Context, entity st
 			state.EntityEQ(entity),
 		).
 		Only(ctx)
-}
-
-func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *ent.State, updatetime time.Time) (*ent.State, error) {
-	return state.
-		Update().
-		SetLastEventTime(updatetime).
-		Save(ctx)
 }
 
 type VoteReminder struct {
@@ -273,6 +267,13 @@ func (m *EventListenerManager) QuerySubscriptionsCountForDiscordChannel(ctx cont
 	return cnt
 }
 
+func (m *EventListenerManager) QueryHasWalletAddress(ctx context.Context, entUser *ent.User, walletAddress string) (bool, error) {
+	return entUser.
+		QueryEventListeners().
+		Where(eventlistener.WalletAddressEQ(walletAddress)).
+		Exist(ctx)
+}
+
 func (m *EventListenerManager) UpdateAddChainEvent(
 	ctx context.Context,
 	el *ent.EventListener,
@@ -346,4 +347,11 @@ func (m *EventListenerManager) UpdateMarkEventRead(ctx context.Context, u *ent.U
 		).
 		SetIsRead(true).
 		Exec(ctx)
+}
+
+func (m *EventListenerManager) UpdateNotifierState(ctx context.Context, state *ent.State, updatetime time.Time) (*ent.State, error) {
+	return state.
+		Update().
+		SetLastEventTime(updatetime).
+		Save(ctx)
 }

@@ -12,6 +12,8 @@ import (
 	"github.com/loomi-labs/star-scope/grpc/event/eventpb/eventpbconnect"
 	"github.com/loomi-labs/star-scope/grpc/indexer"
 	"github.com/loomi-labs/star-scope/grpc/indexer/indexerpb/indexerpbconnect"
+	"github.com/loomi-labs/star-scope/grpc/settings"
+	"github.com/loomi-labs/star-scope/grpc/settings/settingspb/settingspbconnect"
 	"github.com/loomi-labs/star-scope/grpc/user"
 	"github.com/loomi-labs/star-scope/grpc/user/userpb/userpbconnect"
 	"github.com/loomi-labs/star-scope/kafka"
@@ -95,6 +97,10 @@ func (s GRPCServer) Run() {
 	))
 	mux.Handle(eventpbconnect.NewEventServiceHandler(
 		event.NewEventServiceHandler(s.dbManagers, kafka.NewKafka(s.dbManagers, kafkaBrokers)),
+		interceptors,
+	))
+	mux.Handle(settingspbconnect.NewSettingsServiceHandler(
+		settings.NewSettingsServiceHandler(s.dbManagers),
 		interceptors,
 	))
 

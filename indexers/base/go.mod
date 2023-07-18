@@ -3,9 +3,9 @@ module github.com/loomi-labs/star-scope/indexers/base
 go 1.20
 
 require (
-	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.8.0-20230614143644-bce0f490746b.1
-	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.30.0-20230614143644-bce0f490746b.1
-	github.com/bufbuild/connect-go v1.8.0
+	buf.build/gen/go/loomi-labs/star-scope/bufbuild/connect-go v1.9.0-20230717091739-33f0cd6b74ed.1
+	buf.build/gen/go/loomi-labs/star-scope/protocolbuffers/go v1.31.0-20230717091739-33f0cd6b74ed.1
+	github.com/bufbuild/connect-go v1.9.0
 	github.com/cosmos/cosmos-sdk v0.46.7
 	github.com/cosmos/ibc-go/v6 v6.1.0
 	github.com/golang/protobuf v1.5.3
@@ -14,7 +14,7 @@ require (
 	github.com/tendermint/tendermint v0.34.24
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/sync v0.1.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 )
 
 require (

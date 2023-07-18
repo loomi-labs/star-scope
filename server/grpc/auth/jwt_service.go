@@ -26,11 +26,12 @@ const (
 
 const (
 	basePath         = "/starscope.grpc"
-	authService      = basePath + ".AuthService/"
-	userService      = basePath + ".UserService/"
-	userSetupService = basePath + ".UserSetupService/"
-	eventService     = basePath + ".EventService/"
-	indexerService   = basePath + ".IndexerService/"
+	authService      = basePath + ".auth.AuthService/"
+	userService      = basePath + ".user.UserService/"
+	userSetupService = basePath + ".user.UserSetupService/"
+	settingsService  = basePath + ".settings.SettingsService/"
+	eventService     = basePath + ".event.EventService/"
+	indexerService   = basePath + ".indexer.IndexerService/"
 )
 
 func ServiceNames() []string {
@@ -62,6 +63,11 @@ func AccessibleRoles() map[string][]Role {
 		userSetupService + "FinishStep":         {User, Admin},
 		userSetupService + "ValidateWallet":     {User, Admin},
 		userSetupService + "SearchWallets":      {User, Admin},
+		settingsService + "GetWallets":          {User, Admin},
+		settingsService + "AddWallet":           {User, Admin},
+		settingsService + "UpdateWallet":        {User, Admin},
+		settingsService + "RemoveWallet":        {User, Admin},
+		settingsService + "ValidateWallet":      {User, Admin},
 		eventService + "EventStream":            {User, Admin},
 		eventService + "ListEvents":             {User, Admin},
 		eventService + "ListChains":             {User, Admin},

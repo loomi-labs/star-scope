@@ -4,7 +4,7 @@ use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
 
 #[component(inline_props)]
-pub fn AskDeleteDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>) -> View<G> {
+fn AskDeleteDialog<'a, G: Html>(cx: Scope<'a>, is_open: &'a Signal<bool>) -> View<G> {
     let app_state = use_context::<AppState>(cx);
 
     let handle_delete = |cx: Scope| {

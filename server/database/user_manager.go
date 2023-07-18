@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"github.com/loomi-labs/star-scope/common"
 	"github.com/loomi-labs/star-scope/ent"
+	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/commchannel"
 	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/predicate"
 	"github.com/loomi-labs/star-scope/ent/user"
+	"github.com/loomi-labs/star-scope/grpc/settings/settingspb"
 	"github.com/loomi-labs/star-scope/grpc/types"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/shifty11/go-logger/log"
+	"golang.org/x/exp/maps"
+	"sort"
 	"strings"
 	"time"
 )
@@ -111,6 +115,163 @@ func (m *UserManager) QuerySetup(ctx context.Context, u *ent.User) (*ent.UserSet
 	return u.
 		QuerySetup().
 		Only(ctx)
+}
+
+func (m *UserManager) QueryWallets(ctx context.Context, u *ent.User) ([]*settingspb.Wallet, error) {
+	els, err := u.
+		QueryEventListeners().
+		Where(eventlistener.DataTypeIn(
+			eventlistener.DataTypeWalletEvent_VoteReminder,
+			eventlistener.DataTypeWalletEvent_Voted,
+			eventlistener.DataTypeWalletEvent_CoinReceived,
+			eventlistener.DataTypeWalletEvent_NeutronTokenVesting,
+			eventlistener.DataTypeWalletEvent_OsmosisPoolUnlock,
+			eventlistener.DataTypeWalletEvent_Unstake,
+		)).
+		Select(eventlistener.FieldWalletAddress, eventlistener.FieldDataType).
+		WithChain(func(q *ent.ChainQuery) {
+			q.Select(chain.FieldImage, chain.FieldIsQuerying, chain.FieldIsIndexing, chain.FieldIsEnabled)
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var walletsMap = make(map[string]*settingspb.Wallet)
+	for _, el := range els {
+		if _, ok := walletsMap[el.WalletAddress]; !ok {
+			walletsMap[el.WalletAddress] = &settingspb.Wallet{
+				Address:                            el.WalletAddress,
+				LogoUrl:                            el.Edges.Chain.Image,
+				IsNotifyFundingSupported:           el.Edges.Chain.IsEnabled && el.Edges.Chain.IsIndexing,
+				IsNotifyStakingSupported:           el.Edges.Chain.IsEnabled && el.Edges.Chain.IsIndexing,
+				IsNotifyGovVotingReminderSupported: el.Edges.Chain.IsEnabled && el.Edges.Chain.IsQuerying,
+			}
+		}
+		if el.DataType == eventlistener.DataTypeWalletEvent_VoteReminder {
+			walletsMap[el.WalletAddress].NotifyGovVotingReminder = true
+		}
+		if el.DataType == eventlistener.DataTypeWalletEvent_CoinReceived {
+			walletsMap[el.WalletAddress].NotifyFunding = true
+		}
+		if el.DataType == eventlistener.DataTypeWalletEvent_Unstake {
+			walletsMap[el.WalletAddress].NotifyStaking = true
+		}
+	}
+	var wallets = maps.Values(walletsMap)
+	sort.Slice(wallets, func(i, j int) bool {
+		return wallets[i].Address < wallets[j].Address
+	})
+	return wallets, nil
+}
+
+func (m *UserManager) createOrDeleteEventListener(
+	ctx context.Context,
+	tx *ent.Tx,
+	entUser *ent.User,
+	entChain *ent.Chain,
+	walletAddress string,
+	dataType eventlistener.DataType,
+	create bool,
+) error {
+	exists, err := tx.EventListener.
+		Query().
+		Where(eventlistener.And(
+			eventlistener.HasUsersWith(user.IDEQ(entUser.ID)),
+			eventlistener.WalletAddressEQ(walletAddress),
+			eventlistener.DataTypeEQ(dataType),
+		)).
+		Exist(ctx)
+	if err != nil {
+		return err
+	}
+	if !exists && create {
+		commChannels, err := entUser.QueryCommChannels().IDs(ctx)
+		if err != nil {
+			return err
+		}
+		err = tx.EventListener.
+			Create().
+			SetChain(entChain).
+			AddUsers(entUser).
+			AddCommChannelIDs(commChannels...).
+			SetWalletAddress(walletAddress).
+			SetDataType(dataType).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	} else if exists && !create {
+		_, err = tx.EventListener.
+			Delete().
+			Where(eventlistener.And(
+				eventlistener.HasUsersWith(user.IDEQ(entUser.ID)),
+				eventlistener.WalletAddressEQ(walletAddress),
+				eventlistener.DataTypeEQ(dataType),
+			)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *UserManager) UpdateWallet(ctx context.Context, entUser *ent.User, entChain *ent.Chain, update *settingspb.UpdateWalletRequest) error {
+	if update.GetWalletAddress() == "" {
+		return fmt.Errorf("wallet address is required")
+	}
+	return withTx(m.client, ctx, func(tx *ent.Tx) error {
+		err := m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_CoinReceived,
+			update.GetNotifyFunding(),
+		)
+		if err != nil {
+			return err
+		}
+		err = m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_Unstake,
+			update.GetNotifyStaking(),
+		)
+		if err != nil {
+			return err
+		}
+		err = m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_Voted,
+			update.GetNotifyGovVotingReminder(),
+		)
+		if err != nil {
+			return err
+		}
+		err = m.createOrDeleteEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			update.GetWalletAddress(),
+			eventlistener.DataTypeWalletEvent_VoteReminder,
+			update.GetNotifyGovVotingReminder(),
+		)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (m *UserManager) UpdateRole(ctx context.Context, name string, role user.Role) (*ent.User, error) {

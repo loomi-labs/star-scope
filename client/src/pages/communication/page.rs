@@ -5,10 +5,11 @@ use crate::components::loading::LoadingSpinner;
 use crate::components::messages::{create_error_msg_from_status, create_message};
 use crate::components::social_media::{DiscordLoginButton, TelegramLoginButton};
 use crate::config::keys;
-use crate::types::protobuf::grpc::{
-    ConnectDiscordRequest, ConnectTelegramRequest, DeleteDiscordChannelRequest,
-    DeleteTelegramChatRequest, DiscordChannel, DiscordLoginRequest, TelegramChat,
-    TelegramLoginRequest,
+use crate::types::protobuf::grpc_auth::{
+    ConnectDiscordRequest, ConnectTelegramRequest, DiscordLoginRequest, TelegramLoginRequest,
+};
+use crate::types::protobuf::grpc_user::{
+    DeleteDiscordChannelRequest, DeleteTelegramChatRequest, DiscordChannel, TelegramChat,
 };
 use crate::utils::url::{clean_query_params, get_discord_login_data, get_telegram_login_data};
 use crate::{query_user_info, AppRoutes, AppState, InfoLevel, Services};

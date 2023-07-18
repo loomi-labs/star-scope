@@ -39,7 +39,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: chainEvent.GetGovernanceProposal().GetDescription(),
 				Emoji:       emoji,
 				CreatedAt:   chainEvent.Timestamp,
-				EventType:   kafkaevent.EventType_GOVERNANCE,
+				EventType:   eventpb.EventType_GOVERNANCE,
 			}, nil
 		default:
 			return nil, errors.New(fmt.Sprintf("No type defined for event %v", chainEvent.GetEvent()))
@@ -74,7 +74,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Emoji:       emoji,
 				CreatedAt:   contractEvent.Timestamp,
 				NotifyAt:    contractEvent.NotifyTime,
-				EventType:   kafkaevent.EventType_GOVERNANCE,
+				EventType:   eventpb.EventType_GOVERNANCE,
 			}, nil
 		default:
 			return nil, errors.New(fmt.Sprintf("No type defined for event %v", contractEvent.GetEvent()))
@@ -89,7 +89,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: fmt.Sprintf("%v received %v%v from %v", walletEvent.GetWalletAddress(), coinReceived.GetCoin().Amount, coinReceived.GetCoin().Denom, coinReceived.Sender),
 				Emoji:       "💰",
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   kafkaevent.EventType_FUNDING,
+				EventType:   eventpb.EventType_FUNDING,
 			}, nil
 		case *kafkaevent.WalletEvent_OsmosisPoolUnlock:
 			return &eventpb.Event{
@@ -97,7 +97,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: fmt.Sprintf("Unlock period of Osmosis pool for %v is over", walletEvent.GetWalletAddress()),
 				Emoji:       "🔓",
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   kafkaevent.EventType_DEX,
+				EventType:   eventpb.EventType_DEX,
 			}, nil
 		case *kafkaevent.WalletEvent_Unstake:
 			var unstake = walletEvent.GetUnstake()
@@ -106,7 +106,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: fmt.Sprintf("Unbonding period for %v is over. %v %v Available", walletEvent.GetWalletAddress(), unstake.GetCoin().Amount, unstake.GetCoin().Denom),
 				Emoji:       "🔓",
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   kafkaevent.EventType_STAKING,
+				EventType:   eventpb.EventType_STAKING,
 			}, nil
 		case *kafkaevent.WalletEvent_NeutronTokenVesting:
 			var neutronTokenVesting = walletEvent.GetNeutronTokenVesting()
@@ -115,7 +115,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: fmt.Sprintf("Vesting period for %v is over. %v Neutron available.", walletEvent.GetWalletAddress(), neutronTokenVesting.GetAmount()/1000000),
 				Emoji:       "🔓",
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   kafkaevent.EventType_FUNDING,
+				EventType:   eventpb.EventType_FUNDING,
 			}, nil
 		case *kafkaevent.WalletEvent_VoteReminder:
 			var voteReminder = walletEvent.GetVoteReminder()
@@ -130,7 +130,7 @@ func toProto(entEvent *ent.Event) (*eventpb.Event, error) {
 				Description: fmt.Sprintf("%v did not vote yet", wallet),
 				Emoji:       "🗳",
 				CreatedAt:   walletEvent.Timestamp,
-				EventType:   kafkaevent.EventType_GOVERNANCE,
+				EventType:   eventpb.EventType_GOVERNANCE,
 			}, nil
 		}
 	}
