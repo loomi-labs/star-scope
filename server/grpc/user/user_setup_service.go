@@ -19,7 +19,6 @@ import (
 	"io"
 	"sort"
 	"sync"
-	"time"
 )
 
 //goland:noinspection GoNameStartsWithPackageName
@@ -377,6 +376,22 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 
 	log.Sugar.Debugf("searching wallet %v", request.Msg.GetAddress())
 
+	// Create a channel to receive the responses from goroutines
+	responseCh := make(chan *userpb.SearchWalletsResponse)
+	defer close(responseCh)
+
+	// Start a goroutine to  stream the responses
+	go func() {
+		for resp := range responseCh {
+			err := stream.Send(resp)
+			if err != nil {
+				if err == io.EOF || status.Code(err) == codes.Canceled {
+					return
+				}
+			}
+		}
+	}()
+
 	for _, chain := range u.chainManager.QueryEnabled(ctx) {
 		wg.Add(1) // Increment the WaitGroup counter
 
@@ -417,22 +432,8 @@ func (u *UserSetupService) SearchWallets(ctx context.Context, request *connect.R
 					Bech32Address: bech32Address,
 					LogoUrl:       chain.Image,
 				}
-				time.Sleep(20 * time.Millisecond)
-				err = stream.Send(&userpb.SearchWalletsResponse{
+				responseCh <- &userpb.SearchWalletsResponse{
 					Wallet: wallet,
-				})
-				if err != nil {
-					if err == io.EOF || status.Code(err) == codes.Canceled {
-						return
-					}
-					// try again
-					err2 := stream.Send(&userpb.SearchWalletsResponse{
-						Wallet: wallet,
-					})
-					if err2 != nil {
-						log.Sugar.Errorf("failed twice to send response: %v | %v", err, err2)
-						return
-					}
 				}
 			}
 		}(chain)
