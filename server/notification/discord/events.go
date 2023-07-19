@@ -52,7 +52,7 @@ func (dc *DiscordBot) sendNewEvents() {
 	}
 	ctx := context.Background()
 	toBeDeleted := make([]DeleteDiscordUser, 0)
-	endTime := time.Now().Add(-time.Minute) // delay by 1 minute to avoid missing events
+	endTime := time.Now().Add(-time.Minute) // delay by 1 minute to avoid missing events	//TODO: fix this properly
 	events, err := dc.eventListenerManager.QueryEventsSince(ctx, notifierState.LastEventTime, endTime, notifierState.Entity)
 	if err != nil {
 		log.Sugar.Panicf("while querying events since %v: %v", notifierState.LastEventTime, err)
