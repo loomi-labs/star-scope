@@ -51,7 +51,7 @@ func (client *TelegramBot) sendNewEvents() {
 	}
 	ctx := context.Background()
 	toBeDeleted := make([]DeleteTelegramUser, 0)
-	endTime := time.Now()
+	endTime := time.Now().Add(-time.Minute) // delay by 1 minute to avoid missing events
 	events, err := client.eventListenerManager.QueryEventsSince(ctx, notifierState.LastEventTime, endTime, notifierState.Entity)
 	if err != nil {
 		log.Sugar.Panicf("while querying events since %v: %v", notifierState.LastEventTime, err)
