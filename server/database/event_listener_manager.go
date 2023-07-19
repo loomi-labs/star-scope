@@ -363,7 +363,7 @@ type updateResult struct {
 	totalDeleted int
 }
 
-func (m *EventListenerManager) createOrDeleteEventListener(ctx context.Context, tx *ent.Tx, entUser *ent.User, entChain *ent.Chain, walletAddress string, dataType eventlistener.DataType, create bool, result *updateResult) error {
+func (m *EventListenerManager) createOrDeleteWalletEventListener(ctx context.Context, tx *ent.Tx, entUser *ent.User, entChain *ent.Chain, walletAddress string, dataType eventlistener.DataType, create bool, result *updateResult) error {
 	exists, err := tx.EventListener.
 		Query().
 		Where(eventlistener.And(
@@ -415,7 +415,7 @@ func (m *EventListenerManager) UpdateWallet(ctx context.Context, entUser *ent.Us
 	}
 	result, err := withTxResult(m.client, ctx, func(tx *ent.Tx) (*updateResult, error) {
 		result := &updateResult{}
-		err := m.createOrDeleteEventListener(
+		err := m.createOrDeleteWalletEventListener(
 			ctx,
 			tx,
 			entUser,
@@ -428,7 +428,7 @@ func (m *EventListenerManager) UpdateWallet(ctx context.Context, entUser *ent.Us
 		if err != nil {
 			return result, err
 		}
-		err = m.createOrDeleteEventListener(
+		err = m.createOrDeleteWalletEventListener(
 			ctx,
 			tx,
 			entUser,
@@ -441,7 +441,7 @@ func (m *EventListenerManager) UpdateWallet(ctx context.Context, entUser *ent.Us
 		if err != nil {
 			return result, err
 		}
-		err = m.createOrDeleteEventListener(
+		err = m.createOrDeleteWalletEventListener(
 			ctx,
 			tx,
 			entUser,
@@ -454,7 +454,7 @@ func (m *EventListenerManager) UpdateWallet(ctx context.Context, entUser *ent.Us
 		if err != nil {
 			return result, err
 		}
-		err = m.createOrDeleteEventListener(
+		err = m.createOrDeleteWalletEventListener(
 			ctx,
 			tx,
 			entUser,
@@ -462,6 +462,99 @@ func (m *EventListenerManager) UpdateWallet(ctx context.Context, entUser *ent.Us
 			update.GetWalletAddress(),
 			eventlistener.DataTypeWalletEvent_VoteReminder,
 			update.GetNotifyGovVotingReminder(),
+			result,
+		)
+		if err != nil {
+			return result, err
+		}
+		return result, nil
+	})
+	if err != nil {
+		return err
+	}
+	if result.totalCreated > 0 {
+		go m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerCreated)
+	}
+	if result.totalDeleted > 0 {
+		go m.kafkaInternal.ProduceDbChangeMsg(kafka_internal.EventListenerDeleted)
+	}
+	return nil
+}
+
+func (m *EventListenerManager) createOrDeleteChainEventListener(ctx context.Context, tx *ent.Tx, entUser *ent.User, entChain *ent.Chain, dataType eventlistener.DataType, create bool, result *updateResult) error {
+	exists, err := tx.EventListener.
+		Query().
+		Where(eventlistener.And(
+			eventlistener.HasUsersWith(user.IDEQ(entUser.ID)),
+			eventlistener.HasChainWith(chain.IDEQ(entChain.ID)),
+			eventlistener.DataTypeEQ(dataType),
+		)).
+		Exist(ctx)
+	if err != nil {
+		return err
+	}
+	if !exists && create {
+		result.totalCreated += 1
+		commChannels, err := entUser.QueryCommChannels().IDs(ctx)
+		if err != nil {
+			return err
+		}
+		err = tx.EventListener.
+			Create().
+			SetChain(entChain).
+			AddUsers(entUser).
+			AddCommChannelIDs(commChannels...).
+			SetDataType(dataType).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	} else if exists && !create {
+		cntDeleted, err := tx.EventListener.
+			Delete().
+			Where(eventlistener.And(
+				eventlistener.HasUsersWith(user.IDEQ(entUser.ID)),
+				eventlistener.HasChainWith(chain.IDEQ(entChain.ID)),
+				eventlistener.DataTypeEQ(dataType),
+			)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		result.totalDeleted += cntDeleted
+	}
+	return nil
+}
+
+func (m *EventListenerManager) UpdateChain(ctx context.Context, entUser *ent.User, update *settingspb.UpdateChainRequest) interface{} {
+	if update.GetChainId() == 0 {
+		return fmt.Errorf("chain id is required")
+	}
+	entChain, err := m.client.Chain.Get(ctx, int(update.GetChainId()))
+	if err != nil {
+		return err
+	}
+	result, err := withTxResult(m.client, ctx, func(tx *ent.Tx) (*updateResult, error) {
+		result := &updateResult{}
+		err := m.createOrDeleteChainEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			eventlistener.DataTypeChainEvent_GovernanceProposal_Ongoing,
+			update.GetNotifyNewProposals(),
+			result,
+		)
+		if err != nil {
+			return result, err
+		}
+		err = m.createOrDeleteChainEventListener(
+			ctx,
+			tx,
+			entUser,
+			entChain,
+			eventlistener.DataTypeChainEvent_GovernanceProposal_Finished,
+			update.GetNotifyProposalFinished(),
 			result,
 		)
 		if err != nil {

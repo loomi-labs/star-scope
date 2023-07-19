@@ -49,6 +49,21 @@ const (
 	// SettingsServiceValidateWalletProcedure is the fully-qualified name of the SettingsService's
 	// ValidateWallet RPC.
 	SettingsServiceValidateWalletProcedure = "/starscope.grpc.settings.SettingsService/ValidateWallet"
+	// SettingsServiceGetChainsProcedure is the fully-qualified name of the SettingsService's GetChains
+	// RPC.
+	SettingsServiceGetChainsProcedure = "/starscope.grpc.settings.SettingsService/GetChains"
+	// SettingsServiceAddChainProcedure is the fully-qualified name of the SettingsService's AddChain
+	// RPC.
+	SettingsServiceAddChainProcedure = "/starscope.grpc.settings.SettingsService/AddChain"
+	// SettingsServiceUpdateChainProcedure is the fully-qualified name of the SettingsService's
+	// UpdateChain RPC.
+	SettingsServiceUpdateChainProcedure = "/starscope.grpc.settings.SettingsService/UpdateChain"
+	// SettingsServiceRemoveChainProcedure is the fully-qualified name of the SettingsService's
+	// RemoveChain RPC.
+	SettingsServiceRemoveChainProcedure = "/starscope.grpc.settings.SettingsService/RemoveChain"
+	// SettingsServiceGetAvailableChainsProcedure is the fully-qualified name of the SettingsService's
+	// GetAvailableChains RPC.
+	SettingsServiceGetAvailableChainsProcedure = "/starscope.grpc.settings.SettingsService/GetAvailableChains"
 )
 
 // SettingsServiceClient is a client for the starscope.grpc.settings.SettingsService service.
@@ -58,6 +73,11 @@ type SettingsServiceClient interface {
 	UpdateWallet(context.Context, *connect_go.Request[settingspb.UpdateWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	RemoveWallet(context.Context, *connect_go.Request[settingspb.RemoveWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	ValidateWallet(context.Context, *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error)
+	GetChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetChainsResponse], error)
+	AddChain(context.Context, *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error)
+	UpdateChain(context.Context, *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error)
+	RemoveChain(context.Context, *connect_go.Request[settingspb.RemoveChainRequest]) (*connect_go.Response[emptypb.Empty], error)
+	GetAvailableChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetAvailableChainsResponse], error)
 }
 
 // NewSettingsServiceClient constructs a client for the starscope.grpc.settings.SettingsService
@@ -95,16 +115,46 @@ func NewSettingsServiceClient(httpClient connect_go.HTTPClient, baseURL string, 
 			baseURL+SettingsServiceValidateWalletProcedure,
 			opts...,
 		),
+		getChains: connect_go.NewClient[emptypb.Empty, settingspb.GetChainsResponse](
+			httpClient,
+			baseURL+SettingsServiceGetChainsProcedure,
+			opts...,
+		),
+		addChain: connect_go.NewClient[settingspb.UpdateChainRequest, emptypb.Empty](
+			httpClient,
+			baseURL+SettingsServiceAddChainProcedure,
+			opts...,
+		),
+		updateChain: connect_go.NewClient[settingspb.UpdateChainRequest, emptypb.Empty](
+			httpClient,
+			baseURL+SettingsServiceUpdateChainProcedure,
+			opts...,
+		),
+		removeChain: connect_go.NewClient[settingspb.RemoveChainRequest, emptypb.Empty](
+			httpClient,
+			baseURL+SettingsServiceRemoveChainProcedure,
+			opts...,
+		),
+		getAvailableChains: connect_go.NewClient[emptypb.Empty, settingspb.GetAvailableChainsResponse](
+			httpClient,
+			baseURL+SettingsServiceGetAvailableChainsProcedure,
+			opts...,
+		),
 	}
 }
 
 // settingsServiceClient implements SettingsServiceClient.
 type settingsServiceClient struct {
-	getWallets     *connect_go.Client[emptypb.Empty, settingspb.GetWalletsResponse]
-	addWallet      *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
-	updateWallet   *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
-	removeWallet   *connect_go.Client[settingspb.RemoveWalletRequest, emptypb.Empty]
-	validateWallet *connect_go.Client[settingspb.ValidateWalletRequest, settingspb.ValidateWalletResponse]
+	getWallets         *connect_go.Client[emptypb.Empty, settingspb.GetWalletsResponse]
+	addWallet          *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
+	updateWallet       *connect_go.Client[settingspb.UpdateWalletRequest, emptypb.Empty]
+	removeWallet       *connect_go.Client[settingspb.RemoveWalletRequest, emptypb.Empty]
+	validateWallet     *connect_go.Client[settingspb.ValidateWalletRequest, settingspb.ValidateWalletResponse]
+	getChains          *connect_go.Client[emptypb.Empty, settingspb.GetChainsResponse]
+	addChain           *connect_go.Client[settingspb.UpdateChainRequest, emptypb.Empty]
+	updateChain        *connect_go.Client[settingspb.UpdateChainRequest, emptypb.Empty]
+	removeChain        *connect_go.Client[settingspb.RemoveChainRequest, emptypb.Empty]
+	getAvailableChains *connect_go.Client[emptypb.Empty, settingspb.GetAvailableChainsResponse]
 }
 
 // GetWallets calls starscope.grpc.settings.SettingsService.GetWallets.
@@ -132,6 +182,31 @@ func (c *settingsServiceClient) ValidateWallet(ctx context.Context, req *connect
 	return c.validateWallet.CallUnary(ctx, req)
 }
 
+// GetChains calls starscope.grpc.settings.SettingsService.GetChains.
+func (c *settingsServiceClient) GetChains(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetChainsResponse], error) {
+	return c.getChains.CallUnary(ctx, req)
+}
+
+// AddChain calls starscope.grpc.settings.SettingsService.AddChain.
+func (c *settingsServiceClient) AddChain(ctx context.Context, req *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.addChain.CallUnary(ctx, req)
+}
+
+// UpdateChain calls starscope.grpc.settings.SettingsService.UpdateChain.
+func (c *settingsServiceClient) UpdateChain(ctx context.Context, req *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.updateChain.CallUnary(ctx, req)
+}
+
+// RemoveChain calls starscope.grpc.settings.SettingsService.RemoveChain.
+func (c *settingsServiceClient) RemoveChain(ctx context.Context, req *connect_go.Request[settingspb.RemoveChainRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return c.removeChain.CallUnary(ctx, req)
+}
+
+// GetAvailableChains calls starscope.grpc.settings.SettingsService.GetAvailableChains.
+func (c *settingsServiceClient) GetAvailableChains(ctx context.Context, req *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetAvailableChainsResponse], error) {
+	return c.getAvailableChains.CallUnary(ctx, req)
+}
+
 // SettingsServiceHandler is an implementation of the starscope.grpc.settings.SettingsService
 // service.
 type SettingsServiceHandler interface {
@@ -140,6 +215,11 @@ type SettingsServiceHandler interface {
 	UpdateWallet(context.Context, *connect_go.Request[settingspb.UpdateWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	RemoveWallet(context.Context, *connect_go.Request[settingspb.RemoveWalletRequest]) (*connect_go.Response[emptypb.Empty], error)
 	ValidateWallet(context.Context, *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error)
+	GetChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetChainsResponse], error)
+	AddChain(context.Context, *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error)
+	UpdateChain(context.Context, *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error)
+	RemoveChain(context.Context, *connect_go.Request[settingspb.RemoveChainRequest]) (*connect_go.Response[emptypb.Empty], error)
+	GetAvailableChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetAvailableChainsResponse], error)
 }
 
 // NewSettingsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -173,6 +253,31 @@ func NewSettingsServiceHandler(svc SettingsServiceHandler, opts ...connect_go.Ha
 		svc.ValidateWallet,
 		opts...,
 	)
+	settingsServiceGetChainsHandler := connect_go.NewUnaryHandler(
+		SettingsServiceGetChainsProcedure,
+		svc.GetChains,
+		opts...,
+	)
+	settingsServiceAddChainHandler := connect_go.NewUnaryHandler(
+		SettingsServiceAddChainProcedure,
+		svc.AddChain,
+		opts...,
+	)
+	settingsServiceUpdateChainHandler := connect_go.NewUnaryHandler(
+		SettingsServiceUpdateChainProcedure,
+		svc.UpdateChain,
+		opts...,
+	)
+	settingsServiceRemoveChainHandler := connect_go.NewUnaryHandler(
+		SettingsServiceRemoveChainProcedure,
+		svc.RemoveChain,
+		opts...,
+	)
+	settingsServiceGetAvailableChainsHandler := connect_go.NewUnaryHandler(
+		SettingsServiceGetAvailableChainsProcedure,
+		svc.GetAvailableChains,
+		opts...,
+	)
 	return "/starscope.grpc.settings.SettingsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SettingsServiceGetWalletsProcedure:
@@ -185,6 +290,16 @@ func NewSettingsServiceHandler(svc SettingsServiceHandler, opts ...connect_go.Ha
 			settingsServiceRemoveWalletHandler.ServeHTTP(w, r)
 		case SettingsServiceValidateWalletProcedure:
 			settingsServiceValidateWalletHandler.ServeHTTP(w, r)
+		case SettingsServiceGetChainsProcedure:
+			settingsServiceGetChainsHandler.ServeHTTP(w, r)
+		case SettingsServiceAddChainProcedure:
+			settingsServiceAddChainHandler.ServeHTTP(w, r)
+		case SettingsServiceUpdateChainProcedure:
+			settingsServiceUpdateChainHandler.ServeHTTP(w, r)
+		case SettingsServiceRemoveChainProcedure:
+			settingsServiceRemoveChainHandler.ServeHTTP(w, r)
+		case SettingsServiceGetAvailableChainsProcedure:
+			settingsServiceGetAvailableChainsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -212,4 +327,24 @@ func (UnimplementedSettingsServiceHandler) RemoveWallet(context.Context, *connec
 
 func (UnimplementedSettingsServiceHandler) ValidateWallet(context.Context, *connect_go.Request[settingspb.ValidateWalletRequest]) (*connect_go.Response[settingspb.ValidateWalletResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.ValidateWallet is not implemented"))
+}
+
+func (UnimplementedSettingsServiceHandler) GetChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetChainsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.GetChains is not implemented"))
+}
+
+func (UnimplementedSettingsServiceHandler) AddChain(context.Context, *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.AddChain is not implemented"))
+}
+
+func (UnimplementedSettingsServiceHandler) UpdateChain(context.Context, *connect_go.Request[settingspb.UpdateChainRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.UpdateChain is not implemented"))
+}
+
+func (UnimplementedSettingsServiceHandler) RemoveChain(context.Context, *connect_go.Request[settingspb.RemoveChainRequest]) (*connect_go.Response[emptypb.Empty], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.RemoveChain is not implemented"))
+}
+
+func (UnimplementedSettingsServiceHandler) GetAvailableChains(context.Context, *connect_go.Request[emptypb.Empty]) (*connect_go.Response[settingspb.GetAvailableChainsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("starscope.grpc.settings.SettingsService.GetAvailableChains is not implemented"))
 }

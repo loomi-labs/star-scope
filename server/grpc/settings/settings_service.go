@@ -162,3 +162,96 @@ func (s *SettingsService) ValidateWallet(ctx context.Context, request *connect.R
 		Wallet:         wallet,
 	}), nil
 }
+
+func (s *SettingsService) GetChains(ctx context.Context, c *connect.Request[emptypb.Empty]) (*connect.Response[settingspb.GetChainsResponse], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	chains, err := s.chainManager.QuerySubscribedChains(ctx, user)
+	if err != nil {
+		log.Sugar.Error("failed to query chains: ", err)
+		return nil, err
+	}
+
+	return connect.NewResponse(
+		&settingspb.GetChainsResponse{Chains: chains},
+	), nil
+}
+
+func (s *SettingsService) AddChain(ctx context.Context, request *connect.Request[settingspb.UpdateChainRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	err := s.eventListenerManager.UpdateChain(ctx, user, request.Msg)
+	if err != nil {
+		log.Sugar.Error("failed to update chain: ", err)
+		return nil, types.UnknownErr
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *SettingsService) UpdateChain(ctx context.Context, request *connect.Request[settingspb.UpdateChainRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	err := s.eventListenerManager.UpdateChain(ctx, user, request.Msg)
+	if err != nil {
+		log.Sugar.Error("failed to update chain: ", err)
+		return nil, types.UnknownErr
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *SettingsService) RemoveChain(ctx context.Context, request *connect.Request[settingspb.RemoveChainRequest]) (*connect.Response[emptypb.Empty], error) {
+	user, ok := ctx.Value(common.ContextKeyUser).(*ent.User)
+	if !ok {
+		log.Sugar.Error("invalid user")
+		return nil, types.UserNotFoundErr
+	}
+
+	update := &settingspb.UpdateChainRequest{
+		ChainId:                request.Msg.GetChainId(),
+		NotifyNewProposals:     false,
+		NotifyProposalFinished: false,
+	}
+
+	err := s.eventListenerManager.UpdateChain(ctx, user, update)
+	if err != nil {
+		log.Sugar.Error("failed to update chain: ", err)
+		return nil, types.UnknownErr
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *SettingsService) GetAvailableChains(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[settingspb.GetAvailableChainsResponse], error) {
+	chains := s.chainManager.QueryIsQuerying(ctx)
+
+	pbChains := make([]*settingspb.Chain, len(chains))
+	for i, chain := range chains {
+		pbChains[i] = &settingspb.Chain{
+			Id:                                uint64(chain.ID),
+			Name:                              chain.PrettyName,
+			LogoUrl:                           chain.Image,
+			NotifyNewProposals:                false,
+			NotifyProposalFinished:            false,
+			IsNotifyNewProposalsSupported:     true,
+			IsNotifyProposalFinishedSupported: true,
+		}
+	}
+
+	return connect.NewResponse(&settingspb.GetAvailableChainsResponse{
+		Chains: pbChains,
+	}), nil
+}

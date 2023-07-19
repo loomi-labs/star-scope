@@ -2,7 +2,8 @@ use crate::components::messages::{
     create_error_msg_from_status, create_message, create_timed_message,
 };
 use crate::types::protobuf::grpc_settings::{
-    RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Wallet,
+    Chain, RemoveChainRequest, RemoveWalletRequest, UpdateChainRequest, UpdateWalletRequest,
+    ValidateWalletRequest, Wallet,
 };
 use crate::{InfoLevel, Services};
 use sycamore::prelude::*;
@@ -23,25 +24,29 @@ pub async fn query_wallets(cx: Scope<'_>) -> Result<Vec<Wallet>, ()> {
         Err(())
     }
 }
-pub enum Update {
+pub enum WalletUpdate {
     Funding,
     Staking,
     GovVotingReminder,
 }
 
-pub async fn update_existing_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: Update) {
+pub async fn update_existing_wallet(
+    cx: Scope<'_>,
+    wallet_sig: &Signal<Wallet>,
+    update: WalletUpdate,
+) {
     let wallet = create_ref(cx, wallet_sig.get_untracked());
-    let notify_funding = if let Update::Funding = update {
+    let notify_funding = if let WalletUpdate::Funding = update {
         !wallet.notify_funding
     } else {
         wallet.notify_funding
     };
-    let notify_staking = if let Update::Staking = update {
+    let notify_staking = if let WalletUpdate::Staking = update {
         !wallet.notify_staking
     } else {
         wallet.notify_staking
     };
-    let notify_gov_voting_reminder = if let Update::GovVotingReminder = update {
+    let notify_gov_voting_reminder = if let WalletUpdate::GovVotingReminder = update {
         !wallet.notify_gov_voting_reminder
     } else {
         wallet.notify_gov_voting_reminder
@@ -56,21 +61,21 @@ pub async fn update_existing_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, 
     let result = update_wallet(cx, wallet_sig, request).await;
     if result.is_ok() {
         let msg = match update {
-            Update::Funding => {
+            WalletUpdate::Funding => {
                 if notify_funding {
                     "You will be notified about funding events"
                 } else {
                     "You will no longer be notified about funding events"
                 }
             }
-            Update::Staking => {
+            WalletUpdate::Staking => {
                 if notify_staking {
                     "You will be notified about staking events"
                 } else {
                     "You will no longer be notified about staking events"
                 }
             }
-            Update::GovVotingReminder => {
+            WalletUpdate::GovVotingReminder => {
                 if notify_gov_voting_reminder {
                     "You will be notified to vote on governance proposals"
                 } else {
@@ -169,6 +174,168 @@ pub async fn delete_wallet(cx: Scope<'_>, wallet_address: String) -> Result<(), 
             5,
         );
         Ok(())
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub async fn query_chains(cx: Scope<'_>) -> Result<Vec<Chain>, ()> {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(());
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .get_chains(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(result) = response {
+        Ok(result.chains)
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub enum ChainUpdate {
+    NewProposal,
+    ProposalFinished,
+}
+
+pub async fn update_existing_chain(cx: Scope<'_>, chain_sig: &Signal<Chain>, update: ChainUpdate) {
+    let chain = create_ref(cx, chain_sig.get_untracked());
+    let notify_new_proposals = if let ChainUpdate::NewProposal = update {
+        !chain.notify_new_proposals
+    } else {
+        chain.notify_new_proposals
+    };
+    let notify_proposal_finished = if let ChainUpdate::ProposalFinished = update {
+        !chain.notify_proposal_finished
+    } else {
+        chain.notify_proposal_finished
+    };
+    let request = UpdateChainRequest {
+        chain_id: chain.id,
+        notify_new_proposals,
+        notify_proposal_finished,
+    };
+
+    let result = update_chain(cx, chain_sig, request).await;
+    if result.is_ok() {
+        let msg = match update {
+            ChainUpdate::NewProposal => {
+                if notify_new_proposals {
+                    "You will be notified about new governance proposals"
+                } else {
+                    "You will no longer be notified about new governance proposals"
+                }
+            }
+            ChainUpdate::ProposalFinished => {
+                if notify_proposal_finished {
+                    "You will be notified about finished governance proposals"
+                } else {
+                    "You will no longer be notified about finished governance proposals"
+                }
+            }
+        };
+        create_timed_message(cx, "Chain updated", msg, InfoLevel::Success, 5);
+    }
+}
+
+pub async fn update_chain(
+    cx: Scope<'_>,
+    chain: &Signal<Chain>,
+    update: UpdateChainRequest,
+) -> Result<(), ()> {
+    let update_ref = create_ref(cx, update.clone());
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(update);
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .update_chain(request)
+        .await
+        .map(|res| res.into_inner());
+
+    if response.is_ok() {
+        chain.modify().notify_new_proposals = update_ref.notify_new_proposals;
+        chain.modify().notify_proposal_finished = update_ref.notify_proposal_finished;
+        Ok(())
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub async fn delete_chain(cx: Scope<'_>, chain: Chain) -> Result<(), ()> {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(RemoveChainRequest {
+        chain_id: chain.id,
+    });
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .remove_chain(request)
+        .await
+        .map(|res| res.into_inner());
+
+    if response.is_ok() {
+        create_timed_message(
+            cx,
+            "Chain deleted",
+            format!("Chain {} was deleted", chain.name),
+            InfoLevel::Success,
+            5,
+        );
+        Ok(())
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub async fn query_available_chains(cx: Scope<'_>) -> Result<Vec<Chain>, ()> {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(());
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .get_available_chains(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(result) = response {
+        Ok(result.chains)
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub async fn add_chain(cx: Scope<'_>, chain: Chain) -> Result<Chain, ()> {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(UpdateChainRequest {
+        chain_id: chain.id,
+        notify_new_proposals: true,
+        notify_proposal_finished: true,
+    });
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .add_chain(request)
+        .await
+        .map(|res| res.into_inner());
+
+    if response.is_ok() {
+        let new_chain = Chain {
+            id: chain.id,
+            name: chain.name,
+            notify_new_proposals: true,
+            notify_proposal_finished: true,
+            logo_url: chain.logo_url,
+            is_notify_new_proposals_supported: chain.is_notify_new_proposals_supported,
+            is_notify_proposal_finished_supported: chain.is_notify_proposal_finished_supported,
+        };
+        Ok(new_chain)
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
         Err(())

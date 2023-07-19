@@ -8,11 +8,15 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/chain"
 	"github.com/loomi-labs/star-scope/ent/contractproposal"
+	"github.com/loomi-labs/star-scope/ent/eventlistener"
 	"github.com/loomi-labs/star-scope/ent/proposal"
+	"github.com/loomi-labs/star-scope/grpc/settings/settingspb"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/loomi-labs/star-scope/types"
 	"github.com/shifty11/go-logger/log"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
+	"sort"
 	"strings"
 	"time"
 )
@@ -102,6 +106,49 @@ func (m *ChainManager) QueryContractProposals(ctx context.Context, entChain *ent
 	return entChain.
 		QueryContractProposals().
 		AllX(ctx)
+}
+
+func (m *ChainManager) QuerySubscribedChains(ctx context.Context, entUser *ent.User) ([]*settingspb.Chain, error) {
+	els, err := entUser.
+		QueryEventListeners().
+		Where(eventlistener.DataTypeIn(
+			eventlistener.DataTypeChainEvent_GovernanceProposal_Ongoing,
+			eventlistener.DataTypeChainEvent_GovernanceProposal_Finished,
+			//eventlistener.DataTypeChainEvent_ValidatorOutOfActiveSet,
+			//eventlistener.DataTypeChainEvent_ValidatorSlash,
+		)).
+		Select(eventlistener.FieldDataType).
+		WithChain().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var chainMap = make(map[int]*settingspb.Chain)
+	for _, el := range els {
+		if _, ok := chainMap[el.Edges.Chain.ID]; !ok {
+			chainMap[el.Edges.Chain.ID] = &settingspb.Chain{
+				Id:                                uint64(el.Edges.Chain.ID),
+				Name:                              el.Edges.Chain.PrettyName,
+				LogoUrl:                           el.Edges.Chain.Image,
+				NotifyNewProposals:                false,
+				NotifyProposalFinished:            false,
+				IsNotifyNewProposalsSupported:     el.Edges.Chain.IsEnabled && el.Edges.Chain.IsQuerying,
+				IsNotifyProposalFinishedSupported: el.Edges.Chain.IsEnabled && el.Edges.Chain.IsQuerying,
+			}
+		}
+		if el.DataType == eventlistener.DataTypeChainEvent_GovernanceProposal_Ongoing {
+			chainMap[el.Edges.Chain.ID].NotifyNewProposals = true
+		}
+		if el.DataType == eventlistener.DataTypeChainEvent_GovernanceProposal_Finished {
+			chainMap[el.Edges.Chain.ID].NotifyProposalFinished = true
+		}
+	}
+	var chains = maps.Values(chainMap)
+	sort.Slice(chains, func(i, j int) bool {
+		return chains[i].Name < chains[j].Name
+	})
+	return chains, nil
 }
 
 func (m *ChainManager) Create(ctx context.Context, chainData *types.ChainData) (*ent.Chain, error) {
