@@ -1,11 +1,10 @@
-
 use crate::components::loading::LoadingSpinner;
 use crate::components::messages::create_message;
 use crate::components::search::Search;
-use crate::pages::notification_settings::queries::{self, WalletUpdate, ChainUpdate, WalletValidation};
-use crate::types::protobuf::grpc_settings::{
-    UpdateWalletRequest, Chain, Wallet
+use crate::pages::notification_settings::queries::{
+    self, ChainUpdate, WalletUpdate, WalletValidation,
 };
+use crate::types::protobuf::grpc_settings::{Chain, UpdateWalletRequest, Wallet};
 use crate::{AppState, InfoLevel};
 use sycamore::futures::spawn_local_scoped;
 use sycamore::prelude::*;
@@ -99,7 +98,10 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
         if let Some(wallet_address) = delete_signal.get().as_ref().clone() {
             let mut wallets: Modify<'_, Vec<&Signal<Wallet>>> = wallets.modify();
             spawn_local_scoped(cx, async move {
-                if queries::delete_wallet(cx, wallet_address.clone()).await.is_ok() {
+                if queries::delete_wallet(cx, wallet_address.clone())
+                    .await
+                    .is_ok()
+                {
                     wallets.retain(|w| w.get().address != wallet_address);
                 }
             });
@@ -206,7 +208,9 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
             )));
         } else {
             spawn_local_scoped(cx, async move {
-                let result =  queries::query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
+                let result =
+                    queries::query_validate_wallet(cx, new_wallet_address.get().as_ref().clone())
+                        .await;
                 validation.set(Some(result.clone()));
                 if let WalletValidation::Valid(wallet) = result {
                     let request = UpdateWalletRequest {
@@ -216,7 +220,10 @@ fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wall
                         notify_gov_voting_reminder: true,
                     };
                     let wallet_sig = create_signal(cx, wallet.clone());
-                    if queries::update_wallet(cx, wallet_sig, request).await.is_ok() {
+                    if queries::update_wallet(cx, wallet_sig, request)
+                        .await
+                        .is_ok()
+                    {
                         wallets.modify().push(wallet_sig);
                         new_wallet_address.set(String::new());
                         has_new_wallet.set(false);
@@ -417,7 +424,11 @@ fn ChainList<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain
 }
 
 #[component(inline_props)]
-pub fn SearchChain<'a, G: Html>(cx: Scope<'a>, available_chains:  &'a Signal<Vec::<Chain>>, selected_chain: &'a Signal<Option<u64>>) -> View<G> {
+pub fn SearchChain<'a, G: Html>(
+    cx: Scope<'a>,
+    available_chains: &'a Signal<Vec<Chain>>,
+    selected_chain: &'a Signal<Option<u64>>,
+) -> View<G> {
     const MAX_ENTRIES: usize = 10;
     let search_term = create_signal(cx, String::new());
 
@@ -439,7 +450,12 @@ pub fn SearchChain<'a, G: Html>(cx: Scope<'a>, available_chains:  &'a Signal<Vec
                 }
             }
         } else {
-            results = available_chains.get().iter().take(MAX_ENTRIES).cloned().collect();
+            results = available_chains
+                .get()
+                .iter()
+                .take(MAX_ENTRIES)
+                .cloned()
+                .collect();
         }
         results
     });
@@ -492,7 +508,7 @@ pub fn SearchChain<'a, G: Html>(cx: Scope<'a>, available_chains:  &'a Signal<Vec
 
                                     view! {cx,
                                         li(class="flex flex-col rounded hover:bg-gray-100 hover:dark:bg-purple-600 cursor-pointer",
-                                            on:click=move |_| selected_chain.set(Some(chain.id.clone()))) {
+                                            on:click=move |_| selected_chain.set(Some(chain.id))) {
                                             div(class="flex items-center justify-between my-2 gap-2") {
                                                 div(class="flex items-center") {
                                                     (highlicht.get().0)
@@ -538,7 +554,8 @@ fn AddChain<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>
     });
 
     create_effect(cx, move || {
-        let filtered_chains = all_chains.get()
+        let filtered_chains = all_chains
+            .get()
             .iter()
             .filter(|chain| {
                 !chains
@@ -561,11 +578,16 @@ fn AddChain<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>
             if let Some(chain) = chain {
                 spawn_local_scoped(cx, async move {
                     let result = queries::add_chain(cx, chain).await;
-                    if let Some(chain) = result.ok() {
+                    if let Ok(chain) = result {
                         let chain_sig = create_signal(cx, chain.clone());
                         chains.modify().push(chain_sig);
                         has_new_chain.set(false);
-                        create_message(cx, "Chain added", format!("Chain {} is now being tracked", chain.name), InfoLevel::Success);
+                        create_message(
+                            cx,
+                            "Chain added",
+                            format!("Chain {} is now being tracked", chain.name),
+                            InfoLevel::Success,
+                        );
                     }
                     selected_chain.set(None);
                 })
@@ -598,11 +620,11 @@ fn AddChain<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>
                 div(class=format!("flex flex-wrap items-center gap-x-4")) {
                     div(class="flex flex-col") {
                         (if *has_loaded.get() {
-                            view! {cx, 
+                            view! {cx,
                                 SearchChain(available_chains=available_chains, selected_chain=selected_chain)
                             }
-                        } else { 
-                            view! {cx, 
+                        } else {
+                            view! {cx,
                                 LoadingSpinner()
                             }
                         })
@@ -643,14 +665,15 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
 
     let collapsible_header_class = "flex items-center p-4 cursor-pointer dark:hover:bg-gray-800";
     let collapsible_content_class = "flex flex-col rounded-b-lg px-2 peer-hover:bg-gray-800";
-    let collapsible_icon_class = "w-6 h-6 icon-[octicon--triangle-down-16] transform transition-all duration-300";
+    let collapsible_icon_class =
+        "w-6 h-6 icon-[octicon--triangle-down-16] transform transition-all duration-300";
     let subheader_class = "text-xl font-semibold";
 
     view! {cx,
         div(class="flex flex-col") {
             h1(class="text-4xl font-semibold") { "Notification settings" }
             div(class="flex flex-col mt-4 rounded-lg") {
-                div(class=format!("{} {} peer/wallets", collapsible_header_class, if *is_wallet_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ), 
+                div(class=format!("{} {} peer/wallets", collapsible_header_class, if *is_wallet_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ),
                         on:click=move |_| is_wallet_list_open.set(!*is_wallet_list_open.get())) {
                     h2(class=subheader_class) { (format!("Wallets ({})", wallets.get().len())) }
                     span(class=format!("{} {}", collapsible_icon_class, if *is_wallet_list_open.get() {""} else {"-rotate-90"})) {}
@@ -661,7 +684,7 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
                         AddWallet(wallets=wallets)
                     }
                 }
-                div(class=format!("{} {} peer/chains", collapsible_header_class, if *is_chain_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ), 
+                div(class=format!("{} {} peer/chains", collapsible_header_class, if *is_chain_list_open.get() {"hover:rounded-t-lg"} else {"hover:rounded-lg"} ),
                         on:click=move |_| is_chain_list_open.set(!*is_chain_list_open.get())) {
                     h2(class=subheader_class) { (format!("Chains ({})", chains.get().len())) }
                     span(class=format!("{} {}", collapsible_icon_class, if *is_chain_list_open.get() {""} else {"-rotate-90"})) {}

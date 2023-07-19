@@ -1,7 +1,10 @@
 use crate::components::messages::{
     create_error_msg_from_status, create_message, create_timed_message,
 };
-use crate::types::protobuf::grpc_settings::{RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Chain, Wallet, UpdateChainRequest, RemoveChainRequest};
+use crate::types::protobuf::grpc_settings::{
+    Chain, RemoveChainRequest, RemoveWalletRequest, UpdateChainRequest, UpdateWalletRequest,
+    ValidateWalletRequest, Wallet,
+};
 use crate::{InfoLevel, Services};
 use sycamore::prelude::*;
 
@@ -27,7 +30,11 @@ pub enum WalletUpdate {
     GovVotingReminder,
 }
 
-pub async fn update_existing_wallet(cx: Scope<'_>, wallet_sig: &Signal<Wallet>, update: WalletUpdate) {
+pub async fn update_existing_wallet(
+    cx: Scope<'_>,
+    wallet_sig: &Signal<Wallet>,
+    update: WalletUpdate,
+) {
     let wallet = create_ref(cx, wallet_sig.get_untracked());
     let notify_funding = if let WalletUpdate::Funding = update {
         !wallet.notify_funding
@@ -208,7 +215,7 @@ pub async fn update_existing_chain(cx: Scope<'_>, chain_sig: &Signal<Chain>, upd
         chain.notify_proposal_finished
     };
     let request = UpdateChainRequest {
-        chain_id: chain.id.clone(),
+        chain_id: chain.id,
         notify_new_proposals,
         notify_proposal_finished,
     };
@@ -263,7 +270,7 @@ pub async fn update_chain(
 pub async fn delete_chain(cx: Scope<'_>, chain: Chain) -> Result<(), ()> {
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(RemoveChainRequest {
-        chain_id: chain.id.clone(),
+        chain_id: chain.id,
     });
     let response = services
         .grpc_client
@@ -304,13 +311,10 @@ pub async fn query_available_chains(cx: Scope<'_>) -> Result<Vec<Chain>, ()> {
     }
 }
 
-pub async fn add_chain(
-    cx: Scope<'_>,
-    chain: Chain,
-) -> Result<Chain, ()> {
+pub async fn add_chain(cx: Scope<'_>, chain: Chain) -> Result<Chain, ()> {
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(UpdateChainRequest {
-        chain_id: chain.id.clone(),
+        chain_id: chain.id,
         notify_new_proposals: true,
         notify_proposal_finished: true,
     });

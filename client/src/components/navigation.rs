@@ -92,7 +92,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
     let span_text_class = "overflow-y-auto overflow-x-hidden ml-2 text-base tracking-wide truncate";
     let badge_class = "inline-flex items-center justify-center w-5 h-5 ml-0 rounded-full text-[10px] font-bold text-white bg-red-500 border-2 border-white dark:border-gray-900";
 
-    let n_button_data = vec![
+    let n_button_data = [
         (None, "icon-[lucide--copy-check]", "All", cnt_all),
         (
             Some(EventType::Funding),
@@ -141,7 +141,7 @@ pub fn Sidebar<G: Html>(cx: Scope) -> View<G> {
         } }).collect()
     );
 
-    let s_button_data = vec![
+    let s_button_data = [
         (
             Some(AppRoutes::NotificationSettings),
             "icon-[carbon--notification]",
