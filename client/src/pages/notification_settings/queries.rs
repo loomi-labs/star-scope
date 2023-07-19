@@ -232,9 +232,9 @@ pub async fn update_existing_chain(cx: Scope<'_>, chain_sig: &Signal<Chain>, upd
             }
             ChainUpdate::ProposalFinished => {
                 if notify_proposal_finished {
-                    "You will be notified about finished governance proposals"
+                    "You will be notified about governance proposal results"
                 } else {
-                    "You will no longer be notified about finished governance proposals"
+                    "You will no longer be notified about governance proposal results"
                 }
             }
         };
