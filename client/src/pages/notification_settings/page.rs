@@ -398,12 +398,12 @@ fn ChainList<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain
                                         view!{cx,
                                             div(class=BUTTON_ROW_CLASS, on:click=move |_| handle_update(ChainUpdate::ProposalFinished)) {
                                                 span(class=(if chain.get().notify_proposal_finished { selected_class } else { unselected_class })) {}
-                                                span() { "Finishd governance proposals" }
+                                                span() { "Governance proposal results" }
                                             }
                                         }
                                     } else {
                                         view!{cx,
-                                            Tooltip(title="Finishd governance proposals")
+                                            Tooltip(title="Governance proposal results")
                                         }
                                     })
                                     button(class="flex items-center justify-center w-8 h-8 rounded-lg dark:bg-purple-700 dark:hover:bg-purple-600",
