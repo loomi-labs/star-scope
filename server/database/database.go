@@ -14,7 +14,6 @@ import (
 	"github.com/loomi-labs/star-scope/ent"
 	"github.com/loomi-labs/star-scope/ent/migrate"
 	"github.com/loomi-labs/star-scope/ent/state"
-	"github.com/loomi-labs/star-scope/ent/user"
 	"github.com/loomi-labs/star-scope/kafka_internal"
 	"github.com/pkg/errors"
 	"github.com/shifty11/go-logger/log"
@@ -277,14 +276,6 @@ func InitDb() {
 				Create().
 				SetUser(u).
 				SaveX(ctx)
-		}
-	}
-
-	userManager := NewDbManagersWithoutKafka().UserManager
-	for _, u := range client.User.Query().Where(user.IsSetupCompleteEQ(false)).AllX(ctx) {
-		err := userManager.Delete(ctx, u)
-		if err != nil {
-			log.Sugar.Panicf("failed to delete user: %v", err)
 		}
 	}
 
