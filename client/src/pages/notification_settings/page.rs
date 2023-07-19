@@ -1,13 +1,10 @@
-use std::collections::HashSet;
-use std::fmt::Display;
-use std::hash::{Hash, Hasher};
 
 use crate::components::loading::LoadingSpinner;
 use crate::components::messages::create_message;
-use crate::components::search::{SearchEntity, Searchable};
+use crate::components::search::Search;
 use crate::pages::notification_settings::queries::{self, WalletUpdate, ChainUpdate, WalletValidation};
 use crate::types::protobuf::grpc_settings::{
-    UpdateWalletRequest, Chain, Wallet, AvailableChain
+    UpdateWalletRequest, Chain, Wallet
 };
 use crate::{AppState, InfoLevel};
 use sycamore::futures::spawn_local_scoped;
@@ -419,69 +416,165 @@ fn ChainList<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain
     }
 }
 
-#[derive(Debug, Clone)]
-struct SearchableChain {
-    pub chain: AvailableChain,
-}
+#[component(inline_props)]
+pub fn SearchChain<'a, G: Html>(cx: Scope<'a>, available_chains:  &'a Signal<Vec::<Chain>>, selected_chain: &'a Signal<Option<u64>>) -> View<G> {
+    const MAX_ENTRIES: usize = 10;
+    let search_term = create_signal(cx, String::new());
 
-impl Display for SearchableChain {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.chain.name.fmt(f)
+    let search_results = create_selector(cx, move || {
+        let search = search_term.get().to_lowercase();
+        let mut results = vec![];
+        if !search.is_empty() {
+            for searhable in available_chains.get().iter() {
+                if searhable
+                    .name
+                    .to_string()
+                    .to_ascii_lowercase()
+                    .contains(&search)
+                {
+                    results.push(searhable.clone());
+                }
+                if results.len() >= MAX_ENTRIES {
+                    break;
+                }
+            }
+        } else {
+            results = available_chains.get().iter().take(MAX_ENTRIES).cloned().collect();
+        }
+        results
+    });
+
+    let has_input_focus = create_signal(cx, false);
+    let has_dialog_focus = create_signal(cx, false);
+
+    let show_dialog = create_selector(cx, move || {
+        *has_input_focus.get() || *has_dialog_focus.get()
+    });
+
+    let has_results = create_selector(cx, move || search_results.get().len() > 0);
+
+    create_effect(cx, move || {
+        if selected_chain.get().is_none() {
+            has_input_focus.set(false);
+            has_dialog_focus.set(false);
+            search_term.set(String::new());
+        }
+    });
+
+    view! {cx,
+        div(class="relative flex justify-center items-center text-gray-500") {
+            Search(search_term=search_term, has_input_focus=has_input_focus, placeholder="Search chain")
+            dialog(class="absolute z-20 top-full left-0 bg-white shadow-md rounded dark:bg-purple-700 dark:text-white",
+                    open=*show_dialog.get(),
+                    on:focusin= move |_| has_dialog_focus.set(true),
+                    on:blur= move |_| has_dialog_focus.set(false),
+                ) {
+                (if *has_results.get() {
+                    view! {cx,
+                        ul(class="py-2 px-4 max-h-56 overflow-y-auto overflow-x-hidden divide-y") {
+                            Indexed(
+                                iterable=search_results,
+                                view=move |cx, chain| {
+                                    let highlicht = create_selector(cx, move || {
+                                        let name = chain.name.to_string();
+                                        let search = search_term.get().to_ascii_lowercase();
+                                        if let Some(index) = name.to_ascii_lowercase().find(&search) {
+                                            let size = index + search.len();
+
+                                            let prefix = name[..index].to_owned();
+                                            let middle = name[index..size].to_owned();
+                                            let suffix = name[size..].to_owned();
+                                            (prefix, middle, suffix)
+                                        } else {
+                                            (name, "".to_string(), "".to_string())
+                                        }
+                                    });
+
+                                    view! {cx,
+                                        li(class="flex flex-col rounded hover:bg-gray-100 hover:dark:bg-purple-600 cursor-pointer",
+                                            on:click=move |_| selected_chain.set(Some(chain.id.clone()))) {
+                                            div(class="flex items-center justify-between my-2 gap-2") {
+                                                div(class="flex items-center") {
+                                                    (highlicht.get().0)
+                                                    span(class="font-bold") {
+                                                        (highlicht.get().1)
+                                                    }
+                                                    (highlicht.get().2)
+                                                }
+                                                span(class="w-6 h-6 rounded-full border border-gray-300")
+                                            }
+                                            hr(class="h-0.5 border-t-0 bg-neutral-100 opacity-100 dark:opacity-50 last:bg-transparent last:border-0")
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    }
+                } else {
+                    view! {cx,
+                        p(class="text-center") {
+                            "No results"
+                        }
+                    }
+                })
+            }
+        }
     }
 }
-
-impl Hash for SearchableChain {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.chain.id.hash(state);
-    }
-}
-
-impl PartialEq for SearchableChain {
-    fn eq(&self, other: &Self) -> bool {
-        self.chain.id == other.chain.id
-    }
-}
-
-impl Eq for SearchableChain {}
 
 #[component(inline_props)]
 fn AddChain<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>>>) -> View<G> {
     let has_new_chain = create_signal(cx, false);
     let has_loaded = create_signal(cx, false);
-    let available_chains = create_signal(cx, Vec::<AvailableChain>::new());
-    let chain_rows = create_signal(cx, Vec::<Searchable<SearchableChain>>::new());
+    let all_chains = create_signal(cx, Vec::<Chain>::new());
+    let available_chains = create_signal(cx, Vec::<Chain>::new());
+    let selected_chain = create_signal(cx, None::<u64>);
 
     spawn_local_scoped(cx, async move {
         if let Ok(new_chains) = queries::query_available_chains(cx).await {
-
-            available_chains.set(new_chains.clone());
-            chain_rows.set(
-                new_chains
-                    .iter()
-                    .map(|chain| {
-                        let is_selected = create_signal(cx, chains.get().iter().any(|c| c.get().id == chain.id));
-                        Searchable {
-                            entity: SearchableChain {
-                                chain: chain.clone(),
-                            },
-                            is_selected,
-                        }
-                    })
-                    .collect::<Vec<Searchable<SearchableChain>>>(),
-            );
+            all_chains.set(new_chains);
             has_loaded.set(true);
         }
     });
 
-    // let selected_chains = create_signal(cx, {
-    //     chain_rows
-    //         .get()
-    //         .iter()
-    //         .filter(|row| *row.is_selected.get_untracked())
-    //         .map(|row| row.entity.clone())
-    //         .collect::<HashSet<SearchableChain>>()
-    // });
-    let selected_chains = create_signal(cx, HashSet::<SearchableChain>::new());
+    create_effect(cx, move || {
+        let filtered_chains = all_chains.get()
+            .iter()
+            .filter(|chain| {
+                !chains
+                    .get()
+                    .iter()
+                    .any(|chain_signal| chain_signal.get().id == chain.id)
+            })
+            .cloned()
+            .collect::<Vec<Chain>>();
+        available_chains.set(filtered_chains.clone());
+    });
+
+    create_effect(cx, move || {
+        if let Some(chain_id) = *selected_chain.get() {
+            let chain = all_chains
+                .get()
+                .iter()
+                .find(|chain| chain.id == chain_id)
+                .cloned();
+            if let Some(chain) = chain {
+                spawn_local_scoped(cx, async move {
+                    let result = queries::add_chain(cx, chain).await;
+                    if let Some(chain) = result.ok() {
+                        let chain_sig = create_signal(cx, chain.clone());
+                        chains.modify().push(chain_sig);
+                        has_new_chain.set(false);
+                        create_message(cx, "Chain added", format!("Chain {} is now being tracked", chain.name), InfoLevel::Success);
+                    }
+                    selected_chain.set(None);
+                })
+            } else {
+                create_message(cx, "Error", "Chain not found", InfoLevel::Error);
+                selected_chain.set(None);
+            }
+        }
+    });
 
     view! {cx,
         div(class=format!("flex rounded-lg p-4 mt-2 {}", if *has_new_chain.get() { "transition ease-in-out duration-500 dark:bg-purple-800" } else { "" })) {
@@ -506,13 +599,7 @@ fn AddChain<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>
                     div(class="flex flex-col") {
                         (if *has_loaded.get() {
                             view! {cx, 
-                                SearchEntity(
-                                    searchables=chain_rows.get().as_ref().clone(),
-                                    selected_entities=selected_chains, 
-                                    placeholder="Select chains", 
-                                    show_results_for_empty_search=true,
-                                    show_results_area=false,
-                                )
+                                SearchChain(available_chains=available_chains, selected_chain=selected_chain)
                             }
                         } else { 
                             view! {cx, 

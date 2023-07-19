@@ -1,7 +1,7 @@
 use crate::components::messages::{
     create_error_msg_from_status, create_message, create_timed_message,
 };
-use crate::types::protobuf::grpc_settings::{RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Chain, Wallet, UpdateChainRequest, RemoveChainRequest, AvailableChain};
+use crate::types::protobuf::grpc_settings::{RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Chain, Wallet, UpdateChainRequest, RemoveChainRequest};
 use crate::{InfoLevel, Services};
 use sycamore::prelude::*;
 
@@ -237,7 +237,7 @@ pub async fn update_existing_chain(cx: Scope<'_>, chain_sig: &Signal<Chain>, upd
 
 pub async fn update_chain(
     cx: Scope<'_>,
-    wallet: &Signal<Chain>,
+    chain: &Signal<Chain>,
     update: UpdateChainRequest,
 ) -> Result<(), ()> {
     let update_ref = create_ref(cx, update.clone());
@@ -251,8 +251,8 @@ pub async fn update_chain(
         .map(|res| res.into_inner());
 
     if response.is_ok() {
-        wallet.modify().notify_new_proposals = update_ref.notify_new_proposals;
-        wallet.modify().notify_proposal_finished = update_ref.notify_proposal_finished;
+        chain.modify().notify_new_proposals = update_ref.notify_new_proposals;
+        chain.modify().notify_proposal_finished = update_ref.notify_proposal_finished;
         Ok(())
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
@@ -287,7 +287,7 @@ pub async fn delete_chain(cx: Scope<'_>, chain: Chain) -> Result<(), ()> {
     }
 }
 
-pub async fn query_available_chains(cx: Scope<'_>) -> Result<Vec<AvailableChain>, ()> {
+pub async fn query_available_chains(cx: Scope<'_>) -> Result<Vec<Chain>, ()> {
     let services = use_context::<Services>(cx);
     let request = services.grpc_client.create_request(());
     let response = services
@@ -298,6 +298,40 @@ pub async fn query_available_chains(cx: Scope<'_>) -> Result<Vec<AvailableChain>
         .map(|res| res.into_inner());
     if let Ok(result) = response {
         Ok(result.chains)
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub async fn add_chain(
+    cx: Scope<'_>,
+    chain: Chain,
+) -> Result<Chain, ()> {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(UpdateChainRequest {
+        chain_id: chain.id.clone(),
+        notify_new_proposals: true,
+        notify_proposal_finished: true,
+    });
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .add_chain(request)
+        .await
+        .map(|res| res.into_inner());
+
+    if response.is_ok() {
+        let new_chain = Chain {
+            id: chain.id,
+            name: chain.name,
+            notify_new_proposals: true,
+            notify_proposal_finished: true,
+            logo_url: chain.logo_url,
+            is_notify_new_proposals_supported: chain.is_notify_new_proposals_supported,
+            is_notify_proposal_finished_supported: chain.is_notify_proposal_finished_supported,
+        };
+        Ok(new_chain)
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
         Err(())

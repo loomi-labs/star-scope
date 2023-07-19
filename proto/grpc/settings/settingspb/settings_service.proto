@@ -81,12 +81,6 @@ message RemoveChainRequest {
   uint64 chain_id = 1;
 }
 
-message AvailableChain {
-  uint64 id = 1;
-  string name = 2;
-  string logo_url = 3;
-}
-
 message GetAvailableChainsResponse {
-  repeated AvailableChain chains = 1;
+  repeated Chain chains = 1;
 }

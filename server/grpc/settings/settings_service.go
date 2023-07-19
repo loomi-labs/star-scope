@@ -235,15 +235,19 @@ func (s *SettingsService) RemoveChain(ctx context.Context, request *connect.Requ
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
-func (s *SettingsService) GetAvailableChains(ctx context.Context, c *connect.Request[emptypb.Empty]) (*connect.Response[settingspb.GetAvailableChainsResponse], error) {
-	chains := s.chainManager.QueryIsIndexing(ctx)
+func (s *SettingsService) GetAvailableChains(ctx context.Context, _ *connect.Request[emptypb.Empty]) (*connect.Response[settingspb.GetAvailableChainsResponse], error) {
+	chains := s.chainManager.QueryIsQuerying(ctx)
 
-	pbChains := make([]*settingspb.AvailableChain, len(chains))
+	pbChains := make([]*settingspb.Chain, len(chains))
 	for i, chain := range chains {
-		pbChains[i] = &settingspb.AvailableChain{
-			Id:      uint64(chain.ID),
-			Name:    chain.PrettyName,
-			LogoUrl: chain.Image,
+		pbChains[i] = &settingspb.Chain{
+			Id:                                uint64(chain.ID),
+			Name:                              chain.PrettyName,
+			LogoUrl:                           chain.Image,
+			NotifyNewProposals:                false,
+			NotifyProposalFinished:            false,
+			IsNotifyNewProposalsSupported:     true,
+			IsNotifyProposalFinishedSupported: true,
 		}
 	}
 
