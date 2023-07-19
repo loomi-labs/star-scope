@@ -40,7 +40,6 @@ To stop the bot send the command /stop
 */
 const subscriptionsMsg = `🚀 Star Scope bot started.
 %v
-
 <b>How does it work?</b>
 - You subscribe to on-chain events
 - An on-chain event happens
@@ -93,7 +92,7 @@ func (client *TelegramBot) handleStart(update *tgbotapi.Update) {
 
 func (client *TelegramBot) getSubscriptionButtonRow(_ *tgbotapi.Update) []Button {
 	var buttonRow []Button
-	button := NewButton("🔔 Subscriptions")
+	button := NewButton("🔔 Notifications")
 	button.LoginURL = &tgbotapi.LoginURL{URL: client.webAppUrl, RequestWriteAccess: true}
 	buttonRow = append(buttonRow, button)
 	return buttonRow
