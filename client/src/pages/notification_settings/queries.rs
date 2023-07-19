@@ -1,7 +1,7 @@
 use crate::components::messages::{
     create_error_msg_from_status, create_message, create_timed_message,
 };
-use crate::types::protobuf::grpc_settings::{RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Chain, Wallet, UpdateChainRequest, RemoveChainRequest};
+use crate::types::protobuf::grpc_settings::{RemoveWalletRequest, UpdateWalletRequest, ValidateWalletRequest, Chain, Wallet, UpdateChainRequest, RemoveChainRequest, AvailableChain};
 use crate::{InfoLevel, Services};
 use sycamore::prelude::*;
 
@@ -281,6 +281,23 @@ pub async fn delete_chain(cx: Scope<'_>, chain: Chain) -> Result<(), ()> {
             5,
         );
         Ok(())
+    } else {
+        create_error_msg_from_status(cx, response.err().unwrap());
+        Err(())
+    }
+}
+
+pub async fn query_available_chains(cx: Scope<'_>) -> Result<Vec<AvailableChain>, ()> {
+    let services = use_context::<Services>(cx);
+    let request = services.grpc_client.create_request(());
+    let response = services
+        .grpc_client
+        .get_settings_service()
+        .get_available_chains(request)
+        .await
+        .map(|res| res.into_inner());
+    if let Ok(result) = response {
+        Ok(result.chains)
     } else {
         create_error_msg_from_status(cx, response.err().unwrap());
         Err(())

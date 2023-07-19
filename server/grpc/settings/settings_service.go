@@ -234,3 +234,20 @@ func (s *SettingsService) RemoveChain(ctx context.Context, request *connect.Requ
 
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
+
+func (s *SettingsService) GetAvailableChains(ctx context.Context, c *connect.Request[emptypb.Empty]) (*connect.Response[settingspb.GetAvailableChainsResponse], error) {
+	chains := s.chainManager.QueryIsIndexing(ctx)
+
+	pbChains := make([]*settingspb.AvailableChain, len(chains))
+	for i, chain := range chains {
+		pbChains[i] = &settingspb.AvailableChain{
+			Id:      uint64(chain.ID),
+			Name:    chain.PrettyName,
+			LogoUrl: chain.Image,
+		}
+	}
+
+	return connect.NewResponse(&settingspb.GetAvailableChainsResponse{
+		Chains: pbChains,
+	}), nil
+}

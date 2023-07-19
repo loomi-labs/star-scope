@@ -72,6 +72,7 @@ func AccessibleRoles() map[string][]Role {
 		settingsService + "AddChain":            {User, Admin},
 		settingsService + "UpdateChain":         {User, Admin},
 		settingsService + "RemoveChain":         {User, Admin},
+		settingsService + "GetAvailableChains":  {User, Admin},
 		eventService + "EventStream":            {User, Admin},
 		eventService + "ListEvents":             {User, Admin},
 		eventService + "ListChains":             {User, Admin},

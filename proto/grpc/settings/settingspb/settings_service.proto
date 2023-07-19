@@ -17,6 +17,7 @@ service SettingsService {
   rpc AddChain (UpdateChainRequest) returns (google.protobuf.Empty) {}
   rpc UpdateChain (UpdateChainRequest) returns (google.protobuf.Empty) {}
   rpc RemoveChain (RemoveChainRequest) returns (google.protobuf.Empty) {}
+  rpc GetAvailableChains (google.protobuf.Empty) returns (GetAvailableChainsResponse) {}
 }
 
 message Wallet {
@@ -78,4 +79,14 @@ message UpdateChainRequest {
 
 message RemoveChainRequest {
   uint64 chain_id = 1;
+}
+
+message AvailableChain {
+  uint64 id = 1;
+  string name = 2;
+  string logo_url = 3;
+}
+
+message GetAvailableChainsResponse {
+  repeated AvailableChain chains = 1;
 }

@@ -47,6 +47,8 @@ pub struct SearchEntityProps<'a, T> {
     placeholder: &'a str,
     #[builder(default = false)]
     show_results_for_empty_search: bool,
+    #[builder(default = true)]
+    show_results_area: bool,
 }
 
 #[component]
@@ -149,7 +151,7 @@ where
                                     view! {cx,
                                         li(class="flex flex-col rounded hover:bg-gray-100 hover:dark:bg-purple-600 cursor-pointer",
                                             on:click=move |_| row.is_selected.set(!*row.is_selected.get())) {
-                                            div(class="flex items-center justify-between my-2") {
+                                            div(class="flex items-center justify-between my-2 gap-2") {
                                                 div(class="flex items-center") {
                                                     (highlicht.get().0)
                                                     span(class="font-bold") {
@@ -183,7 +185,7 @@ where
                 })
             }
         }
-        div(class="flex flex-wrap justify-center items-center mt-4") {
+        div(class=format!("flex flex-wrap justify-center items-center mt-4 {}", if props.show_results_area {""} else {"hidden"})) {
             Indexed(
                 iterable= selected_searchables,
                 view=move |cx, searchable| {

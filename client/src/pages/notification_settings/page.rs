@@ -1,7 +1,13 @@
+use std::collections::HashSet;
+use std::fmt::Display;
+use std::hash::{Hash, Hasher};
+
+use crate::components::loading::LoadingSpinner;
 use crate::components::messages::create_message;
+use crate::components::search::{SearchEntity, Searchable};
 use crate::pages::notification_settings::queries::{self, WalletUpdate, ChainUpdate, WalletValidation};
 use crate::types::protobuf::grpc_settings::{
-    UpdateWalletRequest, Chain, Wallet
+    UpdateWalletRequest, Chain, Wallet, AvailableChain
 };
 use crate::{AppState, InfoLevel};
 use sycamore::futures::spawn_local_scoped;
@@ -25,104 +31,6 @@ fn Tooltip<G: Html>(cx: Scope, title: &'static str) -> View<G> {
                 span() { (title) }
                 div(class=format!("absolute inset-0 italic text-xs rounded-lg dark:bg-purple-600 {}", if *is_visible.get() { "visible" } else { "invisible" })) {
                     "Not yet supported"
-                }
-            }
-        }
-    }
-}
-
-#[component(inline_props)]
-fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wallet>>>) -> View<G> {
-    let new_wallet_address = create_signal(cx, String::new());
-
-    let validation = create_signal(cx, None::<WalletValidation>);
-
-    let has_new_wallet = create_signal(cx, false);
-
-    create_effect(cx, move || {
-        let address = new_wallet_address.get().as_ref().clone();
-        if address.is_empty() {
-            validation.set(None);
-        } else if address.len() < 30 {
-            validation.set(Some(WalletValidation::Invalid(
-                "Wallet address is too short".to_string(),
-            )));
-        } else if wallets.get().iter().any(|w| w.get().address == address) {
-            validation.set(Some(WalletValidation::Invalid(
-                "Wallet already added".to_string(),
-            )));
-        } else {
-            spawn_local_scoped(cx, async move {
-                let result =  queries::query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
-                validation.set(Some(result.clone()));
-                if let WalletValidation::Valid(wallet) = result {
-                    let request = UpdateWalletRequest {
-                        wallet_address: wallet.address.clone(),
-                        notify_funding: true,
-                        notify_staking: true,
-                        notify_gov_voting_reminder: true,
-                    };
-                    let wallet_sig = create_signal(cx, wallet.clone());
-                    if queries::update_wallet(cx, wallet_sig, request).await.is_ok() {
-                        wallets.modify().push(wallet_sig);
-                        new_wallet_address.set(String::new());
-                        has_new_wallet.set(false);
-                        create_message(
-                            cx,
-                            "Wallet added",
-                            format!("You added the wallet {}", wallet.address),
-                            InfoLevel::Success,
-                        );
-                    }
-                }
-            });
-        }
-    });
-
-    create_effect(cx, move || {
-        if !*has_new_wallet.get() {
-            new_wallet_address.set(String::new());
-            validation.set(None);
-        }
-    });
-
-    view! {cx,
-        div(class=format!("flex rounded-lg p-4 mt-2 {}", if *has_new_wallet.get() { "transition ease-in-out duration-500 dark:bg-purple-800" } else { "" })) {
-            div(class="flex items-center px-1 gap-1") {
-                button(class=format!("flex justify-center items-center w-10 h-10 md:w-14 md:h-14 opacity-100 rounded-full {}",
-                        if *has_new_wallet.get() { "bg-red-500 hover:bg-red-600" } else { "bg-green-500 hover:bg-green-600" }),
-                        on:click=move |_| has_new_wallet.set(!*has_new_wallet.get())) {
-                    span(class=format!("w-6 h-6 md:w-10 md:h-10 icon-[ic--round-add] cursor-pointer transform transition-all duration-500 {}",
-                        if *has_new_wallet.get() { "rotate-45" } else { "" })) {}
-                }
-            }
-            (if !*has_new_wallet.get() {
-                view! {cx,
-                    div(class=format!("flex flex-col w-full justify-center px-2")) {
-                        span(class="text-base font-semibold overflow-hidden whitespace-nowrap overflow-ellipsis") { "Add wallet" }
-                    }
-                }
-            } else { view! {cx, }})
-            div(class=format!("flex flex-col w-full px-2 space-y-2 {}", if *has_new_wallet.get() { "visible" } else { "invisible" })) {
-                span(class="text-base font-semibold") { "Add wallet" }
-                div(class=format!("flex flex-wrap items-center gap-x-4")) {
-                    div(class="flex flex-col") {
-                        div(class="flex") {
-                            input(
-                                class="w-full placeholder:italic border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
-                                placeholder="Wallet address",
-                                type="text",
-                                bind:value=new_wallet_address,
-                            )
-                        }
-                        (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
-                            view! {cx,
-                                span(class="text-red-500 text-left") {(msg)}
-                            }
-                        } else {
-                            view! {cx, }
-                        })
-                    }
                 }
             }
         }
@@ -280,6 +188,104 @@ fn WalletList<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wal
 }
 
 #[component(inline_props)]
+fn AddWallet<'a, G: Html>(cx: Scope<'a>, wallets: &'a Signal<Vec<&'a Signal<Wallet>>>) -> View<G> {
+    let new_wallet_address = create_signal(cx, String::new());
+
+    let validation = create_signal(cx, None::<WalletValidation>);
+
+    let has_new_wallet = create_signal(cx, false);
+
+    create_effect(cx, move || {
+        let address = new_wallet_address.get().as_ref().clone();
+        if address.is_empty() {
+            validation.set(None);
+        } else if address.len() < 30 {
+            validation.set(Some(WalletValidation::Invalid(
+                "Wallet address is too short".to_string(),
+            )));
+        } else if wallets.get().iter().any(|w| w.get().address == address) {
+            validation.set(Some(WalletValidation::Invalid(
+                "Wallet already added".to_string(),
+            )));
+        } else {
+            spawn_local_scoped(cx, async move {
+                let result =  queries::query_validate_wallet(cx, new_wallet_address.get().as_ref().clone()).await;
+                validation.set(Some(result.clone()));
+                if let WalletValidation::Valid(wallet) = result {
+                    let request = UpdateWalletRequest {
+                        wallet_address: wallet.address.clone(),
+                        notify_funding: true,
+                        notify_staking: true,
+                        notify_gov_voting_reminder: true,
+                    };
+                    let wallet_sig = create_signal(cx, wallet.clone());
+                    if queries::update_wallet(cx, wallet_sig, request).await.is_ok() {
+                        wallets.modify().push(wallet_sig);
+                        new_wallet_address.set(String::new());
+                        has_new_wallet.set(false);
+                        create_message(
+                            cx,
+                            "Wallet added",
+                            format!("You added the wallet {}", wallet.address),
+                            InfoLevel::Success,
+                        );
+                    }
+                }
+            });
+        }
+    });
+
+    create_effect(cx, move || {
+        if !*has_new_wallet.get() {
+            new_wallet_address.set(String::new());
+            validation.set(None);
+        }
+    });
+
+    view! {cx,
+        div(class=format!("flex rounded-lg p-4 mt-2 {}", if *has_new_wallet.get() { "transition ease-in-out duration-500 dark:bg-purple-800" } else { "" })) {
+            div(class="flex items-center px-1 gap-1") {
+                button(class=format!("flex justify-center items-center w-10 h-10 md:w-14 md:h-14 opacity-100 rounded-full {}",
+                        if *has_new_wallet.get() { "bg-red-500 hover:bg-red-600" } else { "bg-green-500 hover:bg-green-600" }),
+                        on:click=move |_| has_new_wallet.set(!*has_new_wallet.get())) {
+                    span(class=format!("w-6 h-6 md:w-10 md:h-10 icon-[ic--round-add] cursor-pointer transform transition-all duration-500 {}",
+                        if *has_new_wallet.get() { "rotate-45" } else { "" })) {}
+                }
+            }
+            (if !*has_new_wallet.get() {
+                view! {cx,
+                    div(class=format!("flex flex-col w-full justify-center px-2")) {
+                        span(class="text-base font-semibold overflow-hidden whitespace-nowrap overflow-ellipsis") { "Add wallet" }
+                    }
+                }
+            } else { view! {cx, }})
+            div(class=format!("flex flex-col w-full px-2 space-y-2 {}", if *has_new_wallet.get() { "visible" } else { "invisible" })) {
+                span(class="text-base font-semibold") { "Add wallet" }
+                div(class=format!("flex flex-wrap items-center gap-x-4")) {
+                    div(class="flex flex-col") {
+                        div(class="flex") {
+                            input(
+                                class="w-full placeholder:italic border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-primary",
+                                placeholder="Wallet address",
+                                type="text",
+                                bind:value=new_wallet_address,
+                            )
+                        }
+                        (if let Some(WalletValidation::Invalid(msg)) = validation.get().as_ref().clone() {
+                            view! {cx,
+                                span(class="text-red-500 text-left") {(msg)}
+                            }
+                        } else {
+                            view! {cx, }
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component(inline_props)]
 fn AskDeleteChainDialog<'a, G: Html>(
     cx: Scope<'a>,
     is_open: &'a Signal<Option<Chain>>,
@@ -413,6 +419,113 @@ fn ChainList<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain
     }
 }
 
+#[derive(Debug, Clone)]
+struct SearchableChain {
+    pub chain: AvailableChain,
+}
+
+impl Display for SearchableChain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.chain.name.fmt(f)
+    }
+}
+
+impl Hash for SearchableChain {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.chain.id.hash(state);
+    }
+}
+
+impl PartialEq for SearchableChain {
+    fn eq(&self, other: &Self) -> bool {
+        self.chain.id == other.chain.id
+    }
+}
+
+impl Eq for SearchableChain {}
+
+#[component(inline_props)]
+fn AddChain<'a, G: Html>(cx: Scope<'a>, chains: &'a Signal<Vec<&'a Signal<Chain>>>) -> View<G> {
+    let has_new_chain = create_signal(cx, false);
+    let has_loaded = create_signal(cx, false);
+    let available_chains = create_signal(cx, Vec::<AvailableChain>::new());
+    let chain_rows = create_signal(cx, Vec::<Searchable<SearchableChain>>::new());
+
+    spawn_local_scoped(cx, async move {
+        if let Ok(new_chains) = queries::query_available_chains(cx).await {
+
+            available_chains.set(new_chains.clone());
+            chain_rows.set(
+                new_chains
+                    .iter()
+                    .map(|chain| {
+                        let is_selected = create_signal(cx, chains.get().iter().any(|c| c.get().id == chain.id));
+                        Searchable {
+                            entity: SearchableChain {
+                                chain: chain.clone(),
+                            },
+                            is_selected,
+                        }
+                    })
+                    .collect::<Vec<Searchable<SearchableChain>>>(),
+            );
+            has_loaded.set(true);
+        }
+    });
+
+    // let selected_chains = create_signal(cx, {
+    //     chain_rows
+    //         .get()
+    //         .iter()
+    //         .filter(|row| *row.is_selected.get_untracked())
+    //         .map(|row| row.entity.clone())
+    //         .collect::<HashSet<SearchableChain>>()
+    // });
+    let selected_chains = create_signal(cx, HashSet::<SearchableChain>::new());
+
+    view! {cx,
+        div(class=format!("flex rounded-lg p-4 mt-2 {}", if *has_new_chain.get() { "transition ease-in-out duration-500 dark:bg-purple-800" } else { "" })) {
+            div(class="flex items-center px-1 gap-1") {
+                button(class=format!("flex justify-center items-center w-10 h-10 md:w-14 md:h-14 opacity-100 rounded-full {}",
+                        if *has_new_chain.get() { "bg-red-500 hover:bg-red-600" } else { "bg-green-500 hover:bg-green-600" }),
+                        on:click=move |_| has_new_chain.set(!*has_new_chain.get())) {
+                    span(class=format!("w-6 h-6 md:w-10 md:h-10 icon-[ic--round-add] cursor-pointer transform transition-all duration-500 {}",
+                        if *has_new_chain.get() { "rotate-45" } else { "" })) {}
+                }
+            }
+            (if !*has_new_chain.get() {
+                view! {cx,
+                    div(class=format!("flex flex-col w-full justify-center px-2")) {
+                        span(class="text-base font-semibold overflow-hidden whitespace-nowrap overflow-ellipsis") { "Add chain" }
+                    }
+                }
+            } else { view! {cx, }})
+            div(class=format!("flex flex-col w-full px-2 space-y-2 {}", if *has_new_chain.get() { "visible" } else { "invisible" })) {
+                span(class="text-base font-semibold") { "Add chain" }
+                div(class=format!("flex flex-wrap items-center gap-x-4")) {
+                    div(class="flex flex-col") {
+                        (if *has_loaded.get() {
+                            view! {cx, 
+                                SearchEntity(
+                                    searchables=chain_rows.get().as_ref().clone(),
+                                    selected_entities=selected_chains, 
+                                    placeholder="Select chains", 
+                                    show_results_for_empty_search=true,
+                                    show_results_area=false,
+                                )
+                            }
+                        } else { 
+                            view! {cx, 
+                                LoadingSpinner()
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[component]
 pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
     let wallets: &'_ Signal<Vec<&'_ Signal<Wallet>>> = create_signal(cx, vec![]);
@@ -469,10 +582,10 @@ pub async fn NotificationSettings<G: Html>(cx: Scope<'_>) -> View<G> {
                 div(class=format!("{} peer-hover/chains:bg-gray-800 {}", collapsible_content_class, if *is_chain_list_open.get() {"pb-2"} else {""})) {
                     div(class=if *is_chain_list_open.get() {""} else {"hidden"}) {
                         ChainList(chains=chains)
-                        // AddWallet(wallets=wallets)
+                        AddChain(chains=chains)
                     }
                 }
-                }
+            }
         }
     }
 }
