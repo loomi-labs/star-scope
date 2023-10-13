@@ -282,7 +282,7 @@ jobs:
           ssh_public_key: ${{ secrets.ODIN_SSH_PUBLIC_KEY }}
           deployment_mode: docker-swarm
           copy_stack_file: true
-          deploy_path: /home/ubuntu
+          deploy_path: /home/swarm
           stack_file_name: swarm-prod-star-scope.yml
           keep_files: 5
           args: star-scope --with-registry-auth
