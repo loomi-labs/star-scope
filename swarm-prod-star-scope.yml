@@ -9,10 +9,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=star-scope-db
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   db-migration:
     image: ghcr.io/loomi-labs/star-scope-server:main
@@ -21,10 +17,7 @@ services:
       - DEBUG=true
       - DATABASE_URL=postgres://postgres:postgres@db:5432/star-scope-db?sslmode=disable
     command: "/starscope db migrate"
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
+
 # TODO: uncomment to enable the full app
 #  kafka:
 #    image: obsidiandynamics/kafka
@@ -38,10 +31,6 @@ services:
 #      KAFKA_RESTART_DELAY: '5'
 #      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 #      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: '0'
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  kafdrop:
 #    image: obsidiandynamics/kafdrop
@@ -51,10 +40,6 @@ services:
 #    environment:
 #      KAFKA_BROKERCONNECT: 'kafka:29092'
 #      JVM_OPTS: '-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify'
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 
   grpc:
     image: ghcr.io/loomi-labs/star-scope-server:main
@@ -62,10 +47,6 @@ services:
     secrets:
       - starscope-env
     command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service grpc"
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
 #  main-indexer:
 #    image: ghcr.io/loomi-labs/star-scope-base-indexer:main
@@ -79,10 +60,6 @@ services:
 #      - starscope-env
 #    command: /indexer
 #    restart: on-failure
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  osmosis-indexer:
 #    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
@@ -93,10 +70,6 @@ services:
 #      - starscope-env
 #    command: /indexer
 #    restart: on-failure
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  wallet-event-consumer:
 #    image: ghcr.io/loomi-labs/star-scope-server:main
@@ -104,10 +77,6 @@ services:
 #    secrets:
 #      - starscope-env
 #    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service wallet-event-consumer"
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  chain-event-consumer:
 #    image: ghcr.io/loomi-labs/star-scope-server:main
@@ -115,10 +84,6 @@ services:
 #    secrets:
 #      - starscope-env
 #    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-event-consumer"
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  contract-event-consumer:
 #    image: ghcr.io/loomi-labs/star-scope-server:main
@@ -126,10 +91,6 @@ services:
 #    secrets:
 #      - starscope-env
 #    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service contract-event-consumer"
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  chain-crawler:
 #    image: ghcr.io/loomi-labs/star-scope-server:main
@@ -137,10 +98,6 @@ services:
 #    secrets:
 #      - starscope-env
 #    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-crawler"
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  validator-crawler:
 #    image: ghcr.io/loomi-labs/star-scope-server:main
@@ -148,10 +105,6 @@ services:
 #    secrets:
 #      - starscope-env
 #    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service validator-crawler"
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 #
 #  gov-crawler:
 #    image: ghcr.io/loomi-labs/star-scope-server:main
@@ -159,10 +112,6 @@ services:
 #    secrets:
 #      - starscope-env
 #    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service gov-crawler"
-#    deploy:
-#      placement:
-#        constraints:
-#          - node.role != manager
 
   telegram-bot:
     image: ghcr.io/loomi-labs/star-scope-server:main
@@ -170,10 +119,6 @@ services:
     secrets:
       - starscope-env
     command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service telegram-bot"
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   discord-bot:
     image: ghcr.io/loomi-labs/star-scope-server:main
@@ -181,37 +126,21 @@ services:
     secrets:
       - starscope-env
     command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service discord-bot"
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   client:
     image: ghcr.io/loomi-labs/star-scope-client:main
     networks:
       - caddy
       - default
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   client-cosmos-login:
     image: ghcr.io/loomi-labs/star-scope-client-cosmos-login:main
     networks:
       - caddy
       - default
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   envoy:
     image: ghcr.io/loomi-labs/star-scope-envoy:main
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   pgadmin-ss:
     image: dpage/pgadmin4:latest
@@ -225,10 +154,6 @@ services:
       - default
     volumes:
       - pgadmin:/var/lib/pgadmin
-    deploy:
-      placement:
-        constraints:
-          - node.role != manager
 
   whoami-client:
     image: jwilder/whoami
@@ -238,9 +163,6 @@ services:
       labels:
         caddy: starscope.network
         caddy.reverse_proxy: "client:80"
-      placement:
-        constraints:
-          - node.role != manager
 
   whoami-client-cosmos-login:
     image: jwilder/whoami
@@ -250,9 +172,6 @@ services:
       labels:
         caddy: cosmos-login.starscope.network
         caddy.reverse_proxy: "client-cosmos-login:80"
-      placement:
-        constraints:
-          - node.role != manager
 
 #  whoami-kafdrop:
 #    image: jwilder/whoami
@@ -262,9 +181,6 @@ services:
 #      labels:
 #        caddy: kafdrop.starscope.network
 #        caddy.reverse_proxy: "kafdrop:9000"
-#      placement:
-#        constraints:
-#          - node.role != manager
 
   whoami-pgadmin:
     image: jwilder/whoami
@@ -274,9 +190,6 @@ services:
       labels:
         caddy: pgadmin.starscope.network
         caddy.reverse_proxy: "pgadmin-ss:80"
-      placement:
-        constraints:
-          - node.role != manager
 
 volumes:
   data:
