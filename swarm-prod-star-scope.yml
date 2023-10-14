@@ -18,28 +18,27 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/star-scope-db?sslmode=disable
     command: "/starscope db migrate"
 
-# TODO: uncomment to enable the full app
-#  kafka:
-#    image: obsidiandynamics/kafka
-#    environment:
-#      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092'
-#      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:29092,EXTERNAL://localhost:9092'
-#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
-#      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
-#      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: '6000'
-#      KAFKA_RESTART_ATTEMPTS: '10'
-#      KAFKA_RESTART_DELAY: '5'
-#      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-#      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: '0'
-#
-#  kafdrop:
-#    image: obsidiandynamics/kafdrop
-#    networks:
-#      - caddy
-#      - default
-#    environment:
-#      KAFKA_BROKERCONNECT: 'kafka:29092'
-#      JVM_OPTS: '-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify'
+  kafka:
+    image: obsidiandynamics/kafka
+    environment:
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:29092,EXTERNAL://localhost:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: '6000'
+      KAFKA_RESTART_ATTEMPTS: '10'
+      KAFKA_RESTART_DELAY: '5'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: '0'
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    networks:
+      - caddy
+      - default
+    environment:
+      KAFKA_BROKERCONNECT: 'kafka:29092'
+      JVM_OPTS: '-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify'
 
   grpc:
     image: ghcr.io/loomi-labs/star-scope-server:main
@@ -48,70 +47,70 @@ services:
       - starscope-env
     command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service grpc"
 
-#  main-indexer:
-#    image: ghcr.io/loomi-labs/star-scope-base-indexer:main
-#    working_dir: /app
-#    environment:
-#      - DEBUG=true
-#      - INDEXER_AUTH_TOKEN=jkasdfgiouwersdas
-#      - KAFKA_BROKERS=kafka:29092
-#      - INDEXER_GRPC_ENDPOINT=http://grpc:50001
-#    secrets:
-#      - starscope-env
-#    command: /indexer
-#    restart: on-failure
-#
-#  osmosis-indexer:
-#    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
-#    working_dir: /app
-#    environment:
-#      - DEBUG=true
-#    secrets:
-#      - starscope-env
-#    command: /indexer
-#    restart: on-failure
-#
-#  wallet-event-consumer:
-#    image: ghcr.io/loomi-labs/star-scope-server:main
-#    working_dir: /app
-#    secrets:
-#      - starscope-env
-#    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service wallet-event-consumer"
-#
-#  chain-event-consumer:
-#    image: ghcr.io/loomi-labs/star-scope-server:main
-#    working_dir: /app
-#    secrets:
-#      - starscope-env
-#    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-event-consumer"
-#
-#  contract-event-consumer:
-#    image: ghcr.io/loomi-labs/star-scope-server:main
-#    working_dir: /app
-#    secrets:
-#      - starscope-env
-#    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service contract-event-consumer"
-#
-#  chain-crawler:
-#    image: ghcr.io/loomi-labs/star-scope-server:main
-#    working_dir: /app
-#    secrets:
-#      - starscope-env
-#    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-crawler"
-#
-#  validator-crawler:
-#    image: ghcr.io/loomi-labs/star-scope-server:main
-#    working_dir: /app
-#    secrets:
-#      - starscope-env
-#    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service validator-crawler"
-#
-#  gov-crawler:
-#    image: ghcr.io/loomi-labs/star-scope-server:main
-#    working_dir: /app
-#    secrets:
-#      - starscope-env
-#    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service gov-crawler"
+  main-indexer:
+    image: ghcr.io/loomi-labs/star-scope-base-indexer:main
+    working_dir: /app
+    environment:
+      - DEBUG=true
+      - INDEXER_AUTH_TOKEN=jkasdfgiouwersdas
+      - KAFKA_BROKERS=kafka:29092
+      - INDEXER_GRPC_ENDPOINT=http://grpc:50001
+    secrets:
+      - starscope-env
+    command: /indexer
+    restart: on-failure
+
+  osmosis-indexer:
+    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
+    working_dir: /app
+    environment:
+      - DEBUG=true
+    secrets:
+      - starscope-env
+    command: /indexer
+    restart: on-failure
+
+  wallet-event-consumer:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service wallet-event-consumer"
+
+  chain-event-consumer:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-event-consumer"
+
+  contract-event-consumer:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service contract-event-consumer"
+
+  chain-crawler:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service chain-crawler"
+
+  validator-crawler:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service validator-crawler"
+
+  gov-crawler:
+    image: ghcr.io/loomi-labs/star-scope-server:main
+    working_dir: /app
+    secrets:
+      - starscope-env
+    command: /bin/sh -c "source /run/secrets/starscope-env && /starscope service gov-crawler"
 
   telegram-bot:
     image: ghcr.io/loomi-labs/star-scope-server:main
@@ -173,14 +172,14 @@ services:
         caddy: cosmos-login.starscope.network
         caddy.reverse_proxy: "client-cosmos-login:80"
 
-#  whoami-kafdrop:
-#    image: jwilder/whoami
-#    networks:
-#      - caddy
-#    deploy:
-#      labels:
-#        caddy: kafdrop.starscope.network
-#        caddy.reverse_proxy: "kafdrop:9000"
+  whoami-kafdrop:
+    image: jwilder/whoami
+    networks:
+      - caddy
+    deploy:
+      labels:
+        caddy: kafdrop.starscope.network
+        caddy.reverse_proxy: "kafdrop:9000"
 
   whoami-pgadmin:
     image: jwilder/whoami

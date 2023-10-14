@@ -263,26 +263,26 @@ jobs:
           tags: ${{ steps.meta-envoy.outputs.tags }}
           labels: ${{ steps.meta-envoy.outputs.labels }}
 
-  deploy-to-swarm:
-    needs: [build-and-push-server, build-and-push-client, build-and-push-client-cosmos-login, build-and-push-base-indexer, build-and-push-envoy]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Deploy to swarm
-        uses: wshihadeh/docker-deployment-action@v2
-        with:
-          remote_docker_host: swarm@88.99.139.11
-          ssh_private_key: ${{ secrets.ODIN_SSH_PRIVATE_KEY }}
-          ssh_public_key: ${{ secrets.ODIN_SSH_PUBLIC_KEY }}
-          deployment_mode: docker-swarm
-          copy_stack_file: true
-          deploy_path: /home/swarm
-          stack_file_name: swarm-prod-star-scope.yml
-          keep_files: 5
-          args: star-scope --with-registry-auth
+#  deploy-to-swarm:
+#    needs: [build-and-push-server, build-and-push-client, build-and-push-client-cosmos-login, build-and-push-base-indexer, build-and-push-envoy]
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      packages: read
+#
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
+#
+#      - name: Deploy to swarm
+#        uses: wshihadeh/docker-deployment-action@v2
+#        with:
+#          remote_docker_host: swarm@88.99.139.11
+#          ssh_private_key: ${{ secrets.ODIN_SSH_PRIVATE_KEY }}
+#          ssh_public_key: ${{ secrets.ODIN_SSH_PUBLIC_KEY }}
+#          deployment_mode: docker-swarm
+#          copy_stack_file: true
+#          deploy_path: /home/swarm
+#          stack_file_name: swarm-prod-star-scope.yml
+#          keep_files: 5
+#          args: star-scope --with-registry-auth
