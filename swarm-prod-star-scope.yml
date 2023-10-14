@@ -60,15 +60,15 @@ services:
     command: /indexer
     restart: on-failure
 
-  osmosis-indexer:
-    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
-    working_dir: /app
-    environment:
-      - DEBUG=true
-    secrets:
-      - starscope-env
-    command: /indexer
-    restart: on-failure
+#  osmosis-indexer:
+#    image: ghcr.io/loomi-labs/star-scope-osmosis-indexer:main
+#    working_dir: /app
+#    environment:
+#      - DEBUG=true
+#    secrets:
+#      - starscope-env
+#    command: /indexer
+#    restart: on-failure
 
   wallet-event-consumer:
     image: ghcr.io/loomi-labs/star-scope-server:main
